@@ -30,7 +30,7 @@ class Profile(BaseModel):
         blank=True,
     )
     avatar = models.ImageField(
-        upload_to='users/',
+        upload_to='avatars/',
         verbose_name='Аватар',
         blank=True,
         null=True,
