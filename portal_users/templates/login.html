@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% load bootstrap4 %}
+{% block title %}Вход{% endblock %}
+
+{% block content %}
+    <div class="container">
+        <h3>Вход</h3>
+        <div id="app">
+            <form method="post" action="{% url 'profile:login' %}">
+                {% csrf_token %}
+                {{ form.as_p }}
+                <button type="submit" class="btn btn-primary">Готово</button>
+            </form>
+            <div class="container">
+                <div style="margin-top: 30px">
+                    {% bootstrap_messages %}
+                </div>
+            </div>
+
+        </div>
+    </div>
+{% endblock %}
+
+{% block javascript %}
+    <script>
+
+    </script>
+{% endblock %}

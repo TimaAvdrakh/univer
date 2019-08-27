@@ -1,5 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import User
+from .utils import get_sentinel_user
+from django.contrib.postgres.fields import JSONField
 
 
 class BaseModel(models.Model):
@@ -26,5 +28,20 @@ class BaseModel(models.Model):
 #     model_name = models.CharField()
 #     author = models.ForeignKey(
 #         User,
-#         on_delete=models.SET()
+#         on_delete=models.SET(get_sentinel_user),
+#         verbose_name='Автор',
+#         related_name='my_actions',
 #     )
+#     date = models.DateTimeField(
+#         auto_now_add=True,
+#     )
+#     content = JSONField(
+#         verbose_name='Контент',
+#     )
+#
+#     def __str__(self):
+#         return '{} - {}'.format(self.obj_uid, self.author.username)
+#
+#     class Meta:
+#         verbose_name = 'Лог'
+#         verbose_name_plural = 'Логи'

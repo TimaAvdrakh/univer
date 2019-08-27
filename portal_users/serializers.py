@@ -4,6 +4,7 @@ from rest_framework_recaptcha.fields import ReCaptchaField
 from django.contrib.auth.models import User
 from common.exceptions import CustomException
 from django.contrib.auth import password_validation
+from cron_app.models import EmailTask
 
 
 class LoginSerializer(serializers.Serializer):
@@ -88,7 +89,7 @@ class ForgetPasswordSerializer(serializers.ModelSerializer):
         )
 
     def validate(self, data):
-        if not User.objects.filter(username=data['email'],
+        if not User.objects.filter(email=data['email'],
                                    is_active=True).exists():
             raise CustomException(detail='not_fount')
 
@@ -97,11 +98,18 @@ class ForgetPasswordSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         email = validated_data.get('email')
 
-        user = User.objects.get(username=email,
+        user = User.objects.get(email=email,
                                 is_active=True)
         reset = models.ResetPassword.objects.create(
             email=email,
             user=user
+        )
+
+        # Создаем задачу для крон
+        EmailTask.objects.create(
+            to=email,
+            subject='Сброс пароля',
+            message='{}'.format(reset.uuid)
         )
 
         return reset
@@ -127,7 +135,7 @@ class ResetPasswordSerializer(serializers.Serializer):
             raise CustomException(detail='expired')
 
         try:
-            user = User.objects.get(username=reset.email)
+            user = User.objects.get(email=reset.email)
         except User.DoesNotExist:
             raise CustomException(detail='not_found')
 

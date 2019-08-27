@@ -25,6 +25,9 @@ INSTALLED_APPS = [
     'rest_framework_swagger',
     'rest_framework_recaptcha',
     'corsheaders',
+    'django_cron',
+    'cron_app',
+    'bootstrap4',
 ]
 
 MIDDLEWARE = [
@@ -117,3 +120,8 @@ REST_FRAMEWORK = {
 
 CORS_ORIGIN_ALLOW_ALL = True
 CORS_ALLOW_CREDENTIALS = True
+
+
+CRON_CLASSES = [
+    "cron_app.cron.EmailCronJob",
+]

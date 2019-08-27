@@ -22,5 +22,6 @@ schema_view = get_swagger_view(title='Univer API')
 urlpatterns = [
     path('korabolta/', admin.site.urls),
     path('swagger/6456afdsfdsgfsdg/', schema_view),
-    path('api/v1/user/', include('portal_users.urls', namespace="profile")),
+    path('profile/', include('portal_users.urls', namespace="profile")),
+    path('api/v1/user/', include('portal_users.apiurls', namespace="user")),
 ]
