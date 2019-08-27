@@ -1,4 +1,5 @@
 from django.db import models
+from django.contrib.auth.models import User
 
 
 class BaseModel(models.Model):
@@ -19,3 +20,11 @@ class BaseModel(models.Model):
         blank=True,
     )
 
+
+class Log(BaseModel):
+    obj_uid = models.CharField()
+    model_name = models.CharField()
+    author = models.ForeignKey(
+        User,
+        on_delete=models.SET()
+    )

@@ -39,3 +39,57 @@ class LoginView(generics.CreateAPIView):
                 },
                 status=status.HTTP_401_UNAUTHORIZED
             )
+
+
+class PasswordChangeView(generics.CreateAPIView):
+    """Сменить пароль"""
+    serializer_class = serializers.PasswordChangeSerializer
+    queryset = User.objects.filter(is_active=True)
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.serializer_class(data=request.data,
+                                           context={'request': request})
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        return Response(
+            {
+                'message': 'ok'
+            }
+        )
+
+
+class ForgetPasswordView(generics.CreateAPIView):
+    """Забыли пароль"""
+    permission_classes = ()
+    authentication_classes = ()
+    queryset = models.ResetPassword.objects.all()
+    serializer_class = serializers.ForgetPasswordSerializer
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.serializer_class(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        return Response(
+            {
+                'message': 'ok'
+            },
+            status=status.HTTP_200_OK
+        )
+
+
+class ResetPasswordView(generics.CreateAPIView):
+    """Восстановить пароль"""
+    permission_classes = ()
+    authentication_classes = ()
+    serializer_class = serializers.ResetPasswordSerializer
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.serializer_class(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        return Response(
+            {
+                'message': 'ok'
+            },
+            status=status.HTTP_200_OK
+        )

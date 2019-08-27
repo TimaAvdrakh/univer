@@ -1,6 +1,7 @@
 from django.db import models
 from common.models import BaseModel
 from django.contrib.auth.models import User
+from uuid import uuid4
 
 
 class Profile(BaseModel):
@@ -42,3 +43,26 @@ class Profile(BaseModel):
     class Meta:
         verbose_name = 'Профиль'
         verbose_name_plural = 'Профили'
+
+
+class ResetPassword(BaseModel):
+    email = models.EmailField(
+        verbose_name='Email',
+    )
+    uuid = models.UUIDField(
+        default=uuid4,
+        verbose_name='UUID',
+    )
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        verbose_name='Пользователь',
+    )
+    changed = models.BooleanField(
+        default=False,
+        verbose_name='Изменен',
+    )
+
+    class Meta:
+        verbose_name = 'Восстановление пароля'
+        verbose_name_plural = 'Восстановление пароля'
