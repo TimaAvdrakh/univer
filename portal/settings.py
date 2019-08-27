@@ -22,6 +22,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'common',
     'portal_users',
+    'rest_framework_swagger',
 ]
 
 MIDDLEWARE = [
@@ -108,4 +109,5 @@ REST_FRAMEWORK = {
         'rest_framework.parsers.MultiPartParser',
         # 'rest_framework.parsers.FileUploadParser',
     ),
+    'DEFAULT_SCHEMA_CLASS': 'rest_framework.schemas.coreapi.AutoSchema'
 }
