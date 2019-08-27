@@ -1,4 +1,5 @@
 from rest_framework.views import APIView
+from rest_framework import generics
 from rest_framework import status
 from rest_framework.response import Response
 from . import serializers
@@ -6,12 +7,13 @@ from . import models
 from django.contrib.auth import authenticate, login, logout
 
 
-class LoginView(APIView):
+class LoginView(generics.CreateAPIView):
     permission_classes = ()
     authentication_classes = ()
+    serializer_class = serializers.LoginSerializer
 
-    def post(self, request):
-        serializer = serializers.LoginSerializer(data=request.data)
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         cd = serializer.validated_data
         user = authenticate(request,
