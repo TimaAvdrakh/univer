@@ -21,10 +21,10 @@ class BaseModel(models.Model):
     )
 
 
-class Log(BaseModel):
-    obj_uid = models.CharField()
-    model_name = models.CharField()
-    author = models.ForeignKey(
-        User,
-        on_delete=models.SET()
-    )
+# class Log(BaseModel):
+#     obj_uid = models.CharField()
+#     model_name = models.CharField()
+#     author = models.ForeignKey(
+#         User,
+#         on_delete=models.SET()
+#     )

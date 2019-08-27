@@ -5,6 +5,7 @@ from rest_framework.response import Response
 from . import serializers
 from . import models
 from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.models import User
 
 
 class LoginView(generics.CreateAPIView):
