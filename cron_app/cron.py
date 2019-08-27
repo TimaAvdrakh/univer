@@ -17,3 +17,5 @@ class EmailCronJob(CronJobBase):
                       item.message,
                       from_email='avtoexpertastana@gmail.com',
                       recipient_list=[item.to])
+            item.is_success = True
+            item.save()
