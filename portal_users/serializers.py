@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from . import models
+from rest_framework_recaptcha.fields import ReCaptchaField
 
 
 class LoginSerializer(serializers.Serializer):
@@ -9,6 +10,7 @@ class LoginSerializer(serializers.Serializer):
     password = serializers.CharField(
         required=True,
     )
+    recaptcha = ReCaptchaField()
 
 
 class ProfileDetailSerializer(serializers.ModelSerializer):

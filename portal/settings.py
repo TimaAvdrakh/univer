@@ -23,6 +23,7 @@ INSTALLED_APPS = [
     'common',
     'portal_users',
     'rest_framework_swagger',
+    'rest_framework_recaptcha',
 ]
 
 MIDDLEWARE = [
