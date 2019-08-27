@@ -10,7 +10,7 @@ class LoginSerializer(serializers.Serializer):
     password = serializers.CharField(
         required=True,
     )
-    recaptcha = ReCaptchaField()
+    # recaptcha = ReCaptchaField()
 
 
 class ProfileDetailSerializer(serializers.ModelSerializer):
