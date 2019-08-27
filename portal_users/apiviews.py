@@ -95,3 +95,13 @@ class ResetPasswordView(generics.CreateAPIView):
             },
             status=status.HTTP_200_OK
         )
+
+
+class TestView(APIView):
+    def get(self, request):
+        return Response(
+            {
+                'isAuth': 'ok'
+            },
+            status=status.HTTP_200_OK
+        )
