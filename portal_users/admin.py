@@ -10,7 +10,7 @@ class ProfileAdmin(admin.ModelAdmin):
     ]
     list_display = [
         'user',
-        'id',
+        'uid',
         'last_name',
         'first_name',
         'middle_name',

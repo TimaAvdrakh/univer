@@ -2,12 +2,20 @@ from django.db import models
 from django.contrib.auth.models import User
 from .utils import get_sentinel_user
 from django.contrib.postgres.fields import JSONField
+from uuid import uuid4
 
 
 class BaseModel(models.Model):
     class Meta:
         abstract = True
 
+    uid = models.UUIDField(
+        verbose_name='Уникальный идентификатор',
+        primary_key=True,
+        editable=False,
+        default=uuid4,
+        unique=True,
+    )
     is_active = models.BooleanField(
         default=True,
     )

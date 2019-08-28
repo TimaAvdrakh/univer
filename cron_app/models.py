@@ -1,5 +1,6 @@
 from django.db import models
 from common.models import BaseModel
+from portal_users.models import ResetPassword
 
 
 class BaseTask(BaseModel):
@@ -28,3 +29,10 @@ class EmailTask(BaseTask):
         verbose_name='Сообщение',
     )
 
+
+class ResetPasswordUrlSendTask(BaseTask):
+    """Задача для отправки ссылки для восстановления пароля"""
+    reset_password = models.ForeignKey(
+        ResetPassword,
+        on_delete=models.CASCADE,
+    )

@@ -4,7 +4,7 @@ from rest_framework_recaptcha.fields import ReCaptchaField
 from django.contrib.auth.models import User
 from common.exceptions import CustomException
 from django.contrib.auth import password_validation
-from cron_app.models import EmailTask
+from cron_app.models import ResetPasswordUrlSendTask
 
 
 class LoginSerializer(serializers.Serializer):
@@ -106,10 +106,8 @@ class ForgetPasswordSerializer(serializers.ModelSerializer):
         )
 
         # Создаем задачу для крон
-        EmailTask.objects.create(
-            to=email,
-            subject='Сброс пароля',
-            message='{}'.format(reset.uuid)
+        ResetPasswordUrlSendTask.objects.create(
+            reset_password=reset,
         )
 
         return reset
