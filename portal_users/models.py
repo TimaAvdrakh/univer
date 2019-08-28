@@ -24,12 +24,64 @@ class Profile(BaseModel):
         verbose_name='Отчество',
         blank=True,
     )
+    first_name_en = models.CharField(
+        max_length=100,
+        verbose_name='Имя на английском',
+    )
+    last_name_en = models.CharField(
+        max_length=100,
+        verbose_name='Фамилия на английском',
+    )
+    birth_date = models.DateField(
+        verbose_name='Дата рождения',
+    )
+    birth_place = models.CharField(
+        max_length=200,
+        verbose_name='Место рождения',
+    )
+    nationality = models.CharField(
+        max_length=100,
+        verbose_name='Национальность',
+    )
+    citizenship = models.CharField(
+        max_length=100,
+        verbose_name='Гражданство',
+    )
+    # gender = models.ForeignKey(
+    # )
+    iin = models.IntegerField(
+        verbose_name='ИИН',
+    )
+    document = models.CharField(
+        max_length=500,
+        verbose_name='Документ, удостоверяющий личность'
+    )
+    address = models.CharField(
+        max_length=500,
+        verbose_name='Адрес',
+    )
     phone = models.CharField(
         max_length=20,
         default="",
         verbose_name='Телефон',
         blank=True,
     )
+    email = models.EmailField(
+        verbose_name='Email',
+    )
+    skype = models.CharField(
+        max_length=100,
+        default="",
+        blank=True,
+    )
+    entry_date = models.DateField(
+        verbose_name='Дата поступления в ВУЗ',
+    )
+    interest = models.CharField(
+        max_length=1000,
+        verbose_name='Увлечения',
+    )
+
     avatar = models.ImageField(
         upload_to='avatars/',
         verbose_name='Аватар',
