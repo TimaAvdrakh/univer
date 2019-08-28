@@ -43,6 +43,18 @@ class LoginView(generics.CreateAPIView):
             )
 
 
+class LogoutView(APIView):
+    """Выйти из системы"""
+    def post(self, request):
+        logout(request)
+        return Response(
+            {
+                'message': 'ok'
+            },
+            status=status.HTTP_200_OK
+        )
+
+
 class PasswordChangeView(generics.CreateAPIView):
     """Сменить пароль"""
     serializer_class = serializers.PasswordChangeSerializer
