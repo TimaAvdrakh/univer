@@ -246,7 +246,9 @@ class UserCreateSerializer(serializers.ModelSerializer):
 
         user = User.objects.create(
             username=validated_data['iin'],
-            email=validated_data['email']
+            email=validated_data['email'],
+            first_name=validated_data['first_name'],
+            last_name=validated_data['last_name']
         )
         user.set_password(password)
         user.save()

@@ -256,3 +256,88 @@ class OrganizationToken(BaseModel):
     class Meta:
         verbose_name = 'Токен для Организации'
         verbose_name_plural = 'Токены для Организации'
+
+
+# class Achievement(BaseModel):  # TODO УТОЧНИТЬ
+#     user = models.ForeignKey(
+#         User,
+#         on_delete=models.CASCADE,
+#         related_name='achievements',
+#         verbose_name='Пользователь',
+#     )
+#     achievement_type = models.CharField(
+#         max_length=100,
+#         verbose_name='Тип достижения',
+#     )
+#     level = models.CharField(
+#         max_length=100,
+#         verbose_name='Уровень',
+#     )
+#     content = models.CharField(
+#         max_length=1000,
+#         verbose_name='Тело',
+#     )
+#
+#     def __str__(self):
+#         return '{} {}'.format(self.user.get_full_name(),
+#                               self.achievement_type)
+#
+#     class Meta:
+#         verbose_name = 'Достижение'
+#         verbose_name_plural = 'Достижения'
+
+
+# class IdentityDocument(BaseModel):
+#     user = models.ForeignKey(
+#         User,
+#         on_delete=models.CASCADE,
+#         related_name='identity_documents',
+#         verbose_name='Пользователь',
+#     )
+#     document_type = models.CharField(
+#         verbose_name='Тип документа',  # TODO СПРАВОЧНИК?
+#     )
+#     serial_number = models.CharField(
+#         max_length=100,
+#         verbose_name='Серия',
+#     )
+#     number = models.CharField(
+#         max_length=100,
+#         verbose_name='Номер',
+#     )
+#     validity_date = models.DateField(
+#         verbose_name='Срок действия',
+#     )
+#     issued_by = models.CharField(
+#         max_length=100,
+#         verbose_name='Кем выдан',  # TODO СПРАВОЧНИК?
+#     )
+#
+#     def __str__(self):
+#         return '{}'.format(self.user.get_full_name(),
+#                            self.document_type)
+#
+#     class Meta:
+#         verbose_name = 'Документ удостоверяющий личность'
+#         verbose_name_plural = 'Документы удостоверяющий личность'
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

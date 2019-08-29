@@ -82,18 +82,27 @@ class StudyForm(BaseModel):
 #         related_name='educations',
 #         verbose_name='Пользователь',
 #     )
-#     document_type = models.CharField()
-#     edu_type = models.CharField()
-#     serial = models.CharField(
+#     document_type = models.CharField(
+#         max_length=100,
+#         verbose_name='Тип документа',  # TODO СПРАВОЧНИК?
+#     )
+#     edu_type = models.CharField(
+#         max_length=100,
+#         verbose_name='Вид образования',  # TODO СПРАВОЧНИК?
+#     )
+#     serial_number = models.CharField(
+#         max_length=100,
 #         verbose_name='Серия',
 #     )
-#     number = models.IntegerField(
+#     number = models.CharField(
+#         max_length=100,
 #         verbose_name='Номер',
 #     )
-#     get_date = models.DateField(
+#     given_date = models.DateField(
 #         verbose_name='Дата выдачи',
 #     )
 #     institute = models.CharField(
+#         max_length=100,
 #         verbose_name='Учебное заведение',
 #     )
 #
