@@ -84,7 +84,7 @@ class ForgetPasswordSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.ResetPassword
         fields = (
-            'id',
+            'uid',
             'email',
         )
 

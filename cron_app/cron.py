@@ -1,6 +1,5 @@
 from django_cron import CronJobBase, Schedule
 from . import models
-from django.core.mail import send_mail
 import requests
 from portal.current_settings import PASSWORD_RESET_ENDPOINT
 from django.utils import timezone
@@ -14,14 +13,6 @@ class EmailCronJob(CronJobBase):
 
     def do(self):
         print("1 min test")
-        email_tasks = models.EmailTask.objects.filter(is_success=False)
-        for item in email_tasks:
-            send_mail(item.subject,
-                      item.message,
-                      from_email='avtoexpertastana@gmail.com',
-                      recipient_list=[item.to])
-            item.is_success = True
-            item.save()
 
 
 class PasswordResetUrlSendJob(CronJobBase):

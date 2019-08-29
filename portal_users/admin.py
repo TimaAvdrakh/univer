@@ -15,3 +15,14 @@ class ProfileAdmin(admin.ModelAdmin):
         'first_name',
         'middle_name',
     ]
+
+
+@admin.register(models.ResetPassword)
+class ResetPasswordAdmin(admin.ModelAdmin):
+    list_display = [
+        'email',
+        'uuid',
+        'user',
+        'changed',
+        'created',
+    ]
