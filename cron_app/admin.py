@@ -18,3 +18,13 @@ class ResetPasswordUrlSendTaskAdmin(admin.ModelAdmin):
         'reset_password',
         'is_success'
     ]
+
+
+@admin.register(models.CredentialsEmailTask)
+class CredentialsEmailTaskAdmin(admin.ModelAdmin):
+    list_display = [
+        'to',
+        'username',
+        'password',
+        'is_success',
+    ]

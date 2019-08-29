@@ -36,3 +36,18 @@ class ResetPasswordUrlSendTask(BaseTask):
         ResetPassword,
         on_delete=models.CASCADE,
     )
+
+
+class CredentialsEmailTask(BaseTask):
+    """Задача для отправки логин и пароль на email"""
+    to = models.EmailField(
+        verbose_name='Email',
+    )
+    username = models.CharField(
+        max_length=50,
+        verbose_name='Логин',
+    )
+    password = models.CharField(
+        max_length=100,
+        verbose_name='Пароль',
+    )

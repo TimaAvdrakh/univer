@@ -4,7 +4,7 @@ from rest_framework_recaptcha.fields import ReCaptchaField
 from django.contrib.auth.models import User
 from common.exceptions import CustomException
 from django.contrib.auth import password_validation
-from cron_app.models import ResetPasswordUrlSendTask
+from cron_app.models import ResetPasswordUrlSendTask, CredentialsEmailTask
 from common.utils import password_generator
 
 
@@ -254,6 +254,12 @@ class UserCreateSerializer(serializers.ModelSerializer):
         profile = models.Profile.objects.create(
             user=user,
             **validated_data
+        )
+
+        CredentialsEmailTask.objects.create(
+            to=user.email,
+            username=user.username,
+            password=password
         )
 
         return profile
