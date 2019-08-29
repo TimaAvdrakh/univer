@@ -32,14 +32,32 @@ class StudyForm(BaseModel):
         verbose_name_plural = 'Формы обучения'
 
 
-#
-#
 # class Faculty(BaseModel):
-#     pass
+#     name = models.CharField(
+#         max_length=500,
+#         verbose_name='Название',
+#     )
+#
+#     def __str__(self):
+#         return self.name
+#
+#     class Meta:
+#         verbose_name = 'Факультет'
+#         verbose_name_plural = 'Факультеты'
 #
 #
 # class Cathedra(BaseModel):
-#     pass
+#     name = models.CharField(
+#         max_length=500,
+#         verbose_name='Название',
+#     )
+#
+#     def __str__(self):
+#         return self.name
+#
+#     class Meta:
+#         verbose_name = 'Кафедра'
+#         verbose_name_plural = 'Кафедры'
 #
 #
 # class Group(BaseModel):

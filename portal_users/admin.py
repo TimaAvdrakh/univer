@@ -51,3 +51,11 @@ class MaritalStatusAdmin(admin.ModelAdmin):
         "name",
         "uid",
     ]
+
+
+@admin.register(models.Interest)
+class InterestAdmin(admin.ModelAdmin):
+    list_display = [
+        "name",
+        "uid",
+    ]

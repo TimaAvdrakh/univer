@@ -34,6 +34,20 @@ class MaritalStatus(BaseModel):
         verbose_name_plural = 'Семейное положение'
 
 
+class Interest(BaseModel):
+    name = models.CharField(
+        max_length=100,
+        verbose_name='Название',
+    )
+
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        verbose_name = 'Увлечение'
+        verbose_name_plural = 'Увлечения'
+
+
 class Profile(BaseModel):
     user = models.OneToOneField(
         User,
@@ -110,7 +124,7 @@ class Profile(BaseModel):
         null=True,
         blank=True,
     )
-    document = models.CharField(
+    document = models.CharField(  # TODO refactor
         max_length=500,
         default='',
         blank=True,
@@ -145,9 +159,9 @@ class Profile(BaseModel):
         blank=True,
         null=True,
     )
-    interest = models.CharField(
-        max_length=1000,
-        default='',
+    interests = models.ManyToManyField(
+        Interest,
+        related_name='profiles',
         blank=True,
         verbose_name='Увлечения',
     )
@@ -165,6 +179,12 @@ class Profile(BaseModel):
         on_delete=models.CASCADE,
         verbose_name='Форма обучения',
         related_name='profiles',
+    )
+    extra_data = models.CharField(
+        max_length=1000,
+        default='',
+        blank=True,
+        verbose_name='Дополнительная информация',
     )
 
     def __str__(self):
@@ -258,33 +278,65 @@ class OrganizationToken(BaseModel):
         verbose_name_plural = 'Токены для Организации'
 
 
-# class Achievement(BaseModel):  # TODO УТОЧНИТЬ
-#     user = models.ForeignKey(
-#         User,
-#         on_delete=models.CASCADE,
-#         related_name='achievements',
-#         verbose_name='Пользователь',
-#     )
-#     achievement_type = models.CharField(
-#         max_length=100,
-#         verbose_name='Тип достижения',
-#     )
-#     level = models.CharField(
-#         max_length=100,
-#         verbose_name='Уровень',
-#     )
-#     content = models.CharField(
-#         max_length=1000,
-#         verbose_name='Тело',
-#     )
-#
-#     def __str__(self):
-#         return '{} {}'.format(self.user.get_full_name(),
-#                               self.achievement_type)
-#
-#     class Meta:
-#         verbose_name = 'Достижение'
-#         verbose_name_plural = 'Достижения'
+class Level(BaseModel):
+    name = models.CharField(
+        max_length=500,
+        verbose_name='Название',
+    )
+
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        verbose_name = 'Уровень'
+        verbose_name_plural = 'Уровень'
+
+
+class AchievementType(BaseModel):
+    name = models.CharField(
+        max_length=500,
+        verbose_name='Название',
+    )
+
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        verbose_name = 'Тип достижения'
+        verbose_name_plural = 'Типы достижения'
+
+
+class Achievement(BaseModel):  # TODO УТОЧНИТЬ
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='achievements',
+        verbose_name='Пользователь',
+    )
+    achievement_type = models.ForeignKey(
+        AchievementType,
+        on_delete=models.CASCADE,
+        related_name='achievements',
+        verbose_name='Тип достижения',
+    )
+    level = models.ForeignKey(
+        Level,
+        on_delete=models.CASCADE,
+        related_name='achievements',
+        verbose_name='Уровень',
+    )
+    content = models.CharField(
+        max_length=1000,
+        verbose_name='Тело',
+    )
+
+    def __str__(self):
+        return '{} {}'.format(self.user.get_full_name(),
+                              self.achievement_type)
+
+    class Meta:
+        verbose_name = 'Достижение'
+        verbose_name_plural = 'Достижения'
 
 
 # class IdentityDocument(BaseModel):
