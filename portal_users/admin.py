@@ -26,3 +26,28 @@ class ResetPasswordAdmin(admin.ModelAdmin):
         'changed',
         'created',
     ]
+
+
+@admin.register(models.OrganizationToken)
+class OrganizationTokenAdmin(admin.ModelAdmin):
+    list_display = [
+        'organization',
+        'token',
+        'created',
+    ]
+
+
+@admin.register(models.Gender)
+class GenderAdmin(admin.ModelAdmin):
+    list_display = [
+        "name",
+        "uid",
+    ]
+
+
+@admin.register(models.MaritalStatus)
+class MaritalStatusAdmin(admin.ModelAdmin):
+    list_display = [
+        "name",
+        "uid",
+    ]

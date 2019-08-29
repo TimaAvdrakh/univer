@@ -5,6 +5,7 @@ from django.contrib.auth.models import User
 from common.exceptions import CustomException
 from django.contrib.auth import password_validation
 from cron_app.models import ResetPasswordUrlSendTask
+from common.utils import password_generator
 
 
 class LoginSerializer(serializers.Serializer):
@@ -152,3 +153,107 @@ class ResetPasswordSerializer(serializers.Serializer):
 
         return reset
 
+
+class UserCreateSerializer(serializers.ModelSerializer):
+    # org_token = serializers.CharField(
+    #     required=True,
+    #     help_text='Токен организации для авторизации из 1С',
+    # )
+    uid = serializers.UUIDField(
+        required=True,
+        help_text='uuid для профиля из 1С'
+    )
+    middle_name = serializers.CharField(
+        required=True,
+    )
+    first_name_en = serializers.CharField(
+        required=True,
+    )
+    last_name_en = serializers.CharField(
+        required=True,
+    )
+    birth_date = serializers.DateField(
+        required=True,
+    )
+    birth_place = serializers.CharField(
+        required=True,
+    )
+    nationality = serializers.CharField(
+        required=True,
+    )
+    citizenship = serializers.CharField(
+        required=True,
+    )
+    gender = serializers.PrimaryKeyRelatedField(
+        required=True,
+        queryset=models.Gender.objects.filter(is_active=True),
+    )
+    marital_status = serializers.PrimaryKeyRelatedField(
+        required=True,
+        queryset=models.MaritalStatus.objects.filter(is_active=True)
+    )
+    iin = serializers.CharField(
+        required=True,
+    )
+    address = serializers.CharField(
+        required=True,
+    )
+    phone = serializers.CharField(
+        required=True,
+    )
+    email = serializers.EmailField(
+        required=True,
+    )
+    skype = serializers.CharField(
+        required=True,
+    )
+    entry_date = serializers.DateField(
+        required=True,
+    )
+    study_form = serializers.PrimaryKeyRelatedField(
+        required=True,
+        queryset=models.StudyForm.objects.filter(is_active=True),
+    )
+
+    class Meta:
+        model = models.Profile
+        fields = (
+            'uid',
+            # 'org_token',
+            'first_name',
+            'last_name',
+            'middle_name',
+            'first_name_en',
+            'last_name_en',
+            'birth_date',
+            'birth_place',
+            'nationality',
+            'citizenship',
+            'gender',
+            'marital_status',
+            'iin',
+            'address',
+            'phone',
+            'email',
+            'skype',
+            'interest',
+            'entry_date',
+            'study_form',
+        )
+
+    def create(self, validated_data):
+        password = password_generator(size=8)
+
+        user = User.objects.create(
+            username=validated_data['iin'],
+            email=validated_data['email']
+        )
+        user.set_password(password)
+        user.save()
+
+        profile = models.Profile.objects.create(
+            user=user,
+            **validated_data
+        )
+
+        return profile

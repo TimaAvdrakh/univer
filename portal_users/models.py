@@ -104,7 +104,8 @@ class Profile(BaseModel):
         related_name='profiles',
         verbose_name='Семейное положение',
     )
-    iin = models.IntegerField(
+    iin = models.CharField(
+        max_length=50,
         verbose_name='ИИН',
         null=True,
         blank=True,
@@ -234,3 +235,24 @@ class ResetPassword(BaseModel):
     class Meta:
         verbose_name = 'Восстановление пароля'
         verbose_name_plural = 'Восстановление пароля'
+
+
+class OrganizationToken(BaseModel):
+    organization = models.ForeignKey(
+        Organization,
+        on_delete=models.CASCADE,
+        verbose_name='Организация',
+        related_name='tokens',
+    )
+    token = models.CharField(
+        max_length=40,
+        default=uuid4,
+        verbose_name='Токен',
+    )
+
+    def __str__(self):
+        return 'Token для {}'.format(self.organization.name)
+
+    class Meta:
+        verbose_name = 'Токен для Организации'
+        verbose_name_plural = 'Токены для Организации'

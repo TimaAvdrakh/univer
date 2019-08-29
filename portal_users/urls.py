@@ -12,5 +12,7 @@ urlpatterns = [
     path('forget/password/', views.ForgetPasswordView.as_view(), name='forget-password'),
     path('reset/password/', views.ResetPasswordView.as_view(), name='reset-password'),
 
-    path('test/', views.TestView.as_view(), name='test')
+    path('jsdgfkjkc[wfefewfefewfwef/register/', views.UserRegisterView.as_view(), name='user_register'),
+
+    path('test/', views.TestView.as_view(), name='test'),
 ]

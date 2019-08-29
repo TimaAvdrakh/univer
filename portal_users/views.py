@@ -10,6 +10,7 @@ from django.contrib.auth.models import User
 
 
 class LoginView(generics.CreateAPIView):
+    """Логин"""
     permission_classes = ()
     authentication_classes = ()
     serializer_class = serializers.LoginSerializer
@@ -116,4 +117,41 @@ class TestView(APIView):
                 'isAuth': 'ok'
             },
             status=status.HTTP_200_OK
+        )
+
+
+class UserRegisterView(generics.CreateAPIView):
+    """Регистрация пользователей из 1С"""
+    permission_classes = ()
+    authentication_classes = ()
+    queryset = models.Profile.objects.all()
+    serializer_class = serializers.UserCreateSerializer
+
+    def create(self, request, *args, **kwargs):
+        org_token = request.data.get('org_token', None)
+        if not org_token:
+            return Response(
+                {
+                    'status': 0,
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        if not models.OrganizationToken.objects.filter(token=org_token,
+                                                       is_active=True).exists():
+            return Response(
+                {
+                    'status': 0,
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(
+            {
+                'status': 1,
+            },
+            status=status.HTTP_201_CREATED
         )
