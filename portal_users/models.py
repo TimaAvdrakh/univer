@@ -1,48 +1,24 @@
 from django.db import models
-from common.models import BaseModel
+from common.models import BaseModel, BaseCatalog
 from django.contrib.auth.models import User
 from uuid import uuid4
 from organizations.models import Organization, StudyForm
 from common.utils import get_sentinel_user
 
 
-class Gender(BaseModel):
-    name = models.CharField(
-        max_length=100,
-        verbose_name='Название',
-    )
-
-    def __str__(self):
-        return self.name
-
+class Gender(BaseCatalog):
     class Meta:
         verbose_name = 'Пол'
         verbose_name_plural = 'Полы'
 
 
-class MaritalStatus(BaseModel):
-    name = models.CharField(
-        max_length=100,
-        verbose_name='Название',
-    )
-
-    def __str__(self):
-        return self.name
-
+class MaritalStatus(BaseCatalog):
     class Meta:
         verbose_name = 'Семейное положение'
         verbose_name_plural = 'Семейное положение'
 
 
-class Interest(BaseModel):
-    name = models.CharField(
-        max_length=100,
-        verbose_name='Название',
-    )
-
-    def __str__(self):
-        return self.name
-
+class Interest(BaseCatalog):
     class Meta:
         verbose_name = 'Увлечение'
         verbose_name_plural = 'Увлечения'
@@ -124,12 +100,12 @@ class Profile(BaseModel):
         null=True,
         blank=True,
     )
-    document = models.CharField(  # TODO refactor
-        max_length=500,
-        default='',
-        blank=True,
-        verbose_name='Документ, удостоверяющий личность'
-    )
+    # document = models.CharField(  # TODO refactor
+    #     max_length=500,
+    #     default='',
+    #     blank=True,
+    #     verbose_name='Документ, удостоверяющий личность'
+    # )
     address = models.CharField(
         max_length=500,
         default='',
@@ -278,29 +254,13 @@ class OrganizationToken(BaseModel):
         verbose_name_plural = 'Токены для Организации'
 
 
-class Level(BaseModel):
-    name = models.CharField(
-        max_length=500,
-        verbose_name='Название',
-    )
-
-    def __str__(self):
-        return self.name
-
+class Level(BaseCatalog):
     class Meta:
         verbose_name = 'Уровень'
         verbose_name_plural = 'Уровень'
 
 
-class AchievementType(BaseModel):
-    name = models.CharField(
-        max_length=500,
-        verbose_name='Название',
-    )
-
-    def __str__(self):
-        return self.name
-
+class AchievementType(BaseCatalog):
     class Meta:
         verbose_name = 'Тип достижения'
         verbose_name_plural = 'Типы достижения'
@@ -337,59 +297,3 @@ class Achievement(BaseModel):  # TODO УТОЧНИТЬ
     class Meta:
         verbose_name = 'Достижение'
         verbose_name_plural = 'Достижения'
-
-
-# class IdentityDocument(BaseModel):
-#     user = models.ForeignKey(
-#         User,
-#         on_delete=models.CASCADE,
-#         related_name='identity_documents',
-#         verbose_name='Пользователь',
-#     )
-#     document_type = models.CharField(
-#         verbose_name='Тип документа',  # TODO СПРАВОЧНИК?
-#     )
-#     serial_number = models.CharField(
-#         max_length=100,
-#         verbose_name='Серия',
-#     )
-#     number = models.CharField(
-#         max_length=100,
-#         verbose_name='Номер',
-#     )
-#     validity_date = models.DateField(
-#         verbose_name='Срок действия',
-#     )
-#     issued_by = models.CharField(
-#         max_length=100,
-#         verbose_name='Кем выдан',  # TODO СПРАВОЧНИК?
-#     )
-#
-#     def __str__(self):
-#         return '{}'.format(self.user.get_full_name(),
-#                            self.document_type)
-#
-#     class Meta:
-#         verbose_name = 'Документ удостоверяющий личность'
-#         verbose_name_plural = 'Документы удостоверяющий личность'
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
