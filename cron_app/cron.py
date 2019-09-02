@@ -1,7 +1,7 @@
 from django_cron import CronJobBase, Schedule
 from . import models
 import requests
-from portal.current_settings import PASSWORD_RESET_ENDPOINT
+from portal.curr_settings import PASSWORD_RESET_ENDPOINT
 from django.utils import timezone
 from django.core.mail import send_mail
 from django.template.loader import render_to_string
