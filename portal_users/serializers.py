@@ -236,7 +236,7 @@ class UserCreateSerializer(serializers.ModelSerializer):
             'phone',
             'email',
             'skype',
-            'interest',
+            # 'interests',
             'entry_date',
             'study_form',
         )
