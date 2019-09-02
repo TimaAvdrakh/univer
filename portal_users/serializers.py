@@ -6,6 +6,7 @@ from common.exceptions import CustomException
 from django.contrib.auth import password_validation
 from cron_app.models import ResetPasswordUrlSendTask, CredentialsEmailTask
 from common.utils import password_generator
+from organizations import models as org_models
 
 
 class LoginSerializer(serializers.Serializer):
@@ -212,7 +213,7 @@ class UserCreateSerializer(serializers.ModelSerializer):
     )
     study_form = serializers.PrimaryKeyRelatedField(
         required=True,
-        queryset=models.StudyForm.objects.filter(is_active=True),
+        queryset=org_models.StudyForm.objects.filter(is_active=True),
     )
 
     class Meta:

@@ -64,6 +64,30 @@ class Cathedra(BaseCatalog):
 #         verbose_name_plural = 'Группы'
 
 
+class EducationBase(BaseCatalog):
+    class Meta:
+        verbose_name = 'Основа обучения'
+        verbose_name_plural = 'Основы обучения'
+
+
+# class PreparationDirection(BaseCatalog):
+#     class Meta:
+#         verbose_name = 'Направление подготовки'
+#         verbose_name_plural = 'Направления подготовки'
+
+
+class PreparationLevel(BaseCatalog):
+    class Meta:
+        verbose_name = 'Уровень подготовки'
+        verbose_name_plural = 'Уровни подготовок'
+
+
+class EducationProgram(BaseCatalog):
+    class Meta:
+        verbose_name = 'Образовательная программа'
+        verbose_name_plural = 'Образовательные программы'
+
+
 class EducationType(BaseCatalog):
     class Meta:
         verbose_name = 'Вид образования'

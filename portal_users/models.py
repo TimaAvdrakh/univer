@@ -2,7 +2,7 @@ from django.db import models
 from common.models import BaseModel, BaseCatalog
 from django.contrib.auth.models import User
 from uuid import uuid4
-from organizations.models import Organization, StudyForm
+from organizations import models as org_models
 from common.utils import get_sentinel_user
 
 
@@ -100,6 +100,46 @@ class Profile(BaseModel):
         null=True,
         blank=True,
     )
+    course = models.PositiveSmallIntegerField(
+        verbose_name='Курс',
+        default=1,
+    )
+    faculty = models.ForeignKey(
+        org_models.Faculty,
+        on_delete=models.CASCADE,
+        verbose_name='Факультет',
+        null=True,
+        blank=True,
+        related_name='profiles',
+    )
+    cathedra = models.ForeignKey(
+        org_models.Cathedra,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        verbose_name='Кафедра',
+        related_name='profiles',
+    )
+    # preparation_direction = models.ForeignKey(
+    #     org_models.PreparationDirection,
+    #     on_delete=models.CASCADE,
+    #     null=True,
+    #     blank=True,
+    #     verbose_name='Направление подготовки',
+    #     related_name='profiles',
+    # )
+    # education_program = models.ForeignKey(
+    #     org_models.EducationProgram,
+    #     on_delete=models.CASCADE,
+    #     verbose_name='Образовательная программа',
+    #     related_name='profiles',
+    # )
+    # preparation_level = models.ForeignKey(
+    #     org_models.PreparationLevel,
+    #     on_delete=models.CASCADE,
+    #     verbose_name='Уровень подготовки',
+    # )
+
     # document = models.CharField(  # TODO refactor
     #     max_length=500,
     #     default='',
@@ -149,7 +189,7 @@ class Profile(BaseModel):
         verbose_name='Дата поступления в ВУЗ',
     )
     study_form = models.ForeignKey(
-        StudyForm,
+        org_models.StudyForm,
         null=True,
         blank=True,
         on_delete=models.CASCADE,
@@ -162,6 +202,18 @@ class Profile(BaseModel):
         blank=True,
         verbose_name='Дополнительная информация',
     )
+    # education_base = models.ForeignKey(
+    #     org_models.EducationBase,
+    #     on_delete=models.CASCADE,
+    #     verbose_name='Основа обучения',
+    # )
+    # on_base = models.ForeignKey(
+    #     Education,
+    #     on_delete=models.CASCADE,
+    #     null=True,
+    #     blank=True,
+    #     verbose_name='На базе',
+    # )
 
     def __str__(self):
         return self.user.username
@@ -173,7 +225,7 @@ class Profile(BaseModel):
 
 class Role(BaseModel):
     organization = models.ForeignKey(
-        Organization,
+        org_models.Organization,
         on_delete=models.CASCADE,
         verbose_name='Организация',
         related_name='roles',
@@ -235,7 +287,7 @@ class ResetPassword(BaseModel):
 
 class OrganizationToken(BaseModel):
     organization = models.ForeignKey(
-        Organization,
+        org_models.Organization,
         on_delete=models.CASCADE,
         verbose_name='Организация',
         related_name='tokens',
