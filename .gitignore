@@ -6,4 +6,4 @@ __pycache__
 local_settings.py
 rest_client/
 local_settings_prod.txt
-current_settings.py
+portal/current_settings.py
