@@ -20,7 +20,7 @@ from rest_framework_swagger.views import get_swagger_view
 schema_view = get_swagger_view(title='Univer API')
 
 urlpatterns = [
-    path('korabolta/', admin.site.urls),
-    path('swagger/6456afdsfdsgfsdg/', schema_view),
+    path('api/korabolta/', admin.site.urls),
+    path('api/swagger/6456afdsfdsgfsdg/', schema_view),
     path('api/v1/user/', include('portal_users.urls', namespace="user")),
 ]
