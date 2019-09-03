@@ -104,48 +104,6 @@ class Profile(BaseModel):
         verbose_name='Курс',
         default=1,
     )
-    # faculty = models.ForeignKey(
-    #     org_models.Faculty,
-    #     on_delete=models.CASCADE,
-    #     verbose_name='Факультет',
-    #     null=True,
-    #     blank=True,
-    #     related_name='profiles',
-    # )
-    # cathedra = models.ForeignKey(
-    #     org_models.Cathedra,
-    #     on_delete=models.CASCADE,
-    #     null=True,
-    #     blank=True,
-    #     verbose_name='Кафедра',
-    #     related_name='profiles',
-    # )
-    # preparation_direction = models.ForeignKey(
-    #     org_models.PreparationDirection,
-    #     on_delete=models.CASCADE,
-    #     null=True,
-    #     blank=True,
-    #     verbose_name='Направление подготовки',
-    #     related_name='profiles',
-    # )
-    # education_program = models.ForeignKey(
-    #     org_models.EducationProgram,
-    #     on_delete=models.CASCADE,
-    #     verbose_name='Образовательная программа',
-    #     related_name='profiles',
-    # )
-    # preparation_level = models.ForeignKey(
-    #     org_models.PreparationLevel,
-    #     on_delete=models.CASCADE,
-    #     verbose_name='Уровень подготовки',
-    # )
-
-    # document = models.CharField(  # TODO refactor
-    #     max_length=500,
-    #     default='',
-    #     blank=True,
-    #     verbose_name='Документ, удостоверяющий личность'
-    # )
     address = models.CharField(
         max_length=500,
         default='',
@@ -188,32 +146,12 @@ class Profile(BaseModel):
         blank=True,
         verbose_name='Дата поступления в ВУЗ',
     )
-    # study_form = models.ForeignKey(
-    #     org_models.StudyForm,
-    #     null=True,
-    #     blank=True,
-    #     on_delete=models.CASCADE,
-    #     verbose_name='Форма обучения',
-    #     related_name='profiles',
-    # )
     extra_data = models.CharField(
         max_length=1000,
         default='',
         blank=True,
         verbose_name='Дополнительная информация',
     )
-    # education_base = models.ForeignKey(
-    #     org_models.EducationBase,
-    #     on_delete=models.CASCADE,
-    #     verbose_name='Основа обучения',
-    # )
-    # on_base = models.ForeignKey(
-    #     Education,
-    #     on_delete=models.CASCADE,
-    #     null=True,
-    #     blank=True,
-    #     verbose_name='На базе',
-    # )
 
     def __str__(self):
         return self.user.username

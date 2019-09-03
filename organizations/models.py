@@ -70,10 +70,15 @@ class EducationBase(BaseCatalog):
         verbose_name_plural = 'Основы обучения'
 
 
-# class PreparationDirection(BaseCatalog):
-#     class Meta:
-#         verbose_name = 'Направление подготовки'
-#         verbose_name_plural = 'Направления подготовки'
+class Speciality(BaseCatalog):
+    code = models.CharField(
+        max_length=100,
+        verbose_name='Код',
+    )
+
+    class Meta:
+        verbose_name = 'Направление подготовки'
+        verbose_name_plural = 'Направления подготовки'
 
 
 class PreparationLevel(BaseCatalog):
@@ -137,41 +142,197 @@ class Education(BaseModel):
         verbose_name_plural = 'Образования'
 
 
-# class StudyPeriod(BaseModel):
-#     start = models.PositiveSmallIntegerField(
-#         verbose_name='Начало',
-#     )
-#     end = models.PositiveSmallIntegerField(
-#         verbose_name='Окончание',
-#     )
-#
-#     def __str__(self):
-#         return '{} {}'.format(self.start,
-#                               self.end)
-#
-#     class Meta:
-#         verbose_name = 'Учебный период'
-#         verbose_name_plural = 'Учебные периоды'
-#
-#
-# class EducationPlan(BaseModel):
-#     study_period = models.ForeignKey(
-#         StudyPeriod,
-#         on_delete=models.CASCADE,
-#         verbose_name='Учебный период',
-#     )
+class StudyPeriod(BaseModel):
+    start = models.PositiveSmallIntegerField(
+        verbose_name='Начало',
+    )
+    end = models.PositiveSmallIntegerField(
+        verbose_name='Окончание',
+    )
+
+    def __str__(self):
+        return '{} {}'.format(self.start,
+                              self.end)
+
+    class Meta:
+        verbose_name = 'Учебный период'
+        verbose_name_plural = 'Учебные периоды'
 
 
+class StudyPlan(BaseModel):
+    student = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        verbose_name='Студент',
+    )
+    study_period = models.ForeignKey(
+        StudyPeriod,
+        on_delete=models.CASCADE,
+        verbose_name='Учебный период',
+    )
+    speciality = models.ForeignKey(
+        Speciality,
+        on_delete=models.CASCADE,
+        verbose_name='Направление подготовки',
+    )
+    faculty = models.ForeignKey(
+        Faculty,
+        on_delete=models.CASCADE,
+        verbose_name='Факультет',
+    )
+    cathedra = models.ForeignKey(
+        Cathedra,
+        on_delete=models.CASCADE,
+        verbose_name='Выпускаюшая кафедра',
+    )
+    education_program = models.ForeignKey(
+        EducationProgram,
+        on_delete=models.CASCADE,
+        verbose_name='Образовательная программа',
+    )
+    education_type = models.ForeignKey(
+        EducationType,
+        related_name='study_plans',
+        on_delete=models.CASCADE,
+        verbose_name='Вид образования',
+    )
+    preparation_level = models.ForeignKey(
+        PreparationLevel,
+        on_delete=models.CASCADE,
+        verbose_name='Уровень подготовки',
+    )
+    study_form = models.ForeignKey(
+        StudyForm,
+        on_delete=models.CASCADE,
+        verbose_name='Форма обучения',
+    )
+    # education_base = models.ForeignKey(
+    #     org_models.EducationBase,
+    #     on_delete=models.CASCADE,
+    #     verbose_name='Основа обучения',
+    # )
+    on_base = models.ForeignKey(
+        EducationType,
+        on_delete=models.CASCADE,
+        verbose_name='На базе',
+    )
+
+    def __str__(self):
+        return 'Учебный план {}'.format(self.student.get_full_name())
+
+    class Meta:
+        verbose_name = 'Учебный план'
+        verbose_name_plural = 'Учебные планы'
 
 
+class Discipline(BaseCatalog):
+    class Meta:
+        verbose_name = 'Дисциплина'
+        verbose_name_plural = 'Дисциплины'
 
 
+class LoadType(BaseCatalog):
+    class Meta:
+        verbose_name = 'Вид нагрузки'
+        verbose_name_plural = 'Виды нагрузок'
 
 
+class AcadPeriodType(BaseCatalog):
+    class Meta:
+        verbose_name = 'Вид академического периода'
+        verbose_name_plural = 'Вид академического периода'
 
 
+class AcadPeriod(BaseCatalog):
+    period_type = models.ForeignKey(
+        AcadPeriodType,
+        on_delete=models.CASCADE,
+        verbose_name='Вид академического периода',
+    )
+
+    def __str__(self):
+        return '{} {}'.format(self.name,
+                              self.period_type.name)
+
+    class Meta:
+        verbose_name = 'Академический период'
+        verbose_name_plural = 'Академические периоды'
 
 
+class StudentDiscipline(BaseModel):
+    study_plan = models.ForeignKey(
+        StudyPlan,
+        on_delete=models.CASCADE,
+        verbose_name='Учебный план',
+    )
+    acad_period = models.ForeignKey(
+        AcadPeriod,
+        on_delete=models.CASCADE,
+        verbose_name='Академический период',
+    )
+    discipline = models.ForeignKey(
+        Discipline,
+        on_delete=models.CASCADE,
+        verbose_name='Дисциплина',
+    )
+    load_type = models.ForeignKey(
+        LoadType,
+        on_delete=models.CASCADE,
+        verbose_name='Вид нагрузки',
+    )
+    hours = models.FloatField(
+        verbose_name='Часы',
+    )
+    teacher = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        verbose_name='Преподаватель',
+    )
+
+    def __str__(self):
+        return '{} {}'.format(self.acad_period,
+                              self.discipline)
+
+    class Meta:
+        verbose_name = 'Дисциплина студента'
+        verbose_name_plural = 'Дисциплины студента'
+
+
+class Language(BaseCatalog):
+    class Meta:
+        verbose_name = 'Язык'
+        verbose_name_plural = 'Языки'
+
+
+class TeacherDiscipline(BaseModel):
+    teacher = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        verbose_name='Преподаватель',
+    )
+    discipline = models.ForeignKey(
+        Discipline,
+        on_delete=models.CASCADE,
+        verbose_name='Дисциплина',
+    )
+    load_type = models.ForeignKey(
+        LoadType,
+        on_delete=models.CASCADE,
+        verbose_name='Вид нагрузки',
+    )
+    language = models.ForeignKey(
+        Language,
+        on_delete=models.CASCADE,
+        verbose_name='Язык преподавания',
+    )
+
+    def __str__(self):
+        return '{} {}'.format(self.teacher.get_full_name(),
+                              self.discipline)
+
+    class Meta:
+        verbose_name = 'Закрепление дисциплин'
+        verbose_name_plural = 'Закрепление дисциплин'
 
 
 

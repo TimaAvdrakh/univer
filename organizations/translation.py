@@ -11,3 +11,58 @@ class OrganizationTranslationOptions(TranslationOptions):
 class StudyFormTranslationOptions(TranslationOptions):
     fields = ('name',)
 
+
+@register(models.Speciality)
+class SpecialityTranslationOptions(TranslationOptions):
+    fields = ('name',)
+
+
+@register(models.Faculty)
+class FacultyTranslationOptions(TranslationOptions):
+    fields = ('name',)
+
+
+@register(models.Cathedra)
+class CathedraTranslationOptions(TranslationOptions):
+    fields = ('name',)
+
+
+@register(models.EducationProgram)
+class EducationProgramTranslationOptions(TranslationOptions):
+    fields = ('name',)
+
+
+@register(models.EducationType)
+class EducationTypeTranslationOptions(TranslationOptions):
+    fields = ('name',)
+
+
+@register(models.PreparationLevel)
+class PreparationLevelTranslationOptions(TranslationOptions):
+    fields = ('name',)
+
+
+@register(models.Discipline)
+class DisciplineTranslationOptions(TranslationOptions):
+    fields = ('name',)
+
+
+@register(models.LoadType)
+class LoadTypeTranslationOptions(TranslationOptions):
+    fields = ('name',)
+
+
+@register(models.AcadPeriodType)
+class AcadPeriodTypeTranslationOptions(TranslationOptions):
+    fields = ('name',)
+
+
+@register(models.AcadPeriod)
+class AcadPeriodTranslationOptions(TranslationOptions):
+    fields = ('name',)
+
+
+@register(models.Language)
+class LanguageTranslationOptions(TranslationOptions):
+    fields = ('name',)
+
