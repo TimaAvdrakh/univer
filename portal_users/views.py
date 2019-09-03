@@ -165,3 +165,4 @@ class StudentDisciplineListView(generics.ListAPIView):
     def get_queryset(self):
         queryset = self.queryset.filter(student=self.request.user)
         return queryset
+        # 1
