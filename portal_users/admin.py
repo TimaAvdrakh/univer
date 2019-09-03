@@ -59,3 +59,15 @@ class InterestAdmin(admin.ModelAdmin):
         "name",
         "uid",
     ]
+
+
+@admin.register(models.Role)
+class RoleAdmin(admin.ModelAdmin):
+    list_display = [
+        "organization",
+        "user",
+        "is_student",
+        "is_teacher",
+        "is_org_admin",
+        "is_supervisor",
+    ]

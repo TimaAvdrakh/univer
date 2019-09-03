@@ -135,3 +135,19 @@ class TeacherDisciplineAdmin(admin.ModelAdmin):
         'load_type',
         'language'
     ]
+
+
+@admin.register(models.StudyPlan)
+class StudyPlanAdmin(admin.ModelAdmin):
+    list_display = [
+        'student',
+        'study_period',
+        'speciality',
+        'faculty',
+        'cathedra',
+        'education_program',
+        'education_type',
+        'preparation_level',
+        'study_form',
+        'on_base',
+    ]
