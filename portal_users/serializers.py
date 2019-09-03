@@ -266,3 +266,17 @@ class UserCreateSerializer(serializers.ModelSerializer):
         )
 
         return profile
+
+
+class StudentDisciplineSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = org_models.StudentDiscipline
+        fields = (
+            'student',
+            'study_plan',
+            'acad_period',
+            'discipline',
+            'load_type',
+            'hours',
+            'teacher',
+        )

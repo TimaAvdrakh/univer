@@ -7,6 +7,7 @@ from . import serializers
 from . import models
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
+from organizations import models as org_models
 
 
 class LoginView(generics.CreateAPIView):
@@ -155,3 +156,12 @@ class UserRegisterView(generics.CreateAPIView):
             },
             status=status.HTTP_201_CREATED
         )
+
+
+class StudentDisciplineListView(generics.ListAPIView):
+    queryset = org_models.StudentDiscipline.objects.filter(is_active=True)
+    serializer_class = serializers.StudentDisciplineSerializer
+
+    def get_queryset(self):
+        queryset = self.queryset.filter(student=self.request.user)
+        return queryset

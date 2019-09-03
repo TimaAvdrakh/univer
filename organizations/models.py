@@ -260,6 +260,12 @@ class AcadPeriod(BaseCatalog):
 
 
 class StudentDiscipline(BaseModel):
+    student = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        verbose_name='Студент',
+        related_name='student_disciplines',
+    )
     study_plan = models.ForeignKey(
         StudyPlan,
         on_delete=models.CASCADE,
