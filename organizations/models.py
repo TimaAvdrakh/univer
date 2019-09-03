@@ -135,3 +135,52 @@ class Education(BaseModel):
     class Meta:
         verbose_name = 'Образование'
         verbose_name_plural = 'Образования'
+
+
+# class StudyPeriod(BaseModel):
+#     start = models.PositiveSmallIntegerField(
+#         verbose_name='Начало',
+#     )
+#     end = models.PositiveSmallIntegerField(
+#         verbose_name='Окончание',
+#     )
+#
+#     def __str__(self):
+#         return '{} {}'.format(self.start,
+#                               self.end)
+#
+#     class Meta:
+#         verbose_name = 'Учебный период'
+#         verbose_name_plural = 'Учебные периоды'
+#
+#
+# class EducationPlan(BaseModel):
+#     study_period = models.ForeignKey(
+#         StudyPeriod,
+#         on_delete=models.CASCADE,
+#         verbose_name='Учебный период',
+#     )
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -104,22 +104,22 @@ class Profile(BaseModel):
         verbose_name='Курс',
         default=1,
     )
-    faculty = models.ForeignKey(
-        org_models.Faculty,
-        on_delete=models.CASCADE,
-        verbose_name='Факультет',
-        null=True,
-        blank=True,
-        related_name='profiles',
-    )
-    cathedra = models.ForeignKey(
-        org_models.Cathedra,
-        on_delete=models.CASCADE,
-        null=True,
-        blank=True,
-        verbose_name='Кафедра',
-        related_name='profiles',
-    )
+    # faculty = models.ForeignKey(
+    #     org_models.Faculty,
+    #     on_delete=models.CASCADE,
+    #     verbose_name='Факультет',
+    #     null=True,
+    #     blank=True,
+    #     related_name='profiles',
+    # )
+    # cathedra = models.ForeignKey(
+    #     org_models.Cathedra,
+    #     on_delete=models.CASCADE,
+    #     null=True,
+    #     blank=True,
+    #     verbose_name='Кафедра',
+    #     related_name='profiles',
+    # )
     # preparation_direction = models.ForeignKey(
     #     org_models.PreparationDirection,
     #     on_delete=models.CASCADE,
@@ -188,14 +188,14 @@ class Profile(BaseModel):
         blank=True,
         verbose_name='Дата поступления в ВУЗ',
     )
-    study_form = models.ForeignKey(
-        org_models.StudyForm,
-        null=True,
-        blank=True,
-        on_delete=models.CASCADE,
-        verbose_name='Форма обучения',
-        related_name='profiles',
-    )
+    # study_form = models.ForeignKey(
+    #     org_models.StudyForm,
+    #     null=True,
+    #     blank=True,
+    #     on_delete=models.CASCADE,
+    #     verbose_name='Форма обучения',
+    #     related_name='profiles',
+    # )
     extra_data = models.CharField(
         max_length=1000,
         default='',
