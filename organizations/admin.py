@@ -110,6 +110,7 @@ class AcadPeriodAdmin(admin.ModelAdmin):
 @admin.register(models.StudentDiscipline)
 class StudentDisciplineAdmin(admin.ModelAdmin):
     list_display = [
+        'student',
         'study_plan',
         'acad_period',
         'discipline',
