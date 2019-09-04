@@ -65,7 +65,7 @@ class InterestAdmin(admin.ModelAdmin):
 class RoleAdmin(admin.ModelAdmin):
     list_display = [
         "organization",
-        # "user",
+        "profile",
         "is_student",
         "is_teacher",
         "is_org_admin",
