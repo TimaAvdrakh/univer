@@ -66,3 +66,8 @@ class AcadPeriodTranslationOptions(TranslationOptions):
 class LanguageTranslationOptions(TranslationOptions):
     fields = ('name',)
 
+
+@register(models.LoadType2)
+class LoadType2TranslationOptions(TranslationOptions):
+    fields = ('name',)
+
