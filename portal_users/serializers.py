@@ -43,6 +43,7 @@ class ProfileDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Profile
         fields = (
+            'uid',
             'userId',
             'firstName',
             'lastName',
@@ -272,6 +273,7 @@ class StudentDisciplineSerializer(serializers.ModelSerializer):
     acad_period = serializers.CharField()
     discipline = serializers.CharField()
     load_type = serializers.CharField()
+    teacher = ProfileDetailSerializer()
 
     class Meta:
         model = org_models.StudentDiscipline
