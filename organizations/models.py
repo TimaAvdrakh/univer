@@ -345,9 +345,9 @@ class TeacherDiscipline(BaseModel):
         verbose_name='Язык преподавания',
     )
 
-    def __str__(self):
-        return '{} {}'.format(self.teacher.user.get_full_name(),
-                              self.discipline)
+    # def __str__(self):
+    #     return '{} {}'.format(self.teacher.user.get_full_name(),
+    #                           self.discipline)
 
     class Meta:
         verbose_name = 'Закрепление дисциплин'
