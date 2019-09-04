@@ -163,6 +163,5 @@ class StudentDisciplineListView(generics.ListAPIView):
     serializer_class = serializers.StudentDisciplineSerializer
 
     def get_queryset(self):
-        queryset = self.queryset.filter(student=self.request.user)
+        queryset = self.queryset.filter(student=self.request.user.profile)
         return queryset
-        # 1
