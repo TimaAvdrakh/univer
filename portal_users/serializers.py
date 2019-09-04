@@ -20,6 +20,9 @@ class LoginSerializer(serializers.Serializer):
 
 
 class ProfileDetailSerializer(serializers.ModelSerializer):
+    profileId = serializers.CharField(
+        source='uid',
+    )
     userId = serializers.PrimaryKeyRelatedField(
         source='user',
         read_only=True,
@@ -43,7 +46,7 @@ class ProfileDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Profile
         fields = (
-            'uid',
+            'profileId',
             'userId',
             'firstName',
             'lastName',
