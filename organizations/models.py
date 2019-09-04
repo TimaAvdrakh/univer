@@ -23,6 +23,14 @@ class Faculty(BaseCatalog):
 
 
 class Cathedra(BaseCatalog):
+    faculty = models.ForeignKey(
+        Faculty,
+        null=True,
+        blank=True,
+        on_delete=models.CASCADE,
+        verbose_name='Факультет',
+    )
+
     class Meta:
         verbose_name = 'Кафедра'
         verbose_name_plural = 'Кафедры'

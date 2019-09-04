@@ -32,6 +32,11 @@ class BaseModel(models.Model):
 
 
 class BaseCatalog(BaseModel):
+    # univer = models.ForeignKey(
+    #     'organizations.Organization',
+    #     on_delete=models.CASCADE,
+    #     default=''
+    # )
     name = models.CharField(
         max_length=200,
         verbose_name='Название',
