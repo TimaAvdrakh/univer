@@ -303,6 +303,7 @@ class StudentDiscipline(BaseModel):
     teacher = models.ForeignKey(
         'portal_users.Profile',
         null=True,
+        blank=True,
         on_delete=models.CASCADE,
         verbose_name='Преподаватель',
     )
