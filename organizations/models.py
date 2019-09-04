@@ -241,7 +241,20 @@ class Discipline(BaseCatalog):
         verbose_name_plural = 'Дисциплины'
 
 
+class LoadType2(BaseCatalog):
+    class Meta:
+        verbose_name = 'Тип нагрузки'
+        verbose_name_plural = 'Типы нагрузок'
+
+
 class LoadType(BaseCatalog):
+    load_type2 = models.ForeignKey(
+        LoadType2,
+        null=True,
+        on_delete=models.CASCADE,
+        verbose_name='Тип нагрузки',
+    )
+
     class Meta:
         verbose_name = 'Вид нагрузки'
         verbose_name_plural = 'Виды нагрузок'
@@ -330,16 +343,24 @@ class TeacherDiscipline(BaseModel):
         on_delete=models.CASCADE,
         verbose_name='Преподаватель',
     )
+    study_period = models.ForeignKey(
+        StudyPeriod,
+        on_delete=models.CASCADE,
+        null=True,
+        verbose_name='Учебный период',
+    )
     discipline = models.ForeignKey(
         Discipline,
         on_delete=models.CASCADE,
         verbose_name='Дисциплина',
     )
-    load_type = models.ForeignKey(
-        LoadType,
-        on_delete=models.CASCADE,
-        verbose_name='Вид нагрузки',
-    )
+
+    load_type2 = models.ForeignKey(
+            LoadType2,
+            null=True,
+            on_delete=models.CASCADE,
+            verbose_name='Тип нагрузки',
+        )
     language = models.ForeignKey(
         Language,
         on_delete=models.CASCADE,

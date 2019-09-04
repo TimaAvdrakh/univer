@@ -86,6 +86,15 @@ class DisciplineAdmin(admin.ModelAdmin):
 @admin.register(models.LoadType)
 class LoadTypeAdmin(admin.ModelAdmin):
     list_display = [
+        'load_type2',
+        'name',
+        'uid',
+    ]
+
+
+@admin.register(models.LoadType2)
+class LoadType2Admin(admin.ModelAdmin):
+    list_display = [
         'name',
         'uid',
     ]
@@ -133,7 +142,7 @@ class TeacherDisciplineAdmin(admin.ModelAdmin):
     list_display = [
         'teacher',
         'discipline',
-        'load_type',
+        'load_type2',
         'language'
     ]
 

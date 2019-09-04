@@ -159,9 +159,18 @@ class UserRegisterView(generics.CreateAPIView):
 
 
 class StudentDisciplineListView(generics.ListAPIView):
+    """Получить список дисциплин студента"""
     queryset = org_models.StudentDiscipline.objects.filter(is_active=True)
     serializer_class = serializers.StudentDisciplineSerializer
 
     def get_queryset(self):
-        queryset = self.queryset.filter(student=self.request.user.profile)
+        acad_period = self.request.query_params.get('acad_period')
+
+        if acad_period:
+            pass
+        else:
+            acad_period = "d922e730-2b90-4296-9802-1853020b0357"  # 1 trimestr
+
+        queryset = self.queryset.filter(student=self.request.user.profile,
+                                        acad_period_id=acad_period)
         return queryset
