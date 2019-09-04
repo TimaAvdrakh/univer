@@ -115,7 +115,7 @@ class StudentDisciplineAdmin(admin.ModelAdmin):
         'discipline',
         'load_type',
         'hours',
-        'teacher',
+        # 'teacher',
     ]
 
 
@@ -130,7 +130,7 @@ class LanguageAdmin(admin.ModelAdmin):
 @admin.register(models.TeacherDiscipline)
 class TeacherDisciplineAdmin(admin.ModelAdmin):
     list_display = [
-        'teacher',
+        # 'teacher',
         'discipline',
         'load_type',
         'language'
@@ -140,7 +140,7 @@ class TeacherDisciplineAdmin(admin.ModelAdmin):
 @admin.register(models.StudyPlan)
 class StudyPlanAdmin(admin.ModelAdmin):
     list_display = [
-        'student',
+        # 'student',
         'study_period',
         'speciality',
         'faculty',

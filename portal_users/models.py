@@ -168,8 +168,9 @@ class Role(BaseModel):
         verbose_name='Организация',
         related_name='roles',
     )
-    user = models.ForeignKey(
-        User,
+    profile = models.ForeignKey(
+        'portal_users.Profile',
+        null=True,
         on_delete=models.CASCADE,
         related_name='roles',
         verbose_name='Пользователь',
@@ -193,7 +194,7 @@ class Role(BaseModel):
 
     def __str__(self):
         return '{} {}'.format(self.organization.name,
-                              self.user.username)
+                              self.profile.user.username)
 
     class Meta:
         verbose_name = 'Роль'
@@ -256,9 +257,10 @@ class AchievementType(BaseCatalog):
         verbose_name_plural = 'Типы достижения'
 
 
-class Achievement(BaseModel):  # TODO УТОЧНИТЬ
-    user = models.ForeignKey(
-        User,
+class Achievement(BaseModel):
+    profile = models.ForeignKey(
+        'portal_users.Profile',
+        null=True,
         on_delete=models.CASCADE,
         related_name='achievements',
         verbose_name='Пользователь',
@@ -281,7 +283,7 @@ class Achievement(BaseModel):  # TODO УТОЧНИТЬ
     )
 
     def __str__(self):
-        return '{} {}'.format(self.user.get_full_name(),
+        return '{} {}'.format(self.profile.user.get_full_name(),
                               self.achievement_type)
 
     class Meta:

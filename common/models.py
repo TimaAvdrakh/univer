@@ -56,8 +56,9 @@ class DocumentType(BaseCatalog):
 
 
 class IdentityDocument(BaseModel):
-    user = models.ForeignKey(
-        User,
+    profile = models.ForeignKey(
+        'portal_users.Profile',
+        null=True,
         on_delete=models.CASCADE,
         related_name='identity_documents',
         verbose_name='Пользователь',
@@ -84,7 +85,7 @@ class IdentityDocument(BaseModel):
     # )
 
     def __str__(self):
-        return '{}'.format(self.user.get_full_name(),
+        return '{}'.format(self.profile.user.get_full_name(),
                            self.document_type)
 
     class Meta:

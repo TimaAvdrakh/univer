@@ -108,9 +108,10 @@ class EducationType(BaseCatalog):
 
 
 class Education(BaseModel):
-    user = models.ForeignKey(
-        User,
-        on_delete=models.SET(get_sentinel_user),
+    profile = models.ForeignKey(
+        'portal_users.Profile',
+        null=True,
+        on_delete=models.SET_NULL,
         related_name='educations',
         verbose_name='Пользователь',
     )
@@ -142,7 +143,7 @@ class Education(BaseModel):
     )
 
     def __str__(self):
-        return '{} - {}'.format(self.user.username,
+        return '{} - {}'.format(self.profile.user.username,
                                 self.institute)
 
     class Meta:
@@ -169,7 +170,8 @@ class StudyPeriod(BaseModel):
 
 class StudyPlan(BaseModel):
     student = models.ForeignKey(
-        User,
+        'portal_users.Profile',
+        null=True,
         on_delete=models.CASCADE,
         verbose_name='Студент',
     )
@@ -226,7 +228,7 @@ class StudyPlan(BaseModel):
     )
 
     def __str__(self):
-        return 'Учебный план {}'.format(self.student.get_full_name())
+        return 'Учебный план {}'.format(self.student.user.get_full_name())
 
     class Meta:
         verbose_name = 'Учебный план'
@@ -259,8 +261,8 @@ class AcadPeriod(BaseCatalog):
     )
 
     def __str__(self):
-        return '{} {}'.format(self.name,
-                              self.period_type.name)
+        return '{} - {}'.format(self.name,
+                                self.period_type.name)
 
     class Meta:
         verbose_name = 'Академический период'
@@ -269,7 +271,8 @@ class AcadPeriod(BaseCatalog):
 
 class StudentDiscipline(BaseModel):
     student = models.ForeignKey(
-        User,
+        'portal_users.Profile',
+        null=True,
         on_delete=models.CASCADE,
         verbose_name='Студент',
         related_name='student_disciplines',
@@ -298,7 +301,8 @@ class StudentDiscipline(BaseModel):
         verbose_name='Часы',
     )
     teacher = models.ForeignKey(
-        User,
+        'portal_users.Profile',
+        null=True,
         on_delete=models.CASCADE,
         verbose_name='Преподаватель',
     )
@@ -320,7 +324,8 @@ class Language(BaseCatalog):
 
 class TeacherDiscipline(BaseModel):
     teacher = models.ForeignKey(
-        User,
+        'portal_users.Profile',
+        null=True,
         on_delete=models.CASCADE,
         verbose_name='Преподаватель',
     )
@@ -341,21 +346,9 @@ class TeacherDiscipline(BaseModel):
     )
 
     def __str__(self):
-        return '{} {}'.format(self.teacher.get_full_name(),
+        return '{} {}'.format(self.teacher.user.get_full_name(),
                               self.discipline)
 
     class Meta:
         verbose_name = 'Закрепление дисциплин'
         verbose_name_plural = 'Закрепление дисциплин'
-
-
-
-
-
-
-
-
-
-
-
-

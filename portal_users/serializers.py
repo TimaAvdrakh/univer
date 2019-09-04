@@ -269,6 +269,16 @@ class UserCreateSerializer(serializers.ModelSerializer):
 
 
 class StudentDisciplineSerializer(serializers.ModelSerializer):
+    acad_period = serializers.CharField(
+        source='acad_period',
+    )
+    discipline = serializers.CharField(
+        source='discipline',
+    )
+    load_type = serializers.CharField(
+        source='load_type',
+    )
+
     class Meta:
         model = org_models.StudentDiscipline
         fields = (
