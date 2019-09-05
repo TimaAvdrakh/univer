@@ -177,6 +177,7 @@ class StudentDisciplineListView(generics.ListAPIView):
 
 
 class StudyPlanDetailView(generics.RetrieveAPIView):
+    """Получить мой учебный план"""
     queryset = org_models.StudyPlan.objects.filter(is_active=True)
     serializer_class = serializers.StudyPlanSerializer
 
