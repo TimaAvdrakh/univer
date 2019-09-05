@@ -161,3 +161,14 @@ class StudyPlanAdmin(admin.ModelAdmin):
         'study_form',
         'on_base',
     ]
+
+
+@admin.register(models.Group)
+class GroupAdmin(admin.ModelAdmin):
+    list_display = [
+        'year',
+        'headman',
+        'kurator',
+        'supervisor',
+        'language'
+    ]

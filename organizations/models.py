@@ -4,6 +4,12 @@ from django.contrib.auth.models import User
 from common.utils import get_sentinel_user
 
 
+class Language(BaseCatalog):
+    class Meta:
+        verbose_name = 'Язык'
+        verbose_name_plural = 'Языки'
+
+
 class Organization(BaseCatalog):
     class Meta:
         verbose_name = 'Организация'
@@ -36,40 +42,43 @@ class Cathedra(BaseCatalog):
         verbose_name_plural = 'Кафедры'
 
 
-# class Group(BaseCatalog):
-#     year = models.CharField(
-#         verbose_name='Год',
-#     )
-#     students = models.ManyToManyField(
-#         User,
-#         blank=True,
-#         verbose_name='Студенты',
-#     )
-#     headman = models.OneToOneField(
-#         User,
-#         on_delete=models.SET(get_sentinel_user),
-#         related_name='',
-#         verbose_name='Староста',
-#     )
-#     kurator = models.ForeignKey(
-#         User,
-#         on_delete=models.SET(get_sentinel_user),
-#         verbose_name='Куратор',
-#         related_name='groups',
-#     )
-#     supervisor = models.ForeignKey(
-#         User,
-#         on_delete=models.SET(get_sentinel_user),
-#         verbose_name='Супервизор',
-#     )
-#
-#     def __str__(self):
-#         return '{} - {}'.format(self.name,
-#                                 self.year)
-#
-#     class Meta:
-#         verbose_name = 'Группа'
-#         verbose_name_plural = 'Группы'
+class Group(BaseCatalog):
+    year = models.IntegerField(
+        verbose_name='Год',
+        null=True,
+        blank=True
+    )
+    headman = models.ForeignKey(
+        'portal_users.Profile',
+        on_delete=models.CASCADE,
+        related_name='my_groups',
+        verbose_name='Староста',
+    )
+    kurator = models.ForeignKey(
+        'portal_users.Profile',
+        on_delete=models.CASCADE,
+        verbose_name='Куратор',
+    )
+    supervisor = models.ForeignKey(
+        'portal_users.Profile',
+        on_delete=models.CASCADE,
+        related_name='supervisor_groups',
+        verbose_name='Супервизор',
+    )
+    language = models.ForeignKey(
+        Language,
+        on_delete=models.CASCADE,
+        null=True,
+        verbose_name='Язык обучения',
+    )
+
+    def __str__(self):
+        return '{} - {}'.format(self.name,
+                                self.year)
+
+    class Meta:
+        verbose_name = 'Группа'
+        verbose_name_plural = 'Группы'
 
 
 class EducationBase(BaseCatalog):
@@ -179,6 +188,12 @@ class StudyPlan(BaseModel):
         StudyPeriod,
         on_delete=models.CASCADE,
         verbose_name='Учебный период',
+    )
+    group = models.ForeignKey(
+        Group,
+        on_delete=models.CASCADE,
+        null=True,
+        verbose_name='Группа',
     )
     speciality = models.ForeignKey(
         Speciality,
@@ -328,12 +343,6 @@ class StudentDiscipline(BaseModel):
     class Meta:
         verbose_name = 'Дисциплина студента'
         verbose_name_plural = 'Дисциплины студента'
-
-
-class Language(BaseCatalog):
-    class Meta:
-        verbose_name = 'Язык'
-        verbose_name_plural = 'Языки'
 
 
 class TeacherDiscipline(BaseModel):

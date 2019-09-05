@@ -71,3 +71,7 @@ class LanguageTranslationOptions(TranslationOptions):
 class LoadType2TranslationOptions(TranslationOptions):
     fields = ('name',)
 
+
+@register(models.Group)
+class GroupTranslationOptions(TranslationOptions):
+    fields = ('name',)

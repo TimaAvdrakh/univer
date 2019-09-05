@@ -272,6 +272,14 @@ class UserCreateSerializer(serializers.ModelSerializer):
         return profile
 
 
+# class TeacherDisciplineSerializer(serializers.ModelSerializer):
+#     class Meta:
+#         model = org_models.TeacherDiscipline
+#         fields = (
+#             ''
+#         )
+
+
 class StudentDisciplineSerializer(serializers.ModelSerializer):
     acad_period = serializers.CharField()
     discipline = serializers.CharField()
@@ -289,3 +297,20 @@ class StudentDisciplineSerializer(serializers.ModelSerializer):
             'hours',
             'teacher',
         )
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        lang = instance.study_plang.group.language
+
+        teacher_disciplines = org_models.TeacherDiscipline.objects.filter(
+            discipline=instance.discipline,
+            language=lang,
+            load_type2=instance.load_type.load_type2
+        ).values('teacher').distinct('teacher')
+        teachers = models.Profile.objects.filter(pk__in=teacher_disciplines)
+
+        teacher_serializer = ProfileDetailSerializer(instance=teachers,
+                                                     many=True)
+        data['teachers'] = teacher_serializer.data
+
+        return data
