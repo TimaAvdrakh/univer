@@ -8,7 +8,6 @@ from cron_app.models import ResetPasswordUrlSendTask, CredentialsEmailTask
 from common.utils import password_generator
 from organizations import models as org_models
 from portal import curr_settings
-from organizations.utils import TranslatedModelSerializerMixin
 
 
 class LoginSerializer(serializers.Serializer):

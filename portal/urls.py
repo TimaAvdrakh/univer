@@ -16,11 +16,17 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 from rest_framework_swagger.views import get_swagger_view
+from django.conf.urls.i18n import i18n_patterns
 
 schema_view = get_swagger_view(title='Univer API')
 
 urlpatterns = [
+    path('i18n/', include('django.conf.urls.i18n')),
+]
+
+urlpatterns += i18n_patterns(
     path('korabolta/', admin.site.urls),
     path('api/swagger/6456afdsfdsgfsdg/', schema_view),
     path('api/v1/user/', include('portal_users.urls', namespace="user")),
-]
+    # prefix_default_language=False,
+)
