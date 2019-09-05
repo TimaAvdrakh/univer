@@ -286,9 +286,9 @@ class TeacherDisciplineSerializer(serializers.ModelSerializer):
 
 
 class StudentDisciplineSerializer(serializers.ModelSerializer):
-    acad_period = serializers.CharField()
-    discipline = serializers.CharField()
-    load_type = serializers.CharField()
+    acad_period = serializers.CharField(read_only=True)
+    discipline = serializers.CharField(read_only=True)
+    load_type = serializers.CharField(read_only=True)
     teacher = ProfileDetailSerializer()
 
     class Meta:
@@ -303,9 +303,23 @@ class StudentDisciplineSerializer(serializers.ModelSerializer):
             'hours',
             'teacher',
         )
+        read_only_fields = (
+            'uid',
+            'student',
+            'study_plan',
+            'hours',
+        )
 
     def to_representation(self, instance):
         data = super().to_representation(instance)
+        teacher_disciplines = self.__get_allowed_teachers(instance)
+        teachers_serializer = TeacherDisciplineSerializer(instance=teacher_disciplines,
+                                                          many=True)
+        data['selection_teachers'] = teachers_serializer.data
+
+        return data
+
+    def __get_allowed_teachers(self, instance):
         lang = instance.study_plan.group.language
         if lang.uid == curr_settings.language_multilingual_id:
             """Если группа мультиязычная, то отдаем преподы независимо от языка преподавания"""
@@ -320,11 +334,7 @@ class StudentDisciplineSerializer(serializers.ModelSerializer):
                 load_type2=instance.load_type.load_type2
             )
 
-        teachers_serializer = TeacherDisciplineSerializer(instance=teacher_disciplines,
-                                                          many=True)
-        data['selection_teachers'] = teachers_serializer.data
-
-        return data
+        return teacher_disciplines
 
 
 class StudyPlanSerializer(serializers.ModelSerializer):
@@ -355,3 +365,47 @@ class StudyPlanSerializer(serializers.ModelSerializer):
             'study_form',
             'on_base',
         )
+
+
+class ChooseTeacherSerializer(serializers.ModelSerializer):
+    teacher = serializers.PrimaryKeyRelatedField(
+        queryset=models.Profile.objects.filter(is_active=True),
+    )
+
+    class Meta:
+        model = org_models.StudentDiscipline
+        fields = (
+            'uid',
+            'teacher',
+        )
+
+    def update(self, instance, validated_data):
+        teacher_disciplines = self.__get_allowed_teachers(instance)
+        teachers_pk = teacher_disciplines.values('teacher')
+        teachers = models.Profile.objects.filter(pk__in=teachers_pk)
+
+        chosen_teacher = validated_data.get('teacher')
+
+        if chosen_teacher not in teachers:
+            raise CustomException(detail='teacher_not_allowed')
+
+        instance.teacher = chosen_teacher
+        instance.save()
+        return instance
+
+    def __get_allowed_teachers(self, instance):
+        lang = instance.study_plan.group.language
+        if lang.uid == curr_settings.language_multilingual_id:
+            """Если группа мультиязычная, то отдаем преподы независимо от языка преподавания"""
+            teacher_disciplines = org_models.TeacherDiscipline.objects.filter(
+                discipline=instance.discipline,
+                load_type2=instance.load_type.load_type2
+            ).values('teacher').distinct('teacher')
+        else:
+            teacher_disciplines = org_models.TeacherDiscipline.objects.filter(
+                discipline=instance.discipline,
+                language=lang,
+                load_type2=instance.load_type.load_type2
+            )
+
+        return teacher_disciplines

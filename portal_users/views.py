@@ -8,6 +8,8 @@ from . import models
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
 from organizations import models as org_models
+from rest_framework.permissions import IsAuthenticated
+from . import permissions
 
 
 class LoginView(generics.CreateAPIView):
@@ -184,3 +186,17 @@ class StudyPlanDetailView(generics.RetrieveAPIView):
     def get_object(self):
         obj = self.queryset.get(student=self.request.user.profile)
         return obj
+
+
+class ChooseTeacherView(generics.UpdateAPIView):
+    """Выбрать преподавателя"""
+    permission_classes = (
+        IsAuthenticated,
+        permissions.StudentDisciplinePermission
+    )
+    queryset = org_models.StudentDiscipline.objects.filter(is_active=True)
+    serializer_class = serializers.ChooseTeacherSerializer
+
+
+
+
