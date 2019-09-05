@@ -174,3 +174,12 @@ class StudentDisciplineListView(generics.ListAPIView):
         queryset = self.queryset.filter(student=self.request.user.profile,
                                         acad_period_id=acad_period)
         return queryset
+
+
+class StudyPlanDetailView(generics.RetrieveAPIView):
+    queryset = org_models.StudyPlan.objects.filter(is_active=True)
+    serializer_class = serializers.StudyPlanSerializer
+
+    def get_object(self):
+        obj = self.queryset.get(student=self.request.user.profile)
+        return obj

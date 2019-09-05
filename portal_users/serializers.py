@@ -325,3 +325,33 @@ class StudentDisciplineSerializer(serializers.ModelSerializer):
         data['selection_teachers'] = teachers_serializer.data
 
         return data
+
+
+class StudyPlanSerializer(serializers.ModelSerializer):
+    study_period = serializers.CharField()
+    group = serializers.CharField()
+    speciality = serializers.CharField()
+    faculty = serializers.CharField()
+    cathedra = serializers.CharField()
+    education_program = serializers.CharField()
+    education_type = serializers.CharField()
+    preparation_level = serializers.CharField()
+    study_form = serializers.CharField()
+    on_base = serializers.CharField()
+
+    class Meta:
+        model = org_models.StudyPlan
+        fields = (
+            'uid',
+            'student',
+            'study_period',
+            'group',
+            'speciality',
+            'faculty',
+            'cathedra',
+            'education_program',
+            'education_type',
+            'preparation_level',
+            'study_form',
+            'on_base',
+        )

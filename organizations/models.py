@@ -160,8 +160,8 @@ class StudyPeriod(BaseModel):
     )
 
     def __str__(self):
-        return '{} {}'.format(self.start,
-                              self.end)
+        return '{} - {}'.format(self.start,
+                                self.end)
 
     class Meta:
         verbose_name = 'Учебный период'
@@ -356,11 +356,11 @@ class TeacherDiscipline(BaseModel):
     )
 
     load_type2 = models.ForeignKey(
-            LoadType2,
-            null=True,
-            on_delete=models.CASCADE,
-            verbose_name='Тип нагрузки',
-        )
+        LoadType2,
+        null=True,
+        on_delete=models.CASCADE,
+        verbose_name='Тип нагрузки',
+    )
     language = models.ForeignKey(
         Language,
         on_delete=models.CASCADE,

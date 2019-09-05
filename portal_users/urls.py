@@ -17,4 +17,5 @@ urlpatterns = [
     path('test/', views.TestView.as_view(), name='test'),
 
     path('my_discipline/', views.StudentDisciplineListView.as_view(), name='my_disciplines'),
+    path('my_study_plan/', views.StudyPlanDetailView.as_view(), name='my_study_plan'),
 ]
