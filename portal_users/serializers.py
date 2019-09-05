@@ -7,6 +7,8 @@ from django.contrib.auth import password_validation
 from cron_app.models import ResetPasswordUrlSendTask, CredentialsEmailTask
 from common.utils import password_generator
 from organizations import models as org_models
+from portal import curr_settings
+from organizations.utils import TranslatedModelSerializerMixin
 
 
 class LoginSerializer(serializers.Serializer):
@@ -272,12 +274,16 @@ class UserCreateSerializer(serializers.ModelSerializer):
         return profile
 
 
-# class TeacherDisciplineSerializer(serializers.ModelSerializer):
-#     class Meta:
-#         model = org_models.TeacherDiscipline
-#         fields = (
-#             ''
-#         )
+class TeacherDisciplineSerializer(serializers.ModelSerializer):
+    teacher = ProfileDetailSerializer()
+    language = serializers.CharField()
+
+    class Meta:
+        model = org_models.TeacherDiscipline
+        fields = (
+            'teacher',
+            'language',
+        )
 
 
 class StudentDisciplineSerializer(serializers.ModelSerializer):
@@ -300,17 +306,22 @@ class StudentDisciplineSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         data = super().to_representation(instance)
-        lang = instance.study_plang.group.language
+        lang = instance.study_plan.group.language
+        if lang.uid == curr_settings.language_multilingual_id:
+            """Если группа мультиязычная, то отдаем преподы независимо от языка преподавания"""
+            teacher_disciplines = org_models.TeacherDiscipline.objects.filter(
+                discipline=instance.discipline,
+                load_type2=instance.load_type.load_type2
+            ).values('teacher').distinct('teacher')
+        else:
+            teacher_disciplines = org_models.TeacherDiscipline.objects.filter(
+                discipline=instance.discipline,
+                language=lang,
+                load_type2=instance.load_type.load_type2
+            )
 
-        teacher_disciplines = org_models.TeacherDiscipline.objects.filter(
-            discipline=instance.discipline,
-            language=lang,
-            load_type2=instance.load_type.load_type2
-        ).values('teacher').distinct('teacher')
-        teachers = models.Profile.objects.filter(pk__in=teacher_disciplines)
-
-        teacher_serializer = ProfileDetailSerializer(instance=teachers,
-                                                     many=True)
-        data['teachers'] = teacher_serializer.data
+        teachers_serializer = TeacherDisciplineSerializer(instance=teacher_disciplines,
+                                                          many=True)
+        data['selection_teachers'] = teachers_serializer.data
 
         return data

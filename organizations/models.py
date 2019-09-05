@@ -43,11 +43,6 @@ class Cathedra(BaseCatalog):
 
 
 class Group(BaseCatalog):
-    year = models.IntegerField(
-        verbose_name='Год',
-        null=True,
-        blank=True
-    )
     headman = models.ForeignKey(
         'portal_users.Profile',
         on_delete=models.CASCADE,
@@ -71,10 +66,6 @@ class Group(BaseCatalog):
         null=True,
         verbose_name='Язык обучения',
     )
-
-    def __str__(self):
-        return '{} - {}'.format(self.name,
-                                self.year)
 
     class Meta:
         verbose_name = 'Группа'

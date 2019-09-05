@@ -166,7 +166,6 @@ class StudyPlanAdmin(admin.ModelAdmin):
 @admin.register(models.Group)
 class GroupAdmin(admin.ModelAdmin):
     list_display = [
-        'year',
         'headman',
         'kurator',
         'supervisor',
