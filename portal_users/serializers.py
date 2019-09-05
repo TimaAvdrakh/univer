@@ -295,6 +295,7 @@ class StudentDisciplineSerializer(serializers.ModelSerializer):
     class Meta:
         model = org_models.StudentDiscipline
         fields = (
+            'uid',
             'student',
             'study_plan',
             'acad_period',

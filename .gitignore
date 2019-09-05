@@ -7,3 +7,4 @@ local_settings.py
 rest_client/
 local_settings_prod.txt
 curr_settings.py
+curr_settings_prod.txt
