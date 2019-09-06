@@ -275,6 +275,10 @@ class Discipline(BaseCatalog):
         default='',
         blank=True,
     )
+    is_language = models.BooleanField(
+        default=False,
+        verbose_name='Языковая дисциплина?'
+    )
 
     class Meta:
         verbose_name = 'Дисциплина'

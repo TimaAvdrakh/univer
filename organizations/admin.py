@@ -213,4 +213,5 @@ class DisciplineAdmin(admin.ModelAdmin):
     list_display = [
         'name',
         'uid',
+        'is_language',
     ]
