@@ -52,6 +52,9 @@ class ProfileDetailSerializer(serializers.ModelSerializer):
             'firstName',
             'lastName',
             'middleName',
+            'phone',
+            'email',
+            'avatar'
         )
 
 
@@ -409,3 +412,31 @@ class ChooseTeacherSerializer(serializers.ModelSerializer):
             )
 
         return teacher_disciplines
+
+
+class StudentSerializer(serializers.ModelSerializer):
+    profile = ProfileDetailSerializer()
+
+    class Meta:
+        model = org_models.Student
+        fields = (
+            'profile',
+        )
+
+
+class GroupDetailSerializer(serializers.ModelSerializer):
+    headman = ProfileDetailSerializer()
+    kurator = ProfileDetailSerializer()
+    supervisor = ProfileDetailSerializer()
+    students = StudentSerializer(many=True)
+
+    class Meta:
+        model = org_models.Group
+        fields = (
+            'name',
+            'headman',
+            'kurator',
+            'supervisor',
+            'language',
+            'students',
+        )

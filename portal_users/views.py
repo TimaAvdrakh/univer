@@ -49,6 +49,7 @@ class LoginView(generics.CreateAPIView):
 
 class LogoutView(APIView):
     """Выйти из системы"""
+
     def post(self, request):
         logout(request)
         return Response(
@@ -198,5 +199,13 @@ class ChooseTeacherView(generics.UpdateAPIView):
     serializer_class = serializers.ChooseTeacherSerializer
 
 
+class MyGroupDetailView(generics.ListAPIView):
+    """Получить инфо о моих группах"""
+    serializer_class = serializers.GroupDetailSerializer
 
-
+    def get_queryset(self):
+        request = self.request
+        my_group_pks = org_models.StudyPlan.objects.filter(student=request.user.profile,
+                                                           is_active=True).values('group')
+        my_groups = org_models.Group.objects.filter(pk__in=my_group_pks)
+        return my_groups
