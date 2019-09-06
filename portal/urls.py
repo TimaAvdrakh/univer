@@ -24,9 +24,10 @@ urlpatterns = [
     path('i18n/', include('django.conf.urls.i18n')),
     path('korabolta/', admin.site.urls),
     path('api/swagger/6456afdsfdsgfsdg/', schema_view),
+    path('api/v1/user/', include('portal_users.urls', namespace="user")),
 ]
 
-urlpatterns += i18n_patterns(
-    path('api/v1/user/', include('portal_users.urls', namespace="user")),
-    # prefix_default_language=False,
-)
+# urlpatterns += i18n_patterns(
+#
+#     # prefix_default_language=False,
+# )
