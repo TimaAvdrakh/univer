@@ -440,3 +440,13 @@ class GroupDetailSerializer(serializers.ModelSerializer):
             'language',
             'students',
         )
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        request = self.context.get('request')
+
+        for student in data['students']:
+            if student['profile']['profileId'] == str(request.user.profile.pk):
+                data['students'].remove(student)
+
+        return data
