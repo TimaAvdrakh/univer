@@ -58,7 +58,7 @@ class Group(BaseCatalog):
         'portal_users.Profile',
         on_delete=models.CASCADE,
         related_name='supervisor_groups',
-        verbose_name='Супервизор',
+        verbose_name='Эдвайзер',
     )
     language = models.ForeignKey(
         Language,
@@ -70,6 +70,14 @@ class Group(BaseCatalog):
     class Meta:
         verbose_name = 'Группа'
         verbose_name_plural = 'Группы'
+
+
+class Student(BaseModel):
+    profile = models.ForeignKey(
+        'portal_users.Profile',
+        on_delete=models.CASCADE,
+        null=True,
+    )
 
 
 class EducationBase(BaseCatalog):
@@ -169,6 +177,11 @@ class StudyPeriod(BaseModel):
 
 
 class StudyPlan(BaseModel):
+    number = models.CharField(
+        max_length=100,
+        null=True,
+        verbose_name='Номер',
+    )
     student = models.ForeignKey(
         'portal_users.Profile',
         null=True,
