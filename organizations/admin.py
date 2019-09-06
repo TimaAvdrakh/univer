@@ -75,14 +75,6 @@ class PreparationLevelAdmin(admin.ModelAdmin):
     ]
 
 
-@admin.register(models.Discipline)
-class DisciplineAdmin(admin.ModelAdmin):
-    list_display = [
-        'name',
-        'uid',
-    ]
-
-
 @admin.register(models.LoadType)
 class LoadTypeAdmin(admin.ModelAdmin):
     list_display = [
@@ -188,4 +180,37 @@ class GroupAdmin(admin.ModelAdmin):
     ]
 
 
+@admin.register(models.Prerequisite)
+class PrerequisiteAdmin(admin.ModelAdmin):
+    list_filter = [
+        'discipline',
+        'required_discipline',
+    ]
+    list_display = [
+        'study_period',
+        'discipline',
+        'required_discipline',
+        'speciality',
+    ]
 
+
+@admin.register(models.Postrequisite)
+class PostrequisiteAdmin(admin.ModelAdmin):
+    list_filter = [
+        'discipline',
+        'available_discipline',
+    ]
+    list_display = [
+        'study_period',
+        'discipline',
+        'available_discipline',
+        'speciality',
+    ]
+
+
+@admin.register(models.Discipline)
+class DisciplineAdmin(admin.ModelAdmin):
+    list_display = [
+        'name',
+        'uid',
+    ]

@@ -270,6 +270,12 @@ class StudyPlan(BaseModel):
 
 
 class Discipline(BaseCatalog):
+    description = models.TextField(
+        verbose_name='Описание',
+        default='',
+        blank=True,
+    )
+
     class Meta:
         verbose_name = 'Дисциплина'
         verbose_name_plural = 'Дисциплины'
@@ -402,3 +408,68 @@ class TeacherDiscipline(BaseModel):
     class Meta:
         verbose_name = 'Закрепление дисциплин'
         verbose_name_plural = 'Закрепление дисциплин'
+
+
+class Prerequisite(BaseModel):
+    study_period = models.ForeignKey(
+        StudyPeriod,
+        on_delete=models.CASCADE,
+        verbose_name='Учебный период',
+    )
+    discipline = models.ForeignKey(
+        Discipline,
+        on_delete=models.CASCADE,
+        verbose_name='Дисциплина',
+        related_name='prerequisites',
+    )
+    required_discipline = models.ForeignKey(
+        Discipline,
+        on_delete=models.CASCADE,
+        verbose_name='Требуемая дисциплина',
+    )
+    speciality = models.ForeignKey(
+        Speciality,
+        on_delete=models.CASCADE,
+        verbose_name='Направление подготовки',
+    )
+
+    def __str__(self):
+        return '{} - {}'.format(self.required_discipline,
+                                self.discipline)
+
+    class Meta:
+        verbose_name = 'Пререквизит'
+        verbose_name_plural = 'Пререквизиты'
+
+
+class Postrequisite(BaseModel):
+    study_period = models.ForeignKey(
+        StudyPeriod,
+        on_delete=models.CASCADE,
+        verbose_name='Учебный период',
+    )
+    discipline = models.ForeignKey(
+        Discipline,
+        on_delete=models.CASCADE,
+        verbose_name='Дисциплина',
+        related_name='postrequisites',
+    )
+    available_discipline = models.ForeignKey(
+        Discipline,
+        on_delete=models.CASCADE,
+        verbose_name='Доступная дисциплина',
+    )
+    speciality = models.ForeignKey(
+        Speciality,
+        on_delete=models.CASCADE,
+        verbose_name='Направление подготовки',
+    )
+
+    def __str__(self):
+        return '{} - {}'.format(self.discipline,
+                                self.available_discipline)
+
+    class Meta:
+        verbose_name = 'Постреквизит'
+        verbose_name_plural = 'Постреквизиты'
+

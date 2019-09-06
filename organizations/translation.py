@@ -44,7 +44,7 @@ class PreparationLevelTranslationOptions(TranslationOptions):
 
 @register(models.Discipline)
 class DisciplineTranslationOptions(TranslationOptions):
-    fields = ('name',)
+    fields = ('name', 'description')
 
 
 @register(models.LoadType)
