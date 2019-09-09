@@ -326,7 +326,20 @@ class AcadPeriod(BaseCatalog):
         verbose_name_plural = 'Академические периоды'
 
 
+class StudentDisciplineStatus(BaseCatalog):
+    class Meta:
+        verbose_name = 'Статус при выборе препода'
+        verbose_name_plural = 'Статусы при выборе препода'
+
+
 class StudentDiscipline(BaseModel):
+    author = models.ForeignKey(
+        'portal_users.Profile',
+        on_delete=models.CASCADE,
+        related_name='edited_student_disciplines',
+        null=True,
+        verbose_name='Автор',
+    )
     student = models.ForeignKey(
         'portal_users.Profile',
         null=True,
@@ -363,6 +376,12 @@ class StudentDiscipline(BaseModel):
         blank=True,
         on_delete=models.CASCADE,
         verbose_name='Преподаватель',
+    )
+    status = models.ForeignKey(
+        StudentDisciplineStatus,
+        on_delete=models.CASCADE,
+        null=True,
+        verbose_name='Статус',
     )
 
     def __str__(self):

@@ -118,6 +118,7 @@ class StudentDisciplineAdmin(admin.ModelAdmin):
         'load_type',
         'hours',
         'teacher',
+        'author',
     ]
 
 
@@ -214,4 +215,12 @@ class DisciplineAdmin(admin.ModelAdmin):
         'name',
         'uid',
         'is_language',
+    ]
+
+
+@admin.register(models.StudentDisciplineStatus)
+class StatusAdmin(admin.ModelAdmin):
+    list_display = [
+        'name',
+        'uid',
     ]

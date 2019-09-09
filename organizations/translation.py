@@ -75,3 +75,8 @@ class LoadType2TranslationOptions(TranslationOptions):
 @register(models.Group)
 class GroupTranslationOptions(TranslationOptions):
     fields = ('name',)
+
+
+@register(models.StudentDisciplineStatus)
+class StatusTranslationOptions(TranslationOptions):
+    fields = ('name',)
