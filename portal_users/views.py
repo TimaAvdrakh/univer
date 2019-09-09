@@ -198,6 +198,28 @@ class ChooseTeacherView(generics.UpdateAPIView):
     queryset = org_models.StudentDiscipline.objects.filter(is_active=True)
     serializer_class = serializers.ChooseTeacherSerializer
 
+    def put(self, request, *args, pk=None, **kwargs):
+        try:
+            student_discipline = self.queryset.get(pk=pk)
+        except org_models.StudentDiscipline.DoesNotExist:
+            return Response(
+                {
+                    "message": "not_found",
+                },
+                status=status.HTTP_404_NOT_FOUND
+            )
+        self.check_object_permissions(request,
+                                      student_discipline)
+        serializer = self.serializer_class(data=request.data,
+                                           instance=student_discipline)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        serializer2 = serializers.StudentDisciplineSerializer(student_discipline)
+        return Response(
+            serializer2.data,
+            status=status.HTTP_200_OK
+        )
+
 
 class MyGroupDetailView(generics.ListAPIView):
     """Получить инфо о моих группах"""

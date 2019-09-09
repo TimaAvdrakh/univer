@@ -283,6 +283,7 @@ class TeacherDisciplineSerializer(serializers.ModelSerializer):
     class Meta:
         model = org_models.TeacherDiscipline
         fields = (
+            'uid',
             'teacher',
             'language',
         )
@@ -371,15 +372,15 @@ class StudyPlanSerializer(serializers.ModelSerializer):
 
 
 class ChooseTeacherSerializer(serializers.ModelSerializer):
-    teacher_id = serializers.PrimaryKeyRelatedField(
-        queryset=models.Profile.objects.filter(is_active=True),
+    teacher_discipline = serializers.PrimaryKeyRelatedField(
+        queryset=org_models.TeacherDiscipline.objects.filter(is_active=True),
     )
 
     class Meta:
         model = org_models.StudentDiscipline
         fields = (
             'uid',
-            'teacher_id',
+            'teacher_discipline',
         )
 
     def update(self, instance, validated_data):
@@ -387,7 +388,8 @@ class ChooseTeacherSerializer(serializers.ModelSerializer):
         teachers_pk = teacher_disciplines.values('teacher')
         teachers = models.Profile.objects.filter(pk__in=teachers_pk)
 
-        chosen_teacher = validated_data.get('teacher_id')
+        teacher_discipline = validated_data.get('teacher_discipline')
+        chosen_teacher = teacher_discipline.teacher
 
         if chosen_teacher not in teachers:
             raise CustomException(detail='teacher_not_allowed')
