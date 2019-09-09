@@ -119,6 +119,7 @@ class StudentDisciplineAdmin(admin.ModelAdmin):
         'hours',
         'teacher',
         'author',
+        'status',
     ]
 
 
