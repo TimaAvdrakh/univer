@@ -10,6 +10,7 @@ from django.contrib.auth.models import User
 from organizations import models as org_models
 from rest_framework.permissions import IsAuthenticated
 from . import permissions
+from common.csrf_exempt_auth_class import CsrfExemptSessionAuthentication
 
 
 class LoginView(generics.CreateAPIView):
@@ -195,6 +196,7 @@ class ChooseTeacherView(generics.UpdateAPIView):
         IsAuthenticated,
         permissions.StudentDisciplinePermission
     )
+    # authentication_classes = (CsrfExemptSessionAuthentication,)
     queryset = org_models.StudentDiscipline.objects.filter(is_active=True)
     serializer_class = serializers.ChooseTeacherSerializer
 
