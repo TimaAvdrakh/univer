@@ -214,9 +214,11 @@ class ChooseTeacherView(generics.UpdateAPIView):
                                            instance=student_discipline)
         serializer.is_valid(raise_exception=True)
         serializer.save()
-        serializer2 = serializers.StudentDisciplineSerializer(student_discipline)
+
         return Response(
-            serializer2.data,
+            {
+                "message": "ok",
+            },
             status=status.HTTP_200_OK
         )
 
