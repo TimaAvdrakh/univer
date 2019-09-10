@@ -7,7 +7,8 @@ from django.contrib.auth import password_validation
 from cron_app.models import ResetPasswordUrlSendTask, CredentialsEmailTask
 from common.utils import password_generator
 from organizations import models as org_models
-from portal import curr_settings
+from portal.curr_settings import student_discipline_status, student_discipline_info_status, language_multilingual_id
+from django.db.models import Q
 
 
 class LoginSerializer(serializers.Serializer):
@@ -377,7 +378,7 @@ class StudentDisciplineSerializer(serializers.ModelSerializer):
 
     def __get_allowed_teachers(self, instance):
         lang = instance.study_plan.group.language
-        if lang.uid == curr_settings.language_multilingual_id:
+        if lang.uid == language_multilingual_id:
             """Если группа мультиязычная, то отдаем преподы независимо от языка преподавания"""
             teacher_disciplines = org_models.TeacherDiscipline.objects.filter(
                 discipline=instance.discipline,
@@ -449,15 +450,44 @@ class ChooseTeacherSerializer(serializers.ModelSerializer):
             raise CustomException(detail='teacher_not_allowed')
 
         instance.teacher = chosen_teacher
-        instance.status_id = curr_settings.student_discipline_status['chosen']
+        instance.status_id = student_discipline_status['chosen']
         instance.author = request.user.profile
         instance.save()
 
+        self.__check_is_all_disciplines_chosen(instance)
         return instance
+
+    def __check_is_all_disciplines_chosen(self, instance):
+        """Проверяет все дисциплины выбраны для текущего учебного плана и акамдемического плана"""
+        study_plan = instance.study_plan
+        acad_period = instance.acad_period
+
+        try:
+            student_discipline_info = org_models.StudentDisciplineInfo.objects.get(study_plan=study_plan,
+                                                                                   acad_period=instance.acad_period)
+        except org_models.StudentDisciplineInfo.DoesNotExist:
+            student_discipline_info = org_models.StudentDisciplineInfo.objects.create(
+                student=study_plan.student,
+                study_plan=study_plan,
+                acad_period=acad_period,
+            )
+
+        if org_models.StudentDiscipline.objects.filter(
+                Q(status_id=student_discipline_status["not_chosen"]) | Q(
+                    status_id=student_discipline_status["rejected"]),
+                study_plan=study_plan,
+                acad_period=acad_period,
+                is_active=True,
+        ).exists():
+            """Если есть дисциплина где не выбран препод или отклонен"""
+            student_discipline_info.status_id = student_discipline_info_status['choosing']
+        else:
+            student_discipline_info.status_id = student_discipline_info_status['chosen']
+            # TODO уведомляем эдвайзера о том, что студент выбрал все диспциплины для текущего семестра
 
     def __get_allowed_teachers(self, instance):
         lang = instance.study_plan.group.language
-        if lang.uid == curr_settings.language_multilingual_id:
+        if lang.uid == language_multilingual_id:
             """Если группа мультиязычная, то отдаем преподы независимо от языка преподавания"""
             teacher_disciplines = org_models.TeacherDiscipline.objects.filter(
                 discipline=instance.discipline,
@@ -510,4 +540,23 @@ class GroupDetailSerializer(serializers.ModelSerializer):
 
         return data
 
+
+class StudentDisciplineShortSerializer(serializers.ModelSerializer):
+    """Используется для получения всех дисциплин студента во всех акад.периодах"""
+
+    acad_period = serializers.CharField(read_only=True)
+    discipline = serializers.CharField(read_only=True)
+    load_type = serializers.CharField(read_only=True)
+
+    class Meta:
+        model = org_models.StudentDiscipline
+        fields = (
+            'uid',
+            'student',
+            'study_plan',
+            'acad_period',
+            'discipline',
+            'load_type',
+            'hours',
+        )
 

@@ -149,6 +149,7 @@ class StudyPlanAdmin(admin.ModelAdmin):
         'speciality',
         'faculty',
         'cathedra',
+        'group',
         'education_program',
         'education_type',
         'preparation_level',

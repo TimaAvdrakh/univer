@@ -10,6 +10,7 @@ from django.contrib.auth.models import User
 from organizations import models as org_models
 from rest_framework.permissions import IsAuthenticated
 from . import permissions
+from .utils import get_current_study_year
 from common.csrf_exempt_auth_class import CsrfExemptSessionAuthentication
 
 
@@ -162,32 +163,55 @@ class UserRegisterView(generics.CreateAPIView):
         )
 
 
-class StudentDisciplineListView(generics.ListAPIView):
-    """Получить список дисциплин студента"""
-    queryset = org_models.StudentDiscipline.objects.filter(is_active=True)
+class StudentDisciplineListView(generics.ListAPIView):  # TODO Создать  StudentDisciplineInfo ЕСЛИ НЕ СОЗДАН СО СТАТУСОМ "НЕ НАЧАТО"
+    """Получить список дисциплин в текущем академическом периоде для регистрации"""
     serializer_class = serializers.StudentDisciplineSerializer
 
-    def get_queryset(self):
-        acad_period = self.request.query_params.get('acad_period')
+    def list(self, request, *args, **kwargs):
+        profile = request.user.profile
 
-        if acad_period:
-            pass
-        else:
-            acad_period = "d922e730-2b90-4296-9802-1853020b0357"  # 1 trimestr
+        current_acad_period = "d922e730-2b90-4296-9802-1853020b0357"  # 1 trimestr
 
-        queryset = self.queryset.filter(student=self.request.user.profile,
-                                        acad_period_id=acad_period)
-        return queryset
+        current_study_year = get_current_study_year()
+        study_plans = org_models.StudyPlan.objects.filter(
+            student=profile,
+            study_period__end__gt=current_study_year.get('start'),
+            is_active=True,
+        )
+        resp = []
+        for sp in study_plans:
+            student_disciplines = org_models.StudentDiscipline.objects.filter(
+                study_plan=sp,
+                acad_period_id=current_acad_period,
+            )
+            serializer = self.serializer_class(student_disciplines,
+                                               many=True)
+            item = {
+                'speciality': sp.speciality.name,
+                'disciplines': serializer.data
+            }
+            resp.append(item)
+
+        return Response(
+            resp,
+            status=status.HTTP_200_OK
+        )
 
 
-class StudyPlanDetailView(generics.RetrieveAPIView):
-    """Получить мой учебный план"""
+class MyStudyPlanListView(generics.ListAPIView):
+    """Получить список моих актуальных учебных планов"""
     queryset = org_models.StudyPlan.objects.filter(is_active=True)
     serializer_class = serializers.StudyPlanSerializer
 
-    def get_object(self):
-        obj = self.queryset.get(student=self.request.user.profile)
-        return obj
+    def get_queryset(self):
+        profile = self.request.user.profile
+        current_study_year = get_current_study_year()
+        queryset = self.queryset.filter(
+            student=profile,
+            study_period__end__gt=current_study_year.get('start'),
+            is_active=True,
+        )
+        return queryset
 
 
 class ChooseTeacherView(generics.UpdateAPIView):
@@ -226,15 +250,23 @@ class ChooseTeacherView(generics.UpdateAPIView):
         )
 
 
-class MyGroupDetailView(generics.ListAPIView):
+class MyGroupListView(generics.ListAPIView):
     """Получить инфо о моих группах"""
     serializer_class = serializers.GroupDetailSerializer
 
     def get_queryset(self):
-        request = self.request
-        my_group_pks = org_models.StudyPlan.objects.filter(student=request.user.profile,
-                                                           is_active=True).values('group')
-        my_groups = org_models.Group.objects.filter(pk__in=my_group_pks)
+        profile = self.request.user.profile
+        current_study_year = get_current_study_year()
+
+        my_group_pks = org_models.StudyPlan.objects.filter(
+            student=profile,
+            study_period__end__gt=current_study_year.get('start'),
+            is_active=True
+        ).values('group')
+        my_groups = org_models.Group.objects.filter(
+            pk__in=my_group_pks,
+            is_active=True,
+        )
         return my_groups
 
 
@@ -242,4 +274,10 @@ class NotifyDisciplinesChosen(generics.CreateAPIView):
     """Уведомлять адвайзера о выборе преподов для всех дисциплин"""
     pass
 
+
+# class StudentAllDisciplineListView(generics.ListAPIView):  # TODO
+#     serializer_class = serializers.StudentDisciplineShortSerializer
+#
+#     def get_queryset(self):
+#         pass
 

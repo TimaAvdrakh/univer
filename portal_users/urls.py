@@ -17,8 +17,8 @@ urlpatterns = [
     path('test/', views.TestView.as_view(), name='test'),
 
     path('my_discipline/', views.StudentDisciplineListView.as_view(), name='my_disciplines'),
-    path('my_study_plan/', views.StudyPlanDetailView.as_view(), name='my_study_plan'),
     path('my_discipline/<pk>/edit/', views.ChooseTeacherView.as_view(), name='choose_teacher'),
 
-    path('my_group/', views.MyGroupDetailView.as_view(), name='my_group'),
+    path('my_study_plans/', views.MyStudyPlanListView.as_view(), name='my_study_plans'),
+    path('my_groups/', views.MyGroupListView.as_view(), name='my_group'),
 ]

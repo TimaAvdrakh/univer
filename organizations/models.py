@@ -2,6 +2,7 @@ from django.db import models
 from common.models import BaseModel, BaseCatalog, DocumentType
 from django.contrib.auth.models import User
 from common.utils import get_sentinel_user
+from portal import curr_settings
 
 
 class Language(BaseCatalog):
@@ -183,8 +184,8 @@ class StudyPeriod(BaseModel):
     )
 
     def __str__(self):
-        return '{} - {}'.format(self.start,
-                                self.end)
+        return '{}-{}'.format(self.start,
+                              self.end)
 
     class Meta:
         verbose_name = 'Учебный период'
@@ -206,7 +207,7 @@ class StudyPlan(BaseModel):
     study_period = models.ForeignKey(
         StudyPeriod,
         on_delete=models.CASCADE,
-        verbose_name='Учебный период',
+        verbose_name='Период обучения',
     )
     group = models.ForeignKey(
         Group,
@@ -380,6 +381,7 @@ class StudentDiscipline(BaseModel):
     status = models.ForeignKey(
         StudentDisciplineStatus,
         on_delete=models.CASCADE,
+        # default=curr_settings.student_discipline_status['not_chosen'],
         null=True,
         verbose_name='Статус',
     )
@@ -405,15 +407,15 @@ class StudentDisciplineInfo(BaseModel):
         on_delete=models.CASCADE,
         verbose_name='Студент',
     )
-    acad_period = models.ForeignKey(
-        AcadPeriod,
-        on_delete=models.CASCADE,
-        verbose_name='Академический период',
-    )
     study_plan = models.ForeignKey(
         StudyPlan,
         on_delete=models.CASCADE,
         verbose_name='Учебный план',
+    )
+    acad_period = models.ForeignKey(
+        AcadPeriod,
+        on_delete=models.CASCADE,
+        verbose_name='Академический период',
     )
     status = models.ForeignKey(
         StudentDisciplineInfoStatus,
@@ -429,6 +431,10 @@ class StudentDisciplineInfo(BaseModel):
     class Meta:
         verbose_name = 'Инфо о выборе студента'
         verbose_name_plural = 'Инфо о выбора студента'
+        unique_together = (
+            'acad_period',
+            'study_plan',
+        )
 
 
 class TeacherDiscipline(BaseModel):
@@ -533,4 +539,3 @@ class Postrequisite(BaseModel):
     class Meta:
         verbose_name = 'Постреквизит'
         verbose_name_plural = 'Постреквизиты'
-
