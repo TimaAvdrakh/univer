@@ -103,7 +103,7 @@ class ProfileShortSerializer(serializers.ModelSerializer):
             'firstName',
             'lastName',
             'middleName',
-            'avatar'
+            # 'avatar'
         )
 
 
