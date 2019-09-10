@@ -225,3 +225,22 @@ class StatusAdmin(admin.ModelAdmin):
         'name',
         'uid',
     ]
+
+
+@admin.register(models.StudentDisciplineInfo)
+class StudentDisciplineInfoAdmin(admin.ModelAdmin):
+    list_display = [
+        'student',
+        'acad_period',
+        'study_plan',
+        # 'status',
+        'uid',
+    ]
+
+
+@admin.register(models.StudentDisciplineInfoStatus)
+class StudentDisciplineInfoStatusAdmin(admin.ModelAdmin):
+    list_display = [
+        'name',
+        'uid',
+    ]

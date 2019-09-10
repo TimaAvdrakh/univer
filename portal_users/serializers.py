@@ -20,13 +20,64 @@ class LoginSerializer(serializers.Serializer):
     # recaptcha = ReCaptchaField()
 
 
+class RoleSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.Role
+        fields = (
+            'is_student',
+            'is_teacher',
+            'is_org_admin',
+        )
+
+
 class ProfileDetailSerializer(serializers.ModelSerializer):
     profileId = serializers.CharField(
         source='uid',
     )
-    userId = serializers.PrimaryKeyRelatedField(
-        source='user',
-        read_only=True,
+    # userId = serializers.PrimaryKeyRelatedField(
+    #     source='user',
+    #     read_only=True,
+    # )
+    middleName = serializers.CharField(
+        max_length=100,
+        source='middle_name',
+        allow_blank=True,
+    )
+    firstName = serializers.CharField(
+        max_length=100,
+        source='first_name',
+        required=True,
+    )
+    lastName = serializers.CharField(
+        max_length=100,
+        source='last_name',
+        required=True,
+    )
+
+    class Meta:
+        model = models.Profile
+        fields = (
+            'profileId',
+            # 'userId',
+            'firstName',
+            'lastName',
+            'middleName',
+            'phone',
+            'email',
+            'avatar'
+        )
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance=instance)
+        role = models.Role.objects.filter(profile=instance).first()
+        role_serializer = RoleSerializer(instance=role)
+        data['role'] = role_serializer.data
+        return data
+
+
+class ProfileShortSerializer(serializers.ModelSerializer):
+    profileId = serializers.CharField(
+        source='uid',
     )
     middleName = serializers.CharField(
         max_length=100,
@@ -48,12 +99,9 @@ class ProfileDetailSerializer(serializers.ModelSerializer):
         model = models.Profile
         fields = (
             'profileId',
-            'userId',
             'firstName',
             'lastName',
             'middleName',
-            'phone',
-            'email',
             'avatar'
         )
 
@@ -277,7 +325,7 @@ class UserCreateSerializer(serializers.ModelSerializer):
 
 
 class TeacherDisciplineSerializer(serializers.ModelSerializer):
-    teacher = ProfileDetailSerializer()
+    teacher = ProfileShortSerializer()
     language = serializers.CharField()
 
     class Meta:
@@ -293,7 +341,9 @@ class StudentDisciplineSerializer(serializers.ModelSerializer):
     acad_period = serializers.CharField(read_only=True)
     discipline = serializers.CharField(read_only=True)
     load_type = serializers.CharField(read_only=True)
-    teacher = ProfileDetailSerializer()
+    teacher = ProfileShortSerializer()
+    status = serializers.CharField()
+    author = ProfileShortSerializer()
 
     class Meta:
         model = org_models.StudentDiscipline
@@ -305,6 +355,8 @@ class StudentDisciplineSerializer(serializers.ModelSerializer):
             'discipline',
             'load_type',
             'hours',
+            'status',
+            'author',
             'teacher',
         )
         read_only_fields = (
@@ -384,6 +436,8 @@ class ChooseTeacherSerializer(serializers.ModelSerializer):
         )
 
     def update(self, instance, validated_data):
+        request = self.context.get('request')
+
         teacher_disciplines = self.__get_allowed_teachers(instance)
         teachers_pk = teacher_disciplines.values('teacher')
         teachers = models.Profile.objects.filter(pk__in=teachers_pk)
@@ -395,7 +449,10 @@ class ChooseTeacherSerializer(serializers.ModelSerializer):
             raise CustomException(detail='teacher_not_allowed')
 
         instance.teacher = chosen_teacher
+        instance.status_id = curr_settings.student_discipline_status['chosen']
+        instance.author = request.user.profile
         instance.save()
+
         return instance
 
     def __get_allowed_teachers(self, instance):
@@ -452,3 +509,5 @@ class GroupDetailSerializer(serializers.ModelSerializer):
                 data['students'].remove(student)
 
         return data
+
+

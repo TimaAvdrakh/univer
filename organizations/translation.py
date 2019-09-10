@@ -80,3 +80,8 @@ class GroupTranslationOptions(TranslationOptions):
 @register(models.StudentDisciplineStatus)
 class StatusTranslationOptions(TranslationOptions):
     fields = ('name',)
+
+
+@register(models.StudentDisciplineInfoStatus)
+class StudentDisciplineInfoStatusTranslationOptions(TranslationOptions):
+    fields = ('name',)

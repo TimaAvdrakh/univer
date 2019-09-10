@@ -213,7 +213,8 @@ class ChooseTeacherView(generics.UpdateAPIView):
         self.check_object_permissions(request,
                                       student_discipline)
         serializer = self.serializer_class(data=request.data,
-                                           instance=student_discipline)
+                                           instance=student_discipline,
+                                           context={'request': request})
         serializer.is_valid(raise_exception=True)
         serializer.save()
 
@@ -235,3 +236,10 @@ class MyGroupDetailView(generics.ListAPIView):
                                                            is_active=True).values('group')
         my_groups = org_models.Group.objects.filter(pk__in=my_group_pks)
         return my_groups
+
+
+class NotifyDisciplinesChosen(generics.CreateAPIView):
+    """Уведомлять адвайзера о выборе преподов для всех дисциплин"""
+    pass
+
+

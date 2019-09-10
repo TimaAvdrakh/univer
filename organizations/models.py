@@ -262,7 +262,7 @@ class StudyPlan(BaseModel):
     )
 
     def __str__(self):
-        return 'Учебный план {}'.format(self.student.user.get_full_name())
+        return 'Учебный план {}'.format(self.student.first_name)
 
     class Meta:
         verbose_name = 'Учебный план'
@@ -391,6 +391,44 @@ class StudentDiscipline(BaseModel):
     class Meta:
         verbose_name = 'Дисциплина студента'
         verbose_name_plural = 'Дисциплины студента'
+
+
+class StudentDisciplineInfoStatus(BaseCatalog):
+    class Meta:
+        verbose_name = 'Статус об общем выборе препода'
+        verbose_name_plural = 'Статус об общем выборе препода'
+
+
+class StudentDisciplineInfo(BaseModel):
+    student = models.ForeignKey(
+        'portal_users.Profile',
+        on_delete=models.CASCADE,
+        verbose_name='Студент',
+    )
+    acad_period = models.ForeignKey(
+        AcadPeriod,
+        on_delete=models.CASCADE,
+        verbose_name='Академический период',
+    )
+    study_plan = models.ForeignKey(
+        StudyPlan,
+        on_delete=models.CASCADE,
+        verbose_name='Учебный план',
+    )
+    status = models.ForeignKey(
+        StudentDisciplineInfoStatus,
+        null=True,
+        on_delete=models.SET_NULL,
+        verbose_name='Статус',
+    )
+
+    def __str__(self):
+        return "{} {}".format(self.student,
+                              self.acad_period)
+
+    class Meta:
+        verbose_name = 'Инфо о выборе студента'
+        verbose_name_plural = 'Инфо о выбора студента'
 
 
 class TeacherDiscipline(BaseModel):
