@@ -170,7 +170,7 @@ class StudentDisciplineListView(generics.ListAPIView):  # TODO Создать  S
     def list(self, request, *args, **kwargs):
         profile = request.user.profile
 
-        current_acad_period = "d922e730-2b90-4296-9802-1853020b0357"  # 1 trimestr
+        current_acad_period = "d922e730-2b90-4296-9802-1853020b0357"  # 1 trimestr  # TODO определить текущий Семестр или Триместр
 
         current_study_year = get_current_study_year()
         study_plans = org_models.StudyPlan.objects.filter(
@@ -179,16 +179,18 @@ class StudentDisciplineListView(generics.ListAPIView):  # TODO Создать  S
             is_active=True,
         )
         resp = []
-        for sp in study_plans:
+        for study_plan in study_plans:
             student_disciplines = org_models.StudentDiscipline.objects.filter(
-                study_plan=sp,
+                study_plan=study_plan,
                 acad_period_id=current_acad_period,
             )
             serializer = self.serializer_class(student_disciplines,
                                                many=True)
             item = {
-                'speciality': sp.speciality.name,
-                'disciplines': serializer.data
+                "study_plan_id": study_plan.pk,
+                'speciality_name': study_plan.speciality.name,
+                'active': False,
+                'disciplines': serializer.data,
             }
             resp.append(item)
 
@@ -270,12 +272,12 @@ class MyGroupListView(generics.ListAPIView):
         return my_groups
 
 
-class NotifyDisciplinesChosen(generics.CreateAPIView):
+class NotifyAdviser(generics.CreateAPIView):
     """Уведомлять адвайзера о выборе преподов для всех дисциплин"""
-    pass
+    serializer_class = serializers.NotifyAdviserSerializer
 
 
-# class StudentAllDisciplineListView(generics.ListAPIView):  # TODO
+# class StudentAllDisciplineListView(generics.ListAPIView):  # TODO  группировать по акам периоду
 #     serializer_class = serializers.StudentDisciplineShortSerializer
 #
 #     def get_queryset(self):

@@ -350,8 +350,8 @@ class StudentDisciplineSerializer(serializers.ModelSerializer):
         model = org_models.StudentDiscipline
         fields = (
             'uid',
-            'student',
-            'study_plan',
+            # 'student',
+            # 'study_plan',
             'acad_period',
             'discipline',
             'load_type',
@@ -405,6 +405,9 @@ class StudyPlanSerializer(serializers.ModelSerializer):
     preparation_level = serializers.CharField()
     study_form = serializers.CharField()
     on_base = serializers.CharField()
+    active = serializers.BooleanField(
+        default=False,
+    )
 
     class Meta:
         model = org_models.StudyPlan
@@ -421,6 +424,7 @@ class StudyPlanSerializer(serializers.ModelSerializer):
             'preparation_level',
             'study_form',
             'on_base',
+            'active',
         )
 
 
@@ -518,11 +522,15 @@ class GroupDetailSerializer(serializers.ModelSerializer):
     kurator = ProfileDetailSerializer()
     supervisor = ProfileDetailSerializer()
     students = StudentSerializer(many=True)
+    active = serializers.BooleanField(
+        default=False,
+    )
 
     class Meta:
         model = org_models.Group
         fields = (
             'name',
+            'active',
             'headman',
             'kurator',
             'supervisor',
@@ -559,4 +567,14 @@ class StudentDisciplineShortSerializer(serializers.ModelSerializer):
             'load_type',
             'hours',
         )
+
+
+class NotifyAdviserSerializer(serializers.Serializer):
+    study_plan = serializers.PrimaryKeyRelatedField(
+        queryset=org_models.StudyPlan.objects.filter(is_active=True),
+    )
+
+    def create(self, validated_data):
+        pass
+
 
