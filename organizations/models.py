@@ -3,6 +3,8 @@ from common.models import BaseModel, BaseCatalog, DocumentType
 from django.contrib.auth.models import User
 from common.utils import get_sentinel_user
 from portal import curr_settings
+from datetime import date
+from portal_users.utils import get_current_study_year, get_current_course
 
 
 class Language(BaseCatalog):
@@ -265,6 +267,11 @@ class StudyPlan(BaseModel):
     def __str__(self):
         return 'Учебный план {} {}'.format(self.student.first_name,
                                            self.group.name)
+
+    @property
+    def current_course(self):
+        """Текущий курс студента"""
+        return get_current_course(self.study_period)
 
     class Meta:
         verbose_name = 'Учебный план'

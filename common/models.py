@@ -79,6 +79,7 @@ class IdentityDocument(BaseModel):
     validity_date = models.DateField(
         verbose_name='Срок действия',
     )
+
     # issued_by = models.CharField(
     #     max_length=100,
     #     verbose_name='Кем выдан',  # TODO СПРАВОЧНИК?
@@ -91,6 +92,50 @@ class IdentityDocument(BaseModel):
     class Meta:
         verbose_name = 'Документ удостоверяющий личность'
         verbose_name_plural = 'Документы удостоверяющий личность'
+
+
+class RegistrationPeriod(BaseCatalog):
+    start_date = models.DateField(
+        verbose_name='Дата начала',
+    )
+    end_date = models.DateField(
+        verbose_name='Дата завершения',
+    )
+
+    def __str__(self):
+        return '{}:{}-{}'.format(self.name,
+                                 self.start_date,
+                                 self.end_date)
+
+    class Meta:
+        verbose_name = 'Период регистрации'
+        verbose_name_plural = 'Периоды регистрации'
+
+
+class CourseAcadPeriodPermission(BaseModel):
+    registration_period = models.ForeignKey(
+        RegistrationPeriod,
+        on_delete=models.CASCADE,
+        related_name='course_acad_periods',
+        verbose_name='Период регистрации',
+    )
+    course = models.PositiveSmallIntegerField(
+        verbose_name='Курс',
+    )
+    acad_period = models.ForeignKey(
+        'organizations.AcadPeriod',
+        on_delete=models.CASCADE,
+        verbose_name='Академический период',
+    )
+
+    def __str__(self):
+        return '{}: {}-{}'.format(self.registration_period,
+                                  self.course,
+                                  self.acad_period)
+
+    class Meta:
+        verbose_name = 'Правила выбора Курс-Акад.период'
+        verbose_name_plural = 'Правила выбора Курс-Акад.период'
 
 
 # class Log(BaseModel):
