@@ -13,6 +13,7 @@ class CourseAcadPeriodPermissionAdmin(admin.ModelAdmin):
 
 
 class CourseAcadPeriodPermissionInline(admin.TabularInline):
+    extra = 1
     model = models.CourseAcadPeriodPermission
 
 
