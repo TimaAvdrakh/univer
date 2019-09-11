@@ -82,7 +82,7 @@ class IdentityDocument(BaseModel):
 
     # issued_by = models.CharField(
     #     max_length=100,
-    #     verbose_name='Кем выдан',  # TODO СПРАВОЧНИК?
+    #     verbose_name='Кем выдан',
     # )
 
     def __str__(self):
@@ -106,6 +106,13 @@ class RegistrationPeriod(BaseCatalog):
         return '{}:{}-{}'.format(self.name,
                                  self.start_date,
                                  self.end_date)
+
+    def save(self, *args, **kwargs):
+        if self.start_date >= self.end_date:
+            """Предупреждение выдавать"""
+            pass
+        else:
+            super().save(*args, **kwargs)
 
     class Meta:
         verbose_name = 'Период регистрации'
@@ -136,6 +143,10 @@ class CourseAcadPeriodPermission(BaseModel):
     class Meta:
         verbose_name = 'Правила выбора Курс-Акад.период'
         verbose_name_plural = 'Правила выбора Курс-Акад.период'
+        unique_together = (
+            'course',
+            'acad_period',
+        )
 
 
 # class Log(BaseModel):

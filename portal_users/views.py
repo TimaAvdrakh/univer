@@ -12,6 +12,7 @@ from rest_framework.permissions import IsAuthenticated
 from . import permissions
 from .utils import get_current_study_year
 from common.csrf_exempt_auth_class import CsrfExemptSessionAuthentication
+from portal.curr_settings import student_discipline_info_status
 
 
 class LoginView(generics.CreateAPIView):
@@ -163,21 +164,60 @@ class UserRegisterView(generics.CreateAPIView):
         )
 
 
-class StudentDisciplineListView(generics.ListAPIView):  # TODO Создать  StudentDisciplineInfo ЕСЛИ НЕ СОЗДАН СО СТАТУСОМ "НЕ НАЧАТО"
-    """Получить список дисциплин в текущем академическом периоде для регистрации"""
+class StudentDisciplineListView(generics.ListAPIView):
+    """Получить список дисциплин для регистрации
+       Принимает: query_params: ?study_plan=<uid study_plan>&acad_period=<uid acad_period>
+    """
     serializer_class = serializers.StudentDisciplineSerializer
+    permission_classes = (
+        IsAuthenticated,
+        permissions.StudyPlanPermission,
+    )
 
-    def get_queryset(self):
-        # profile = self.request.user.profile
-        study_plan_id = self.request.query_params.get('study_plan')
-        acad_period_id = self.request.query_params.get('acad_period')
+    def list(self, request, *args, **kwargs):
+        study_plan_id = request.query_params.get('study_plan')
+        acad_period_id = request.query_params.get('acad_period')
+
+        try:
+            study_plan = org_models.StudyPlan.objects.get(
+                pk=study_plan_id,
+                is_active=True,
+            )
+        except org_models.StudyPlan.DoesNotExist:
+            return Response(
+                {
+                    'message': 'not_found',
+                },
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        self.check_object_permissions(self.request,
+                                      study_plan)
+
+        try:
+            org_models.StudentDisciplineInfo.objects.get(
+                study_plan_id=study_plan_id,
+                acad_period_id=acad_period_id,
+            )
+        except org_models.StudentDisciplineInfo.DoesNotExist:
+            org_models.StudentDisciplineInfo.objects.create(
+                student=study_plan.student,
+                study_plan_id=study_plan_id,
+                acad_period_id=acad_period_id,
+                status_id=student_discipline_info_status["not_started"],
+            )
 
         student_disciplines = org_models.StudentDiscipline.objects.filter(
             study_plan_id=study_plan_id,
             acad_period_id=acad_period_id,
             is_active=True,
         )
-        return student_disciplines
+        serializer = self.serializer_class(student_disciplines,
+                                           many=True)
+        return Response(
+            serializer.data,
+            status=status.HTTP_200_OK
+        )
 
     # def list(self, request, *args, **kwargs):
     #     profile = request.user.profile
@@ -287,8 +327,41 @@ class MyGroupListView(generics.ListAPIView):
 class NotifyAdviser(generics.CreateAPIView):
     """Уведомлять адвайзера о выборе преподов для всех дисциплин"""
     serializer_class = serializers.NotifyAdviserSerializer
+    permission_classes = (
+        IsAuthenticated,
+        permissions.StudyPlanPermission,
+    )
 
-# class StudentAllDisciplineListView(generics.ListAPIView):  # TODO  группировать по акам периоду
+    def create(self, request, *args, **kwargs):
+        study_plan_id = request.data.get('study_plan')
+        try:
+            study_plan = org_models.StudyPlan.objects.get(
+                pk=study_plan_id,
+                is_active=True,
+            )
+        except org_models.StudyPlan.DoesNotExist:
+            return Response(
+                {
+                    'message': 'not_found',
+                },
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        self.check_object_permissions(request,
+                                      study_plan)
+
+        serializer = self.serializer_class(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(
+            {
+                'message': 'ok'
+            },
+            status=status.HTTP_200_OK
+        )
+
+
+# class StudentAllDisciplineListView(generics.ListAPIView):  # TODO
 #     serializer_class = serializers.StudentDisciplineShortSerializer
 #
 #     def get_queryset(self):

@@ -576,25 +576,30 @@ class NotifyAdviserSerializer(serializers.Serializer):
     study_plan = serializers.PrimaryKeyRelatedField(
         queryset=org_models.StudyPlan.objects.filter(is_active=True),
     )
+    acad_period = serializers.PrimaryKeyRelatedField(
+        queryset=org_models.AcadPeriod.objects.filter(is_active=True),
+    )
 
     def save(self, **kwargs):
         study_plan = self.validated_data.get('study_plan')
-        current_acad_period = "d922e730-2b90-4296-9802-1853020b0357"
+        acad_period = self.validated_data.get('acad_period')
 
         try:
             student_discipline_info = org_models.StudentDisciplineInfo.objects.get(
                 study_plan=study_plan,
-                acad_period=current_acad_period
+                acad_period=acad_period
             )
         except org_models.StudentDisciplineInfo.DoesNotExist:
             student_discipline_info = org_models.StudentDisciplineInfo.objects.create(
                 student=study_plan.student,
                 study_plan=study_plan,
-                acad_period=current_acad_period,
+                acad_period=acad_period,
+                status_id=student_discipline_info_status["not_started"],
             )
 
         if str(student_discipline_info.status_id) == student_discipline_info_status['chosen']:
             """Все дисциплины выбраны для текущего академ/периода"""
+
             print('Ok')
             # TODO уведомляем эдвайзера о том, что студент выбрал все диспциплины для текущего семестра
         else:
