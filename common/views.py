@@ -8,13 +8,15 @@ from rest_framework import status
 
 
 class AcadPeriodList(generics.ListAPIView):
-    """Получить список академического период"""
+    """Получить список академических периодов"""
     queryset = org_models.AcadPeriod.objects.filter(is_active=True)
     serializer_class = serializers.AcadPeriodSerializer
 
 
 class GetAcadPeriodsForRegister(generics.ListAPIView):
-    """Получить доступные для регистрации акам периоды"""
+    """Получить доступные для регистрации акам периоды
+    Принимает query_param: ?study_plan="<uid study_plan>"
+    """
     serializer_class = serializers.CourseAcadPeriodPermissionSerializer
 
     def list(self, request, *args, **kwargs):
