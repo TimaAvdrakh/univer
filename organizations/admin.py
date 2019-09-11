@@ -110,6 +110,13 @@ class AcadPeriodAdmin(admin.ModelAdmin):
 
 @admin.register(models.StudentDiscipline)
 class StudentDisciplineAdmin(admin.ModelAdmin):
+    list_filter = [
+        'student',
+        'acad_period',
+        'study_plan',
+        'status',
+        'author',
+    ]
     list_display = [
         'student',
         'study_plan',
@@ -234,7 +241,7 @@ class StudentDisciplineInfoAdmin(admin.ModelAdmin):
         'student',
         'acad_period',
         'study_plan',
-        # 'status',
+        'status',
         'uid',
     ]
 

@@ -21,4 +21,6 @@ urlpatterns = [
 
     path('my_study_plans/', views.MyStudyPlanListView.as_view(), name='my_study_plans'),
     path('my_groups/', views.MyGroupListView.as_view(), name='my_group'),
+
+    path('notify_advisor/', views.NotifyAdviser.as_view(), name='notify_advisor'),
 ]

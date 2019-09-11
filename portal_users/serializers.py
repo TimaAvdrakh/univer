@@ -429,6 +429,7 @@ class StudyPlanSerializer(serializers.ModelSerializer):
 
 
 class ChooseTeacherSerializer(serializers.ModelSerializer):
+    """Выбирает препода студент"""
     teacher_discipline = serializers.PrimaryKeyRelatedField(
         queryset=org_models.TeacherDiscipline.objects.filter(is_active=True),
     )
@@ -487,7 +488,7 @@ class ChooseTeacherSerializer(serializers.ModelSerializer):
             student_discipline_info.status_id = student_discipline_info_status['choosing']
         else:
             student_discipline_info.status_id = student_discipline_info_status['chosen']
-            # TODO уведомляем эдвайзера о том, что студент выбрал все диспциплины для текущего семестра
+        student_discipline_info.save()
 
     def __get_allowed_teachers(self, instance):
         lang = instance.study_plan.group.language
@@ -570,11 +571,31 @@ class StudentDisciplineShortSerializer(serializers.ModelSerializer):
 
 
 class NotifyAdviserSerializer(serializers.Serializer):
+    """Уведомлять адвайзера о выборе преподов для всех дисциплин"""
+
     study_plan = serializers.PrimaryKeyRelatedField(
         queryset=org_models.StudyPlan.objects.filter(is_active=True),
     )
 
-    def create(self, validated_data):
-        pass
+    def save(self, **kwargs):
+        study_plan = self.validated_data.get('study_plan')
+        current_acad_period = "d922e730-2b90-4296-9802-1853020b0357"
 
+        try:
+            student_discipline_info = org_models.StudentDisciplineInfo.objects.get(
+                study_plan=study_plan,
+                acad_period=current_acad_period
+            )
+        except org_models.StudentDisciplineInfo.DoesNotExist:
+            student_discipline_info = org_models.StudentDisciplineInfo.objects.create(
+                student=study_plan.student,
+                study_plan=study_plan,
+                acad_period=current_acad_period,
+            )
 
+        if str(student_discipline_info.status_id) == student_discipline_info_status['chosen']:
+            """Все дисциплины выбраны для текущего академ/периода"""
+            print('Ok')
+            # TODO уведомляем эдвайзера о том, что студент выбрал все диспциплины для текущего семестра
+        else:
+            raise CustomException(detail="not_all_chosen")

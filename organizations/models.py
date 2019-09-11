@@ -263,7 +263,8 @@ class StudyPlan(BaseModel):
     )
 
     def __str__(self):
-        return 'Учебный план {}'.format(self.student.first_name)
+        return 'Учебный план {} {}'.format(self.student.first_name,
+                                           self.group.name)
 
     class Meta:
         verbose_name = 'Учебный план'

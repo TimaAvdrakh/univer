@@ -167,37 +167,49 @@ class StudentDisciplineListView(generics.ListAPIView):  # TODO Создать  S
     """Получить список дисциплин в текущем академическом периоде для регистрации"""
     serializer_class = serializers.StudentDisciplineSerializer
 
-    def list(self, request, *args, **kwargs):
-        profile = request.user.profile
+    def get_queryset(self):
+        # profile = self.request.user.profile
+        study_plan_id = self.request.query_params.get('study_plan')
+        acad_period_id = self.request.query_params.get('acad_period')
 
-        current_acad_period = "d922e730-2b90-4296-9802-1853020b0357"  # 1 trimestr  # TODO определить текущий Семестр или Триместр
-
-        current_study_year = get_current_study_year()
-        study_plans = org_models.StudyPlan.objects.filter(
-            student=profile,
-            study_period__end__gt=current_study_year.get('start'),
+        student_disciplines = org_models.StudentDiscipline.objects.filter(
+            study_plan_id=study_plan_id,
+            acad_period_id=acad_period_id,
             is_active=True,
         )
-        resp = []
-        for study_plan in study_plans:
-            student_disciplines = org_models.StudentDiscipline.objects.filter(
-                study_plan=study_plan,
-                acad_period_id=current_acad_period,
-            )
-            serializer = self.serializer_class(student_disciplines,
-                                               many=True)
-            item = {
-                "study_plan_id": study_plan.pk,
-                'speciality_name': study_plan.speciality.name,
-                'active': False,
-                'disciplines': serializer.data,
-            }
-            resp.append(item)
+        return student_disciplines
 
-        return Response(
-            resp,
-            status=status.HTTP_200_OK
-        )
+    # def list(self, request, *args, **kwargs):
+    #     profile = request.user.profile
+
+    # current_acad_period = "d922e730-2b90-4296-9802-1853020b0357"  # 1 trimestr  # TODO определить текущий Семестр или Триместр
+
+    # current_study_year = get_current_study_year()
+    # study_plans = org_models.StudyPlan.objects.filter(
+    #     student=profile,
+    #     study_period__end__gt=current_study_year.get('start'),
+    #     is_active=True,
+    # )
+    # resp = []
+    # for study_plan in study_plans:
+    #     student_disciplines = org_models.StudentDiscipline.objects.filter(
+    #         study_plan=study_plan,
+    #         acad_period_id=current_acad_period,
+    #     )
+    #     serializer = self.serializer_class(student_disciplines,
+    #                                        many=True)
+    #     item = {
+    #         "study_plan_id": study_plan.pk,
+    #         'speciality_name': study_plan.speciality.name,
+    #         'active': False,
+    #         'disciplines': serializer.data,
+    #     }
+    #     resp.append(item)
+    #
+    # return Response(
+    #     resp,
+    #     status=status.HTTP_200_OK
+    # )
 
 
 class MyStudyPlanListView(generics.ListAPIView):
@@ -276,10 +288,8 @@ class NotifyAdviser(generics.CreateAPIView):
     """Уведомлять адвайзера о выборе преподов для всех дисциплин"""
     serializer_class = serializers.NotifyAdviserSerializer
 
-
 # class StudentAllDisciplineListView(generics.ListAPIView):  # TODO  группировать по акам периоду
 #     serializer_class = serializers.StudentDisciplineShortSerializer
 #
 #     def get_queryset(self):
 #         pass
-
