@@ -327,8 +327,7 @@ class AcadPeriod(BaseCatalog):
     )
 
     def __str__(self):
-        return '{} - {}'.format(self.name,
-                                self.period_type.name)
+        return '{}'.format(self.name)
 
     class Meta:
         verbose_name = 'Академический период'

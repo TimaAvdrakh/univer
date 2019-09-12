@@ -164,7 +164,7 @@ class UserRegisterView(generics.CreateAPIView):
         )
 
 
-class StudentDisciplineListView(generics.ListAPIView):
+class StudentDisciplineForRegListView(generics.ListAPIView):
     """Получить список дисциплин для регистрации
        Принимает: query_params: ?study_plan=<uid study_plan>&acad_period=<uid acad_period>
     """
@@ -199,7 +199,7 @@ class StudentDisciplineListView(generics.ListAPIView):
                 study_plan_id=study_plan_id,
                 acad_period_id=acad_period_id,
             )
-        except org_models.StudentDisciplineInfo.DoesNotExist:
+        except org_models.StudentDisciplineInfo.DoesNotExist:  # Создаем StudentDisciplineInfo если не создан
             org_models.StudentDisciplineInfo.objects.create(
                 student=study_plan.student,
                 study_plan_id=study_plan_id,
@@ -361,8 +361,45 @@ class NotifyAdviser(generics.CreateAPIView):
         )
 
 
-# class StudentAllDisciplineListView(generics.ListAPIView):  # TODO
-#     serializer_class = serializers.StudentDisciplineShortSerializer
-#
-#     def get_queryset(self):
-#         pass
+class StudentAllDisciplineListView(generics.ListAPIView):  # TODO
+    """Получить список дисциплин студента
+    Принимает: query_params: ?study_plan=<uid study_plan>&acad_period=<uid acad_period>
+    """
+    permission_classes = (
+        IsAuthenticated,
+        permissions.StudyPlanPermission,
+    )
+    serializer_class = serializers.StudentDisciplineShortSerializer
+
+    def list(self, request, *args, **kwargs):
+        study_plan_id = request.query_params.get('study_plan')
+        acad_period_id = request.query_params.get('acad_period')
+
+        try:
+            study_plan = org_models.StudyPlan.objects.get(
+                pk=study_plan_id,
+                is_active=True,
+            )
+        except org_models.StudyPlan.DoesNotExist:
+            return Response(
+                {
+                    'message': 'not_found',
+                },
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        self.check_object_permissions(self.request,
+                                      study_plan)
+
+        student_disciplines = org_models.StudentDiscipline.objects.filter(
+            study_plan_id=study_plan_id,
+            acad_period_id=acad_period_id,
+            is_active=True,
+        )
+        serializer = self.serializer_class(student_disciplines,
+                                           many=True)
+        return Response(
+            serializer.data,
+            status=status.HTTP_200_OK
+        )
+

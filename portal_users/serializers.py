@@ -561,7 +561,6 @@ class StudentDisciplineShortSerializer(serializers.ModelSerializer):
         model = org_models.StudentDiscipline
         fields = (
             'uid',
-            'student',
             'study_plan',
             'acad_period',
             'discipline',
