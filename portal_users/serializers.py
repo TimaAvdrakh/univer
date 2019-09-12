@@ -4,7 +4,7 @@ from rest_framework_recaptcha.fields import ReCaptchaField
 from django.contrib.auth.models import User
 from common.exceptions import CustomException
 from django.contrib.auth import password_validation
-from cron_app.models import ResetPasswordUrlSendTask, CredentialsEmailTask
+from cron_app.models import ResetPasswordUrlSendTask, CredentialsEmailTask, NotifyAdvisorTask
 from common.utils import password_generator
 from organizations import models as org_models
 from portal.curr_settings import student_discipline_status, student_discipline_info_status, language_multilingual_id
@@ -571,8 +571,7 @@ class StudentDisciplineShortSerializer(serializers.ModelSerializer):
 
 
 class NotifyAdviserSerializer(serializers.Serializer):
-    """Уведомлять адвайзера о выборе преподов для всех дисциплин"""
-
+    """Уведомлять адвайзера о том, что студент завершил регистрацию на дисциплины"""
     study_plan = serializers.PrimaryKeyRelatedField(
         queryset=org_models.StudyPlan.objects.filter(is_active=True),
     )
@@ -598,9 +597,8 @@ class NotifyAdviserSerializer(serializers.Serializer):
             )
 
         if str(student_discipline_info.status_id) == student_discipline_info_status['chosen']:
-            """Все дисциплины выбраны для текущего академ/периода"""
-
-            print('Ok')
-            # TODO уведомляем эдвайзера о том, что студент выбрал все диспциплины для текущего семестра
+            """Все дисциплины выбраны для выбранного академ/периода"""
+            # Создаем задачу для отправки уведомления
+            NotifyAdvisorTask.objects.create(stud_discipline_info=student_discipline_info)
         else:
             raise CustomException(detail="not_all_chosen")

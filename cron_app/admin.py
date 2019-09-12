@@ -28,3 +28,14 @@ class CredentialsEmailTaskAdmin(admin.ModelAdmin):
         'password',
         'is_success',
     ]
+
+
+@admin.register(models.NotifyAdvisorTask)
+class NotifyAdvisorTaskAdmin(admin.ModelAdmin):
+    list_filter = (
+        'is_success',
+    )
+    list_display = [
+        'stud_discipline_info',
+        'is_success',
+    ]

@@ -67,3 +67,40 @@ class SendCredentialsJob(CronJobBase):
             task.is_success = True
             task.save()
 
+
+class NotifyAdvisorJob(CronJobBase):
+    """Отправляет уведомление Эдвайзеру,
+        о завершении выбора студента
+    """
+    RUN_EVERY_MINS = 1
+    schedule = Schedule(run_every_mins=RUN_EVERY_MINS)
+    code = 'crop_app.notify_advisor'
+
+    def do(self):
+        mail_subject = 'Студент закончил выбор'
+        tasks = models.NotifyAdvisorTask.objects.filter(is_success=False)
+        for task in tasks:
+            stud_discipline_info = task.stud_discipline_info
+            acad_period = stud_discipline_info.acad_period
+            study_plan = stud_discipline_info.study_plan
+            student = study_plan.student
+            advisor = study_plan.group.supervisor
+
+            msg_plain = render_to_string('emails/student_finished_selection.txt',
+                                         {'full_name': student.full_name,
+                                          'acad_period': acad_period.name}
+                                         )
+            msg_html = render_to_string('emails/student_finished_selection.html',
+                                        {'full_name': student.full_name,
+                                         'acad_period': acad_period.name}
+                                        )
+
+            send_mail(
+                mail_subject,
+                msg_plain,
+                'avtoexpertastana@gmail.com',
+                [advisor.email],
+                html_message=msg_html,
+            )
+            task.is_success = True
+            task.save()

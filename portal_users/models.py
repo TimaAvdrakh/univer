@@ -41,6 +41,7 @@ class Profile(BaseModel):
     middle_name = models.CharField(
         max_length=100,
         verbose_name='Отчество',
+        default='',
         blank=True,
     )
     first_name_en = models.CharField(
@@ -155,6 +156,15 @@ class Profile(BaseModel):
 
     def __str__(self):
         return self.user.username
+
+    @property
+    def full_name(self):
+        """ФИО"""
+        return '{} {} {}'.format(
+            self.last_name,
+            self.first_name,
+            self.middle_name
+        )
 
     class Meta:
         verbose_name = 'Профиль'

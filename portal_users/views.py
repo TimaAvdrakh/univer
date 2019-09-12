@@ -325,7 +325,7 @@ class MyGroupListView(generics.ListAPIView):
 
 
 class NotifyAdviser(generics.CreateAPIView):
-    """Уведомлять адвайзера о выборе преподов для всех дисциплин"""
+    """Уведомлять адвайзера о том, что студент завершил регистрацию на дисциплины"""
     serializer_class = serializers.NotifyAdviserSerializer
     permission_classes = (
         IsAuthenticated,

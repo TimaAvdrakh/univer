@@ -51,3 +51,14 @@ class CredentialsEmailTask(BaseTask):
         max_length=100,
         verbose_name='Пароль',
     )
+
+
+class NotifyAdvisorTask(BaseTask):
+    """Задача для отправки уведомление Эдвайзеру,
+    о завершении выбора студента
+    """
+    stud_discipline_info = models.ForeignKey(
+        'organizations.StudentDisciplineInfo',
+        on_delete=models.CASCADE,
+        verbose_name='Инфо о выборе студента',
+    )
