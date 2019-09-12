@@ -265,8 +265,9 @@ class StudyPlan(BaseModel):
     )
 
     def __str__(self):
-        return 'Учебный план {} {}'.format(self.student.first_name,
-                                           self.group.name)
+        return 'Уч.план {} {} {}'.format(self.student.first_name,
+                                         self.speciality,
+                                         self.group.name)
 
     @property
     def current_course(self):
