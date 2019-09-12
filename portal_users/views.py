@@ -222,7 +222,7 @@ class StudentDisciplineForRegListView(generics.ListAPIView):
     # def list(self, request, *args, **kwargs):
     #     profile = request.user.profile
 
-    # current_acad_period = "d922e730-2b90-4296-9802-1853020b0357"  # 1 trimestr  # TODO определить текущий Семестр или Триместр
+    # current_acad_period = "d922e730-2b90-4296-9802-1853020b0357"  # 1 trimestr
 
     # current_study_year = get_current_study_year()
     # study_plans = org_models.StudyPlan.objects.filter(
@@ -406,5 +406,11 @@ class StudentAllDisciplineListView(generics.ListAPIView):  # TODO
 
 class ProfileDetailView(generics.RetrieveAPIView):
     """Получить профиль пользователя"""
+    queryset = models.Profile.objects.filter(is_active=True)
+    serializer_class = serializers.ProfileFullSerializer
+
+
+class ProfileEditView(generics.UpdateAPIView):
+    """Редактировать профиль"""
     queryset = models.Profile.objects.filter(is_active=True)
     serializer_class = serializers.ProfileFullSerializer

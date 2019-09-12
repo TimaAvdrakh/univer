@@ -55,9 +55,13 @@ class MaritalStatusAdmin(admin.ModelAdmin):
 
 @admin.register(models.Interest)
 class InterestAdmin(admin.ModelAdmin):
+    list_filter = (
+        "is_active",
+    )
     list_display = [
         "name",
         "uid",
+        "is_active",
     ]
 
 
@@ -70,4 +74,37 @@ class RoleAdmin(admin.ModelAdmin):
         "is_teacher",
         "is_org_admin",
         "is_supervisor",
+    ]
+
+
+@admin.register(models.Level)
+class LevelAdmin(admin.ModelAdmin):
+    list_display = [
+        "name",
+        "uid",
+    ]
+
+
+@admin.register(models.AchievementType)
+class AchievementTypeAdmin(admin.ModelAdmin):
+    list_display = [
+        "name",
+        "uid",
+    ]
+
+
+@admin.register(models.Achievement)
+class AchievementAdmin(admin.ModelAdmin):
+    list_filter = (
+        'profile',
+        'is_active',
+        "achievement_type",
+        "level",
+    )
+    list_display = [
+        "profile",
+        "achievement_type",
+        "level",
+        "content",
+        "is_active",
     ]

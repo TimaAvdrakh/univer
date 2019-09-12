@@ -9,6 +9,7 @@ from common.utils import password_generator
 from organizations import models as org_models
 from portal.curr_settings import student_discipline_status, student_discipline_info_status, language_multilingual_id
 from django.db.models import Q
+from common.serializers import FilteredListSerializer
 
 
 class LoginSerializer(serializers.Serializer):
@@ -31,28 +32,75 @@ class RoleSerializer(serializers.ModelSerializer):
         )
 
 
+class InterestSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.Interest
+        list_serializer_class = FilteredListSerializer
+        fields = (
+            'uid',
+            'name',
+            'is_active',
+        )
+
+
+class AchievementSerializer(serializers.ModelSerializer):
+    achievement_type = serializers.CharField()
+    level = serializers.CharField()
+
+    class Meta:
+        model = models.Achievement
+        list_serializer_class = FilteredListSerializer
+        fields = (
+            'uid',
+            'achievement_type',
+            'level',
+            'content',
+        )
+
+
 class ProfileFullSerializer(serializers.ModelSerializer):
     """Используется для получения и редактирования профиля"""
     profileId = serializers.CharField(
         source='uid',
+        read_only=True,
     )
     firstName = serializers.CharField(
         max_length=100,
         source='first_name',
-        required=True,
+        read_only=True,
     )
     lastName = serializers.CharField(
         max_length=100,
         source='last_name',
-        required=True,
+        read_only=True,
     )
     middleName = serializers.CharField(
         max_length=100,
         source='middle_name',
-        allow_blank=True,
+        read_only=True,
     )
-    gender = serializers.CharField()
-    marital_status = serializers.CharField()
+    gender = serializers.CharField(
+        read_only=True,
+    )
+    marital_status = serializers.CharField(
+        read_only=True,
+    )
+    interests = InterestSerializer(
+        many=True,
+        required=False,
+    )
+    interests_for_del = serializers.ListField(
+        child=serializers.CharField(),
+        required=False,
+    )
+    achievements = AchievementSerializer(
+        many=True,
+        required=False,
+    )
+    achievements_for_del = serializers.ListField(
+        child=serializers.CharField(),
+        required=False,
+    )
 
     class Meta:
         model = models.Profile
@@ -73,14 +121,52 @@ class ProfileFullSerializer(serializers.ModelSerializer):
             'skype',
             'avatar',
             'interests',
+            'interests_for_del',
+            'achievements',
+            'achievements_for_del',
             'extra_data',
         )
+
+    def update(self, instance, validated_data):
+        instance.address = validated_data.get('address', instance.address)
+        instance.phone = validated_data.get('phone', instance.phone)
+        instance.email = validated_data.get('email', instance.email)
+        instance.skype = validated_data.get('skype', instance.skype)
+        instance.extra_data = validated_data.get('extra_data', instance.extra_data)
+        instance.save()
+
+        interests = validated_data.get('interests')
+        for interest in interests:
+            models.Interest.objects.get_or_create(
+                profile=instance,
+                name=interest['name'],
+                is_active=True,
+            )
+
+        interests_for_del = validated_data.get('interests_for_del')
+        models.Interest.objects.filter(pk__in=interests_for_del).update(is_active=False)
+
+        achievements = validated_data.get('achievements')
+        for achievement in achievements:
+            models.Achievement.objects.get_or_create(
+                profile=instance,
+                level_id=achievement['level'],
+                achievement_type_id=achievement['achievement_type'],
+                content=achievement['content'],
+                is_active=True,
+            )
+
+        achievements_for_del = validated_data.get('achievements_for_del')
+        models.Achievement.objects.filter(pk__in=achievements_for_del).update(is_active=False)
+
+        return instance
 
     def to_representation(self, instance):
         data = super().to_representation(instance=instance)
         role = models.Role.objects.filter(profile=instance).first()
         role_serializer = RoleSerializer(instance=role)
         data['role'] = role_serializer.data
+
         return data
 
 

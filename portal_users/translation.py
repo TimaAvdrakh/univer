@@ -10,3 +10,13 @@ class GenderTranslationOptions(TranslationOptions):
 @register(models.MaritalStatus)
 class MaritalStatusTranslationOptions(TranslationOptions):
     fields = ('name',)
+
+
+@register(models.Level)
+class LevelTranslationOptions(TranslationOptions):
+    fields = ('name',)
+
+
+@register(models.AchievementType)
+class AchievementTypeTranslationOptions(TranslationOptions):
+    fields = ('name',)

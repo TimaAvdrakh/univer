@@ -3,6 +3,12 @@ from organizations import models as org_models
 from . import models
 
 
+class FilteredListSerializer(serializers.ListSerializer):
+    def to_representation(self, data):
+        data = data.filter(is_active=True)
+        return super().to_representation(data)
+
+
 class AcadPeriodSerializer(serializers.ModelSerializer):
     class Meta:
         model = org_models.AcadPeriod

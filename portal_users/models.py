@@ -18,12 +18,6 @@ class MaritalStatus(BaseCatalog):
         verbose_name_plural = 'Семейное положение'
 
 
-class Interest(BaseCatalog):
-    class Meta:
-        verbose_name = 'Увлечение'
-        verbose_name_plural = 'Увлечения'
-
-
 class Profile(BaseModel):
     user = models.OneToOneField(
         User,
@@ -134,12 +128,12 @@ class Profile(BaseModel):
         blank=True,
         null=True,
     )
-    interests = models.ManyToManyField(
-        Interest,
-        related_name='profiles',
-        blank=True,
-        verbose_name='Увлечения',
-    )
+    # interests = models.ManyToManyField(
+    #     Interest,
+    #     related_name='profiles',
+    #     blank=True,
+    #     verbose_name='Увлечения',
+    # )
     # Обучение
     entry_date = models.DateField(
         null=True,
@@ -168,6 +162,20 @@ class Profile(BaseModel):
     class Meta:
         verbose_name = 'Профиль'
         verbose_name_plural = 'Профили'
+
+
+class Interest(BaseCatalog):
+    profile = models.ForeignKey(
+        Profile,
+        null=True,
+        on_delete=models.CASCADE,
+        verbose_name='Профиль',
+        related_name='interests',
+    )
+
+    class Meta:
+        verbose_name = 'Увлечение'
+        verbose_name_plural = 'Увлечения'
 
 
 class Role(BaseModel):
