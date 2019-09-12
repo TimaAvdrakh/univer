@@ -25,4 +25,6 @@ urlpatterns = [
     path('notify_advisor/', views.NotifyAdviser.as_view(), name='notify_advisor'),
 
     path('student/all_discipline/', views.StudentAllDisciplineListView.as_view(), name='students_all_discipline'),
+
+    path('profile/<pk>/', views.ProfileDetailView.as_view(), name='profile_detail'),
 ]

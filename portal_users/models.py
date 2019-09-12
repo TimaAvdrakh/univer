@@ -67,13 +67,13 @@ class Profile(BaseModel):
         blank=True,
         verbose_name='Место рождения',
     )
-    nationality = models.CharField(
+    nationality = models.CharField(  # TODO справочник
         max_length=100,
         default='',
         blank=True,
         verbose_name='Национальность',
     )
-    citizenship = models.CharField(
+    citizenship = models.CharField(  # TODO справочник
         max_length=100,
         default='',
         blank=True,
@@ -140,7 +140,6 @@ class Profile(BaseModel):
         blank=True,
         verbose_name='Увлечения',
     )
-
     # Обучение
     entry_date = models.DateField(
         null=True,

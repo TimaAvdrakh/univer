@@ -403,3 +403,8 @@ class StudentAllDisciplineListView(generics.ListAPIView):  # TODO
             status=status.HTTP_200_OK
         )
 
+
+class ProfileDetailView(generics.RetrieveAPIView):
+    """Получить профиль пользователя"""
+    queryset = models.Profile.objects.filter(is_active=True)
+    serializer_class = serializers.ProfileFullSerializer

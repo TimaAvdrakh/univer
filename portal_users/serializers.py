@@ -31,14 +31,63 @@ class RoleSerializer(serializers.ModelSerializer):
         )
 
 
+class ProfileFullSerializer(serializers.ModelSerializer):
+    """Используется для получения и редактирования профиля"""
+    profileId = serializers.CharField(
+        source='uid',
+    )
+    firstName = serializers.CharField(
+        max_length=100,
+        source='first_name',
+        required=True,
+    )
+    lastName = serializers.CharField(
+        max_length=100,
+        source='last_name',
+        required=True,
+    )
+    middleName = serializers.CharField(
+        max_length=100,
+        source='middle_name',
+        allow_blank=True,
+    )
+    gender = serializers.CharField()
+    marital_status = serializers.CharField()
+
+    class Meta:
+        model = models.Profile
+        fields = (
+            'profileId',
+            'firstName',
+            'lastName',
+            'middleName',
+            'first_name_en',
+            'last_name_en',
+            'birth_date',
+            'birth_place',
+            'gender',
+            'marital_status',
+            'address',
+            'phone',
+            'email',
+            'skype',
+            'avatar',
+            'interests',
+            'extra_data',
+        )
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance=instance)
+        role = models.Role.objects.filter(profile=instance).first()
+        role_serializer = RoleSerializer(instance=role)
+        data['role'] = role_serializer.data
+        return data
+
+
 class ProfileDetailSerializer(serializers.ModelSerializer):
     profileId = serializers.CharField(
         source='uid',
     )
-    # userId = serializers.PrimaryKeyRelatedField(
-    #     source='user',
-    #     read_only=True,
-    # )
     middleName = serializers.CharField(
         max_length=100,
         source='middle_name',
@@ -59,7 +108,6 @@ class ProfileDetailSerializer(serializers.ModelSerializer):
         model = models.Profile
         fields = (
             'profileId',
-            # 'userId',
             'firstName',
             'lastName',
             'middleName',
@@ -103,7 +151,6 @@ class ProfileShortSerializer(serializers.ModelSerializer):
             'firstName',
             'lastName',
             'middleName',
-            # 'avatar'
         )
 
 
