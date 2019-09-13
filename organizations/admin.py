@@ -245,6 +245,7 @@ class DisciplineAdmin(admin.ModelAdmin):
 class StatusAdmin(admin.ModelAdmin):
     list_display = [
         'name',
+        'number',
         'uid',
     ]
 

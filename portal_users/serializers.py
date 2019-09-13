@@ -472,20 +472,27 @@ class TeacherDisciplineSerializer(serializers.ModelSerializer):
         )
 
 
+class StudentDisciplineStatusSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = org_models.StudentDisciplineStatus
+        fields = (
+            'name',
+            'number',
+        )
+
+
 class StudentDisciplineSerializer(serializers.ModelSerializer):
     acad_period = serializers.CharField(read_only=True)
     discipline = serializers.CharField(read_only=True)
     load_type = serializers.CharField(read_only=True)
     teacher = ProfileShortSerializer()
-    status = serializers.CharField()
+    status = StudentDisciplineStatusSerializer()
     author = ProfileShortSerializer()
 
     class Meta:
         model = org_models.StudentDiscipline
         fields = (
             'uid',
-            # 'student',
-            # 'study_plan',
             'acad_period',
             'discipline',
             'load_type',

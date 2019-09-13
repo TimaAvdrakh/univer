@@ -343,6 +343,11 @@ class AcadPeriod(BaseCatalog):
 
 
 class StudentDisciplineStatus(BaseCatalog):
+    number = models.IntegerField(
+        null=True,
+        verbose_name='Номер',
+    )
+
     class Meta:
         verbose_name = 'Статус при выборе препода'
         verbose_name_plural = 'Статусы при выборе препода'
