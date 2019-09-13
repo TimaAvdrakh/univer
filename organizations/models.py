@@ -175,7 +175,7 @@ class Education(BaseModel):
     )
 
     def __str__(self):
-        return '{} - {}'.format(self.profile.user.username,
+        return '{} - {}'.format(self.profile.full_name,
                                 self.institute)
 
     class Meta:
@@ -269,6 +269,10 @@ class StudyPlan(BaseModel):
         EducationType,
         on_delete=models.CASCADE,
         verbose_name='На базе',
+    )
+    entry_date = models.DateField(
+        null=True,
+        verbose_name='Дата поступления в ВУЗ',
     )
 
     def __str__(self):

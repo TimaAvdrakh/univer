@@ -5,15 +5,16 @@ from organizations import models as org_models
 from datetime import date
 from rest_framework.response import Response
 from rest_framework import status
+from portal_users.models import Level, AchievementType
 
 
-class AcadPeriodList(generics.ListAPIView):
+class AcadPeriodListView(generics.ListAPIView):
     """Получить список академических периодов"""
     queryset = org_models.AcadPeriod.objects.filter(is_active=True)
     serializer_class = serializers.AcadPeriodSerializer
 
 
-class GetAcadPeriodsForRegister(generics.ListAPIView):
+class GetAcadPeriodsForRegisterView(generics.ListAPIView):
     """Получить доступные для регистрации акам периоды
     Принимает query_param: ?study_plan="<uid study_plan>"
     """
@@ -48,3 +49,15 @@ class GetAcadPeriodsForRegister(generics.ListAPIView):
             serializer.data,
             status=status.HTTP_200_OK
         )
+
+
+class LevelListView(generics.ListAPIView):
+    """Получить список уровней"""
+    queryset = Level.objects.filter(is_active=True)
+    serializer_class = serializers.LevelSerializer
+
+
+class AchievementTypeListView(generics.ListAPIView):
+    """Получить список видов достижений"""
+    queryset = AchievementType.objects.filter(is_active=True)
+    serializer_class = serializers.AchievementTypeSerializer

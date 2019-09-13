@@ -66,16 +66,16 @@ class Profile(BaseModel):
         blank=True,
         verbose_name='Место рождения',
     )
-    nationality = models.CharField(  # TODO справочник
-        max_length=100,
-        default='',
-        blank=True,
+    nationality = models.ForeignKey(
+        'common.Nationality',
+        on_delete=models.CASCADE,
+        null=True,
         verbose_name='Национальность',
     )
-    citizenship = models.CharField(  # TODO справочник
-        max_length=100,
-        default='',
-        blank=True,
+    citizenship = models.ForeignKey(
+        'common.Citizenship',
+        on_delete=models.CASCADE,
+        null=True,
         verbose_name='Гражданство',
     )
     gender = models.ForeignKey(
@@ -132,18 +132,6 @@ class Profile(BaseModel):
         verbose_name='Аватар',
         blank=True,
         null=True,
-    )
-    # interests = models.ManyToManyField(
-    #     Interest,
-    #     related_name='profiles',
-    #     blank=True,
-    #     verbose_name='Увлечения',
-    # )
-    # Обучение
-    entry_date = models.DateField(
-        null=True,
-        blank=True,
-        verbose_name='Дата поступления в ВУЗ',
     )
     extra_data = models.CharField(
         max_length=1000,

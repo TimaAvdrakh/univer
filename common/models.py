@@ -49,10 +49,28 @@ class BaseCatalog(BaseModel):
         abstract = True
 
 
+class Nationality(BaseCatalog):
+    class Meta:
+        verbose_name = 'Национальность'
+        verbose_name_plural = 'Национальности'
+
+
+class Citizenship(BaseCatalog):
+    class Meta:
+        verbose_name = 'Гражданство'
+        verbose_name_plural = 'Гражданство'
+
+
 class DocumentType(BaseCatalog):
     class Meta:
         verbose_name = 'Тип документа'
         verbose_name_plural = 'Типы документа'
+
+
+class GovernmentAgency(BaseCatalog):
+    class Meta:
+        verbose_name = 'Государственная организация'
+        verbose_name_plural = 'Государственные организации'
 
 
 class IdentityDocument(BaseModel):
@@ -76,17 +94,22 @@ class IdentityDocument(BaseModel):
         max_length=100,
         verbose_name='Номер',
     )
+    given_date = models.DateField(
+        null=True,
+        verbose_name='Дата выдачи',
+    )
     validity_date = models.DateField(
         verbose_name='Срок действия',
     )
-
-    # issued_by = models.CharField(
-    #     max_length=100,
-    #     verbose_name='Кем выдан',
-    # )
+    issued_by = models.ForeignKey(
+        GovernmentAgency,
+        on_delete=models.CASCADE,
+        null=True,
+        verbose_name='Кем выдан',
+    )
 
     def __str__(self):
-        return '{}'.format(self.profile.user.get_full_name(),
+        return '{}'.format(self.profile.full_name,
                            self.document_type)
 
     class Meta:

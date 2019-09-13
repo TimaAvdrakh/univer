@@ -275,3 +275,27 @@ class EducationBaseAdmin(admin.ModelAdmin):
         'name',
         'uid',
     ]
+
+
+@admin.register(models.Education)
+class EducationAdmin(admin.ModelAdmin):
+    list_filter = (
+        'profile',
+        'document_type',
+        'edu_type',
+        'serial_number',
+        'number',
+        'given_date',
+        'institute',
+        'is_active',
+    )
+    list_display = (
+        'profile',
+        'document_type',
+        'edu_type',
+        'serial_number',
+        'number',
+        'given_date',
+        'institute',
+        'is_active',
+    )

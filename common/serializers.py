@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from organizations import models as org_models
 from . import models
+from portal_users.models import Level, AchievementType
 
 
 class FilteredListSerializer(serializers.ListSerializer):
@@ -40,4 +41,52 @@ class CourseAcadPeriodPermissionSerializer(serializers.ModelSerializer):
         )
 
 
+class LevelSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Level
+        fields = (
+            'uid',
+            'name',
+        )
 
+
+class AchievementTypeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = AchievementType
+        fields = (
+            'uid',
+            'name',
+        )
+
+
+class IdentityDocumentSerializer(serializers.ModelSerializer):
+    document_type = serializers.CharField()
+    issued_by = serializers.CharField()
+
+    class Meta:
+        model = models.IdentityDocument
+        fields = (
+            'document_type',
+            'serial_number',
+            'number',
+            'given_date',
+            'validity_date',
+            'issued_by',
+        )
+
+
+class EducationSerializer(serializers.ModelSerializer):
+    document_type = serializers.CharField()
+    edu_type = serializers.CharField()
+    institute = serializers.CharField()
+
+    class Meta:
+        model = org_models.Education
+        fields = (
+            'document_type',
+            'edu_type',
+            'serial_number',
+            'number',
+            'given_date',
+            'institute',
+        )

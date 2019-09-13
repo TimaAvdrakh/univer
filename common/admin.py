@@ -29,3 +29,55 @@ class RegistrationForDisciplineAdmin(admin.ModelAdmin):
         'end_date',
     ]
 
+
+@admin.register(models.IdentityDocument)
+class IdentityDocumentAdmin(admin.ModelAdmin):
+    list_filter = (
+        'profile',
+        'document_type',
+        'serial_number',
+        'number',
+        'validity_date',
+        'issued_by',
+    )
+    list_display = (
+        'profile',
+        'document_type',
+        'serial_number',
+        'number',
+        'given_date',
+        'validity_date',
+        'issued_by',
+    )
+
+
+@admin.register(models.DocumentType)
+class DocumentTypeAdmin(admin.ModelAdmin):
+    list_display = (
+        'name',
+        'uid'
+    )
+
+
+@admin.register(models.GovernmentAgency)
+class GosOrganizationAdmin(admin.ModelAdmin):
+    list_display = (
+        'name',
+        'uid'
+    )
+
+
+@admin.register(models.Nationality)
+class NationalityAdmin(admin.ModelAdmin):
+    list_display = (
+        'name',
+        'uid'
+    )
+
+
+@admin.register(models.Citizenship)
+class CitizenshipAdmin(admin.ModelAdmin):
+    list_display = (
+        'name',
+        'uid'
+    )

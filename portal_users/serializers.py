@@ -9,7 +9,7 @@ from common.utils import password_generator
 from organizations import models as org_models
 from portal.curr_settings import student_discipline_status, student_discipline_info_status, language_multilingual_id
 from django.db.models import Q
-from common.serializers import FilteredListSerializer
+from common import serializers as common_serializers
 
 
 class LoginSerializer(serializers.Serializer):
@@ -35,7 +35,7 @@ class RoleSerializer(serializers.ModelSerializer):
 class InterestSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Interest
-        list_serializer_class = FilteredListSerializer
+        list_serializer_class = common_serializers.FilteredListSerializer
         fields = (
             'uid',
             'name',
@@ -49,7 +49,7 @@ class AchievementSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = models.Achievement
-        list_serializer_class = FilteredListSerializer
+        list_serializer_class = common_serializers.FilteredListSerializer
         fields = (
             'uid',
             'achievement_type',
@@ -101,6 +101,16 @@ class ProfileFullSerializer(serializers.ModelSerializer):
         child=serializers.CharField(),
         required=False,
     )
+    identity_documents = common_serializers.IdentityDocumentSerializer(
+        many=True,
+        required=False,
+    )
+    educations = common_serializers.EducationSerializer(
+        many=True,
+        required=False,
+    )
+    nationality = serializers.CharField()
+    citizenship = serializers.CharField()
 
     class Meta:
         model = models.Profile
@@ -114,6 +124,8 @@ class ProfileFullSerializer(serializers.ModelSerializer):
             'last_name_en',
             'birth_date',
             'birth_place',
+            'nationality',
+            'citizenship',
             'gender',
             'marital_status',
             'address',
@@ -126,6 +138,12 @@ class ProfileFullSerializer(serializers.ModelSerializer):
             'achievements',
             'achievements_for_del',
             'extra_data',
+            'iin',
+            'identity_documents',
+            'educations',
+        )
+        read_only_fields = (
+            'iin',
         )
 
     def update(self, instance, validated_data):
@@ -163,10 +181,17 @@ class ProfileFullSerializer(serializers.ModelSerializer):
         return instance
 
     def to_representation(self, instance):
+        request = self.context.get('request')
         data = super().to_representation(instance=instance)
         role = models.Role.objects.filter(profile=instance).first()
         role_serializer = RoleSerializer(instance=role)
         data['role'] = role_serializer.data
+
+        if request.user.profile != instance:
+            data['iin'] = ''
+
+        if request.user.profile != instance:
+            data['identity_documents'] = []
 
         return data
 
@@ -399,9 +424,6 @@ class UserCreateSerializer(serializers.ModelSerializer):
     skype = serializers.CharField(
         required=True,
     )
-    entry_date = serializers.DateField(
-        required=True,
-    )
     study_form = serializers.PrimaryKeyRelatedField(
         required=True,
         queryset=org_models.StudyForm.objects.filter(is_active=True),
@@ -428,8 +450,6 @@ class UserCreateSerializer(serializers.ModelSerializer):
             'phone',
             'email',
             'skype',
-            # 'interests',
-            'entry_date',
             'study_form',
         )
 
@@ -566,7 +586,7 @@ class StudyPlanSerializer(serializers.ModelSerializer):
     on_base = serializers.CharField()
     education_base = serializers.CharField()
     active = serializers.BooleanField(
-        default=False,
+        default=False,  # Для удобства на фронте
     )
 
     class Meta:
@@ -587,6 +607,7 @@ class StudyPlanSerializer(serializers.ModelSerializer):
             'education_base',
             'active',
             'current_course',
+            'entry_date',
         )
 
     def to_representation(self, instance):
