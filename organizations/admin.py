@@ -266,3 +266,11 @@ class StudentDisciplineInfoStatusAdmin(admin.ModelAdmin):
         'name',
         'uid',
     ]
+
+
+@admin.register(models.EducationBase)
+class EducationBaseAdmin(admin.ModelAdmin):
+    list_display = [
+        'name',
+        'uid',
+    ]

@@ -24,6 +24,11 @@ class Profile(BaseModel):
         related_name='profile',
         on_delete=models.CASCADE,
     )
+    student_id = models.IntegerField(
+        null=True,
+        verbose_name='ID студента',
+        help_text='Из 1С',
+    )
     first_name = models.CharField(
         max_length=100,
         verbose_name='Имя',

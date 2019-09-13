@@ -106,6 +106,7 @@ class ProfileFullSerializer(serializers.ModelSerializer):
         model = models.Profile
         fields = (
             'profileId',
+            'student_id',
             'firstName',
             'lastName',
             'middleName',
@@ -527,17 +528,27 @@ class StudentDisciplineSerializer(serializers.ModelSerializer):
         return teacher_disciplines
 
 
+class EducationProgramSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = org_models.EducationProgram
+        fields = (
+            'name',
+            'code',
+        )
+
+
 class StudyPlanSerializer(serializers.ModelSerializer):
     study_period = serializers.CharField()
     group = serializers.CharField()
     speciality = serializers.CharField()
     faculty = serializers.CharField()
     cathedra = serializers.CharField()
-    education_program = serializers.CharField()
+    education_program = EducationProgramSerializer()
     education_type = serializers.CharField()
     preparation_level = serializers.CharField()
     study_form = serializers.CharField()
     on_base = serializers.CharField()
+    education_base = serializers.CharField()
     active = serializers.BooleanField(
         default=False,
     )
@@ -557,7 +568,9 @@ class StudyPlanSerializer(serializers.ModelSerializer):
             'preparation_level',
             'study_form',
             'on_base',
+            'education_base',
             'active',
+            'current_course',
         )
 
 

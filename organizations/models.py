@@ -122,6 +122,12 @@ class PreparationLevel(BaseCatalog):
 
 
 class EducationProgram(BaseCatalog):
+    code = models.CharField(
+        default='',
+        max_length=100,
+        verbose_name='Код',
+    )
+
     class Meta:
         verbose_name = 'Образовательная программа'
         verbose_name_plural = 'Образовательные программы'
@@ -253,11 +259,12 @@ class StudyPlan(BaseModel):
         on_delete=models.CASCADE,
         verbose_name='Форма обучения',
     )
-    # education_base = models.ForeignKey(
-    #     org_models.EducationBase,
-    #     on_delete=models.CASCADE,
-    #     verbose_name='Основа обучения',
-    # )
+    education_base = models.ForeignKey(
+        EducationBase,
+        on_delete=models.CASCADE,
+        null=True,
+        verbose_name='Основа обучения',
+    )
     on_base = models.ForeignKey(
         EducationType,
         on_delete=models.CASCADE,
