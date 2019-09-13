@@ -459,9 +459,18 @@ class UserCreateSerializer(serializers.ModelSerializer):
         return profile
 
 
+class LanguageSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = org_models.Language
+        fields = (
+            'uid',
+            'name',
+        )
+
+
 class TeacherDisciplineSerializer(serializers.ModelSerializer):
     teacher = ProfileShortSerializer()
-    language = serializers.CharField()
+    language = LanguageSerializer()
 
     class Meta:
         model = org_models.TeacherDiscipline
@@ -579,6 +588,20 @@ class StudyPlanSerializer(serializers.ModelSerializer):
             'active',
             'current_course',
         )
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+
+        data['is_multilang'] = False
+        if instance.group.language.pk == language_multilingual_id:
+            data['is_multilang'] = True
+
+        data['language'] = {
+            'name': instance.group.language.name,
+            'uid': instance.group.language.pk
+        }
+
+        return data
 
 
 class ChooseTeacherSerializer(serializers.ModelSerializer):
@@ -706,7 +729,7 @@ class GroupDetailSerializer(serializers.ModelSerializer):
 class StudentDisciplineShortSerializer(serializers.ModelSerializer):
     """Используется для получения всех дисциплин студента во всех акад.периодах"""
 
-    acad_period = serializers.CharField(read_only=True)
+    # acad_period = serializers.CharField(read_only=True)
     discipline = serializers.CharField(read_only=True)
     load_type = serializers.CharField(read_only=True)
 
@@ -714,8 +737,8 @@ class StudentDisciplineShortSerializer(serializers.ModelSerializer):
         model = org_models.StudentDiscipline
         fields = (
             'uid',
-            'study_plan',
-            'acad_period',
+            # 'study_plan',
+            # 'acad_period',
             'discipline',
             'load_type',
             'hours',

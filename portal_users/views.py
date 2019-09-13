@@ -363,8 +363,9 @@ class NotifyAdviser(generics.CreateAPIView):
 
 class StudentAllDisciplineListView(generics.ListAPIView):  # TODO
     """Получить список дисциплин студента
-    Принимает: query_params: ?study_plan=<uid study_plan>&acad_period=<uid acad_period>
+    Принимает: query_params: ?study_plan=<uid study_plan>
     """
+    # &acad_period=<uid acad_period>
     permission_classes = (
         IsAuthenticated,
         permissions.StudyPlanPermission,
@@ -373,7 +374,7 @@ class StudentAllDisciplineListView(generics.ListAPIView):  # TODO
 
     def list(self, request, *args, **kwargs):
         study_plan_id = request.query_params.get('study_plan')
-        acad_period_id = request.query_params.get('acad_period')
+        # acad_period_id = request.query_params.get('acad_period')
 
         try:
             study_plan = org_models.StudyPlan.objects.get(
@@ -391,17 +392,65 @@ class StudentAllDisciplineListView(generics.ListAPIView):  # TODO
         self.check_object_permissions(self.request,
                                       study_plan)
 
-        student_disciplines = org_models.StudentDiscipline.objects.filter(
+        acad_period_pks = org_models.StudentDiscipline.objects.filter(
             study_plan_id=study_plan_id,
-            acad_period_id=acad_period_id,
             is_active=True,
-        )
-        serializer = self.serializer_class(student_disciplines,
-                                           many=True)
+        ).values('acad_period')
+
+        acad_periods = org_models.AcadPeriod.objects.filter(pk__in=acad_period_pks)
+
+        resp = []
+
+        for acad_period in acad_periods:
+            student_disciplines = org_models.StudentDiscipline.objects.filter(
+                study_plan_id=study_plan_id,
+                acad_period=acad_period,
+                is_active=True,
+            )
+            serializer = self.serializer_class(student_disciplines,
+                                               many=True)
+            item_key = acad_period.name
+            item = {
+                item_key: serializer.data
+            }
+            resp.append(item)
+
         return Response(
-            serializer.data,
+            resp,
             status=status.HTTP_200_OK
         )
+
+    # def list(self, request, *args, **kwargs):
+    #     study_plan_id = request.query_params.get('study_plan')
+    #     acad_period_id = request.query_params.get('acad_period')
+    #
+    #     try:
+    #         study_plan = org_models.StudyPlan.objects.get(
+    #             pk=study_plan_id,
+    #             is_active=True,
+    #         )
+    #     except org_models.StudyPlan.DoesNotExist:
+    #         return Response(
+    #             {
+    #                 'message': 'not_found',
+    #             },
+    #             status=status.HTTP_404_NOT_FOUND
+    #         )
+    #
+    #     self.check_object_permissions(self.request,
+    #                                   study_plan)
+    #
+    #     student_disciplines = org_models.StudentDiscipline.objects.filter(
+    #         study_plan_id=study_plan_id,
+    #         acad_period_id=acad_period_id,
+    #         is_active=True,
+    #     )
+    #     serializer = self.serializer_class(student_disciplines,
+    #                                        many=True)
+    #     return Response(
+    #         serializer.data,
+    #         status=status.HTTP_200_OK
+    #     )
 
 
 class ProfileDetailView(generics.RetrieveAPIView):
