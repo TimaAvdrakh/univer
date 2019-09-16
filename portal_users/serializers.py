@@ -539,29 +539,40 @@ class StudentDisciplineSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         data = super().to_representation(instance)
-        teacher_disciplines = self.__get_allowed_teachers(instance)
+        teacher_disciplines, languages = self.__get_allowed_teachers(instance)
         teachers_serializer = TeacherDisciplineSerializer(instance=teacher_disciplines,
                                                           many=True)
+        if languages:
+            """Мультиязычная группа"""
+            lang_serializer = LanguageSerializer(instance=languages,
+                                                 many=True)
+            data['languages'] = lang_serializer.data
         data['selection_teachers'] = teachers_serializer.data
 
         return data
 
     def __get_allowed_teachers(self, instance):
         lang = instance.study_plan.group.language
-        if lang.uid == language_multilingual_id:
+        if str(lang.uid) == language_multilingual_id:
             """Если группа мультиязычная, то отдаем преподы независимо от языка преподавания"""
             teacher_disciplines = org_models.TeacherDiscipline.objects.filter(
                 discipline=instance.discipline,
                 load_type2=instance.load_type.load_type2
-            ).values('teacher').distinct('teacher')
+            )
+            language_pks = org_models.TeacherDiscipline.objects.filter(
+                discipline=instance.discipline,
+                load_type2=instance.load_type.load_type2
+            ).values('language').distinct('language')
+            languages = org_models.Language.objects.filter(pk__in=language_pks)
         else:
             teacher_disciplines = org_models.TeacherDiscipline.objects.filter(
                 discipline=instance.discipline,
                 language=lang,
                 load_type2=instance.load_type.load_type2
             )
+            languages = None
 
-        return teacher_disciplines
+        return teacher_disciplines, languages
 
 
 class EducationProgramSerializer(serializers.ModelSerializer):
@@ -614,7 +625,7 @@ class StudyPlanSerializer(serializers.ModelSerializer):
         data = super().to_representation(instance)
 
         data['is_multilang'] = False
-        if instance.group.language.pk == language_multilingual_id:
+        if str(instance.group.language.pk) == language_multilingual_id:
             data['is_multilang'] = True
 
         data['language'] = {
