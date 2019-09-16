@@ -700,12 +700,12 @@ class ChooseTeacherSerializer(serializers.ModelSerializer):
 
     def __get_allowed_teachers(self, instance):
         lang = instance.study_plan.group.language
-        if lang.uid == language_multilingual_id:
+        if str(lang.uid) == language_multilingual_id:
             """Если группа мультиязычная, то отдаем преподы независимо от языка преподавания"""
             teacher_disciplines = org_models.TeacherDiscipline.objects.filter(
                 discipline=instance.discipline,
                 load_type2=instance.load_type.load_type2
-            ).values('teacher').distinct('teacher')
+            )
         else:
             teacher_disciplines = org_models.TeacherDiscipline.objects.filter(
                 discipline=instance.discipline,
