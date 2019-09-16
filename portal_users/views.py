@@ -69,14 +69,17 @@ class PasswordChangeView(generics.CreateAPIView):
     queryset = User.objects.filter(is_active=True)
 
     def create(self, request, *args, **kwargs):
+        user = request.user
         serializer = self.serializer_class(data=request.data,
                                            context={'request': request})
         serializer.is_valid(raise_exception=True)
         self.perform_create(serializer)
+        login(request, user)
         return Response(
             {
                 'message': 'ok'
-            }
+            },
+            status=status.HTTP_200_OK
         )
 
 
