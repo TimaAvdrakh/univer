@@ -26,20 +26,34 @@ class PasswordResetUrlSendJob(CronJobBase):
 
     def do(self):
         tasks = models.ResetPasswordUrlSendTask.objects.filter(is_success=False)
-        for item in tasks:
-            reset_password = item.reset_password
-            data = {
-                'email': reset_password.email,
-                'user_id': reset_password.user.id,
-                'event_date': timezone.now(),
-                'forgot_id': reset_password.uuid
-            }
+        for task in tasks:
+            reset_password = task.reset_password
 
-            r = requests.post(PASSWORD_RESET_ENDPOINT,
-                              data)
-            if r.status_code == 200:
-                item.is_success = True
-                item.save()
+            msg_plain = render_to_string('emails/reset_password/reset_password.txt', {'uid': reset_password.uuid})
+            msg_html = render_to_string('emails/reset_password/reset_password.html', {'uid': reset_password.uuid})
+
+            send_mail(
+                'Восстановление пароля',
+                msg_plain,
+                'avtoexpertastana@gmail.com',
+                [reset_password.email],
+                html_message=msg_html,
+            )
+            task.is_success = True
+            task.save()
+
+            # data = {
+            #     'email': reset_password.email,
+            #     'user_id': reset_password.user.id,
+            #     'event_date': timezone.now(),
+            #     'forgot_id': reset_password.uuid
+            # }
+
+            # r = requests.post(PASSWORD_RESET_ENDPOINT,
+            #                   data)
+            # if r.status_code == 200:
+            #     item.is_success = True
+            #     item.save()
 
 
 class SendCredentialsJob(CronJobBase):
