@@ -483,14 +483,14 @@ class LanguageSerializer(serializers.ModelSerializer):
     class Meta:
         model = org_models.Language
         fields = (
-            'uid',
+            # 'uid',
             'name',
         )
 
 
 class TeacherDisciplineSerializer(serializers.ModelSerializer):
     teacher = ProfileShortSerializer()
-    language = LanguageSerializer()
+    language = serializers.CharField()
 
     class Meta:
         model = org_models.TeacherDiscipline
@@ -628,10 +628,7 @@ class StudyPlanSerializer(serializers.ModelSerializer):
         if str(instance.group.language.pk) == language_multilingual_id:
             data['is_multilang'] = True
 
-        data['language'] = {
-            'name': instance.group.language.name,
-            'uid': instance.group.language.pk
-        }
+        data['language'] = instance.group.language.name
 
         return data
 
