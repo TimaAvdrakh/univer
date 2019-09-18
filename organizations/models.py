@@ -363,6 +363,7 @@ class StudentDiscipline(BaseModel):
         on_delete=models.CASCADE,
         related_name='edited_student_disciplines',
         null=True,
+        blank=True,
         verbose_name='Автор',
     )
     student = models.ForeignKey(
@@ -405,6 +406,7 @@ class StudentDiscipline(BaseModel):
     language = models.ForeignKey(
         Language,
         null=True,
+        blank=True,
         on_delete=models.CASCADE,
         verbose_name='Язык',
     )
