@@ -402,6 +402,12 @@ class StudentDiscipline(BaseModel):
         on_delete=models.CASCADE,
         verbose_name='Преподаватель',
     )
+    language = models.ForeignKey(
+        Language,
+        null=True,
+        on_delete=models.CASCADE,
+        verbose_name='Язык',
+    )
     status = models.ForeignKey(
         StudentDisciplineStatus,
         on_delete=models.CASCADE,

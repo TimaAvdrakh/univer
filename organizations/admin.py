@@ -125,6 +125,7 @@ class StudentDisciplineAdmin(admin.ModelAdmin):
         'load_type',
         'hours',
         'teacher',
+        'language',
         'author',
         'status',
     ]

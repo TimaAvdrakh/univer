@@ -517,6 +517,7 @@ class StudentDisciplineSerializer(serializers.ModelSerializer):
     teacher = ProfileShortSerializer()
     status = StudentDisciplineStatusSerializer()
     author = ProfileShortSerializer()
+    language = serializers.CharField()
 
     class Meta:
         model = org_models.StudentDiscipline
@@ -529,12 +530,14 @@ class StudentDisciplineSerializer(serializers.ModelSerializer):
             'status',
             'author',
             'teacher',
+            'language',
         )
         read_only_fields = (
             'uid',
             'student',
             'study_plan',
             'hours',
+            'language',
         )
 
     def to_representation(self, instance):
@@ -660,6 +663,7 @@ class ChooseTeacherSerializer(serializers.ModelSerializer):
             raise CustomException(detail='teacher_not_allowed')
 
         instance.teacher = chosen_teacher
+        instance.language = teacher_discipline.language
         instance.status_id = student_discipline_status['chosen']
         instance.author = request.user.profile
         instance.save()
