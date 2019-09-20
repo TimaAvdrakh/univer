@@ -550,6 +550,9 @@ class StudentDisciplineSerializer(serializers.ModelSerializer):
             lang_serializer = LanguageSerializer(instance=languages,
                                                  many=True)
             data['languages'] = lang_serializer.data
+        else:
+            data['languages'] = []
+
         data['selection_teachers'] = teachers_serializer.data
 
         return data
