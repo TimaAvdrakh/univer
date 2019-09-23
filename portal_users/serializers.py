@@ -283,10 +283,10 @@ class PasswordChangeSerializer(serializers.ModelSerializer):
         user = self.context.get('request').user
 
         if not user.check_password(data['oldPassword']):
-            raise CustomException(detail='wrong_old_password')
+            raise CustomException(detail=3)  # wrong_old_password
 
         if data['password'] != data['passwordConfirm']:
-            raise CustomException(detail='password_mismatch')
+            raise CustomException(detail=2)  # password_mismatch
         password_validation.validate_password(data['password'])
         return data
 
@@ -314,6 +314,7 @@ class ForgetPasswordSerializer(serializers.ModelSerializer):
         return data
 
     def create(self, validated_data):
+        request = self.context.get('request')
         email = validated_data.get('email')
 
         user = User.objects.get(email=email,
@@ -326,6 +327,7 @@ class ForgetPasswordSerializer(serializers.ModelSerializer):
         # Создаем задачу для крон
         ResetPasswordUrlSendTask.objects.create(
             reset_password=reset,
+            lang_code=request.LANGUAGE_CODE,
         )
 
         return reset
@@ -813,3 +815,112 @@ class NotifyAdviserSerializer(serializers.Serializer):
             NotifyAdvisorTask.objects.create(stud_discipline_info=student_discipline_info)
         else:
             raise CustomException(detail="not_all_chosen")
+
+
+class ProfileContactEditSerializer(serializers.ModelSerializer):
+    """Используется для редактирования контактных данных профиля"""
+    profileId = serializers.CharField(
+        source='uid',
+        read_only=True,
+    )
+
+    class Meta:
+        model = models.Profile
+        fields = (
+            'profileId',
+            'address',
+            'phone',
+            'email',
+            'skype',
+            'extra_data',
+        )
+
+    def update(self, instance, validated_data):
+        instance.address = validated_data.get('address', instance.address)
+        instance.phone = validated_data.get('phone', instance.phone)
+        instance.email = validated_data.get('email', instance.email)
+        instance.skype = validated_data.get('skype', instance.skype)
+        instance.extra_data = validated_data.get('extra_data', instance.extra_data)
+        instance.save()
+
+        return instance
+
+
+class ProfileInterestsEditSerializer(serializers.ModelSerializer):
+    """Используется для редактирования интереса"""
+    profileId = serializers.CharField(
+        source='uid',
+        read_only=True,
+    )
+    interests = InterestSerializer(
+        many=True,
+        required=False,
+    )
+    interests_for_del = serializers.ListField(
+        child=serializers.CharField(),
+        required=False,
+    )
+
+    class Meta:
+        model = models.Profile
+        fields = (
+            'profileId',
+            'interests',
+            'interests_for_del',
+        )
+
+    def update(self, instance, validated_data):
+        interests = validated_data.get('interests')
+        for interest in interests:
+            models.Interest.objects.get_or_create(
+                profile=instance,
+                name=interest['name'],
+                is_active=True,
+            )
+
+        interests_for_del = validated_data.get('interests_for_del')
+        models.Interest.objects.filter(pk__in=interests_for_del).update(is_active=False)
+
+        return instance
+
+
+class ProfileAchievementsEditSerializer(serializers.ModelSerializer):
+    """Используется для редактирования достижения"""
+    profileId = serializers.CharField(
+        source='uid',
+        read_only=True,
+    )
+    achievements = AchievementSerializer(
+        many=True,
+        required=False,
+    )
+    achievements_for_del = serializers.ListField(
+        child=serializers.CharField(),
+        required=False,
+    )
+
+    class Meta:
+        model = models.Profile
+        fields = (
+            'profileId',
+            'achievements',
+            'achievements_for_del',
+        )
+
+    def update(self, instance, validated_data):
+        achievements = validated_data.get('achievements')
+        for achievement in achievements:
+            models.Achievement.objects.get_or_create(
+                profile=instance,
+                level_id=achievement['level'],
+                achievement_type_id=achievement['achievement_type'],
+                content=achievement['content'],
+                is_active=True,
+            )
+
+        achievements_for_del = validated_data.get('achievements_for_del')
+        models.Achievement.objects.filter(pk__in=achievements_for_del).update(is_active=False)
+
+        return instance
+
+

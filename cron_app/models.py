@@ -36,6 +36,11 @@ class ResetPasswordUrlSendTask(BaseTask):
         ResetPassword,
         on_delete=models.CASCADE,
     )
+    lang_code = models.CharField(
+        max_length=10,
+        verbose_name='Код языка',
+        default='ru',
+    )
 
 
 class CredentialsEmailTask(BaseTask):

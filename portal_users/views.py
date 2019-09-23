@@ -77,7 +77,7 @@ class PasswordChangeView(generics.CreateAPIView):
         login(request, user)
         return Response(
             {
-                'message': 'ok'
+                'message': 1  # Успешно
             },
             status=status.HTTP_200_OK
         )
@@ -91,7 +91,8 @@ class ForgetPasswordView(generics.CreateAPIView):
     serializer_class = serializers.ForgetPasswordSerializer
 
     def create(self, request, *args, **kwargs):
-        serializer = self.serializer_class(data=request.data)
+        serializer = self.serializer_class(data=request.data,
+                                           context={'request': request})
         serializer.is_valid(raise_exception=True)
         self.perform_create(serializer)
         return Response(
@@ -462,7 +463,22 @@ class ProfileDetailView(generics.RetrieveAPIView):
     serializer_class = serializers.ProfileFullSerializer
 
 
-class ProfileEditView(generics.UpdateAPIView):
-    """Редактировать профиль"""
+class ContactEditView(generics.UpdateAPIView):
+    """Редактировать контактные данные"""
     queryset = models.Profile.objects.filter(is_active=True)
-    serializer_class = serializers.ProfileFullSerializer
+    serializer_class = serializers.ProfileContactEditSerializer
+
+
+class InterestsEditView(generics.UpdateAPIView):
+    """Редактировать интересы"""
+    queryset = models.Profile.objects.filter(is_active=True)
+    serializer_class = serializers.ProfileInterestsEditSerializer
+
+
+class AchievementsEditView(generics.UpdateAPIView):
+    """Редактировать достижения"""
+    queryset = models.Profile.objects.filter(is_active=True)
+    serializer_class = serializers.ProfileAchievementsEditSerializer
+
+
+
