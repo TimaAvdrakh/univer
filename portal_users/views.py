@@ -97,7 +97,7 @@ class ForgetPasswordView(generics.CreateAPIView):
         self.perform_create(serializer)
         return Response(
             {
-                'message': 'ok'
+                'message': 1  # Успешно
             },
             status=status.HTTP_200_OK
         )
@@ -115,7 +115,7 @@ class ResetPasswordView(generics.CreateAPIView):
         self.perform_create(serializer)
         return Response(
             {
-                'message': 'ok'
+                'message': 1  # Успешно
             },
             status=status.HTTP_200_OK
         )

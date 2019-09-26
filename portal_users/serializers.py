@@ -309,7 +309,7 @@ class ForgetPasswordSerializer(serializers.ModelSerializer):
     def validate(self, data):
         if not User.objects.filter(email=data['email'],
                                    is_active=True).exists():
-            raise CustomException(detail='not_fount')
+            raise CustomException(detail=2)  # not_found
 
         return data
 
@@ -340,25 +340,25 @@ class ResetPasswordSerializer(serializers.Serializer):
 
     def validate(self, data):
         if data['password'] != data['password2']:
-            raise CustomException(detail='password_mismatch')
+            raise CustomException(detail=2)  # password_mismatch
 
         password_validation.validate_password(data['password'])
 
         try:
             reset = models.ResetPassword.objects.get(uuid=data['uuid'])
         except models.ResetPassword.DoesNotExist:
-            raise CustomException(detail='not_found')
+            raise CustomException(detail=3)  # not_found
 
         if reset.changed:
-            raise CustomException(detail='expired')
+            raise CustomException(detail=4)  # expired
 
         try:
             user = User.objects.get(email=reset.email)
         except User.DoesNotExist:
-            raise CustomException(detail='not_found')
+            raise CustomException(detail=3)  # not_found
 
         if reset.user.id != user.id:
-            raise CustomException(detail='not_found')
+            raise CustomException(detail=3)  # not_found
 
         return data
 
