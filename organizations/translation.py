@@ -90,3 +90,8 @@ class StudentDisciplineInfoStatusTranslationOptions(TranslationOptions):
 @register(models.EducationBase)
 class EducationBaseTranslationOptions(TranslationOptions):
     fields = ('name',)
+
+
+@register(models.EducationProgramGroup)
+class EducationProgramGroupTranslationOptions(TranslationOptions):
+    fields = ('name',)

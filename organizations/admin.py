@@ -53,9 +53,15 @@ class CathedraAdmin(admin.ModelAdmin):
 
 @admin.register(models.EducationProgram)
 class EducationProgramAdmin(admin.ModelAdmin):
+    list_filter = (
+        'group',
+    )
+
     list_display = [
         'name',
         'uid',
+        'code',
+        'group',
     ]
 
 
@@ -300,3 +306,12 @@ class EducationAdmin(admin.ModelAdmin):
         'institute',
         'is_active',
     )
+
+
+@admin.register(models.EducationProgramGroup)
+class EducationProgramGroupAdmin(admin.ModelAdmin):
+    list_display = [
+        'name',
+        'uid',
+        'code',
+    ]

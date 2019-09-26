@@ -121,11 +121,29 @@ class PreparationLevel(BaseCatalog):
         verbose_name_plural = 'Уровни подготовок'
 
 
+class EducationProgramGroup(BaseCatalog):
+    code = models.CharField(
+        default='',
+        max_length=100,
+        verbose_name='Код',
+    )
+
+    class Meta:
+        verbose_name = 'Группа образовательных программ'
+        verbose_name_plural = 'Группы образовательных программ'
+
+
 class EducationProgram(BaseCatalog):
     code = models.CharField(
         default='',
         max_length=100,
         verbose_name='Код',
+    )
+    group = models.ForeignKey(
+        EducationProgramGroup,
+        on_delete=models.CASCADE,
+        null=True,
+        verbose_name='Группа ОП',
     )
 
     class Meta:
