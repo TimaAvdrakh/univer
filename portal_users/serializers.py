@@ -592,6 +592,15 @@ class EducationProgramSerializer(serializers.ModelSerializer):
         )
 
 
+class EducationProgramGroupSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = org_models.EducationProgramGroup
+        fields = (
+            'name',
+            'code',
+        )
+
+
 class StudyPlanSerializer(serializers.ModelSerializer):
     study_period = serializers.CharField()
     group = serializers.CharField()

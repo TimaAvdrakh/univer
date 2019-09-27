@@ -41,3 +41,24 @@ def get_current_course(study_period):
         course = None
 
     return course
+
+
+def get_course(study_period, study_year):
+    """Расчитать курс. Принимает объект период обучения и учебный год"""
+    study_year_tuple = (study_year.start, study_year.end)
+
+    start = study_period.start
+    end = study_period.end
+
+    study_years_list = []
+
+    for i in range(start, end):
+        study_year_item = (i, i + 1)
+        study_years_list.append(study_year_item)
+
+    if study_year_tuple in study_years_list:
+        course = study_years_list.index(study_year_tuple) + 1
+    else:
+        course = None
+
+    return course

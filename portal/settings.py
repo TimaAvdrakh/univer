@@ -30,6 +30,7 @@ INSTALLED_APPS = [
     'bootstrap4',
     'organizations',
     'modeltranslation',
+    'advisors',
 ]
 
 MIDDLEWARE = [

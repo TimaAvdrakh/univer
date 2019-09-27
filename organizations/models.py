@@ -4,7 +4,7 @@ from django.contrib.auth.models import User
 from common.utils import get_sentinel_user
 from portal import curr_settings
 from datetime import date
-from portal_users.utils import get_current_study_year, get_current_course
+from portal_users.utils import get_current_study_year, get_current_course, get_course
 
 
 class Language(BaseCatalog):
@@ -57,7 +57,7 @@ class Group(BaseCatalog):
         on_delete=models.CASCADE,
         verbose_name='Куратор',
     )
-    supervisor = models.ForeignKey(
+    supervisor = models.ForeignKey(  # TODO УБРАТЬ
         'portal_users.Profile',
         on_delete=models.CASCADE,
         related_name='supervisor_groups',
@@ -230,6 +230,13 @@ class StudyPlan(BaseModel):
         on_delete=models.CASCADE,
         verbose_name='Студент',
     )
+    advisor = models.ForeignKey(
+        'portal_users.Profile',
+        on_delete=models.CASCADE,
+        null=True,
+        related_name='student_study_plans',
+        verbose_name='Эдвайзер',
+    )
     study_period = models.ForeignKey(
         StudyPeriod,
         on_delete=models.CASCADE,
@@ -302,6 +309,11 @@ class StudyPlan(BaseModel):
     def current_course(self):
         """Текущий курс студента"""
         return get_current_course(self.study_period)
+
+    def get_course(self, study_year):
+        """Возвращает курс студента в указанном учебном году
+        Если учебный год вне диапазона периода обучения вернет None"""
+        return get_course(self.study_period, study_year)
 
     class Meta:
         verbose_name = 'Учебный план'
@@ -396,6 +408,12 @@ class StudentDiscipline(BaseModel):
         on_delete=models.CASCADE,
         verbose_name='Учебный план',
     )
+    # study_year = models.ForeignKey(
+    #     StudyPeriod,
+    #     on_delete=models.CASCADE,
+    #     null=True,
+    #     verbose_name='Учебный год',
+    # )
     acad_period = models.ForeignKey(
         AcadPeriod,
         on_delete=models.CASCADE,

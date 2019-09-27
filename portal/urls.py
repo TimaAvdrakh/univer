@@ -26,6 +26,7 @@ urlpatterns = [
     path('api/swagger/6456afdsfdsgfsdg/', schema_view),
     path('api/v1/user/', include('portal_users.urls', namespace="user")),
     path('api/v1/common/', include('common.urls', namespace="common")),
+    path('api/v1/advisors/', include('advisors.urls', namespace='advisors')),
 ]
 
 # urlpatterns += i18n_patterns(
