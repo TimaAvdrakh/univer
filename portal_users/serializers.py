@@ -10,6 +10,7 @@ from organizations import models as org_models
 from portal.curr_settings import student_discipline_status, student_discipline_info_status, language_multilingual_id
 from django.db.models import Q
 from common import serializers as common_serializers
+from uuid import uuid4
 
 
 class LoginSerializer(serializers.Serializer):
@@ -952,3 +953,24 @@ class ProfileAchievementsEditSerializer(serializers.ModelSerializer):
         return instance
 
 
+class AvatarSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.Profile
+        fields = (
+            'id',
+            'avatar',
+        )
+
+    def create(self, validated_data):
+        request = self.context.get('request')
+        profile = request.user.profile
+
+        image = validated_data['avatar']
+        extension = image.name.split('.')[-1]
+        image_name = '{}.{}'.format(str(uuid4()),
+                                    extension)
+
+        profile.avatar.save(image_name,
+                            image,
+                            save=True)
+        return profile

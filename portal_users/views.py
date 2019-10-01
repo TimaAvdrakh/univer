@@ -481,4 +481,8 @@ class AchievementsEditView(generics.UpdateAPIView):
     serializer_class = serializers.ProfileAchievementsEditSerializer
 
 
+class AvatarUploadView(generics.CreateAPIView):
+    """Загрузка аватар"""
+    serializer_class = serializers.AvatarSerializer
+    queryset = models.Profile.objects.filter(is_active=True)
 

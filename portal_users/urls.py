@@ -32,4 +32,6 @@ urlpatterns = [
     path('profile/<pk>/interests/edit/', views.InterestsEditView.as_view(), name='profile_interests_edit'),
     path('profile/<pk>/achievements/edit/', views.AchievementsEditView.as_view(), name='profile_achievements_edit'),
 
+    path('avatar/upload/', views.AvatarUploadView.as_view(), name='avatar_upload'),
+
 ]

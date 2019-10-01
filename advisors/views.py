@@ -52,11 +52,16 @@ class RegistrationBidListView(generics.ListAPIView):
         return queryset
 
 
-class DisciplineShortListView(generics.ListAPIView):  # TODO ПОЛНАЯ ВЕСИЯ НУЖНА
+class StudentDisciplineListView(generics.ListAPIView):
+    """
+    query_params: study_plan, acad_period, status, short (если значение 1, вернет только первые три записи)
+    """
     queryset = org_models.StudentDiscipline.objects.filter(is_active=True)
     serializer_class = serializers.StudentDisciplineShortSerializer
 
     def get_queryset(self):
+        short = self.request.query_params.get('short')
+
         study_plan = self.request.query_params.get('study_plan')
         # study_year = self.request.query_params.get('study_year')
         acad_period = self.request.query_params.get('acad_period')
@@ -74,7 +79,10 @@ class DisciplineShortListView(generics.ListAPIView):  # TODO ПОЛНАЯ ВЕС
         if acad_period:
             queryset = queryset.filter(acad_period_id=acad_period)
 
-        return queryset[:3]
+        if int(short) == 1:
+            queryset = queryset[:3]
+
+        return queryset
 
 
 class AcadPeriodListView(generics.ListAPIView):
