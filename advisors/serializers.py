@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from organizations import models as org_models
 from portal_users.serializers import ProfileShortSerializer, StudentDisciplineStatusSerializer
+from portal.curr_settings import student_discipline_info_status, student_discipline_status
 
 
 class StudyPlanSerializer(serializers.ModelSerializer):
@@ -62,3 +63,46 @@ class GroupShortSerializer(serializers.ModelSerializer):
             'uid',
             'name',
         )
+
+
+class CheckStudentBidsSerializer(serializers.Serializer):
+    """Эдвайзер утдерждает или отклоняет заявку на регистрации"""
+
+    study_plan = serializers.PrimaryKeyRelatedField(
+        queryset=org_models.StudyPlan.objects.filter(is_active=True),
+    )
+    acad_periods = serializers.ListField(
+        child=serializers.PrimaryKeyRelatedField(
+            queryset=org_models.AcadPeriod.objects.filter(is_active=True),
+        )
+    )
+    status = serializers.IntegerField()
+
+    def save(self, **kwargs):
+        study_plan = self.validated_data.get('study_plan')
+        acad_periods = self.validated_data.get('acad_periods')
+        status = self.validated_data.get('status')
+
+        if status == 4:  # Утвержден
+            info_status_id = student_discipline_info_status['confirmed']
+            status_id = student_discipline_status['confirmed']
+        else:
+            info_status_id = student_discipline_info_status['rejected']
+            status_id = student_discipline_status['rejected']
+
+        for acad_period in acad_periods:
+            student_discipline_info = org_models.StudentDisciplineInfo.objects.get(
+                study_plan=study_plan,
+                acad_period=acad_period
+            )
+            student_discipline_info.status_id = info_status_id
+            student_discipline_info.save()
+
+            org_models.StudentDiscipline.objects.filter(
+                study_plan=study_plan,
+                acad_period=acad_period,
+                is_active=True,
+            ).update(status_id=status_id)
+
+
+

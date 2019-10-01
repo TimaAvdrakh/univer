@@ -12,4 +12,6 @@ urlpatterns = [
     path('edu_programs/', views.EducationProgramListView.as_view(), name='education_program_list'),
     path('edu_programs_group/', views.EducationProgramGroupListView.as_view(), name='education_program_group_list'),
     path('groups/', views.GroupListView.as_view(), name='groups'),
+
+    path('check/student_choices/', views.CheckStudentChoices.as_view(), name='check_student_choices'),
 ]

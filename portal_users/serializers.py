@@ -651,7 +651,7 @@ class StudyPlanSerializer(serializers.ModelSerializer):
 
 
 class ChooseTeacherSerializer(serializers.ModelSerializer):
-    """Выбирает препода студент"""
+    """Студент выбирает препода или эдвайзер за студента"""
     teacher_discipline = serializers.PrimaryKeyRelatedField(
         queryset=org_models.TeacherDiscipline.objects.filter(is_active=True),
     )
@@ -678,7 +678,14 @@ class ChooseTeacherSerializer(serializers.ModelSerializer):
 
         instance.teacher = chosen_teacher
         instance.language = teacher_discipline.language
-        instance.status_id = student_discipline_status['chosen']
+
+        if request.user.profile == instance.student:
+            """Студент сам делает выбор"""
+            instance.status_id = student_discipline_status['chosen']
+        elif request.user.profile == instance.study_plan.advisor:
+            """Эдвайзер делает выбор за студента"""
+            instance.status_id = student_discipline_status['changed']
+
         instance.author = request.user.profile
         instance.save()
 

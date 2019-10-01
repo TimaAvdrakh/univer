@@ -4,7 +4,7 @@ from django.contrib.auth.models import User
 from common.utils import get_sentinel_user
 from portal import curr_settings
 from datetime import date
-from portal_users.utils import get_current_study_year, get_current_course, get_course
+from portal_users.utils import get_current_study_year, get_current_course, get_course, divide_to_study_years
 
 
 class Language(BaseCatalog):
@@ -212,6 +212,32 @@ class StudyPeriod(BaseModel):
         verbose_name_plural = 'Учебные периоды'
 
 
+# test
+class StudyYearCourse(BaseModel):
+    study_plan = models.ForeignKey(
+        'StudyPlan',
+        on_delete=models.CASCADE,
+        verbose_name='Учебный план',
+        related_name='study_year_courses',
+    )
+    study_year = models.ForeignKey(
+        'StudyPeriod',
+        on_delete=models.CASCADE,
+        verbose_name='Учебный год',
+    )
+    course = models.PositiveIntegerField(
+        verbose_name='Курс',
+    )
+
+    def __str__(self):
+        return '{} {}'.format(self.study_plan,
+                              self.course)
+
+    class Meta:
+        verbose_name = 'Учебный Год - Курс'
+        verbose_name_plural = 'Учебный Год - Курс'
+
+
 class StudyPlan(BaseModel):
     number = models.CharField(
         max_length=100,
@@ -293,6 +319,22 @@ class StudyPlan(BaseModel):
         null=True,
         verbose_name='Дата поступления в ВУЗ',
     )
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        StudyYearCourse.objects.filter(study_plan=self).delete()
+
+        study_years = divide_to_study_years(self.study_period)
+
+        for study_year_item in study_years:
+            study_year, created = StudyPeriod.objects.get_or_create(start=study_year_item[0],
+                                                                    end=study_year_item[1])
+
+            StudyYearCourse.objects.create(
+                study_plan=self,
+                study_year=study_year,
+                course=study_years.index(study_year_item) + 1,
+            )
 
     def __str__(self):
         return 'Уч.план {}-{}-{}'.format(self.student.first_name,
@@ -458,6 +500,11 @@ class StudentDiscipline(BaseModel):
 
 
 class StudentDisciplineInfoStatus(BaseCatalog):
+    number = models.IntegerField(
+        null=True,
+        verbose_name='Номер',
+    )
+
     class Meta:
         verbose_name = 'Статус об общем выборе препода'
         verbose_name_plural = 'Статус об общем выборе препода'

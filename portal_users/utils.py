@@ -1,4 +1,11 @@
+# import os
+# import django
+#
+# os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'portal.settings')
+# django.setup()
+
 from datetime import date
+# from organizations.models import StudyYearCourse, StudyPeriod
 
 
 def get_current_study_year():
@@ -62,3 +69,20 @@ def get_course(study_period, study_year):
         course = None
 
     return course
+
+
+def divide_to_study_years(study_period):
+    start = study_period.start
+    end = study_period.end
+
+    study_years = []
+
+    for i in range(start, end):
+        study_year = (i, i + 1)
+        study_years.append(study_year)
+
+    return study_years
+
+
+
+

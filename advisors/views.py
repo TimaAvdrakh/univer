@@ -42,13 +42,17 @@ class RegistrationBidListView(generics.ListAPIView):
         if study_year:
             study_year_obj = org_models.StudyPeriod.objects.get(pk=study_year)
             queryset = queryset.filter(study_period__end__gt=study_year_obj.start)
-        if course:
-            pass  # TODO фильтрация по курсу
+        if course and study_year:
+            study_plan_pks = org_models.StudyYearCourse.objects.filter(
+                study_year_id=study_year,
+                course=course
+            ).values('study_plan')
+            queryset = queryset.filter(pk__in=study_plan_pks)
 
         return queryset
 
 
-class DisciplineShortListView(generics.ListAPIView):
+class DisciplineShortListView(generics.ListAPIView):  # TODO ПОЛНАЯ ВЕСИЯ НУЖНА
     queryset = org_models.StudentDiscipline.objects.filter(is_active=True)
     serializer_class = serializers.StudentDisciplineShortSerializer
 
@@ -238,8 +242,15 @@ class GroupListView(generics.ListAPIView):
             study_plans = study_plans.filter(study_form_id=study_form)
         if edu_prog:
             study_plans = study_plans.filter(education_program_id=edu_prog)
-        if course:
-            pass  # TODO фильтрация по курсу
+
+        if course and study_year:
+            study_plan_pks = org_models.StudyYearCourse.objects.filter(
+                study_year_id=study_year,
+                course=course
+            ).values('study_plan')
+
+            study_plans = study_plans.filter(pk__in=study_plan_pks)
+
         if study_year:
             study_year_obj = org_models.StudyPeriod.objects.get(pk=study_year)
             study_plans = study_plans.filter(study_period__end__gt=study_year_obj.start)
@@ -252,4 +263,11 @@ class GroupListView(generics.ListAPIView):
         queryset = self.queryset.filter(pk__in=group_pks)
 
         return queryset
+
+
+class CheckStudentChoices(generics.CreateAPIView):
+    """Утвердить или отклонить заявки студента"""
+    serializer_class = serializers.CheckStudentBidsSerializer
+
+
 

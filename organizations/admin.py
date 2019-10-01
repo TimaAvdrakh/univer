@@ -272,6 +272,7 @@ class StudentDisciplineInfoStatusAdmin(admin.ModelAdmin):
     list_display = [
         'name',
         'uid',
+        'number'
     ]
 
 
@@ -313,4 +314,16 @@ class EducationProgramGroupAdmin(admin.ModelAdmin):
         'name',
         'uid',
         'code',
+    ]
+
+
+@admin.register(models.StudyYearCourse)
+class StudyYearCourseAdmin(admin.ModelAdmin):
+    list_filter = (
+        'study_plan',
+    )
+    list_display = [
+        'study_plan',
+        'study_year',
+        'course',
     ]
