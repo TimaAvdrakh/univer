@@ -57,12 +57,6 @@ class Group(BaseCatalog):
         on_delete=models.CASCADE,
         verbose_name='Куратор',
     )
-    supervisor = models.ForeignKey(  # TODO УБРАТЬ
-        'portal_users.Profile',
-        on_delete=models.CASCADE,
-        related_name='supervisor_groups',
-        verbose_name='Эдвайзер',
-    )
     language = models.ForeignKey(
         Language,
         on_delete=models.CASCADE,

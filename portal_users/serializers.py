@@ -744,7 +744,6 @@ class StudentSerializer(serializers.ModelSerializer):
 class GroupDetailSerializer(serializers.ModelSerializer):
     headman = ProfileDetailSerializer()
     kurator = ProfileDetailSerializer()
-    supervisor = ProfileDetailSerializer()
     students = StudentSerializer(many=True)
     active = serializers.BooleanField(
         default=False,
@@ -757,7 +756,6 @@ class GroupDetailSerializer(serializers.ModelSerializer):
             'active',
             'headman',
             'kurator',
-            'supervisor',
             'language',
             'students',
         )
@@ -765,6 +763,20 @@ class GroupDetailSerializer(serializers.ModelSerializer):
     def to_representation(self, instance):
         data = super().to_representation(instance)
         request = self.context.get('request')
+
+        advisor = None
+        try:
+            advisor = org_models.StudyPlan.objects.get(
+                student=request.user.profile,
+                group=instance,
+                is_active=True,
+            ).advisor
+
+        except org_models.StudyPlan.DoesNotExist:
+            pass
+
+        advisor_serializer = ProfileDetailSerializer(advisor)
+        data['supervisor'] = advisor_serializer.data
 
         for student in data['students']:
             if student['profile']['profileId'] == str(request.user.profile.pk):

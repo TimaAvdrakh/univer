@@ -206,7 +206,6 @@ class GroupAdmin(admin.ModelAdmin):
         'name',
         'headman',
         'kurator',
-        'supervisor',
         'language'
     ]
 
