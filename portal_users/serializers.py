@@ -787,7 +787,7 @@ class GroupDetailSerializer(serializers.ModelSerializer):
         data['supervisor'] = advisor_serializer.data
 
         for student in data['students']:
-            if student['profile']['profileId'] == str(request.user.profile.pk):
+            if student['profile']['profileId'] == data['headman']['profileId']:
                 data['students'].remove(student)
 
         return data
