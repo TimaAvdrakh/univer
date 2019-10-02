@@ -19,6 +19,18 @@ class Organization(BaseCatalog):
         verbose_name_plural = 'Организации'
 
 
+class DisciplineCycle(BaseCatalog):
+    class Meta:
+        verbose_name = 'Цикл дисциплины'
+        verbose_name_plural = 'Циклы дисциплин'
+
+
+class DisciplineComponent(BaseCatalog):
+    class Meta:
+        verbose_name = 'Компонент дисциплины'
+        verbose_name_plural = 'Компоненты дисциплин'
+
+
 class StudyForm(BaseCatalog):
     class Meta:
         verbose_name = 'Форма обучения'
@@ -212,7 +224,6 @@ class StudyPeriod(BaseModel):
         verbose_name_plural = 'Учебные периоды'
 
 
-# test
 class StudyYearCourse(BaseModel):
     study_plan = models.ForeignKey(
         'StudyPlan',
@@ -444,12 +455,6 @@ class StudentDiscipline(BaseModel):
         on_delete=models.CASCADE,
         verbose_name='Учебный план',
     )
-    # study_year = models.ForeignKey(
-    #     StudyPeriod,
-    #     on_delete=models.CASCADE,
-    #     null=True,
-    #     verbose_name='Учебный год',
-    # )
     acad_period = models.ForeignKey(
         AcadPeriod,
         on_delete=models.CASCADE,
@@ -482,6 +487,21 @@ class StudentDiscipline(BaseModel):
         on_delete=models.CASCADE,
         verbose_name='Язык',
     )
+    cycle = models.ForeignKey(
+        DisciplineCycle,
+        on_delete=models.CASCADE,
+        null=True,
+        verbose_name='Цикл дисциплины',
+        related_name='student_disciplines',
+    )
+    component = models.ForeignKey(
+        DisciplineComponent,
+        on_delete=models.CASCADE,
+        null=True,
+        verbose_name='Компонент дисциплины',
+        related_name='student_disciplines',
+    )
+
     status = models.ForeignKey(
         StudentDisciplineStatus,
         on_delete=models.CASCADE,

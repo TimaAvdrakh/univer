@@ -95,3 +95,13 @@ class EducationBaseTranslationOptions(TranslationOptions):
 @register(models.EducationProgramGroup)
 class EducationProgramGroupTranslationOptions(TranslationOptions):
     fields = ('name',)
+
+
+@register(models.DisciplineCycle)
+class DisciplineCycleTranslationOptions(TranslationOptions):
+    fields = ('name',)
+
+
+@register(models.DisciplineComponent)
+class DisciplineComponentTranslationOptions(TranslationOptions):
+    fields = ('name',)

@@ -327,3 +327,19 @@ class StudyYearCourseAdmin(admin.ModelAdmin):
         'study_year',
         'course',
     ]
+
+
+@admin.register(models.DisciplineCycle)
+class DisciplineCycleAdmin(admin.ModelAdmin):
+    list_display = [
+        'name',
+        'uid',
+    ]
+
+
+@admin.register(models.DisciplineComponent)
+class DisciplineComponentAdmin(admin.ModelAdmin):
+    list_display = [
+        'name',
+        'uid',
+    ]
