@@ -343,3 +343,5 @@ class DisciplineComponentAdmin(admin.ModelAdmin):
         'name',
         'uid',
     ]
+
+#1
