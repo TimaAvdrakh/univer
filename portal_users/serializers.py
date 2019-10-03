@@ -958,7 +958,7 @@ class AvatarSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Profile
         fields = (
-            'id',
+            'uid',
             'avatar',
         )
 
