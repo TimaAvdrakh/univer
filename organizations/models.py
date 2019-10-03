@@ -365,6 +365,10 @@ class StudyPlan(BaseModel):
     class Meta:
         verbose_name = 'Учебный план'
         verbose_name_plural = 'Учебные планы'
+        unique_together = (
+            'student',
+            'group',
+        )
 
 
 class Discipline(BaseCatalog):
