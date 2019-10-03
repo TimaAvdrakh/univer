@@ -5,7 +5,7 @@ from . import serializers
 from organizations import models as org_models
 from common.serializers import AcadPeriodSerializer
 from common import models as common_models
-from portal_users.serializers import EducationProgramSerializer, EducationProgramGroupSerializer
+from portal_users.serializers import EducationProgramSerializer, EducationProgramGroupSerializer, StudyPlanSerializer
 
 
 class RegistrationBidListView(generics.ListAPIView):
@@ -276,6 +276,38 @@ class GroupListView(generics.ListAPIView):
 class CheckStudentChoices(generics.CreateAPIView):
     """Утвердить или отклонить заявки студента"""
     serializer_class = serializers.CheckStudentBidsSerializer
+
+
+class FilteredStudentsListView(generics.ListAPIView):
+    """Фильтровать студентов для селекта"""
+    pass
+
+
+class GetStudyPlanView(generics.RetrieveAPIView):
+    queryset = org_models.StudyPlan.objects.filter(is_active=True)
+    serializer_class = StudyPlanSerializer
+
+    def get_object(self):
+        study_year = self.request.query_params.get('study_year')
+        reg_period = self.request.query_params.get('reg_period')  # TODO АПИ для получения периода регистрации
+        acad_period = self.request.query_params.get('acad_period')
+        faculty = self.request.query_params.get('faculty')
+        speciality = self.request.query_params.get('speciality')  # TODO АПИ для получения специальностей
+        edu_prog_group = self.request.query_params.get('edu_prog_group')
+        edu_prog = self.request.query_params.get('edu_prog')
+        group = self.request.query_params.get('group')
+        student = self.request.query_params.get('student')  # TODO АПИ для получения студентов
+
+        try:
+            study_plan = self.queryset.get(
+                student_id=student,
+                group_id=group,
+                speciality_id=speciality,
+                faculty_id=faculty,
+                education_program_id=edu_prog,
+            )
+        except org_models.StudyPlan.DoesNotExist:
+            pass
 
 
 
