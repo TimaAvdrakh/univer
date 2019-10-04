@@ -101,3 +101,12 @@ class StudyPeriodSerializer(serializers.ModelSerializer):
             'start',
             'end',
         )
+
+
+class StudyFormSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = org_models.StudyForm
+        fields = (
+            'uid',
+            'name',
+        )

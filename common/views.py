@@ -73,3 +73,9 @@ class RegistrationPeriodListView(generics.ListAPIView):
     """Справочник периодов регистрации"""
     queryset = models.RegistrationPeriod.objects.filter(is_active=True)
     serializer_class = serializers.RegistrationPeriodSerializer
+
+
+class StudyFormListView(generics.ListAPIView):
+    """Справочник учебных форм"""
+    queryset = org_models.StudyForm.objects.filter(is_active=True)
+    serializer_class = serializers.StudyFormSerializer
