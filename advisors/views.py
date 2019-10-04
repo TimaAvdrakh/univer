@@ -13,8 +13,7 @@ from organizations.models import StudentDisciplineInfo
 
 class StudyPlansListView(generics.ListAPIView):
     """
-    Получение учебных планов
-    query_params: study_year, study_form, faculty, cathedra, edu_prog_group, edu_prog, course, group
+    Получение учебных планов, query_params: study_year, study_form, faculty, cathedra, edu_prog_group, edu_prog, course, group
     """
     queryset = org_models.StudyPlan.objects.filter(is_active=True)
     serializer_class = serializers.StudyPlanSerializer
