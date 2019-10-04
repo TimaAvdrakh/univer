@@ -105,4 +105,46 @@ class CheckStudentBidsSerializer(serializers.Serializer):
             ).update(status_id=status_id)
 
 
+class StudyPlanDetailSerializer(serializers.ModelSerializer):
+    student = serializers.CharField()
+    study_period = serializers.CharField()
+    group = serializers.CharField()
+    speciality = serializers.CharField()
+    faculty = serializers.CharField()
+    cathedra = serializers.CharField()
+    # education_program = EducationProgramSerializer()
+    education_type = serializers.CharField()
+    preparation_level = serializers.CharField()
+    study_form = serializers.CharField()
+    on_base = serializers.CharField()
+    education_base = serializers.CharField()
+    active = serializers.BooleanField(
+        default=False,  # Для удобства на фронте
+    )
 
+    class Meta:
+        model = org_models.StudyPlan
+        fields = (
+            'uid',
+            'student',
+            'study_period',
+            'group',
+            'speciality',
+            'faculty',
+            'cathedra',
+            # 'education_program',
+            'education_type',
+            'preparation_level',
+            'study_form',
+            'on_base',
+            'education_base',
+            'active',
+            'current_course',
+            'entry_date',
+        )
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        data['language'] = instance.group.language.name
+
+        return data

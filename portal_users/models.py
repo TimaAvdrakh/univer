@@ -141,7 +141,7 @@ class Profile(BaseModel):
     )
 
     def __str__(self):
-        return self.user.username
+        return self.full_name
 
     @property
     def full_name(self):

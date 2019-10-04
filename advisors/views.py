@@ -5,7 +5,9 @@ from . import serializers
 from organizations import models as org_models
 from common.serializers import AcadPeriodSerializer
 from common import models as common_models
-from portal_users.serializers import EducationProgramSerializer, EducationProgramGroupSerializer, StudyPlanSerializer
+from portal_users.serializers import EducationProgramSerializer, EducationProgramGroupSerializer, \
+    StudyPlanSerializer, ProfileShortSerializer
+from portal_users.models import Profile
 
 
 class RegistrationBidListView(generics.ListAPIView):
@@ -279,30 +281,51 @@ class CheckStudentChoices(generics.CreateAPIView):
 
 
 class FilteredStudentsListView(generics.ListAPIView):
-    """Фильтровать студентов для селекта"""
-    pass
+    """Фильтровать студентов для селекта (Эдвайзер)"""
+    serializer_class = ProfileShortSerializer
+
+    def get_queryset(self):
+        request = self.request
+
+        study_year = request.query_params.get('study_year')
+        faculty = request.query_params.get('faculty')
+        speciality = request.query_params.get('speciality')  # TODO АПИ для получения специальностей
+        edu_prog = request.query_params.get('edu_prog')
+        group = request.query_params.get('group')
+
+        study_year_obj = org_models.StudyPeriod.objects.get(pk=study_year)
+        student_pks = org_models.StudyPlan.objects.filter(
+            group_id=group,
+            speciality_id=speciality,
+            faculty_id=faculty,
+            education_program_id=edu_prog,
+            study_period__end__gt=study_year_obj.start,
+            is_active=True,
+        ).values('student')
+        students = Profile.objects.filter(pk__in=student_pks)
+
+        return students
 
 
 class GetStudyPlanView(generics.RetrieveAPIView):
-    """Получает учебный план студента для отчета"""
-    serializer_class = StudyPlanSerializer
+    """Получает учебный план студента для отчета (Эдвайзер)"""
+    serializer_class = serializers.StudyPlanDetailSerializer
 
-    def get_object(self):
+    def get(self, request, *args, **kwargs):
 
-        reg_period = self.request.query_params.get('reg_period')  # TODO АПИ для получения периода регистрации
-        acad_period = self.request.query_params.get('acad_period')
-        edu_prog_group = self.request.query_params.get('edu_prog_group')
+        # reg_period = self.request.query_params.get('reg_period')  # TODO АПИ для получения периода регистрации
+        # acad_period = self.request.query_params.get('acad_period')
+        # edu_prog_group = self.request.query_params.get('edu_prog_group')
 
-        study_year = self.request.query_params.get('study_year')
-        faculty = self.request.query_params.get('faculty')
-        speciality = self.request.query_params.get('speciality')  # TODO АПИ для получения специальностей
-        edu_prog = self.request.query_params.get('edu_prog')
-        group = self.request.query_params.get('group')
-        student = self.request.query_params.get('student')  # TODO АПИ для получения студентов
+        study_year = request.query_params.get('study_year')
+        faculty = request.query_params.get('faculty')
+        speciality = request.query_params.get('speciality')  # TODO АПИ для получения специальностей
+        edu_prog = request.query_params.get('edu_prog')
+        group = request.query_params.get('group')
+        student = request.query_params.get('student')
 
         try:
             study_year_obj = org_models.StudyPeriod.objects.get(pk=study_year)
-            # queryset = queryset.filter(study_period__end__gt=study_year_obj.start)
 
             study_plan = org_models.StudyPlan.objects.get(
                 student_id=student,
@@ -311,6 +334,7 @@ class GetStudyPlanView(generics.RetrieveAPIView):
                 faculty_id=faculty,
                 education_program_id=edu_prog,
                 study_period__end__gt=study_year_obj.start,
+                is_active=True,
             )
         except org_models.StudyPlan.DoesNotExist:
             return Response(
@@ -320,4 +344,9 @@ class GetStudyPlanView(generics.RetrieveAPIView):
                 status=status.HTTP_404_NOT_FOUND
             )
 
+        serializer = self.serializer_class(instance=study_plan)
+        return Response(
+            serializer.data,
+            status=status.HTTP_200_OK,
+        )
 

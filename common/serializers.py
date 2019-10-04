@@ -23,6 +23,7 @@ class RegistrationPeriodSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.RegistrationPeriod
         fields = (
+            'uid',
             'name',
             'start_date',
             'end_date',

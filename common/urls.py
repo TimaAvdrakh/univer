@@ -11,4 +11,6 @@ urlpatterns = [
     path('achievement_types/', views.AchievementTypeListView.as_view(), name='achievement_types'),
 
     path('study_years/', views.StudyYearListView.as_view(), name='study_years'),
+
+    path('reg_periods/', views.RegistrationPeriodListView.as_view(), name='register_periods'),
 ]

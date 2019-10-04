@@ -67,3 +67,9 @@ class StudyYearListView(generics.ListAPIView):
     """Справочник учебных годов"""
     queryset = org_models.StudyPeriod.objects.filter(is_study_year=True).order_by('start')
     serializer_class = serializers.StudyPeriodSerializer
+
+
+class RegistrationPeriodListView(generics.ListAPIView):
+    """Справочник периодов регистрации"""
+    queryset = models.RegistrationPeriod.objects.filter(is_active=True)
+    serializer_class = serializers.RegistrationPeriodSerializer
