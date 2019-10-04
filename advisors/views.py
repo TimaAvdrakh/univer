@@ -284,30 +284,40 @@ class FilteredStudentsListView(generics.ListAPIView):
 
 
 class GetStudyPlanView(generics.RetrieveAPIView):
-    queryset = org_models.StudyPlan.objects.filter(is_active=True)
+    """Получает учебный план студента для отчета"""
     serializer_class = StudyPlanSerializer
 
     def get_object(self):
-        study_year = self.request.query_params.get('study_year')
+
         reg_period = self.request.query_params.get('reg_period')  # TODO АПИ для получения периода регистрации
         acad_period = self.request.query_params.get('acad_period')
+        edu_prog_group = self.request.query_params.get('edu_prog_group')
+
+        study_year = self.request.query_params.get('study_year')
         faculty = self.request.query_params.get('faculty')
         speciality = self.request.query_params.get('speciality')  # TODO АПИ для получения специальностей
-        edu_prog_group = self.request.query_params.get('edu_prog_group')
         edu_prog = self.request.query_params.get('edu_prog')
         group = self.request.query_params.get('group')
         student = self.request.query_params.get('student')  # TODO АПИ для получения студентов
 
         try:
-            study_plan = self.queryset.get(
+            study_year_obj = org_models.StudyPeriod.objects.get(pk=study_year)
+            # queryset = queryset.filter(study_period__end__gt=study_year_obj.start)
+
+            study_plan = org_models.StudyPlan.objects.get(
                 student_id=student,
                 group_id=group,
                 speciality_id=speciality,
                 faculty_id=faculty,
                 education_program_id=edu_prog,
+                study_period__end__gt=study_year_obj.start,
             )
         except org_models.StudyPlan.DoesNotExist:
-            pass
-
+            return Response(
+                {
+                    'message': 0  # Учебный план не найден
+                },
+                status=status.HTTP_404_NOT_FOUND
+            )
 
 

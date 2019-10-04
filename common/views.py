@@ -61,3 +61,9 @@ class AchievementTypeListView(generics.ListAPIView):
     """Получить список видов достижений"""
     queryset = AchievementType.objects.filter(is_active=True)
     serializer_class = serializers.AchievementTypeSerializer
+
+
+class StudyYearListView(generics.ListAPIView):
+    """Справочник учебных годов"""
+    queryset = org_models.StudyPeriod.objects.filter(is_study_year=True).order_by('start')
+    serializer_class = serializers.StudyPeriodSerializer

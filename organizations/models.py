@@ -214,6 +214,10 @@ class StudyPeriod(BaseModel):
     end = models.PositiveSmallIntegerField(
         verbose_name='Окончание',
     )
+    is_study_year = models.BooleanField(
+        default=False,
+        verbose_name='Учебный год',
+    )
 
     def __str__(self):
         return '{}-{}'.format(self.start,

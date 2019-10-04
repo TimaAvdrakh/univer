@@ -19,10 +19,14 @@ class StudyFormAdmin(admin.ModelAdmin):
 
 @admin.register(models.StudyPeriod)
 class StudyPeriodAdmin(admin.ModelAdmin):
+    list_filter = (
+        'is_study_year',
+    )
     list_display = [
         'start',
         'end',
         'uid',
+        'is_study_year',
     ]
 
 

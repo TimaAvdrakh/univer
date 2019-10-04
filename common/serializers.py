@@ -90,3 +90,13 @@ class EducationSerializer(serializers.ModelSerializer):
             'given_date',
             'institute',
         )
+
+
+class StudyPeriodSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = org_models.StudyPeriod
+        fields = (
+            'uid',
+            'start',
+            'end',
+        )
