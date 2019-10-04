@@ -19,5 +19,9 @@ urlpatterns = [
 
     path('students/', views.FilteredStudentsListView.as_view(), name='students'),
 
-path('student/confirmed/disciplines/', views.ConfirmedStudentDisciplineListView.as_view(), name='confirmed_disciplines'),
+    path('student/confirmed/disciplines/', views.ConfirmedStudentDisciplineListView.as_view(),
+         name='confirmed_disciplines'),
+
+    path('confirmed/acad_periods/', views.ConfirmedAcadPeriodListView.as_view(),
+         name='confirmed_acad_periods_for_filter'),
 ]

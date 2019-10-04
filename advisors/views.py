@@ -178,6 +178,7 @@ class EducationProgramGroupListView(generics.ListAPIView):
         study_form = self.request.query_params.get('study_form')
         cathedra = self.request.query_params.get('cathedra')
         faculty = self.request.query_params.get('faculty')
+        speciality = self.request.query_params.get('speciality')  # Для утвержденных дисциплин
 
         study_plans = org_models.StudyPlan.objects.filter(advisor=profile)
 
@@ -190,6 +191,8 @@ class EducationProgramGroupListView(generics.ListAPIView):
             study_plans = study_plans.filter(faculty_id=faculty)
         if cathedra:
             study_plans = study_plans.filter(cathedra_id=cathedra)
+        if speciality:  # Для утвержденных дисциплин
+            study_plans = study_plans.filter(speciality_id=speciality)
 
         education_program_pks = study_plans.values('education_program')
         queryset = self.queryset.filter(educationprogram__in=education_program_pks)
@@ -198,7 +201,7 @@ class EducationProgramGroupListView(generics.ListAPIView):
 
 
 class EducationProgramListView(generics.ListAPIView):
-    """Получить список образовательных программ, query_params:  edu_prog_group=<uid edu_prog_group> необязательно"""
+    """Получить список образовательных программ, query_params:  edu_prog_group=<uid edu_prog_group>"""
 
     queryset = org_models.EducationProgram.objects.filter(is_active=True)
     serializer_class = EducationProgramSerializer
@@ -248,6 +251,7 @@ class GroupListView(generics.ListAPIView):
 
         edu_prog = self.request.query_params.get('edu_prog')
         course = self.request.query_params.get('course')
+        speciality = self.request.query_params.get('speciality')  # Для утвержденных дисциплин
 
         study_plans = org_models.StudyPlan.objects.filter(advisor=profile)
 
@@ -271,6 +275,9 @@ class GroupListView(generics.ListAPIView):
             study_plans = study_plans.filter(faculty_id=faculty)
         if cathedra:
             study_plans = study_plans.filter(cathedra_id=cathedra)
+
+        if speciality:  # Для утвержденных дисциплин
+            study_plans = study_plans.filter(speciality_id=speciality)
 
         group_pks = study_plans.values('group')
         queryset = self.queryset.filter(pk__in=group_pks)
@@ -354,7 +361,26 @@ class GetStudyPlanView(generics.RetrieveAPIView):
         )
 
 
+class ConfirmedAcadPeriodListView(generics.ListAPIView):  # TODO доделать
+    """Получить список акад периодов периоду регистрации, query_params: reg_period"""
+
+    queryset = org_models.AcadPeriod.objects.filter(is_active=True)
+    serializer_class = AcadPeriodSerializer
+
+    def get_queryset(self):
+        reg_period = self.request.query_params.get('reg_period')
+
+        acad_period_pks = common_models.CourseAcadPeriodPermission.objects.filter(
+            registration_period_id=reg_period,
+        ).values('acad_period')
+        acad_periods = self.queryset.filter(pk__in=acad_period_pks)
+
+        return acad_periods
+
+
 class ConfirmedStudentDisciplineListView(generics.ListAPIView):
+    """Получить утвержденных дисциплин выбранного учебного плана"""
+
     serializer_class = serializers.ConfirmedStudentDisciplineShortSerializer
 
     def list(self, request, *args, **kwargs):
