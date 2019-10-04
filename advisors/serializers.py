@@ -148,3 +148,25 @@ class StudyPlanDetailSerializer(serializers.ModelSerializer):
         data['language'] = instance.group.language.name
 
         return data
+
+
+class ConfirmedStudentDisciplineShortSerializer(serializers.ModelSerializer):
+    """Используется в отчете для Эдвайзера"""
+
+    discipline = serializers.CharField(read_only=True)
+
+    class Meta:
+        model = org_models.StudentDiscipline
+        fields = (
+            'uid',
+            'discipline',
+        )
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance=instance)
+        data['discipline_code'] = 0
+        data['credit'] = 45  # TODO расчитать кол кредитов
+        data['component'] = instance.component.name[:5]
+
+        return data
+

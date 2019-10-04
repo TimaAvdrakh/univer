@@ -4,7 +4,7 @@ from . import views
 app_name = 'advisors'
 
 urlpatterns = [
-    path('register_bids/', views.RegistrationBidListView.as_view(), name='registration_bid_list'),
+    path('study_plans/', views.StudyPlansListView.as_view(), name='registration_bid_list'),
     path('student/disciplines/', views.StudentDisciplineListView.as_view(), name='discipline_short_list'),
     path('acad_periods/', views.AcadPeriodListView.as_view(), name='acad_periods_for_filter'),
     path('faculties/', views.FacultyListView.as_view(), name='faculty_list'),

@@ -8,9 +8,14 @@ from common import models as common_models
 from portal_users.serializers import EducationProgramSerializer, EducationProgramGroupSerializer, \
     StudyPlanSerializer, ProfileShortSerializer
 from portal_users.models import Profile
+from organizations.models import StudentDisciplineInfo
 
 
-class RegistrationBidListView(generics.ListAPIView):
+class StudyPlansListView(generics.ListAPIView):
+    """
+    Получение учебных планов
+    query_params: study_year, study_form, faculty, cathedra, edu_prog_group, edu_prog, course, group
+    """
     queryset = org_models.StudyPlan.objects.filter(is_active=True)
     serializer_class = serializers.StudyPlanSerializer
 
@@ -56,6 +61,7 @@ class RegistrationBidListView(generics.ListAPIView):
 
 class StudentDisciplineListView(generics.ListAPIView):
     """
+    Получение дисциплин студента
     query_params: study_plan, acad_period, status, short (если значение 1, вернет только первые три записи)
     """
     queryset = org_models.StudentDiscipline.objects.filter(is_active=True)
@@ -313,7 +319,7 @@ class GetStudyPlanView(generics.RetrieveAPIView):
 
     def get(self, request, *args, **kwargs):
 
-        # reg_period = self.request.query_params.get('reg_period')  # TODO АПИ для получения периода регистрации
+        # reg_period = self.request.query_params.get('reg_period')
         # acad_period = self.request.query_params.get('acad_period')
         # edu_prog_group = self.request.query_params.get('edu_prog_group')
 
@@ -349,4 +355,20 @@ class GetStudyPlanView(generics.RetrieveAPIView):
             serializer.data,
             status=status.HTTP_200_OK,
         )
+
+
+class ConfirmedStudentDisciplineListView(generics.ListAPIView):
+    serializer_class = serializers.ConfirmedStudentDisciplineShortSerializer
+
+    def list(self, request, *args, **kwargs):
+        study_plan_id = request.query_params.get('study_plan')
+        acad_period = self.request.query_params.get('acad_period')
+
+        study_plan = org_models.StudyPlan.objects.get(pk=study_plan_id)
+
+        # StudentDisciplineInfo.objects.get(
+        #     study_plan=study_plan,
+        #     status_id=
+        # )
+
 
