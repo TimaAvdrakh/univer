@@ -7,6 +7,7 @@ from portal.curr_settings import student_discipline_info_status, student_discipl
 class StudyPlanSerializer(serializers.ModelSerializer):
     education_program = serializers.CharField()
     student = ProfileShortSerializer()
+    group = serializers.CharField()
 
     class Meta:
         model = org_models.StudyPlan
@@ -14,6 +15,7 @@ class StudyPlanSerializer(serializers.ModelSerializer):
             'uid',
             'education_program',
             'student',
+            'group',
         )
 
     def to_representation(self, instance):
@@ -167,7 +169,7 @@ class ConfirmedStudentDisciplineShortSerializer(serializers.ModelSerializer):
         data = super().to_representation(instance=instance)
         data['discipline_code'] = 0
         data['credit'] = 45  # TODO расчитать кол кредитов
-        data['component'] = instance.component.name[:5]
+        # data['component'] = instance.component.name[:5]
 
         return data
 
