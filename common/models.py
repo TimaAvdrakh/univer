@@ -169,6 +169,7 @@ class CourseAcadPeriodPermission(BaseModel):
         unique_together = (
             'course',
             'acad_period',
+            'registration_period',
         )
 
 
