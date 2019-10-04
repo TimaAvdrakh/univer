@@ -92,7 +92,7 @@ class StudentDisciplineListView(generics.ListAPIView):
 
 
 class AcadPeriodListView(generics.ListAPIView):
-    """Получить список акад периодов по курсу и периоду регистрации"""
+    """Получить список акад периодов по курсу и периоду регистрации, query_params: reg_period, course"""
 
     queryset = org_models.AcadPeriod.objects.filter(is_active=True)
     serializer_class = AcadPeriodSerializer
@@ -111,7 +111,7 @@ class AcadPeriodListView(generics.ListAPIView):
 
 
 class FacultyListView(generics.ListAPIView):
-    """Получить список факультетов доступных для эдвайзеру, query_params: study_year, study_form, faculty"""
+    """Получить список факультетов доступных для эдвайзеру, query_params: study_year, study_form"""
     queryset = org_models.Faculty.objects.filter(is_active=True)
     serializer_class = serializers.FacultySerializer
 
