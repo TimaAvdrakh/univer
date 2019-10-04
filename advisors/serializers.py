@@ -11,6 +11,7 @@ class StudyPlanSerializer(serializers.ModelSerializer):
     class Meta:
         model = org_models.StudyPlan
         fields = (
+            'uid',
             'education_program',
             'student',
         )

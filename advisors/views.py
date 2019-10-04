@@ -111,7 +111,7 @@ class AcadPeriodListView(generics.ListAPIView):
 
 
 class FacultyListView(generics.ListAPIView):
-    """Получить список факультетов доступных для эдвайзеру"""
+    """Получить список факультетов доступных для эдвайзеру, query_params: study_year, study_form, faculty"""
     queryset = org_models.Faculty.objects.filter(is_active=True)
     serializer_class = serializers.FacultySerializer
 
@@ -135,7 +135,7 @@ class FacultyListView(generics.ListAPIView):
 
 
 class CathedraListView(generics.ListAPIView):
-    """Получить список кафедр доступных для эдвайзеру, query_params:  faculty=<uid faculty> необязательно"""
+    """Получить список кафедр доступных для эдвайзеру, query_params: study_year, study_form, faculty"""
 
     queryset = org_models.Cathedra.objects.filter(is_active=True)
     serializer_class = serializers.CathedraSerializer
@@ -165,7 +165,7 @@ class CathedraListView(generics.ListAPIView):
 
 
 class EducationProgramGroupListView(generics.ListAPIView):
-    """Получить список групп образовательных программ"""
+    """Получить список групп образовательных программ, query_params: study_year, study_form, faculty, cathedra"""
 
     queryset = org_models.EducationProgramGroup.objects.filter(is_active=True)
     serializer_class = EducationProgramGroupSerializer
@@ -232,7 +232,7 @@ class EducationProgramListView(generics.ListAPIView):
 
 
 class GroupListView(generics.ListAPIView):
-    """Получить список групп"""
+    """Получить список групп, query_params: study_year, study_form, faculty, cathedra, edu_prog, course"""
 
     queryset = org_models.Group.objects.filter(is_active=True)
     serializer_class = serializers.GroupShortSerializer
