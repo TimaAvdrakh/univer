@@ -60,8 +60,7 @@ class StudyPlansListView(generics.ListAPIView):
 
 class StudentDisciplineListView(generics.ListAPIView):
     """
-    Получение дисциплин студента
-    query_params: study_plan, acad_period, status, short (если значение 1, вернет только первые три записи)
+    Получение дисциплин студента, query_params: study_plan, acad_period, status, short (если значение 1, вернет только первые три записи)
     """
     queryset = org_models.StudentDiscipline.objects.filter(is_active=True)
     serializer_class = serializers.StudentDisciplineShortSerializer
@@ -136,8 +135,7 @@ class FacultyListView(generics.ListAPIView):
 
 
 class CathedraListView(generics.ListAPIView):
-    """Получить список кафедр доступных для эдвайзеру
-    query_params:  faculty=<uid faculty> необязательно"""
+    """Получить список кафедр доступных для эдвайзеру, query_params:  faculty=<uid faculty> необязательно"""
 
     queryset = org_models.Cathedra.objects.filter(is_active=True)
     serializer_class = serializers.CathedraSerializer
@@ -199,8 +197,7 @@ class EducationProgramGroupListView(generics.ListAPIView):
 
 
 class EducationProgramListView(generics.ListAPIView):
-    """Получить список образовательных программ
-    query_params:  edu_prog_group=<uid edu_prog_group> необязательно"""
+    """Получить список образовательных программ, query_params:  edu_prog_group=<uid edu_prog_group> необязательно"""
 
     queryset = org_models.EducationProgram.objects.filter(is_active=True)
     serializer_class = EducationProgramSerializer
