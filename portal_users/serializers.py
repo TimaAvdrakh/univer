@@ -773,19 +773,21 @@ class GroupDetailSerializer(serializers.ModelSerializer):
         data = super().to_representation(instance)
         request = self.context.get('request')
 
-        advisor = None
-        try:
-            advisor = org_models.StudyPlan.objects.get(
-                student=request.user.profile,
-                group=instance,
-                is_active=True,
-            ).advisor
+        study_plans = org_models.StudyPlan.objects.filter(
+            student=request.user.profile,
+            group=instance,
+            is_active=True,
+        ).distinct('advisor')
 
-        except org_models.StudyPlan.DoesNotExist:
-            pass
-
-        advisor_serializer = ProfileDetailSerializer(advisor)
-        data['supervisor'] = advisor_serializer.data
+        data['supervisors'] = []
+        for study_plan in study_plans:
+            advisor_serializer = ProfileDetailSerializer(study_plan.advisor)
+            item = {
+                'supervisor': advisor_serializer.data,
+                'edu_program': study_plan.education_program.name,
+                'edu_program_code': study_plan.education_program.code,
+            }
+            data['supervisors'].append(item)
 
         for student in data['students']:
             if student['profile']['profileId'] == data['headman']['profileId']:
