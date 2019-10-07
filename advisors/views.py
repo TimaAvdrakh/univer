@@ -14,7 +14,7 @@ from portal.curr_settings import student_discipline_info_status
 
 class StudyPlansListView(generics.ListAPIView):
     """
-    Получение учебных планов, query_params: study_year, study_form, faculty, cathedra, edu_prog_group, edu_prog, course, group
+    Получение учебных планов, query_params: study_year(!), study_form, faculty, cathedra, edu_prog_group, edu_prog, course, group,
     """
     queryset = org_models.StudyPlan.objects.filter(is_active=True)
     serializer_class = serializers.StudyPlanSerializer
@@ -61,7 +61,7 @@ class StudyPlansListView(generics.ListAPIView):
 
 class StudentDisciplineListView(generics.ListAPIView):
     """
-    Получение дисциплин студента, query_params: study_plan, acad_period, status, short (если значение 1, вернет только первые три записи)
+    Получение дисциплин студента, query_params: study_plan(!), acad_period(!), status, short(!) (если значение 1, вернет только первые три записи)
     """
     queryset = org_models.StudentDiscipline.objects.filter(is_active=True)
     serializer_class = serializers.StudentDisciplineShortSerializer
@@ -93,7 +93,7 @@ class StudentDisciplineListView(generics.ListAPIView):
 
 
 class AcadPeriodListView(generics.ListAPIView):
-    """Получить список акад периодов по курсу и периоду регистрации, query_params: reg_period, course"""
+    """Получить список акад периодов по курсу и периоду регистрации, query_params: reg_period(!), course"""
 
     queryset = org_models.AcadPeriod.objects.filter(is_active=True)
     serializer_class = AcadPeriodSerializer
@@ -102,10 +102,16 @@ class AcadPeriodListView(generics.ListAPIView):
         reg_period = self.request.query_params.get('reg_period')
         course = self.request.query_params.get('course')
 
-        acad_period_pks = common_models.CourseAcadPeriodPermission.objects.filter(
-            registration_period_id=reg_period,
-            course=course
-        ).values('acad_period')
+        if course:
+            acad_period_pks = common_models.CourseAcadPeriodPermission.objects.filter(
+                registration_period_id=reg_period,
+                course=course
+            ).values('acad_period')
+        else:
+            acad_period_pks = common_models.CourseAcadPeriodPermission.objects.filter(
+                registration_period_id=reg_period,
+            ).values('acad_period')
+
         acad_periods = self.queryset.filter(pk__in=acad_period_pks)
 
         return acad_periods
