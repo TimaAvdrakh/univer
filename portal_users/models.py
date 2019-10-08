@@ -166,20 +166,24 @@ class Teacher(BaseModel):
     academic_degree = models.CharField(
         max_length=100,
         default='',
+        blank=True,
         verbose_name='Ученая степень',
     )
     academic_rank = models.CharField(
         max_length=100,
         default='',
+        blank=True,
         verbose_name='Ученое звание',
     )
     work_experience_year = models.CharField(
         default='',
+        blank=True,
         max_length=100,
         verbose_name='Стаж работы в ВУЗ (Год)',
     )
     work_experience_month = models.CharField(
         default='',
+        blank=True,
         max_length=100,
         verbose_name='Стаж работы в ВУЗ (Месяц)',
     )

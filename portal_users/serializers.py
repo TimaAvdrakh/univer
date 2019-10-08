@@ -977,3 +977,25 @@ class AvatarSerializer(serializers.ModelSerializer):
                             image,
                             save=True)
         return profile
+
+
+# class TeacherSerializer(serializers.ModelSerializer):
+#     class Meta:
+#         model = models.Teacher
+#         fields = (
+#             'academic_degree',
+#             'academic_rank',
+#             'work_experience_year',
+#             'work_experience_month',
+#         )
+
+
+# class TeacherPositionSerializer(serializers.ModelSerializer):
+#     class Meta:
+#         model = models.TeacherPosition
+#         fields = (
+#             'teacher',
+#             'position',
+#             'cathedra',
+#             'is_main',
+#         )
