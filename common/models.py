@@ -173,6 +173,23 @@ class CourseAcadPeriodPermission(BaseModel):
         )
 
 
+class CreditCoeff(BaseModel):
+    start_year = models.PositiveIntegerField(
+        verbose_name='Год начала',
+    )
+    coeff = models.PositiveIntegerField(
+        verbose_name='Коэффициент',
+    )
+
+    def __str__(self):
+        return '{} {}'.format(self.start_year,
+                              self.coeff)
+
+    class Meta:
+        verbose_name = 'Коэффициент кредита'
+        verbose_name_plural = 'Коэффициенты кредитов'
+
+
 # class Log(BaseModel):
 #     obj_uid = models.CharField()
 #     model_name = models.CharField()

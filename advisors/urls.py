@@ -16,9 +16,7 @@ urlpatterns = [
     path('check/student_choices/', views.CheckStudentChoices.as_view(), name='check_student_choices'),
 
     path('student/study_plan/', views.GetStudyPlanView.as_view(), name='student_study_plan'),
-
     path('students/', views.FilteredStudentsListView.as_view(), name='students'),
-
     path('student/confirmed/disciplines/', views.ConfirmedStudentDisciplineListView.as_view(),
          name='confirmed_disciplines'),
 

@@ -40,6 +40,12 @@ class StudentDisciplineShortSerializer(serializers.ModelSerializer):
             'hours',
         )
 
+    def to_representation(self, instance):
+        data = super().to_representation(instance=instance)
+        data['credit'] = instance.credit
+
+        return data
+
 
 class FacultySerializer(serializers.ModelSerializer):
     class Meta:

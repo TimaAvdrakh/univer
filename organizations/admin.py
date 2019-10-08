@@ -99,6 +99,7 @@ class LoadType2Admin(admin.ModelAdmin):
     list_display = [
         'name',
         'uid',
+        'number',
     ]
 
 
@@ -126,6 +127,7 @@ class StudentDisciplineAdmin(admin.ModelAdmin):
         'study_plan',
         'status',
         'author',
+        'discipline',
     ]
     list_display = [
         'student',

@@ -5,6 +5,7 @@ from common.utils import get_sentinel_user
 from portal import curr_settings
 from datetime import date
 from portal_users.utils import get_current_study_year, get_current_course, get_course, divide_to_study_years
+from .utils import calculate_credit
 
 
 class Language(BaseCatalog):
@@ -393,6 +394,11 @@ class Discipline(BaseCatalog):
 
 
 class LoadType2(BaseCatalog):
+    number = models.PositiveSmallIntegerField(
+        default=0,
+        verbose_name='Номер',
+    )
+
     class Meta:
         verbose_name = 'Тип нагрузки'
         verbose_name_plural = 'Типы нагрузок'
@@ -510,7 +516,6 @@ class StudentDiscipline(BaseModel):
         verbose_name='Компонент дисциплины',
         related_name='student_disciplines',
     )
-
     status = models.ForeignKey(
         StudentDisciplineStatus,
         on_delete=models.CASCADE,
@@ -518,6 +523,12 @@ class StudentDiscipline(BaseModel):
         null=True,
         verbose_name='Статус',
     )
+
+    @property
+    def credit(self):
+        """Возвращает кредит дисциплины"""
+        return calculate_credit(self.discipline,
+                                self.student)
 
     def __str__(self):
         return '{} {}'.format(self.acad_period,

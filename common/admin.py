@@ -81,3 +81,11 @@ class CitizenshipAdmin(admin.ModelAdmin):
         'name',
         'uid'
     )
+
+
+@admin.register(models.CreditCoeff)
+class CreditCoeffAdmin(admin.ModelAdmin):
+    list_display = (
+        'start_year',
+        'coeff'
+    )
