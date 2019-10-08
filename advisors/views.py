@@ -324,7 +324,7 @@ class FilteredStudentsListView(generics.ListAPIView):
 
 
 class GetStudyPlanView(generics.RetrieveAPIView):
-    """Получает учебный план студента для отчета (Эдвайзер)"""
+    """Получает учебный план студента для ИУПы обучающихся (2 стр) (Эдвайзер)"""
     serializer_class = serializers.StudyPlanDetailSerializer
 
     def get(self, request, *args, **kwargs):
