@@ -207,7 +207,7 @@ class TeacherPosition(BaseModel):
     teacher = models.ForeignKey(
         Teacher,
         models.CASCADE,
-        verbose_name='Учитель',
+        verbose_name='Сотрудник',
     )
     position = models.ForeignKey(
         Position,
@@ -217,6 +217,7 @@ class TeacherPosition(BaseModel):
     cathedra = models.ForeignKey(
         'organizations.Cathedra',
         on_delete=models.CASCADE,
+        verbose_name='Подразделение',
     )
     is_main = models.BooleanField(
         default=False,
