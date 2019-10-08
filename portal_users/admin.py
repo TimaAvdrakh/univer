@@ -124,7 +124,8 @@ class PositionAdmin(admin.ModelAdmin):
         "profile",
         "academic_degree",
         "academic_rank",
-        "work_experience",
+        "work_experience_year",
+        'work_experience_month',
     ]
 
 

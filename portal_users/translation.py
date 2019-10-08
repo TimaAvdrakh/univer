@@ -20,3 +20,8 @@ class LevelTranslationOptions(TranslationOptions):
 @register(models.AchievementType)
 class AchievementTypeTranslationOptions(TranslationOptions):
     fields = ('name',)
+
+
+@register(models.Position)
+class PositionTranslationOptions(TranslationOptions):
+    fields = ('name',)

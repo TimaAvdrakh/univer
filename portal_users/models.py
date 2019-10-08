@@ -173,9 +173,15 @@ class Teacher(BaseModel):
         default='',
         verbose_name='Ученое звание',
     )
-    work_experience = models.CharField(
+    work_experience_year = models.CharField(
+        default='',
         max_length=100,
-        verbose_name='Стаж работы в ВУЗ',
+        verbose_name='Стаж работы в ВУЗ (Год)',
+    )
+    work_experience_month = models.CharField(
+        default='',
+        max_length=100,
+        verbose_name='Стаж работы в ВУЗ (Месяц)',
     )
 
     def __str__(self):
