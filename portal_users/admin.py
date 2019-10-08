@@ -108,3 +108,31 @@ class AchievementAdmin(admin.ModelAdmin):
         "content",
         "is_active",
     ]
+
+
+@admin.register(models.Position)
+class PositionAdmin(admin.ModelAdmin):
+    list_display = [
+        "name",
+        "uid",
+    ]
+
+
+@admin.register(models.Teacher)
+class PositionAdmin(admin.ModelAdmin):
+    list_display = [
+        "profile",
+        "academic_degree",
+        "academic_rank",
+        "work_experience",
+    ]
+
+
+@admin.register(models.TeacherPosition)
+class PositionAdmin(admin.ModelAdmin):
+    list_display = [
+        "teacher",
+        "position",
+        "cathedra",
+        "is_main",
+    ]

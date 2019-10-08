@@ -157,6 +157,71 @@ class Profile(BaseModel):
         verbose_name_plural = 'Профили'
 
 
+class Teacher(BaseModel):
+    profile = models.OneToOneField(
+        Profile,
+        on_delete=models.CASCADE,
+        verbose_name='Профиль',
+    )
+    academic_degree = models.CharField(
+        max_length=100,
+        default='',
+        verbose_name='Ученая степень',
+    )
+    academic_rank = models.CharField(
+        max_length=100,
+        default='',
+        verbose_name='Ученое звание',
+    )
+    work_experience = models.CharField(
+        max_length=100,
+        verbose_name='Стаж работы в ВУЗ',
+    )
+
+    def __str__(self):
+        return '{} {}'.format(self.profile.full_name,
+                              self.academic_degree)
+
+    class Meta:
+        verbose_name = 'Преподаватель'
+        verbose_name_plural = 'Преподаватели'
+
+
+class Position(BaseCatalog):
+    class Meta:
+        verbose_name = 'Должность'
+        verbose_name_plural = 'Должности'
+
+
+class TeacherPosition(BaseModel):
+    teacher = models.ForeignKey(
+        Teacher,
+        models.CASCADE,
+        verbose_name='Учитель',
+    )
+    position = models.ForeignKey(
+        Position,
+        on_delete=models.CASCADE,
+        verbose_name='Должность',
+    )
+    cathedra = models.ForeignKey(
+        'organizations.Cathedra',
+        on_delete=models.CASCADE,
+    )
+    is_main = models.BooleanField(
+        default=False,
+        verbose_name='Основная должность',
+    )
+
+    def __str__(self):
+        return '{} {}'.format(self.teacher.profile.full_name,
+                              self.position)
+
+    class Meta:
+        verbose_name = 'Должность преподавателя'
+        verbose_name_plural = 'Должности преподавателей'
+
+
 class Interest(BaseCatalog):
     profile = models.ForeignKey(
         Profile,
