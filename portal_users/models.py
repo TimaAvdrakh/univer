@@ -193,8 +193,8 @@ class Teacher(BaseModel):
                               self.academic_degree)
 
     class Meta:
-        verbose_name = 'Преподаватель'
-        verbose_name_plural = 'Преподаватели'
+        verbose_name = 'Cотрудник'
+        verbose_name_plural = 'Cотрудники'
 
 
 class Position(BaseCatalog):
@@ -228,8 +228,8 @@ class TeacherPosition(BaseModel):
                               self.position)
 
     class Meta:
-        verbose_name = 'Должность преподавателя'
-        verbose_name_plural = 'Должности преподавателей'
+        verbose_name = 'Должность сотрудника'
+        verbose_name_plural = 'Должности сотрудников'
 
 
 class Interest(BaseCatalog):
