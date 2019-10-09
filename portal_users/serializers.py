@@ -186,7 +186,9 @@ class ProfileFullSerializer(serializers.ModelSerializer):
         request = self.context.get('request')
         data = super().to_representation(instance=instance)
         role = models.Role.objects.filter(profile=instance).first()
+        is_employee = False
         if role.is_teacher or role.is_supervisor or role.is_org_admin:
+            is_employee = True
             teacher = models.Teacher.objects.get(profile=request.user.profile)
             data['employee'] = TeacherSerializer(teacher).data
             teacher_positions = models.TeacherPosition.objects.filter(teacher=teacher,
@@ -196,6 +198,8 @@ class ProfileFullSerializer(serializers.ModelSerializer):
 
         role_serializer = RoleSerializer(instance=role)
         data['role'] = role_serializer.data
+
+        data['is_employee'] = is_employee
 
         if request.user.profile != instance:
             data['iin'] = ''
