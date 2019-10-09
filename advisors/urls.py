@@ -24,4 +24,11 @@ urlpatterns = [
 
     path('confirmed/acad_periods/', views.ConfirmedAcadPeriodListView.as_view(),
          name='confirmed_acad_periods_for_filter'),
+
+    # 3 стр
+path('registration/results/', views.RegisterResultView.as_view(),
+         name='registration_results'),
+
+path('registration/statistics/', views.RegisterStatisticsView.as_view(),
+         name='registration_statistics'),
 ]

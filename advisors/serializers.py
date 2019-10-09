@@ -173,9 +173,9 @@ class ConfirmedStudentDisciplineShortSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         data = super().to_representation(instance=instance)
-        data['discipline_code'] = 0
+        data['discipline_code'] = 0  # TODO Временно
         data['credit'] = instance.credit
-        # data['component'] = instance.component.name[:5]
+        data['component'] = instance.component.name[:5]
 
         return data
 
@@ -188,3 +188,37 @@ class SpecialitySerializer(serializers.ModelSerializer):
             'name',
             'code',
         )
+
+
+class StudentDisciplineSerializer(serializers.ModelSerializer):
+    """Используется в Результате регистрации"""
+
+    discipline = serializers.CharField(read_only=True)
+    load_type = serializers.CharField()
+    language = serializers.CharField()
+    teacher = serializers.CharField()
+    student_count = serializers.IntegerField()
+
+    class Meta:
+        model = org_models.StudentDiscipline
+        fields = (
+            'uid',
+            'discipline',
+            'load_type',
+            'hours',
+            'language',
+            'teacher',
+            'student_count',
+        )
+
+
+class RegisterStatisticsSerializer(serializers.Serializer):
+    faculty = serializers.CharField()
+    cathedra = serializers.CharField()
+    speciality = serializers.CharField()
+    group = serializers.CharField()
+    student_count = serializers.IntegerField()
+    discipline = serializers.CharField()
+    not_chosen_student_count = serializers.IntegerField()
+    percent_of_non_chosen_student = serializers.FloatField()
+

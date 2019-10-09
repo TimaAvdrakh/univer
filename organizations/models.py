@@ -523,6 +523,12 @@ class StudentDiscipline(BaseModel):
         null=True,
         verbose_name='Статус',
     )
+    study_year = models.ForeignKey(
+        StudyPeriod,
+        null=True,
+        on_delete=models.CASCADE,
+        verbose_name='Учебный год',
+    )
 
     @property
     def credit(self):

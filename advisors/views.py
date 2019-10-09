@@ -9,7 +9,8 @@ from portal_users.serializers import EducationProgramSerializer, EducationProgra
     StudyPlanSerializer, ProfileShortSerializer
 from portal_users.models import Profile
 from organizations.models import StudentDisciplineInfo
-from portal.curr_settings import student_discipline_info_status
+from portal.curr_settings import student_discipline_info_status, student_discipline_status
+from django.db.models import Q, Count, Sum
 
 
 class StudyPlansListView(generics.ListAPIView):
@@ -92,6 +93,7 @@ class StudentDisciplineListView(generics.ListAPIView):
 
         if int(short) == 1:
             queryset = queryset[:3]
+
         serializer = self.serializer_class(instance=queryset,
                                            many=True)
         resp = {
@@ -371,7 +373,7 @@ class GetStudyPlanView(generics.RetrieveAPIView):
     def get(self, request, *args, **kwargs):
         study_year = request.query_params.get('study_year')
         faculty = request.query_params.get('faculty')
-        speciality = request.query_params.get('speciality')  # TODO АПИ для получения специальностей
+        speciality = request.query_params.get('speciality')
         edu_prog = request.query_params.get('edu_prog')
         group = request.query_params.get('group')
         student = request.query_params.get('student')
@@ -492,5 +494,138 @@ class ConfirmedStudentDisciplineListView(generics.ListAPIView):
 
 
 class RegisterResultView(generics.ListAPIView):
-    pass
+    """Результат регистрации"""
+    serializer_class = serializers.StudentDisciplineSerializer
+    queryset = org_models.StudentDiscipline.objects.filter(is_active=True)
+
+    def list(self, request, *args, **kwargs):
+        study_year = request.query_params.get('study_year')
+        acad_period = self.request.query_params.get('acad_period')
+        faculty = request.query_params.get('faculty')
+        speciality = request.query_params.get('speciality')
+        edu_prog = request.query_params.get('edu_prog')
+        course = request.query_params.get('course')
+        group = request.query_params.get('group')
+
+        queryset = self.queryset
+        queryset = queryset.filter(status_id=student_discipline_status['confirmed'])
+
+        if acad_period:
+            queryset = queryset.filter(acad_period_id=acad_period)
+        if faculty:
+            queryset = queryset.filter(study_plan__faculty_id=faculty)
+        if speciality:
+            queryset = queryset.filter(study_plan__speciality_id=speciality)
+        if edu_prog:
+            queryset = queryset.filter(study_plan__education_program_id=edu_prog)
+        if group:
+            queryset = queryset.filter(study_plan__group_id=group)
+        if study_year:
+            queryset = queryset.filter(study_year_id=study_year)
+
+        if course and study_year:
+            study_plan_pks = org_models.StudyYearCourse.objects.filter(
+                study_year_id=study_year,
+                course=course
+            ).values('study_plan')
+            queryset = queryset.filter(study_plan__in=study_plan_pks)
+
+        distincted_queryset = queryset.distinct('discipline', 'load_type', 'hours', 'language', 'teacher')
+
+        student_discipline_list = []
+        for item in distincted_queryset:
+            student_count = queryset.filter(
+                discipline=item.discipline,
+                load_type=item.load_type,
+                language=item.language,
+                teacher=item.teacher,
+                hours=item.hours,
+            ).distinct('student').count()
+            d = {
+                'discipline': item.discipline,
+                'load_type': item.load_type,
+                'hours': item.hours,
+                'language': item.language,
+                'teacher': item.teacher,
+                'student_count': student_count
+            }
+            student_discipline_list.append(d)
+
+        serializer = self.serializer_class(student_discipline_list,
+                                           many=True)
+        return Response(
+            serializer.data,
+            status=status.HTTP_200_OK,
+        )
+
+
+class RegisterStatisticsView(generics.ListAPIView):
+    """Статистика регистрации"""
+    serializer_class = serializers.RegisterStatisticsSerializer
+    queryset = org_models.StudentDiscipline.objects.filter(is_active=True)
+
+    def list(self, request, *args, **kwargs):
+        study_year = request.query_params.get('study_year')
+        reg_period = request.query_params.get('reg_period')  # TODO если не указан акад период
+        acad_period = request.query_params.get('acad_period')
+        faculty = request.query_params.get('faculty')
+        speciality = request.query_params.get('speciality')
+        edu_prog = request.query_params.get('edu_prog')
+        course = request.query_params.get('course')
+        group = request.query_params.get('group')
+
+        queryset = self.queryset
+        queryset = queryset.filter(status_id=student_discipline_status['not_chosen'])
+
+        if acad_period:
+            queryset = queryset.filter(acad_period_id=acad_period)
+        if faculty:
+            queryset = queryset.filter(study_plan__faculty_id=faculty)
+        if speciality:
+            queryset = queryset.filter(study_plan__speciality_id=speciality)
+        if edu_prog:
+            queryset = queryset.filter(study_plan__education_program_id=edu_prog)
+        if group:
+            queryset = queryset.filter(study_plan__group_id=group)
+        if study_year:
+            queryset = queryset.filter(study_year_id=study_year)
+
+        if course and study_year:
+            study_plan_pks = org_models.StudyYearCourse.objects.filter(
+                study_year_id=study_year,
+                course=course
+            ).values('study_plan')
+            queryset = queryset.filter(study_plan__in=study_plan_pks)
+
+        distincted_queryset = queryset.distinct('study_plan__group')
+
+        student_discipline_list = []
+        for student_discipline in distincted_queryset:
+
+            group_student_count = org_models.StudyPlan.objects.filter(
+                group=student_discipline.study_plan.group,
+                is_active=True,
+            ).distinct('student').count()
+            not_chosen_student_count = queryset.filter(study_plan__group=student_discipline.study_plan.group).\
+                distinct('student').count()
+
+            d = {
+                'faculty': student_discipline.study_plan.faculty.name,
+                'cathedra': student_discipline.study_plan.cathedra.name,
+                'speciality': student_discipline.study_plan.speciality.name,
+                'group': student_discipline.study_plan.group.name,
+                'student_count': group_student_count,
+                'discipline': student_discipline.discipline.name,
+                'not_chosen_student_count': not_chosen_student_count,
+                'percent_of_non_chosen_student': (not_chosen_student_count / group_student_count) * 100,
+            }
+            student_discipline_list.append(d)
+
+        serializer = self.serializer_class(student_discipline_list,
+                                           many=True)
+        return Response(
+            serializer.data,
+            status=status.HTTP_200_OK,
+        )
+
 
