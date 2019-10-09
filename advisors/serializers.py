@@ -174,7 +174,7 @@ class ConfirmedStudentDisciplineShortSerializer(serializers.ModelSerializer):
     def to_representation(self, instance):
         data = super().to_representation(instance=instance)
         data['discipline_code'] = 0
-        data['credit'] = 45  # TODO расчитать кол кредитов
+        data['credit'] = instance.credit
         # data['component'] = instance.component.name[:5]
 
         return data

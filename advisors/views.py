@@ -66,30 +66,42 @@ class StudentDisciplineListView(generics.ListAPIView):
     queryset = org_models.StudentDiscipline.objects.filter(is_active=True)
     serializer_class = serializers.StudentDisciplineShortSerializer
 
-    def get_queryset(self):
+    def list(self, request, *args, **kwargs):
         short = self.request.query_params.get('short')
 
         study_plan = self.request.query_params.get('study_plan')
         # study_year = self.request.query_params.get('study_year')
         acad_period = self.request.query_params.get('acad_period')
-        status = self.request.query_params.get('status')
+        status_id = self.request.query_params.get('status')
         # reg_period = self.request.query_params.get('reg_period')
 
         queryset = self.queryset
         if study_plan:
             queryset = queryset.filter(study_plan_id=study_plan)
-        if status:
-            status_obj = org_models.StudentDisciplineStatus.objects.get(number=status)
+        if status_id:
+            status_obj = org_models.StudentDisciplineStatus.objects.get(number=status_id)
             queryset = queryset.filter(status=status_obj)
         # if study_year:
         #     queryset = queryset.filter(study_year_id=study_year)
         if acad_period:
             queryset = queryset.filter(acad_period_id=acad_period)
 
+        student_discipline_list = list(queryset)
+        credit_list = [i.credit for i in student_discipline_list]
+        total_credit = sum(credit_list)
+
         if int(short) == 1:
             queryset = queryset[:3]
-
-        return queryset
+        serializer = self.serializer_class(instance=queryset,
+                                           many=True)
+        resp = {
+            'total_credit': total_credit,
+            'disciplines': serializer.data
+        }
+        return Response(
+            resp,
+            status=status.HTTP_200_OK
+        )
 
 
 class AcadPeriodListView(generics.ListAPIView):
@@ -479,4 +491,6 @@ class ConfirmedStudentDisciplineListView(generics.ListAPIView):
         )
 
 
+class RegisterResultView(generics.ListAPIView):
+    pass
 
