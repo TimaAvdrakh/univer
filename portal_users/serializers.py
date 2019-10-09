@@ -186,6 +186,14 @@ class ProfileFullSerializer(serializers.ModelSerializer):
         request = self.context.get('request')
         data = super().to_representation(instance=instance)
         role = models.Role.objects.filter(profile=instance).first()
+        if role.is_teacher or role.is_supervisor or role.is_org_admin:
+            teacher = models.Teacher.objects.get(profile=request.user.profile)
+            data['employee'] = TeacherSerializer(teacher).data
+            teacher_positions = models.TeacherPosition.objects.filter(teacher=teacher,
+                                                                      is_active=True)
+            data['positions'] = TeacherPositionSerializer(teacher_positions,
+                                                          many=True).data
+
         role_serializer = RoleSerializer(instance=role)
         data['role'] = role_serializer.data
 
@@ -979,23 +987,26 @@ class AvatarSerializer(serializers.ModelSerializer):
         return profile
 
 
-# class TeacherSerializer(serializers.ModelSerializer):
-#     class Meta:
-#         model = models.Teacher
-#         fields = (
-#             'academic_degree',
-#             'academic_rank',
-#             'work_experience_year',
-#             'work_experience_month',
-#         )
+class TeacherSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.Teacher
+        fields = (
+            'academic_degree',
+            'academic_rank',
+            'work_experience_year',
+            'work_experience_month',
+        )
 
 
-# class TeacherPositionSerializer(serializers.ModelSerializer):
-#     class Meta:
-#         model = models.TeacherPosition
-#         fields = (
-#             'teacher',
-#             'position',
-#             'cathedra',
-#             'is_main',
-#         )
+class TeacherPositionSerializer(serializers.ModelSerializer):
+    position = serializers.CharField()
+    cathedra = serializers.CharField()
+
+    class Meta:
+        model = models.TeacherPosition
+        fields = (
+            # 'teacher',
+            'position',
+            'cathedra',
+            'is_main',
+        )

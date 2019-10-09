@@ -323,16 +323,40 @@ class FilteredStudentsListView(generics.ListAPIView):
         return students
 
 
+class SpecialityListView(generics.ListAPIView):
+    """Получить список специальностей доступных эдвайзеру, query_params: study_year, faculty"""
+
+    queryset = org_models.Speciality.objects.filter(is_active=True)
+    serializer_class = serializers.SpecialitySerializer
+
+    def get_queryset(self):
+        profile = self.request.user.profile
+
+        study_year = self.request.query_params.get('study_year')
+        faculty = self.request.query_params.get('faculty')
+
+        study_plans = org_models.StudyPlan.objects.filter(advisor=profile)
+
+        if study_year:
+            study_year_obj = org_models.StudyPeriod.objects.get(pk=study_year)
+            study_plans = study_plans.filter(study_period__end__gt=study_year_obj.start)
+
+        speciality_pks = study_plans.values('speciality')
+        queryset = self.queryset.filter(pk__in=speciality_pks)
+
+        if faculty:
+            queryset = queryset.filter(faculty_id=faculty)
+
+        return queryset
+
+
 class GetStudyPlanView(generics.RetrieveAPIView):
-    """Получает учебный план студента для ИУПы обучающихся (2 стр) (Эдвайзер)"""
+    """Получить учебный план студента для ИУПы обучающихся (2 стр, Утвержденные)
+    query_params: study_year(!), edu_prog(!), student(!), faculty, speciality, group
+    """
     serializer_class = serializers.StudyPlanDetailSerializer
 
     def get(self, request, *args, **kwargs):
-
-        # reg_period = self.request.query_params.get('reg_period')
-        # acad_period = self.request.query_params.get('acad_period')
-        # edu_prog_group = self.request.query_params.get('edu_prog_group')
-
         study_year = request.query_params.get('study_year')
         faculty = request.query_params.get('faculty')
         speciality = request.query_params.get('speciality')  # TODO АПИ для получения специальностей
@@ -368,7 +392,7 @@ class GetStudyPlanView(generics.RetrieveAPIView):
 
 
 class ConfirmedAcadPeriodListView(generics.ListAPIView):  # TODO доделать
-    """Получить список акад периодов периоду регистрации, query_params: reg_period"""
+    """Получить список акад периодов периоду регистрации, query_params: reg_period(!)"""
 
     queryset = org_models.AcadPeriod.objects.filter(is_active=True)
     serializer_class = AcadPeriodSerializer
@@ -385,7 +409,7 @@ class ConfirmedAcadPeriodListView(generics.ListAPIView):  # TODO доделат�
 
 
 class ConfirmedStudentDisciplineListView(generics.ListAPIView):
-    """Получить утвержденных дисциплин выбранного учебного плана"""
+    """Получить все утвержденные дисциплины выбранного учебного плана, query_params: study_plan(!), acad_period(!)"""
 
     serializer_class = serializers.ConfirmedStudentDisciplineShortSerializer
 

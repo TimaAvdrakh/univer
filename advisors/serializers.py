@@ -179,3 +179,12 @@ class ConfirmedStudentDisciplineShortSerializer(serializers.ModelSerializer):
 
         return data
 
+
+class SpecialitySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = org_models.Speciality
+        fields = (
+            'uid',
+            'name',
+            'code',
+        )
