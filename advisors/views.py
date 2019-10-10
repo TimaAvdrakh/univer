@@ -91,15 +91,20 @@ class StudentDisciplineListView(generics.ListAPIView):
         credit_list = [i.credit for i in student_discipline_list]
         total_credit = sum(credit_list)
 
+        is_more = len(queryset) > 3
+
         if int(short) == 1:
             queryset = queryset[:3]
 
         serializer = self.serializer_class(instance=queryset,
                                            many=True)
+
         resp = {
             'total_credit': total_credit,
-            'disciplines': serializer.data
+            'disciplines': serializer.data,
+            'is_more': is_more
         }
+
         return Response(
             resp,
             status=status.HTTP_200_OK
@@ -597,7 +602,7 @@ class RegisterStatisticsView(generics.ListAPIView):
             ).values('study_plan')
             queryset = queryset.filter(study_plan__in=study_plan_pks)
 
-        distincted_queryset = queryset.distinct('study_plan__group')
+        distincted_queryset = queryset.distinct('discipline')
 
         student_discipline_list = []
         for student_discipline in distincted_queryset:
