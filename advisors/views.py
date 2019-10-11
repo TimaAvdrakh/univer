@@ -95,6 +95,8 @@ class StudentDisciplineListView(generics.ListAPIView):
 
         if int(short) == 1:
             queryset = queryset[:3]
+        else:
+            is_more = False
 
         serializer = self.serializer_class(instance=queryset,
                                            many=True)
@@ -606,13 +608,15 @@ class RegisterStatisticsView(generics.ListAPIView):
 
         student_discipline_list = []
         for student_discipline in distincted_queryset:
-
             group_student_count = org_models.StudyPlan.objects.filter(
                 group=student_discipline.study_plan.group,
                 is_active=True,
             ).distinct('student').count()
-            not_chosen_student_count = queryset.filter(study_plan__group=student_discipline.study_plan.group).\
-                distinct('student').count()
+
+            not_chosen_student_count = queryset.filter(
+                study_plan__group=student_discipline.study_plan.group,
+                pk=student_discipline.pk
+            ).distinct('student').count()
 
             d = {
                 'faculty': student_discipline.study_plan.faculty.name,
@@ -632,5 +636,3 @@ class RegisterStatisticsView(generics.ListAPIView):
             serializer.data,
             status=status.HTTP_200_OK,
         )
-
-
