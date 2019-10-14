@@ -601,6 +601,7 @@ class EducationProgramSerializer(serializers.ModelSerializer):
     class Meta:
         model = org_models.EducationProgram
         fields = (
+            'uid',
             'name',
             'code',
         )
@@ -610,6 +611,7 @@ class EducationProgramGroupSerializer(serializers.ModelSerializer):
     class Meta:
         model = org_models.EducationProgramGroup
         fields = (
+            'uid',
             'name',
             'code',
         )
