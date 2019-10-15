@@ -647,3 +647,5 @@ class NotRegisteredStudentListView(generics.ListAPIView):
         is_active=True
     ).distinct('student')
     serializer_class = serializers.NotRegisteredStudentSerializer
+
+# 1
