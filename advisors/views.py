@@ -11,6 +11,7 @@ from portal_users.models import Profile
 from organizations.models import StudentDisciplineInfo
 from portal.curr_settings import student_discipline_info_status, student_discipline_status
 from django.db.models import Q, Count, Sum
+from common.paginators import CustomPagination
 
 
 class StudyPlansListView(generics.ListAPIView):
@@ -636,3 +637,13 @@ class RegisterStatisticsView(generics.ListAPIView):
             serializer.data,
             status=status.HTTP_200_OK,
         )
+
+
+class NotRegisteredStudentListView(generics.ListAPIView):
+    """Списке незарегистрированных"""
+    pagination_class = CustomPagination
+    queryset = org_models.StudentDiscipline.objects.filter(
+        status_id=student_discipline_status['not_chosen'],
+        is_active=True
+    ).distinct('student')
+    serializer_class = serializers.NotRegisteredStudentSerializer

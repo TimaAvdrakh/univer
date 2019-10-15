@@ -224,6 +224,8 @@ class StudentDisciplineSerializer(serializers.ModelSerializer):
 
 
 class RegisterStatisticsSerializer(serializers.Serializer):
+    """Используется в Статистике Регистрации"""
+
     faculty = serializers.CharField()
     cathedra = serializers.CharField()
     speciality = serializers.CharField()
@@ -233,3 +235,25 @@ class RegisterStatisticsSerializer(serializers.Serializer):
     not_chosen_student_count = serializers.IntegerField()
     percent_of_non_chosen_student = serializers.FloatField()
 
+
+class NotRegisteredStudentSerializer(serializers.ModelSerializer):
+    """Используется в Списке незарегистрированных"""
+
+    discipline = serializers.CharField()
+
+    class Meta:
+        model = org_models.StudentDiscipline
+        fields = (
+            'uid',
+            'discipline',
+        )
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        data['faculty'] = instance.study_plan.faculty.name
+        data['cathedra'] = instance.study_plan.cathedra.name
+        data['speciality'] = instance.study_plan.speciality.name
+        data['group'] = instance.study_plan.group.name
+        data['student'] = instance.student.full_name
+
+        return data
