@@ -100,7 +100,7 @@ class NotifyAdvisorJob(CronJobBase):
             acad_period = stud_discipline_info.acad_period
             study_plan = stud_discipline_info.study_plan
             student = study_plan.student
-            advisor = study_plan.group.supervisor
+            advisor = study_plan.advisor
 
             msg_plain = render_to_string('emails/student_finished_selection.txt',
                                          {'full_name': student.full_name,
@@ -116,6 +116,41 @@ class NotifyAdvisorJob(CronJobBase):
                 msg_plain,
                 'avtoexpertastana@gmail.com',
                 [advisor.email],
+                html_message=msg_html,
+            )
+            task.is_success = True
+            task.save()
+
+
+class AdvisorRejectBidJob(CronJobBase):
+    """Эдвайзер отклонил заявку студента на регистрацию на дисциплины"""
+
+    RUN_EVERY_MINS = 1
+    schedule = Schedule(run_every_mins=RUN_EVERY_MINS)
+    code = 'crop_app.advisor_reject'
+
+    def do(self):
+        mail_subject = 'Ваша заявка отклонена'
+        tasks = models.AdvisorRejectedBidTask.objects.filter(is_success=False)
+        for task in tasks:
+            study_plan = task.study_plan
+            student = study_plan.student
+            advisor = study_plan.advisor
+
+            msg_plain = render_to_string('emails/advisor_reject/advisor_rejected_bid.txt',
+                                         {'advisor_name': advisor.full_name,
+                                          'comment': task.comment}
+                                         )
+            msg_html = render_to_string('emails/advisor_reject/advisor_rejected_bid.html',
+                                        {'advisor_name': advisor.full_name,
+                                         'comment': task.comment}
+                                        )
+
+            send_mail(
+                mail_subject,
+                msg_plain,
+                'avtoexpertastana@gmail.com',
+                [student.email],
                 html_message=msg_html,
             )
             task.is_success = True

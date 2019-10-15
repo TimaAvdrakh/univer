@@ -39,3 +39,14 @@ class NotifyAdvisorTaskAdmin(admin.ModelAdmin):
         'stud_discipline_info',
         'is_success',
     ]
+
+
+@admin.register(models.AdvisorRejectedBidTask)
+class AdvisorRejectedBidTaskTaskAdmin(admin.ModelAdmin):
+    list_filter = (
+        'is_success',
+    )
+    list_display = [
+        'study_plan',
+        'is_success',
+    ]

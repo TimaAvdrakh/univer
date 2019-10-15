@@ -2,6 +2,7 @@ from rest_framework import serializers
 from organizations import models as org_models
 from portal_users.serializers import ProfileShortSerializer, StudentDisciplineStatusSerializer
 from portal.curr_settings import student_discipline_info_status, student_discipline_status
+from cron_app.models import AdvisorRejectedBidTask
 
 
 class StudyPlanSerializer(serializers.ModelSerializer):
@@ -26,7 +27,7 @@ class StudyPlanSerializer(serializers.ModelSerializer):
 
 
 class StudentDisciplineShortSerializer(serializers.ModelSerializer):
-    """Используется для получения дисциплин студента для отчета Эдвайзеру (ИУП)"""
+    """Используется для получения дисциплин студента для отчета Эдвайзеру (заявки на ИУПы)"""
 
     discipline = serializers.CharField(read_only=True)
     status = StudentDisciplineStatusSerializer()
@@ -38,6 +39,7 @@ class StudentDisciplineShortSerializer(serializers.ModelSerializer):
             'discipline',
             'status',
             'hours',
+            'author',
         )
 
     def to_representation(self, instance):
@@ -86,18 +88,27 @@ class CheckStudentBidsSerializer(serializers.Serializer):
         )
     )
     status = serializers.IntegerField()
+    comment = serializers.CharField(
+        required=False,
+        help_text='Причина отклонения заявки студента',
+    )
 
     def save(self, **kwargs):
         study_plan = self.validated_data.get('study_plan')
         acad_periods = self.validated_data.get('acad_periods')
         status = self.validated_data.get('status')
+        comment = self.validated_data.get('comment')
 
         if status == 4:  # Утвержден
             info_status_id = student_discipline_info_status['confirmed']
             status_id = student_discipline_status['confirmed']
-        else:
+        else:  # Отклонен
             info_status_id = student_discipline_info_status['rejected']
             status_id = student_discipline_status['rejected']
+            AdvisorRejectedBidTask.objects.create(  # Отправить письмо на емайл студента
+                study_plan=study_plan,
+                comment=comment,
+            )
 
         for acad_period in acad_periods:
             student_discipline_info = org_models.StudentDisciplineInfo.objects.get(

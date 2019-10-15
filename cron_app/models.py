@@ -67,3 +67,16 @@ class NotifyAdvisorTask(BaseTask):
         on_delete=models.CASCADE,
         verbose_name='Инфо о выборе студента',
     )
+
+
+class AdvisorRejectedBidTask(BaseTask):
+    """Эдвайзер отклонил заявку студента на регистрацию на дисциплины"""
+    study_plan = models.ForeignKey(
+        'organizations.StudyPlan',
+        on_delete=models.CASCADE,
+        verbose_name='Учебный план',
+    )
+    comment = models.CharField(
+        max_length=500,
+        verbose_name='Комментарий',
+    )

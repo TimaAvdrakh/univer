@@ -140,6 +140,7 @@ CRON_CLASSES = [
     "cron_app.cron.PasswordResetUrlSendJob",
     "cron_app.cron.SendCredentialsJob",
     "cron_app.cron.NotifyAdvisorJob",
+    "cron_app.cron.AdvisorRejectBidJob",
 ]
 
 # SESSION_COOKIE_AGE = 60
