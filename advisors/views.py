@@ -313,7 +313,7 @@ class GroupListView(generics.ListAPIView):
 
 
 class CheckStudentChoices(generics.CreateAPIView):
-    """Утвердить или отклонить заявки студента"""
+    """Утвердить или отклонить заявки студента. Статус: 4 - утврежден, 3 - отклонен"""
     serializer_class = serializers.CheckStudentBidsSerializer
 
 
