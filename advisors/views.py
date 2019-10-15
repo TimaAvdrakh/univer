@@ -33,7 +33,7 @@ class StudyPlansListView(generics.ListAPIView):
         # status = self.request.query_params.get('status')  # В Дисциплине студента
         # reg_period = self.request.query_params.get('reg_period')  # Дисциплина студента
 
-        queryset = self.queryset
+        queryset = self.queryset.filter(advisor=self.request.user.profile)
 
         if study_form:
             queryset = queryset.filter(study_form_id=study_form)
@@ -604,7 +604,7 @@ class RegisterStatisticsView(generics.ListAPIView):
             ).values('study_plan')
             queryset = queryset.filter(study_plan__in=study_plan_pks)
 
-        distincted_queryset = queryset.distinct('discipline')
+        distincted_queryset = queryset.distinct('discipline', 'study_plan__group')
 
         student_discipline_list = []
         for student_discipline in distincted_queryset:
@@ -615,7 +615,7 @@ class RegisterStatisticsView(generics.ListAPIView):
 
             not_chosen_student_count = queryset.filter(
                 study_plan__group=student_discipline.study_plan.group,
-                pk=student_discipline.pk
+                discipline=student_discipline.discipline
             ).distinct('student').count()
 
             d = {

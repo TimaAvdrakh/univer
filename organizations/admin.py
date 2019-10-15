@@ -125,6 +125,7 @@ class StudentDisciplineAdmin(admin.ModelAdmin):
         'student',
         'acad_period',
         'study_plan',
+        'study_plan__group',
         'status',
         'author',
         'discipline',
