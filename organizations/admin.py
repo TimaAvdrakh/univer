@@ -177,10 +177,12 @@ class StudyPlanAdmin(admin.ModelAdmin):
         'faculty',
         'cathedra',
         'group',
+        'advisor',
     )
     list_display = [
         'student',
         'study_period',
+        'advisor',
         'speciality',
         'faculty',
         'cathedra',
