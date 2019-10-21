@@ -12,6 +12,8 @@ from organizations.models import StudentDisciplineInfo
 from portal.curr_settings import student_discipline_info_status, student_discipline_status
 from django.db.models import Q, Count, Sum
 from common.paginators import CustomPagination
+from . import permissions as adv_permission
+from rest_framework.permissions import IsAuthenticated
 
 
 class StudyPlansListView(generics.ListAPIView):
@@ -316,6 +318,33 @@ class GroupListView(generics.ListAPIView):
 class CheckStudentChoices(generics.CreateAPIView):
     """Утвердить или отклонить заявки студента. Статус: 4 - утврежден, 3 - отклонен"""
     serializer_class = serializers.CheckStudentBidsSerializer
+    permission_classes = (
+        IsAuthenticated,
+        adv_permission.StudyPlanAdvisorPermission
+    )
+
+    def create(self, request, *args, **kwargs):
+        try:
+            sp = org_models.StudyPlan.objects.get(pk=request.data['study_plan'])
+        except org_models.StudyPlan.DoesNotExist:
+            return Response(
+                {
+                    "message": "not_found",
+                },
+                status=status.HTTP_404_NOT_FOUND
+            )
+        self.check_object_permissions(request,
+                                      sp)
+
+        serializer = self.serializer_class(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(
+            {
+                'message': 'ok'
+            },
+            status=status.HTTP_200_OK
+        )
 
 
 class FilteredStudentsListView(generics.ListAPIView):

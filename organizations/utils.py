@@ -5,13 +5,14 @@ from django.db.models import Sum
 from django.utils import timezone
 
 
-def calculate_credit(discipline, student):
+def calculate_credit(discipline, student, acad_period):
     """Расчитает кредит для дисциплины"""
     coeff = CreditCoeff.objects.get(start_year__lte=timezone.now().year).coeff
 
     student_disciplines = models.StudentDiscipline.objects.filter(
         discipline=discipline,
         student=student,
+        acad_period=acad_period,
         is_active=True,
     )
 
