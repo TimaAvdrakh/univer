@@ -438,6 +438,11 @@ class AcadPeriod(BaseCatalog):
         return '{} {}'.format(self.number,
                               self.name)
 
+    @property
+    def repr_name(self):
+        return '{} {}'.format(self.number,
+                              self.name)
+
     class Meta:
         verbose_name = 'Академический период'
         verbose_name_plural = 'Академические периоды'

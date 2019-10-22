@@ -15,8 +15,13 @@ class AcadPeriodSerializer(serializers.ModelSerializer):
         model = org_models.AcadPeriod
         fields = (
             'uid',
-            'name',
         )
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance=instance)
+        data['name'] = instance.repr_name
+
+        return data
 
 
 class RegistrationPeriodSerializer(serializers.ModelSerializer):
