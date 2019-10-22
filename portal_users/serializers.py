@@ -208,8 +208,6 @@ class ProfileFullSerializer(serializers.ModelSerializer):
         if request.user.profile != instance:
             data['identity_documents'] = []
 
-        # data['avatar'] = current_site + data['avatar']
-
         return data
 
 
@@ -250,6 +248,8 @@ class ProfileDetailSerializer(serializers.ModelSerializer):
         role = models.Role.objects.filter(profile=instance).first()
         role_serializer = RoleSerializer(instance=role)
         data['role'] = role_serializer.data
+        data['avatar'] = current_site + data['avatar']
+
         return data
 
 
