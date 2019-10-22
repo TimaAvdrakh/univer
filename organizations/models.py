@@ -424,6 +424,10 @@ class AcadPeriodType(BaseCatalog):
 
 
 class AcadPeriod(BaseCatalog):
+    number = models.IntegerField(
+        verbose_name='Номер',
+        default=0,
+    )
     period_type = models.ForeignKey(
         AcadPeriodType,
         on_delete=models.CASCADE,
@@ -431,11 +435,13 @@ class AcadPeriod(BaseCatalog):
     )
 
     def __str__(self):
-        return '{}'.format(self.name)
+        return '{} {}'.format(self.number,
+                              self.name)
 
     class Meta:
         verbose_name = 'Академический период'
         verbose_name_plural = 'Академические периоды'
+        ordering = ('number',)
 
 
 class StudentDisciplineStatus(BaseCatalog):

@@ -115,6 +115,7 @@ class AcadPeriodTypeAdmin(admin.ModelAdmin):
 class AcadPeriodAdmin(admin.ModelAdmin):
     list_display = [
         'name',
+        'number',
         'uid',
     ]
 
