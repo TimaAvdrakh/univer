@@ -7,7 +7,7 @@ from django.utils import timezone
 
 def calculate_credit(discipline, student, acad_period):
     """Расчитает кредит для дисциплины"""
-    coeff = CreditCoeff.objects.get(start_year__lte=timezone.now().year).coeff
+    coeff = CreditCoeff.objects.filter(start_year__lte=timezone.now().year).latest('start_year').coeff
 
     student_disciplines = models.StudentDiscipline.objects.filter(
         discipline=discipline,
