@@ -117,7 +117,7 @@ class StudentDisciplineListView(generics.ListAPIView):
 
 
 class AcadPeriodListView(generics.ListAPIView):
-    """Получить список акад периодов по курсу и периоду регистрации, query_params: reg_period(!), course, study_plan(!)"""
+    """Получить список акад периодов по курсу и периоду регистрации, query_params: reg_period(!), course"""
 
     queryset = org_models.AcadPeriod.objects.filter(is_active=True)
     serializer_class = AcadPeriodSerializer
@@ -125,7 +125,6 @@ class AcadPeriodListView(generics.ListAPIView):
     def get_queryset(self):
         reg_period = self.request.query_params.get('reg_period')
         course = self.request.query_params.get('course')
-        study_plan = self.request.query_params.get('study_plan')
 
         if course:
             acad_period_pks = common_models.CourseAcadPeriodPermission.objects.filter(
@@ -138,11 +137,6 @@ class AcadPeriodListView(generics.ListAPIView):
             ).values('acad_period')
 
         acad_periods = self.queryset.filter(pk__in=acad_period_pks)
-
-        acad_period_pks_from_sd = org_models.StudentDiscipline.objects.filter(study_plan_id=study_plan).\
-            values('acad_period')
-
-        acad_periods = acad_periods.filter(pk__in=acad_period_pks_from_sd)
 
         return acad_periods
 
