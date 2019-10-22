@@ -413,7 +413,7 @@ class StudentAllDisciplineListView(generics.ListAPIView):
             )
             serializer = self.serializer_class(student_disciplines,
                                                many=True)
-            item_key = acad_period.name
+            item_key = acad_period.repr_name
             item = {
                 item_key: serializer.data
             }
