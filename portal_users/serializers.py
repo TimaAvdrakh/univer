@@ -208,7 +208,7 @@ class ProfileFullSerializer(serializers.ModelSerializer):
         if request.user.profile != instance:
             data['identity_documents'] = []
 
-        data['avatar'] = current_site + data['avatar']
+        # data['avatar'] = current_site + data['avatar']
 
         return data
 
