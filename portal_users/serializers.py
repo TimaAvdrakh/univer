@@ -11,6 +11,7 @@ from portal.curr_settings import student_discipline_status, student_discipline_i
 from django.db.models import Q
 from common import serializers as common_serializers
 from uuid import uuid4
+from portal.curr_settings import current_site
 
 
 class LoginSerializer(serializers.Serializer):
@@ -206,6 +207,8 @@ class ProfileFullSerializer(serializers.ModelSerializer):
 
         if request.user.profile != instance:
             data['identity_documents'] = []
+
+        data['avatar'] = current_site + data['avatar']
 
         return data
 
