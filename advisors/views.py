@@ -389,15 +389,15 @@ class SpecialityListView(generics.ListAPIView):
 
         study_plans = org_models.StudyPlan.objects.filter(advisor=profile)
 
+        if faculty:
+            study_plans = study_plans.filter(faculty_id=faculty)
+
         if study_year:
             study_year_obj = org_models.StudyPeriod.objects.get(pk=study_year)
             study_plans = study_plans.filter(study_period__end__gt=study_year_obj.start)
 
         speciality_pks = study_plans.values('speciality')
         queryset = self.queryset.filter(pk__in=speciality_pks)
-
-        if faculty:
-            queryset = queryset.filter(faculty_id=faculty)
 
         return queryset
 
