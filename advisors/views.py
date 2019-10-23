@@ -348,7 +348,8 @@ class CheckStudentChoices(generics.CreateAPIView):
 
 
 class FilteredStudentsListView(generics.ListAPIView):
-    """Фильтровать студентов для селекта (Эдвайзер)"""
+    """Фильтровать студентов для селекта (Эдвайзер)
+        study_year, faculty, speciality, edu_prog, group"""
     serializer_class = ProfileShortSerializer
 
     def get_queryset(self):
