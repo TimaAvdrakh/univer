@@ -248,8 +248,9 @@ class ProfileDetailSerializer(serializers.ModelSerializer):
         role = models.Role.objects.filter(profile=instance).first()
         role_serializer = RoleSerializer(instance=role)
         data['role'] = role_serializer.data
-        if data['avatar'] is not None:
-            data['avatar'] = current_site + data['avatar']
+
+        # if data['avatar'] is not None:
+        #     data['avatar'] = current_site + data['avatar']
 
         return data
 
@@ -800,8 +801,13 @@ class GroupDetailSerializer(serializers.ModelSerializer):
         data['supervisors'] = []
         for study_plan in study_plans:
             advisor_serializer = ProfileDetailSerializer(study_plan.advisor)
+
+            advisor_data = advisor_serializer.data
+            if advisor_data['avatar'] is not None:
+                advisor_data['avatar'] = current_site + advisor_data['avatar']
+
             item = {
-                'supervisor': advisor_serializer.data,
+                'supervisor': advisor_data,
                 'edu_program': study_plan.education_program.name,
                 'edu_program_code': study_plan.education_program.code,
             }

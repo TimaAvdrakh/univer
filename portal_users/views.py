@@ -12,7 +12,7 @@ from rest_framework.permissions import IsAuthenticated
 from . import permissions
 from .utils import get_current_study_year
 from common.csrf_exempt_auth_class import CsrfExemptSessionAuthentication
-from portal.curr_settings import student_discipline_info_status
+from portal.curr_settings import student_discipline_info_status, current_site
 
 
 class LoginView(generics.CreateAPIView):
@@ -30,8 +30,12 @@ class LoginView(generics.CreateAPIView):
                             password=cd['password'])
         if user is not None:
             profile_serializer = serializers.ProfileDetailSerializer(instance=user.profile)
+            profile_data = profile_serializer.data
+            if profile_data['avatar'] is not None:
+                profile_data['avatar'] = current_site + profile_data['avatar']
+
             data = {
-                'user': profile_serializer.data,
+                'user': profile_data,
                 'firstLogin': user.last_login is None
             }
 
