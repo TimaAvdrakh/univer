@@ -420,12 +420,12 @@ class GetStudyPlanView(generics.RetrieveAPIView):
             study_year_obj = org_models.StudyPeriod.objects.get(pk=study_year)
 
             study_plan = org_models.StudyPlan.objects.get(
-                student_id=student,
-                group_id=group,
-                speciality_id=speciality,
-                faculty_id=faculty,
-                education_program_id=edu_prog,
                 study_period__end__gt=study_year_obj.start,
+                education_program_id=edu_prog,
+                student_id=student,
+                faculty_id=faculty,
+                speciality_id=speciality,
+                group_id=group,
                 is_active=True,
             )
         except org_models.StudyPlan.DoesNotExist:
@@ -497,7 +497,7 @@ class ConfirmedStudentDisciplineListView(generics.ListAPIView):
             )
             serializer = self.serializer_class(student_disciplines,
                                                many=True)
-            item_key = acad_period.name
+            item_key = acad_period.repr_name
             item = {
                 item_key: serializer.data
             }

@@ -15,15 +15,15 @@ urlpatterns = [
 
     path('check/student_choices/', views.CheckStudentChoices.as_view(), name='check_student_choices'),
 
+    # 2 стр
     path('student/study_plan/', views.GetStudyPlanView.as_view(), name='student_study_plan'),
     path('students/', views.FilteredStudentsListView.as_view(), name='students'),
-
     path('speciality/', views.SpecialityListView.as_view(), name='speciality_list'),
     path('student/confirmed/disciplines/', views.ConfirmedStudentDisciplineListView.as_view(),
          name='confirmed_disciplines'),
 
-    path('confirmed/acad_periods/', views.ConfirmedAcadPeriodListView.as_view(),
-         name='confirmed_acad_periods_for_filter'),
+    # path('confirmed/acad_periods/', views.ConfirmedAcadPeriodListView.as_view(),
+    #      name='confirmed_acad_periods_for_filter'),
 
     # 3 стр
     path('registration/results/', views.RegisterResultView.as_view(),
