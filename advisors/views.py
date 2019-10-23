@@ -403,7 +403,7 @@ class SpecialityListView(generics.ListAPIView):
 
 class GetStudyPlanView(generics.RetrieveAPIView):
     """Получить учебный план студента для ИУПы обучающихся (2 стр, Утвержденные)
-    query_params: study_year(!), edu_prog(!), student(!), faculty, speciality, group
+        study_year(!), edu_prog(!), student(!), faculty, speciality, group
     """
     serializer_class = serializers.StudyPlanDetailSerializer
 
