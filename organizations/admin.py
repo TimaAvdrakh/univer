@@ -254,6 +254,7 @@ class DisciplineAdmin(admin.ModelAdmin):
         'name',
         'uid',
         'is_language',
+        'code'
     ]
 
 

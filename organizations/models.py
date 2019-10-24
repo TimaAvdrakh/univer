@@ -387,6 +387,11 @@ class Discipline(BaseCatalog):
         default=False,
         verbose_name='Языковая дисциплина?'
     )
+    code = models.CharField(
+        default='',
+        max_length=100,
+        verbose_name='Код',
+    )
 
     class Meta:
         verbose_name = 'Дисциплина'
