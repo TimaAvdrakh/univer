@@ -49,6 +49,25 @@ class BaseCatalog(BaseModel):
         abstract = True
 
 
+class BaseIdModel(models.Model):
+    class Meta:
+        abstract = True
+
+    is_active = models.BooleanField(
+        default=True,
+    )
+    created = models.DateTimeField(
+        auto_now_add=True,
+    )
+    updated = models.DateTimeField(
+        auto_now=True,
+    )
+    deleted = models.DateTimeField(
+        null=True,
+        blank=True,
+    )
+
+
 class Nationality(BaseCatalog):
     class Meta:
         verbose_name = 'Национальность'

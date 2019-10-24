@@ -1,3 +1,11 @@
 from django.contrib import admin
+from . import models
 
-# Register your models here.
+
+@admin.register(models.AdvisorCheck)
+class AdvisorCheckAdmin(admin.ModelAdmin):
+    list_display = (
+        'study_plan',
+        'id',
+        'status',
+    )

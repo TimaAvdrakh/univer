@@ -3,6 +3,7 @@ from organizations import models as org_models
 from portal_users.serializers import ProfileShortSerializer, StudentDisciplineStatusSerializer
 from portal.curr_settings import student_discipline_info_status, student_discipline_status
 from cron_app.models import AdvisorRejectedBidTask
+from . import models
 
 
 class StudyPlanSerializer(serializers.ModelSerializer):
@@ -90,6 +91,7 @@ class CheckStudentBidsSerializer(serializers.Serializer):
     status = serializers.IntegerField()
     comment = serializers.CharField(
         required=False,
+        allow_blank=True,
         help_text='Причина отклонения заявки студента',
     )
 
@@ -102,13 +104,19 @@ class CheckStudentBidsSerializer(serializers.Serializer):
         if status == 4:  # Утвержден
             info_status_id = student_discipline_info_status['confirmed']
             status_id = student_discipline_status['confirmed']
-        else:  # Отклонен
+        else:  # Отклонен  3
             info_status_id = student_discipline_info_status['rejected']
             status_id = student_discipline_status['rejected']
             AdvisorRejectedBidTask.objects.create(  # Отправить письмо на емайл студента
                 study_plan=study_plan,
                 comment=comment,
             )
+
+        check = models.AdvisorCheck.objects.create(
+            study_plan=study_plan,
+            status=status,
+            comment=comment
+        )
 
         for acad_period in acad_periods:
             student_discipline_info = org_models.StudentDisciplineInfo.objects.get(
@@ -123,6 +131,8 @@ class CheckStudentBidsSerializer(serializers.Serializer):
                 acad_period=acad_period,
                 is_active=True,
             ).update(status_id=status_id)
+
+            check.acad_periods.add(acad_period)
 
 
 class StudyPlanDetailSerializer(serializers.ModelSerializer):

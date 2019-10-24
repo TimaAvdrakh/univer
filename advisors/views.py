@@ -14,6 +14,8 @@ from django.db.models import Q, Count, Sum
 from common.paginators import CustomPagination
 from . import permissions as adv_permission
 from rest_framework.permissions import IsAuthenticated
+from . import models
+from django.db.models import Q, Count
 
 
 class StudyPlansListView(generics.ListAPIView):
@@ -65,7 +67,8 @@ class StudyPlansListView(generics.ListAPIView):
 
 class StudentDisciplineListView(generics.ListAPIView):
     """
-    Получение дисциплин студента, query_params: study_plan(!), acad_period(!), status, short(!) (если значение 1, вернет только первые три записи)
+    Получение дисциплин студента, query_params:
+    study_plan(!), acad_period(!), status, short(!) (если значение 1, вернет только первые три записи), old_acad_periods
     """
     queryset = org_models.StudentDiscipline.objects.filter(is_active=True)
     serializer_class = serializers.StudentDisciplineShortSerializer
@@ -78,6 +81,38 @@ class StudentDisciplineListView(generics.ListAPIView):
         acad_period = self.request.query_params.get('acad_period')
         status_id = self.request.query_params.get('status')
         # reg_period = self.request.query_params.get('reg_period')
+        old_acad_periods = self.request.query_params.get('old_acad_periods')
+
+        if len(old_acad_periods) > 0:
+            old_acad_period_list = old_acad_periods.split(',')
+
+            # q = Q()
+            # for old_acad_period in old_acad_period_list:
+            #     old_acad_period_obj = org_models.AcadPeriod.objects.get(pk=old_acad_period)
+            #     q &= Q(acad_periods__in=(old_acad_period,))
+
+            # checks = models.AdvisorCheck.objects.filter(
+            #     study_plan_id=study_plan
+            # ).annotate(c=Count('acad_periods')).filter(c=len(old_acad_period_list)).filter(q)
+
+            # checks = models.AdvisorCheck.objects.filter(
+            #     study_plan_id=study_plan,
+            #     acad_periods__in=old_acad_period_list
+            # )
+
+            checks = models.AdvisorCheck.objects.filter(
+                study_plan_id=study_plan
+            ).annotate(c=Count('acad_periods')).filter(c=len(old_acad_period_list))
+
+            for old_acad_period in old_acad_period_list:
+                checks = checks.filter(acad_periods=old_acad_period)
+
+            if checks.exists():
+                old_status = checks.latest('id').status
+            else:
+                old_status = 0
+        else:
+            old_status = 0
 
         queryset = self.queryset
         if study_plan:
@@ -89,6 +124,8 @@ class StudentDisciplineListView(generics.ListAPIView):
         #     queryset = queryset.filter(study_year_id=study_year)
         if acad_period:
             queryset = queryset.filter(acad_period_id=acad_period)
+
+        queryset = queryset.distinct('discipline')
 
         student_discipline_list = list(queryset)
         credit_list = [i.credit for i in student_discipline_list]
@@ -107,7 +144,8 @@ class StudentDisciplineListView(generics.ListAPIView):
         resp = {
             'total_credit': total_credit,
             'disciplines': serializer.data,
-            'is_more': is_more
+            'is_more': is_more,
+            'old_status': old_status
         }
 
         return Response(
