@@ -5,7 +5,8 @@ from common.models import BaseIdModel
 class AdvisorCheck(BaseIdModel):
     STATUS_CHOICES = (
         (3, 'Отклонено'),
-        (4, 'Утверждено')
+        (4, 'Утверждено'),
+        # ()
     )
 
     study_plan = models.ForeignKey(

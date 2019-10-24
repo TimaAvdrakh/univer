@@ -83,7 +83,7 @@ class StudentDisciplineListView(generics.ListAPIView):
         # reg_period = self.request.query_params.get('reg_period')
         old_acad_periods = self.request.query_params.get('old_acad_periods')
 
-        if len(old_acad_periods) > 0:
+        if old_acad_periods and len(old_acad_periods) > 0:
             old_acad_period_list = old_acad_periods.split(',')
 
             # q = Q()
