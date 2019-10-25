@@ -22,7 +22,7 @@ class StudyPlanSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         data = super().to_representation(instance)
-        data['education_program_group'] = instance.education_program.group.name
+        data['education_program_group'] = instance.education_program.group.code
 
         return data
 

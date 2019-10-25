@@ -180,7 +180,7 @@ class AcadPeriodListView(generics.ListAPIView):
 
 
 class FacultyListView(generics.ListAPIView):
-    """Получить список факультетов доступных для эдвайзеру, query_params: study_year, study_form"""
+    """Получить список факультетов доступных для эдвайзеру, query_params: study_year(!), study_form"""
     queryset = org_models.Faculty.objects.filter(is_active=True)
     serializer_class = serializers.FacultySerializer
 
@@ -234,7 +234,8 @@ class CathedraListView(generics.ListAPIView):
 
 
 class EducationProgramGroupListView(generics.ListAPIView):
-    """Получить список групп образовательных программ, query_params: study_year, study_form, faculty, cathedra"""
+    """Получить список групп образовательных программ.
+    study_year, study_form, faculty, cathedra, speciality(для 2 стр (Утвержденные дисциплины))"""
 
     queryset = org_models.EducationProgramGroup.objects.filter(is_active=True)
     serializer_class = EducationProgramGroupSerializer
