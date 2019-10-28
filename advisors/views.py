@@ -539,7 +539,7 @@ class ConfirmedStudentDisciplineListView(generics.ListAPIView):
             # item_key = acad_period.repr_name
 
             resp = {
-                'acad_perdiod': acad_period.repr_name,
+                'acad_period': acad_period.repr_name,
                 'discipline': serializer.data
             }
             # resp.append(item)
