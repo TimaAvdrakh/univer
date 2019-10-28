@@ -510,7 +510,7 @@ class ConfirmedStudentDisciplineListView(generics.ListAPIView):
 
         study_plan = org_models.StudyPlan.objects.get(pk=study_plan_id)
 
-        resp = []
+        # resp = []
 
         if acad_period_id:
             acad_period = org_models.AcadPeriod.objects.get(pk=acad_period_id)
@@ -536,33 +536,41 @@ class ConfirmedStudentDisciplineListView(generics.ListAPIView):
             )
             serializer = self.serializer_class(student_disciplines,
                                                many=True)
-            item_key = acad_period.repr_name
-            item = {
-                item_key: serializer.data
+            # item_key = acad_period.repr_name
+
+            resp = {
+                'acad_perdiod': acad_period.repr_name,
+                'discipline': serializer.data
             }
-            resp.append(item)
-
+            # resp.append(item)
         else:
-            acad_period_pks = StudentDisciplineInfo.objects.filter(
-                study_plan=study_plan,
-                status_id=student_discipline_info_status['confirmed'],
-            ).values('acad_period')
-
-            acad_periods = org_models.AcadPeriod.objects.filter(pk__in=acad_period_pks)
-
-            for acad_period in acad_periods:
-                student_disciplines = org_models.StudentDiscipline.objects.filter(
-                    study_plan_id=study_plan_id,
-                    acad_period=acad_period,
-                    is_active=True,
-                )
-                serializer = self.serializer_class(student_disciplines,
-                                                   many=True)
-                item_key = acad_period.name
-                item = {
-                    item_key: serializer.data
-                }
-                resp.append(item)
+            return Response(
+                {
+                    'message': 'acad_period_required'
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        # else:
+        #     acad_period_pks = StudentDisciplineInfo.objects.filter(
+        #         study_plan=study_plan,
+        #         status_id=student_discipline_info_status['confirmed'],
+        #     ).values('acad_period')
+        #
+        #     acad_periods = org_models.AcadPeriod.objects.filter(pk__in=acad_period_pks)
+        #
+        #     for acad_period in acad_periods:
+        #         student_disciplines = org_models.StudentDiscipline.objects.filter(
+        #             study_plan_id=study_plan_id,
+        #             acad_period=acad_period,
+        #             is_active=True,
+        #         )
+        #         serializer = self.serializer_class(student_disciplines,
+        #                                            many=True)
+        #         item_key = acad_period.name
+        #         item = {
+        #             item_key: serializer.data
+        #         }
+        #         resp.append(item)
 
         return Response(
             resp,
