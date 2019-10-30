@@ -6,7 +6,7 @@ class AdvisorCheck(BaseIdModel):
     STATUS_CHOICES = (
         (3, 'Отклонено'),
         (4, 'Утверждено'),
-        # ()
+        (5, 'Изменено'),
     )
 
     study_plan = models.ForeignKey(

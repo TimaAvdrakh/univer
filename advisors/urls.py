@@ -4,6 +4,7 @@ from . import views
 app_name = 'advisors'
 
 urlpatterns = [
+    # 1 стр
     path('study_plans/', views.StudyPlansListView.as_view(), name='registration_bid_list'),
     path('student/disciplines/', views.StudentDisciplineListView.as_view(), name='discipline_short_list'),
     path('acad_periods/', views.AcadPeriodListView.as_view(), name='acad_periods_for_filter'),
@@ -34,4 +35,7 @@ urlpatterns = [
 
     path('not_registered/students/', views.NotRegisteredStudentListView.as_view(),
          name='not_registered_students'),
+
+    path('excel/', views.GenerateExcelView.as_view(),
+         name='generate_excel'),
 ]

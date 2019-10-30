@@ -16,6 +16,10 @@ from . import permissions as adv_permission
 from rest_framework.permissions import IsAuthenticated
 from . import models
 from django.db.models import Q, Count
+from openpyxl import Workbook, load_workbook
+from datetime import datetime
+from django.shortcuts import HttpResponse
+from uuid import uuid4
 
 
 class StudyPlansListView(generics.ListAPIView):
@@ -745,4 +749,203 @@ class NotRegisteredStudentListView(generics.ListAPIView):
     ).distinct('student')
     serializer_class = serializers.NotRegisteredStudentSerializer
 
-# 1
+
+class GenerateExcelView(generics.RetrieveAPIView):
+    """Генерировать Excel для Заявки на ИУПы
+        study_year(!), study_form, faculty, cathedra, edu_prog_group, edu_prog, course, group,
+    """
+
+    def get(self, request, *args, **kwargs):
+        study_year = request.query_params.get('study_year')  # Дисциплина студента
+        study_form = request.query_params.get('study_form')
+        faculty = request.query_params.get('faculty')
+        cathedra = request.query_params.get('cathedra')
+        edu_prog_group = request.query_params.get('edu_prog_group')
+        edu_prog = request.query_params.get('edu_prog')
+        course = request.query_params.get('course')  # Дисциплина студента
+        group = request.query_params.get('group')
+        reg_period = self.request.query_params.get('reg_period')
+        status_id = self.request.query_params.get('status')  # В Дисциплине студента
+        acad_periods = self.request.query_params.get('acad_periods')
+
+        wb = load_workbook('advisors/excel/template.xlsx')
+        ws = wb.active
+
+        queryset = org_models.StudyPlan.objects.filter(is_active=True). \
+            filter(advisor=self.request.user.profile)
+
+        if reg_period:
+            reg_period_obj = common_models.RegistrationPeriod.objects.get(pk=reg_period)
+            ws['B4'] = reg_period_obj.name
+        if course:
+            ws['B5'] = course
+
+        if status_id:
+            status_obj = org_models.StudentDisciplineStatus.objects.get(number=status_id)
+            ws['B6'] = status_obj.name
+        else:
+            ws['B6'] = 'Все'
+
+        if study_form:
+            study_form_obj = org_models.StudyForm.objects.get(pk=study_form)
+            ws['B7'] = study_form_obj.name
+            queryset = queryset.filter(study_form_id=study_form)
+        else:
+            ws['B7'] = 'Все'
+
+        if faculty:
+            faculty_obj = org_models.Faculty.objects.get(pk=faculty)
+            queryset = queryset.filter(faculty_id=faculty)
+            ws['B8'] = faculty_obj.name
+        else:
+            ws['B8'] = 'Все'
+
+        if cathedra:
+            cathedra_obj = org_models.Cathedra.objects.get(pk=cathedra)
+            queryset = queryset.filter(cathedra_id=cathedra)
+            ws['B9'] = cathedra_obj.name
+        else:
+            ws['B9'] = 'Все'
+
+        if edu_prog_group:
+            queryset = queryset.filter(education_program__group_id=edu_prog_group)
+            edu_prog_group_obj = org_models.EducationProgramGroup.objects.get(pk=edu_prog_group)
+            ws['B10'] = edu_prog_group_obj.name
+        else:
+            ws['B10'] = 'Все'
+
+        if edu_prog:
+            queryset = queryset.filter(education_program_id=edu_prog)
+            edu_prog_obj = org_models.EducationProgram.objects.get(pk=edu_prog)
+            ws['B11'] = edu_prog_obj.name
+        else:
+            ws['B11'] = 'Все'
+
+        if group:
+            queryset = queryset.filter(group_id=group)
+            group_obj = org_models.Group.objects.get(pk=group)
+            ws['B12'] = group_obj.name
+        else:
+            ws['B12'] = 'Все'
+
+        if study_year:
+            study_year_obj = org_models.StudyPeriod.objects.get(pk=study_year)
+            queryset = queryset.filter(study_period__end__gt=study_year_obj.start)
+            ws['B3'] = '{} - {}'.format(study_year_obj.start,
+                                        study_year_obj.end)
+
+        if course and study_year:
+            study_plan_pks = org_models.StudyYearCourse.objects.filter(
+                study_year_id=study_year,
+                course=course
+            ).values('study_plan')
+            queryset = queryset.filter(pk__in=study_plan_pks)
+
+        now = datetime.now()
+        ws['B13'] = now.strftime("%d:%m:%Y, %H:%M:%S")
+
+        for i, study_plan in enumerate(queryset):
+            row_num = str(16 + i)
+
+            a = 'A' + row_num
+            ws[a] = i + 1
+
+            b = 'B' + row_num
+            ws[b] = study_plan.education_program.group.code
+
+            c = 'C' + row_num
+            ws[c] = study_plan.education_program.name
+
+            d = 'D' + row_num
+            ws[d] = study_plan.group.name
+
+            e = 'E' + row_num
+            ws[e] = study_plan.student.full_name
+
+            columns = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J',
+                       'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T']
+
+            current_col_num = 5
+            sum_credit = 0
+            old_status = 0
+
+            if acad_periods and len(acad_periods) > 0:
+                acad_period_list = acad_periods.split(',')
+
+                for i, acad_period in enumerate(acad_period_list):
+                    acad_period_obj = org_models.AcadPeriod.objects.get(pk=acad_period)
+                    head = '{} триместр Перечень дисциплин, ' \
+                           'на которые проведена  регистрация ' \
+                           'с указанием кредитов'.format(acad_period_obj.number)
+
+                    student_disciplines = org_models.StudentDiscipline.objects.filter(
+                        is_active=True,
+                        study_plan=study_plan,
+                        acad_period_id=acad_period,
+                    ).distinct('discipline')
+
+                    student_discipline_list = list(student_disciplines)
+                    credit_list = [i.credit for i in student_discipline_list]
+                    total_credit = sum(credit_list)
+                    sum_credit += total_credit
+
+                    text = 'Кредиты: {}\n'.format(total_credit)
+
+                    for stud_discipline in student_disciplines:
+                        text += '{} ({})\n'.format(stud_discipline.discipline.name,
+                                                   stud_discipline.credit)
+
+                    head_cell = columns[current_col_num] + '14'
+                    ws[head_cell] = head
+
+                    text_cell = columns[current_col_num] + row_num
+                    ws[text_cell] = text
+
+                    current_col_num += 1
+
+                checks = models.AdvisorCheck.objects.filter(
+                    study_plan_id=study_plan
+                ).annotate(c=Count('acad_periods')).filter(c=len(acad_period_list))
+
+                for acad_period in acad_period_list:
+                    checks = checks.filter(acad_periods=acad_period)
+
+                if checks.exists():
+                    old_status = checks.latest('id').status
+                else:
+                    old_status = 0
+
+            gos_attestation = columns[current_col_num] + row_num
+            ws[gos_attestation] = 'не выбрана'
+
+            current_col_num += 1
+            sum_credit_cell = columns[current_col_num] + row_num
+            ws[sum_credit_cell] = sum_credit
+
+            current_col_num += 1
+            mark_cell = columns[current_col_num] + row_num
+
+            if old_status == 3:
+                mark = 'Отклонено'
+            elif old_status == 4:
+                mark = 'Утверждено'
+            elif old_status == 5:
+                mark = 'Изменено'
+            else:
+                mark = 'Не определено'
+
+            ws[mark_cell] = mark
+
+        wb.save('advisors/excel/template.xlsx')
+
+        with open('advisors/excel/template.xlsx', 'rb') as f:
+            response = HttpResponse(f, content_type='application/ms-excel')
+            response['Content-Disposition'] = 'attachment; filename="zayavki' + str(uuid4()) + '.xls"'
+            return response
+
+        # return Response(
+        #     {
+        #         'message': 'ok'
+        #     },
+        #     status=status.HTTP_200_OK
+        # )
