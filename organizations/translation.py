@@ -104,4 +104,5 @@ class DisciplineCycleTranslationOptions(TranslationOptions):
 
 @register(models.DisciplineComponent)
 class DisciplineComponentTranslationOptions(TranslationOptions):
-    fields = ('name',)
+    fields = ('name', 'short_name',)
+

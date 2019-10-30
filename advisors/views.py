@@ -482,100 +482,120 @@ class GetStudyPlanView(generics.RetrieveAPIView):
         )
 
 
-class ConfirmedAcadPeriodListView(generics.ListAPIView):  # TODO доделать
-    """Получить список акад периодов периоду регистрации, query_params: reg_period(!)"""
-
-    queryset = org_models.AcadPeriod.objects.filter(is_active=True)
-    serializer_class = AcadPeriodSerializer
-
-    def get_queryset(self):
-        reg_period = self.request.query_params.get('reg_period')
-
-        acad_period_pks = common_models.CourseAcadPeriodPermission.objects.filter(
-            registration_period_id=reg_period,
-        ).values('acad_period')
-        acad_periods = self.queryset.filter(pk__in=acad_period_pks)
-
-        return acad_periods
+# class ConfirmedAcadPeriodListView(generics.ListAPIView):  # TODO доделать
+#     """Получить список акад периодов периоду регистрации, query_params: reg_period(!)"""
+#
+#     queryset = org_models.AcadPeriod.objects.filter(is_active=True)
+#     serializer_class = AcadPeriodSerializer
+#
+#     def get_queryset(self):
+#         reg_period = self.request.query_params.get('reg_period')
+#
+#         acad_period_pks = common_models.CourseAcadPeriodPermission.objects.filter(
+#             registration_period_id=reg_period,
+#         ).values('acad_period')
+#         acad_periods = self.queryset.filter(pk__in=acad_period_pks)
+#
+#         return acad_periods
 
 
 class ConfirmedStudentDisciplineListView(generics.ListAPIView):
-    """Получить все утвержденные дисциплины выбранного учебного плана, query_params: study_plan(!), acad_period(!)"""
+    """Получить все утвержденные дисциплины выбранного учебного плана
+        study_plan(!), study_year(!)"""
 
     serializer_class = serializers.ConfirmedStudentDisciplineShortSerializer
 
     def list(self, request, *args, **kwargs):
         study_plan_id = request.query_params.get('study_plan')
-        acad_period_id = self.request.query_params.get('acad_period')
+        study_year = request.query_params.get('study_year')
 
-        study_plan = org_models.StudyPlan.objects.get(pk=study_plan_id)
+        study_plan = org_models.StudyPlan.objects.get(pk=study_plan_id,
+                                                      is_active=True)
+        study_year_obj = org_models.StudyPeriod.objects.get(pk=study_year)
+        course = study_plan.get_course(study_year_obj)
 
-        # resp = []
+        acad_periods = org_models.StudentDiscipline.objects.filter(
+            study_year_id=study_year,
+            study_plan_id=study_plan_id
+        ).distinct('acad_period').values('acad_period')
 
-        if acad_period_id:
-            acad_period = org_models.AcadPeriod.objects.get(pk=acad_period_id)
+        resp = []
 
-            try:
-                StudentDisciplineInfo.objects.get(
-                    study_plan=study_plan,
+        for acad_period in acad_periods:
+            acad_period_id = acad_period['acad_period']
+            acad_period_obj = org_models.AcadPeriod.objects.get(pk=acad_period_id)
+
+            if StudentDisciplineInfo.objects.filter(
+                    study_plan_id=study_plan_id,
                     acad_period_id=acad_period_id,
                     status_id=student_discipline_info_status['confirmed'],
+            ).exists():
+                student_disciplines = org_models.StudentDiscipline.objects.filter(
+                    study_year_id=study_year,
+                    study_plan_id=study_plan_id,
+                    acad_period_id=acad_period_id,
                 )
-            except StudentDisciplineInfo.DoesNotExist:
-                return Response(
-                    {
-                        'message': 'not_found',
-                    },
-                    status=status.HTTP_404_NOT_FOUND,
-                )
-
-            student_disciplines = org_models.StudentDiscipline.objects.filter(
-                study_plan_id=study_plan_id,
-                acad_period_id=acad_period_id,
-                is_active=True,
-            )
-            serializer = self.serializer_class(student_disciplines,
-                                               many=True)
-            # item_key = acad_period.repr_name
-
-            resp = {
-                'acad_period': acad_period.repr_name,
-                'discipline': serializer.data
-            }
-            # resp.append(item)
-        else:
-            return Response(
-                {
-                    'message': 'acad_period_required'
-                },
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        # else:
-        #     acad_period_pks = StudentDisciplineInfo.objects.filter(
-        #         study_plan=study_plan,
-        #         status_id=student_discipline_info_status['confirmed'],
-        #     ).values('acad_period')
-        #
-        #     acad_periods = org_models.AcadPeriod.objects.filter(pk__in=acad_period_pks)
-        #
-        #     for acad_period in acad_periods:
-        #         student_disciplines = org_models.StudentDiscipline.objects.filter(
-        #             study_plan_id=study_plan_id,
-        #             acad_period=acad_period,
-        #             is_active=True,
-        #         )
-        #         serializer = self.serializer_class(student_disciplines,
-        #                                            many=True)
-        #         item_key = acad_period.name
-        #         item = {
-        #             item_key: serializer.data
-        #         }
-        #         resp.append(item)
+                serializer = self.serializer_class(student_disciplines,
+                                                   many=True)
+                item = {
+                    'acad_period': acad_period_obj.repr_name,
+                    'disciplines': serializer.data,
+                    'course': course
+                }
+                resp.append(item)
 
         return Response(
             resp,
             status=status.HTTP_200_OK
         )
+
+    # def list(self, request, *args, **kwargs):
+    #     study_plan_id = request.query_params.get('study_plan')
+    #     acad_period_id = self.request.query_params.get('acad_period')
+    #
+    #     study_plan = org_models.StudyPlan.objects.get(pk=study_plan_id)
+    #
+    #     if acad_period_id:
+    #         acad_period = org_models.AcadPeriod.objects.get(pk=acad_period_id)
+    #
+    #         try:
+    #             StudentDisciplineInfo.objects.get(
+    #                 study_plan=study_plan,
+    #                 acad_period_id=acad_period_id,
+    #                 status_id=student_discipline_info_status['confirmed'],
+    #             )
+    #         except StudentDisciplineInfo.DoesNotExist:
+    #             return Response(
+    #                 {
+    #                     'message': 'not_found',
+    #                 },
+    #                 status=status.HTTP_404_NOT_FOUND,
+    #             )
+    #
+    #         student_disciplines = org_models.StudentDiscipline.objects.filter(
+    #             study_plan_id=study_plan_id,
+    #             acad_period_id=acad_period_id,
+    #             is_active=True,
+    #         )
+    #         serializer = self.serializer_class(student_disciplines,
+    #                                            many=True)
+    #
+    #         resp = {
+    #             'acad_period': acad_period.repr_name,
+    #             'discipline': serializer.data
+    #         }
+    #     else:
+    #         return Response(
+    #             {
+    #                 'message': 'acad_period_required'
+    #             },
+    #             status=status.HTTP_400_BAD_REQUEST
+    #         )
+    #
+    #     return Response(
+    #         resp,
+    #         status=status.HTTP_200_OK
+    #     )
 
 
 class RegisterResultView(generics.ListAPIView):

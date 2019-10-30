@@ -27,6 +27,11 @@ class DisciplineCycle(BaseCatalog):
 
 
 class DisciplineComponent(BaseCatalog):
+    short_name = models.CharField(
+        max_length=10,
+        default='',
+    )
+
     class Meta:
         verbose_name = 'Компонент дисциплины'
         verbose_name_plural = 'Компоненты дисциплин'

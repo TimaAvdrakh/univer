@@ -352,6 +352,7 @@ class DisciplineCycleAdmin(admin.ModelAdmin):
 class DisciplineComponentAdmin(admin.ModelAdmin):
     list_display = [
         'name',
+        'short_name',
         'uid',
     ]
 

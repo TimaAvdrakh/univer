@@ -4,6 +4,7 @@ from portal_users.serializers import ProfileShortSerializer, StudentDisciplineSt
 from portal.curr_settings import student_discipline_info_status, student_discipline_status
 from cron_app.models import AdvisorRejectedBidTask
 from . import models
+from portal_users.utils import get_current_study_year
 
 
 class StudyPlanSerializer(serializers.ModelSerializer):
@@ -176,6 +177,9 @@ class StudyPlanDetailSerializer(serializers.ModelSerializer):
     def to_representation(self, instance):
         data = super().to_representation(instance)
         data['language'] = instance.group.language.name
+        study_year_dict = get_current_study_year()
+        data['current_study_year'] = '{}-{}'.format(study_year_dict['start'],
+                                                    study_year_dict['end'])
 
         return data
 
@@ -196,7 +200,7 @@ class ConfirmedStudentDisciplineShortSerializer(serializers.ModelSerializer):
         data = super().to_representation(instance=instance)
         data['discipline_code'] = instance.discipline.code
         data['credit'] = instance.credit
-        data['component'] = instance.component.name[:5]
+        data['component'] = instance.component.short_name
 
         return data
 
