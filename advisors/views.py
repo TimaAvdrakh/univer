@@ -72,7 +72,7 @@ class StudyPlansListView(generics.ListAPIView):
 class StudentDisciplineListView(generics.ListAPIView):
     """
     Получение дисциплин студента, query_params:
-    study_plan(!), acad_period(!), status, short(!) (если значение 1, вернет только первые три записи), old_acad_periods
+    study_plan(!), acad_period(!), status, short(!) (если значение 1, вернет только первые три записи)
     """
     queryset = org_models.StudentDiscipline.objects.filter(is_active=True)
     serializer_class = serializers.StudentDisciplineShortSerializer
@@ -85,36 +85,12 @@ class StudentDisciplineListView(generics.ListAPIView):
         acad_period = self.request.query_params.get('acad_period')
         status_id = self.request.query_params.get('status')
         # reg_period = self.request.query_params.get('reg_period')
-        old_acad_periods = self.request.query_params.get('old_acad_periods')
 
-        if old_acad_periods and len(old_acad_periods) > 0:
-            old_acad_period_list = old_acad_periods.split(',')
+        checks = models.AdvisorCheck.objects.filter(study_plan_id=study_plan,
+                                                    acad_period_id=acad_period)
 
-            # q = Q()
-            # for old_acad_period in old_acad_period_list:
-            #     old_acad_period_obj = org_models.AcadPeriod.objects.get(pk=old_acad_period)
-            #     q &= Q(acad_periods__in=(old_acad_period,))
-
-            # checks = models.AdvisorCheck.objects.filter(
-            #     study_plan_id=study_plan
-            # ).annotate(c=Count('acad_periods')).filter(c=len(old_acad_period_list)).filter(q)
-
-            # checks = models.AdvisorCheck.objects.filter(
-            #     study_plan_id=study_plan,
-            #     acad_periods__in=old_acad_period_list
-            # )
-
-            checks = models.AdvisorCheck.objects.filter(
-                study_plan_id=study_plan
-            ).annotate(c=Count('acad_periods')).filter(c=len(old_acad_period_list))
-
-            for old_acad_period in old_acad_period_list:
-                checks = checks.filter(acad_periods=old_acad_period)
-
-            if checks.exists():
-                old_status = checks.latest('id').status
-            else:
-                old_status = 0
+        if checks.exists():
+            old_status = checks.latest('id').status
         else:
             old_status = 0
 
@@ -903,7 +879,7 @@ class GenerateExcelView(generics.RetrieveAPIView):
 
                     current_col_num += 1
 
-                checks = models.AdvisorCheck.objects.filter(
+                checks = models.AdvisorCheck.objects.filter(  # TODO изменить для кажлого триместра
                     study_plan_id=study_plan
                 ).annotate(c=Count('acad_periods')).filter(c=len(acad_period_list))
 

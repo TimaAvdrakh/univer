@@ -13,8 +13,10 @@ class AdvisorCheck(BaseIdModel):
         'organizations.StudyPlan',
         on_delete=models.CASCADE,
     )
-    acad_periods = models.ManyToManyField(
+    acad_period = models.ForeignKey(
         'organizations.AcadPeriod',
+        on_delete=models.CASCADE,
+        null=True,
     )
     status = models.IntegerField(
         choices=STATUS_CHOICES,

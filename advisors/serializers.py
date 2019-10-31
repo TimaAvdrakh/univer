@@ -5,6 +5,7 @@ from portal.curr_settings import student_discipline_info_status, student_discipl
 from cron_app.models import AdvisorRejectedBidTask
 from . import models
 from portal_users.utils import get_current_study_year
+from common.exceptions import CustomException
 
 
 class StudyPlanSerializer(serializers.ModelSerializer):
@@ -105,19 +106,15 @@ class CheckStudentBidsSerializer(serializers.Serializer):
         if status == 4:  # Утвержден
             info_status_id = student_discipline_info_status['confirmed']
             status_id = student_discipline_status['confirmed']
-        else:  # Отклонен  3
+        elif status == 3:  # Отклонен
             info_status_id = student_discipline_info_status['rejected']
             status_id = student_discipline_status['rejected']
             AdvisorRejectedBidTask.objects.create(  # Отправить письмо на емайл студента
                 study_plan=study_plan,
                 comment=comment,
             )
-
-        check = models.AdvisorCheck.objects.create(
-            study_plan=study_plan,
-            status=status,
-            comment=comment
-        )
+        else:
+            raise CustomException(detail='not_valid_status')
 
         for acad_period in acad_periods:
             student_discipline_info = org_models.StudentDisciplineInfo.objects.get(
@@ -133,7 +130,12 @@ class CheckStudentBidsSerializer(serializers.Serializer):
                 is_active=True,
             ).update(status_id=status_id)
 
-            check.acad_periods.add(acad_period)
+            models.AdvisorCheck.objects.create(
+                study_plan=study_plan,
+                status=status,
+                acad_period=acad_period,
+                comment=comment,
+            )
 
 
 class StudyPlanDetailSerializer(serializers.ModelSerializer):

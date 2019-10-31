@@ -39,5 +39,3 @@ urlpatterns = [
     path('excel/', views.GenerateExcelView.as_view(),
          name='generate_excel'),
 ]
-
-# 1
