@@ -534,6 +534,7 @@ class StudentDiscipline(BaseModel):
         DisciplineComponent,
         on_delete=models.CASCADE,
         null=True,
+        blank=True,
         verbose_name='Компонент дисциплины',
         related_name='student_disciplines',
     )

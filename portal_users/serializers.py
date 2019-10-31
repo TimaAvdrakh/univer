@@ -12,6 +12,7 @@ from django.db.models import Q
 from common import serializers as common_serializers
 from uuid import uuid4
 from portal.curr_settings import current_site
+from advisors.models import AdvisorCheck
 
 
 class LoginSerializer(serializers.Serializer):
@@ -706,6 +707,11 @@ class ChooseTeacherSerializer(serializers.ModelSerializer):
         elif request.user.profile == instance.study_plan.advisor:
             """Эдвайзер делает выбор за студента"""
             instance.status_id = student_discipline_status['changed']
+            AdvisorCheck.objects.create(
+                study_plan=instance.study_plan,
+                acad_period=instance.acad_period,
+                status=5  # Изменено
+            )
 
         instance.author = request.user.profile
         instance.save()

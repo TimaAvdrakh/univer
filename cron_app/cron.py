@@ -104,11 +104,11 @@ class NotifyAdvisorJob(CronJobBase):
 
             msg_plain = render_to_string('emails/student_finished_selection.txt',
                                          {'full_name': student.full_name,
-                                          'acad_period': acad_period.name}
+                                          'acad_period': acad_period.repr_name}
                                          )
             msg_html = render_to_string('emails/student_finished_selection.html',
                                         {'full_name': student.full_name,
-                                         'acad_period': acad_period.name}
+                                         'acad_period': acad_period.repr_name}
                                         )
 
             send_mail(
