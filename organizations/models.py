@@ -392,11 +392,6 @@ class Discipline(BaseCatalog):
         default=False,
         verbose_name='Языковая дисциплина?'
     )
-    code = models.CharField(
-        default='',
-        max_length=100,
-        verbose_name='Код',
-    )
 
     class Meta:
         verbose_name = 'Дисциплина'
@@ -500,6 +495,11 @@ class StudentDiscipline(BaseModel):
         Discipline,
         on_delete=models.CASCADE,
         verbose_name='Дисциплина',
+    )
+    discipline_code = models.CharField(
+        default='',
+        max_length=100,
+        verbose_name='Код дисциплины',
     )
     load_type = models.ForeignKey(
         LoadType,

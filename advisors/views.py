@@ -24,7 +24,8 @@ from uuid import uuid4
 
 class StudyPlansListView(generics.ListAPIView):
     """
-    Получение учебных планов, query_params: study_year(!), study_form, faculty, cathedra, edu_prog_group, edu_prog, course, group,
+    Получение учебных планов,
+    study_year(!), study_form, faculty, cathedra, edu_prog_group, edu_prog, course, group,
     """
     queryset = org_models.StudyPlan.objects.filter(is_active=True)
     serializer_class = serializers.StudyPlanSerializer
@@ -135,14 +136,27 @@ class StudentDisciplineListView(generics.ListAPIView):
 
 
 class AcadPeriodListView(generics.ListAPIView):
-    """Получить список акад периодов по курсу и периоду регистрации, query_params: reg_period(!), course"""
+    """Получить список акад периодов по курсу и периоду регистрации,
+    study_year(!) reg_period(!), study_form, faculty, cathedra, edu_prog_group, edu_prog, course, group, status
+    """
 
     queryset = org_models.AcadPeriod.objects.filter(is_active=True)
     serializer_class = AcadPeriodSerializer
 
     def get_queryset(self):
         reg_period = self.request.query_params.get('reg_period')
+        study_year = self.request.query_params.get('study_year')
+
         course = self.request.query_params.get('course')
+        study_form = self.request.query_params.get('study_form')
+        faculty = self.request.query_params.get('faculty')
+        cathedra = self.request.query_params.get('cathedra')
+        edu_prog_group = self.request.query_params.get('edu_prog_group')
+        edu_prog = self.request.query_params.get('edu_prog')
+        group = self.request.query_params.get('group')
+        status_id = self.request.query_params.get('status')
+
+        profile = self.request.user.profile
 
         if course:
             acad_period_pks = common_models.CourseAcadPeriodPermission.objects.filter(
@@ -155,6 +169,31 @@ class AcadPeriodListView(generics.ListAPIView):
             ).values('acad_period')
 
         acad_periods = self.queryset.filter(pk__in=acad_period_pks)
+
+        sd = org_models.StudentDiscipline.objects.filter(
+            study_plan__advisor=profile,
+            study_year_id=study_year,
+        )
+
+        if study_form:
+            sd = sd.filter(study_plan__study_form_id=study_form)
+        if faculty:
+            sd = sd.filter(study_plan__faculty_id=faculty)
+        if cathedra:
+            sd = sd.filter(study_plan__cathedra_id=cathedra)
+        if edu_prog_group:
+            sd = sd.filter(study_plan__education_program__group_id=edu_prog_group)
+        if edu_prog:
+            sd = sd.filter(study_plan__education_program_id=edu_prog)
+        if group:
+            sd = sd.filter(study_plan__group_id=group)
+        if status_id:
+            status_obj = org_models.StudentDisciplineStatus.objects.get(number=status_id)
+            sd = sd.filter(status=status_obj)
+
+        acad_period_pks_from_sd = sd.values('acad_period')
+
+        acad_periods = acad_periods.filter(pk__in=acad_period_pks_from_sd)
 
         return acad_periods
 

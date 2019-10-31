@@ -141,6 +141,7 @@ class StudentDisciplineAdmin(admin.ModelAdmin):
         'teacher',
         'language',
         'author',
+        'discipline_code',
         'status',
     ]
 
@@ -254,7 +255,6 @@ class DisciplineAdmin(admin.ModelAdmin):
         'name',
         'uid',
         'is_language',
-        'code'
     ]
 
 

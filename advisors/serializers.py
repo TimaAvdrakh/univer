@@ -196,11 +196,11 @@ class ConfirmedStudentDisciplineShortSerializer(serializers.ModelSerializer):
         fields = (
             'uid',
             'discipline',
+            'discipline_code'
         )
 
     def to_representation(self, instance):
         data = super().to_representation(instance=instance)
-        data['discipline_code'] = instance.discipline.code
         data['credit'] = instance.credit
         data['component'] = instance.component.short_name
 

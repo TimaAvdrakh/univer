@@ -8,4 +8,5 @@ class AdvisorCheckAdmin(admin.ModelAdmin):
         'study_plan',
         'id',
         'status',
+        'acad_period',
     )
