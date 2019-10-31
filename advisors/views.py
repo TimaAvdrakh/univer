@@ -844,6 +844,7 @@ class GenerateExcelView(generics.RetrieveAPIView):
             current_col_num = 5
             sum_credit = 0
             old_status = 0
+            mark_text = ''
 
             if acad_periods and len(acad_periods) > 0:
                 acad_period_list = acad_periods.split(',')
@@ -879,17 +880,25 @@ class GenerateExcelView(generics.RetrieveAPIView):
 
                     current_col_num += 1
 
-                checks = models.AdvisorCheck.objects.filter(  # TODO изменить для кажлого триместра
-                    study_plan_id=study_plan
-                ).annotate(c=Count('acad_periods')).filter(c=len(acad_period_list))
+                    checks = models.AdvisorCheck.objects.filter(
+                        study_plan=study_plan,
+                        acad_period_id=acad_period,
+                    )
+                    if checks.exists():
+                        old_status = checks.latest('id').status
+                    else:
+                        old_status = 0
 
-                for acad_period in acad_period_list:
-                    checks = checks.filter(acad_periods=acad_period)
+                    if old_status == 3:
+                        mark = '{} - Отклонено\n'.format(acad_period_obj.repr_name)
+                    elif old_status == 4:
+                        mark = '{} - Утверждено\n'.format(acad_period_obj.repr_name)
+                    elif old_status == 5:
+                        mark = '{} - Изменено\n'.format(acad_period_obj.repr_name)
+                    else:
+                        mark = '{} - Не определено\n'.format(acad_period_obj.repr_name)
 
-                if checks.exists():
-                    old_status = checks.latest('id').status
-                else:
-                    old_status = 0
+                    mark_text += mark
 
             gos_attestation = columns[current_col_num] + row_num
             ws[gos_attestation] = 'не выбрана'
@@ -900,17 +909,7 @@ class GenerateExcelView(generics.RetrieveAPIView):
 
             current_col_num += 1
             mark_cell = columns[current_col_num] + row_num
-
-            if old_status == 3:
-                mark = 'Отклонено'
-            elif old_status == 4:
-                mark = 'Утверждено'
-            elif old_status == 5:
-                mark = 'Изменено'
-            else:
-                mark = 'Не определено'
-
-            ws[mark_cell] = mark
+            ws[mark_cell] = mark_text
 
         wb.save('advisors/excel/template.xlsx')
 
