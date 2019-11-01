@@ -407,7 +407,7 @@ class CheckStudentChoices(generics.CreateAPIView):
 
 class FilteredStudentsListView(generics.ListAPIView):
     """Фильтровать студентов для селекта (Эдвайзер)
-        study_year, faculty, speciality, edu_prog, group"""
+        study_year(!), edu_prog(!), faculty, speciality, group"""
     serializer_class = ProfileShortSerializer
 
     def get_queryset(self):
@@ -420,14 +420,20 @@ class FilteredStudentsListView(generics.ListAPIView):
         group = request.query_params.get('group')
 
         study_year_obj = org_models.StudyPeriod.objects.get(pk=study_year)
-        student_pks = org_models.StudyPlan.objects.filter(
-            group_id=group,
-            speciality_id=speciality,
-            faculty_id=faculty,
+
+        study_plans = org_models.StudyPlan.objects.filter(
             education_program_id=edu_prog,
             study_period__end__gt=study_year_obj.start,
             is_active=True,
-        ).values('student')
+        )
+        if faculty:
+            study_plans = study_plans.filter(faculty_id=faculty)
+        if speciality:
+            study_plans = study_plans.filter(speciality_id=speciality)
+        if group:
+            study_plans = study_plans.filter(group_id=group)
+
+        student_pks = study_plans.values('student')
         students = Profile.objects.filter(pk__in=student_pks)
 
         return students
@@ -474,17 +480,25 @@ class GetStudyPlanView(generics.RetrieveAPIView):
         group = request.query_params.get('group')
         student = request.query_params.get('student')
 
+        filters = {}
+
+        if faculty:
+            filters['faculty_id'] = faculty
+
+        if speciality:
+            filters['speciality_id'] = speciality
+
+        if group:
+            filters['group_id'] = group
+
         try:
             study_year_obj = org_models.StudyPeriod.objects.get(pk=study_year)
-
             study_plan = org_models.StudyPlan.objects.get(
                 study_period__end__gt=study_year_obj.start,
                 education_program_id=edu_prog,
                 student_id=student,
-                faculty_id=faculty,
-                speciality_id=speciality,
-                group_id=group,
                 is_active=True,
+                **filters,
             )
         except org_models.StudyPlan.DoesNotExist:
             return Response(
@@ -499,23 +513,6 @@ class GetStudyPlanView(generics.RetrieveAPIView):
             serializer.data,
             status=status.HTTP_200_OK,
         )
-
-
-# class ConfirmedAcadPeriodListView(generics.ListAPIView):  # TODO доделать
-#     """Получить список акад периодов периоду регистрации, query_params: reg_period(!)"""
-#
-#     queryset = org_models.AcadPeriod.objects.filter(is_active=True)
-#     serializer_class = AcadPeriodSerializer
-#
-#     def get_queryset(self):
-#         reg_period = self.request.query_params.get('reg_period')
-#
-#         acad_period_pks = common_models.CourseAcadPeriodPermission.objects.filter(
-#             registration_period_id=reg_period,
-#         ).values('acad_period')
-#         acad_periods = self.queryset.filter(pk__in=acad_period_pks)
-#
-#         return acad_periods
 
 
 class ConfirmedStudentDisciplineListView(generics.ListAPIView):

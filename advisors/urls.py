@@ -23,9 +23,6 @@ urlpatterns = [
     path('student/confirmed/disciplines/', views.ConfirmedStudentDisciplineListView.as_view(),
          name='confirmed_disciplines'),
 
-    # path('confirmed/acad_periods/', views.ConfirmedAcadPeriodListView.as_view(),
-    #      name='confirmed_acad_periods_for_filter'),
-
     # 3 стр
     path('registration/results/', views.RegisterResultView.as_view(),
          name='registration_results'),
