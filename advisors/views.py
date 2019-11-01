@@ -172,7 +172,7 @@ class AcadPeriodListView(generics.ListAPIView):
 
         sd = org_models.StudentDiscipline.objects.filter(
             study_plan__advisor=profile,
-            study_year_id=study_year,
+            # study_year_id=study_year,
         )
 
         if study_form:
@@ -440,7 +440,8 @@ class FilteredStudentsListView(generics.ListAPIView):
 
 
 class SpecialityListView(generics.ListAPIView):
-    """Получить список специальностей доступных эдвайзеру, query_params: study_year, faculty"""
+    """Получить список специальностей доступных эдвайзеру,
+    study_year(!), faculty"""
 
     queryset = org_models.Speciality.objects.filter(is_active=True)
     serializer_class = serializers.SpecialitySerializer
