@@ -960,3 +960,6 @@ class GenerateExcelView(generics.RetrieveAPIView):
         #     },
         #     status=status.HTTP_200_OK
         # )
+
+
+# 1
