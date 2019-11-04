@@ -169,7 +169,7 @@ class AcadPeriodListView(generics.ListAPIView):
 
         sd = org_models.StudentDiscipline.objects.filter(
             study_plan__advisor=profile,
-            # study_year_id=study_year,
+            study_year_id=study_year,
         )
 
         if study_form:
