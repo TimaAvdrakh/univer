@@ -99,7 +99,7 @@ class EducationProgramGroupTranslationOptions(TranslationOptions):
 
 @register(models.DisciplineCycle)
 class DisciplineCycleTranslationOptions(TranslationOptions):
-    fields = ('name',)
+    fields = ('name', 'short_name',)
 
 
 @register(models.DisciplineComponent)

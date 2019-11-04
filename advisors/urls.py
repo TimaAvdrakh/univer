@@ -33,6 +33,6 @@ urlpatterns = [
     path('not_registered/students/', views.NotRegisteredStudentListView.as_view(),
          name='not_registered_students'),
 
-    path('excel/', views.GenerateExcelView.as_view(),
+    path('excel/', views.GenerateIupBidExcelView.as_view(),
          name='generate_excel'),
 ]

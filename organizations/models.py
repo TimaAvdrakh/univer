@@ -21,6 +21,12 @@ class Organization(BaseCatalog):
 
 
 class DisciplineCycle(BaseCatalog):
+    short_name = models.CharField(
+        max_length=10,
+        default='',
+        verbose_name='Краткое название',
+    )
+
     class Meta:
         verbose_name = 'Цикл дисциплины'
         verbose_name_plural = 'Циклы дисциплин'
@@ -29,6 +35,7 @@ class DisciplineCycle(BaseCatalog):
 class DisciplineComponent(BaseCatalog):
     short_name = models.CharField(
         max_length=10,
+        verbose_name='Краткое название',
         default='',
     )
 

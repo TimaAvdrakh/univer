@@ -107,10 +107,7 @@ class StudentDisciplineListView(generics.ListAPIView):
             queryset = queryset.filter(acad_period_id=acad_period)
 
         queryset = queryset.distinct('discipline')
-
-        student_discipline_list = list(queryset)
-        credit_list = [i.credit for i in student_discipline_list]
-        total_credit = sum(credit_list)
+        total_credit = sum(i.credit for i in queryset)
 
         is_more = len(queryset) > 3
 
@@ -289,7 +286,8 @@ class EducationProgramGroupListView(generics.ListAPIView):
 
 
 class EducationProgramListView(generics.ListAPIView):
-    """Получить список образовательных программ, query_params:  edu_prog_group=<uid edu_prog_group>"""
+    """Получить список образовательных программ,
+    edu_prog_group=<uid edu_prog_group>, study_year"""
 
     queryset = org_models.EducationProgram.objects.filter(is_active=True)
     serializer_class = EducationProgramSerializer
@@ -509,7 +507,8 @@ class GetStudyPlanView(generics.RetrieveAPIView):
                 status=status.HTTP_404_NOT_FOUND
             )
 
-        serializer = self.serializer_class(instance=study_plan)
+        serializer = self.serializer_class(instance=study_plan,
+                                           context={'study_year_obj': study_year_obj})
         return Response(
             serializer.data,
             status=status.HTTP_200_OK,
@@ -526,10 +525,10 @@ class ConfirmedStudentDisciplineListView(generics.ListAPIView):
         study_plan_id = request.query_params.get('study_plan')
         study_year = request.query_params.get('study_year')
 
-        study_plan = org_models.StudyPlan.objects.get(pk=study_plan_id,
-                                                      is_active=True)
-        study_year_obj = org_models.StudyPeriod.objects.get(pk=study_year)
-        course = study_plan.get_course(study_year_obj)
+        # study_plan = org_models.StudyPlan.objects.get(pk=study_plan_id,
+        #                                               is_active=True)
+        # study_year_obj = org_models.StudyPeriod.objects.get(pk=study_year)
+        # course = study_plan.get_course(study_year_obj)
 
         acad_periods = org_models.StudentDiscipline.objects.filter(
             study_year_id=study_year,
@@ -551,13 +550,14 @@ class ConfirmedStudentDisciplineListView(generics.ListAPIView):
                     study_year_id=study_year,
                     study_plan_id=study_plan_id,
                     acad_period_id=acad_period_id,
-                )
+                ).distinct('discipline')
+
                 serializer = self.serializer_class(student_disciplines,
                                                    many=True)
                 item = {
                     'acad_period': acad_period_obj.repr_name,
                     'disciplines': serializer.data,
-                    'course': course
+                    # 'course': course
                 }
                 resp.append(item)
 
@@ -565,54 +565,6 @@ class ConfirmedStudentDisciplineListView(generics.ListAPIView):
             resp,
             status=status.HTTP_200_OK
         )
-
-    # def list(self, request, *args, **kwargs):
-    #     study_plan_id = request.query_params.get('study_plan')
-    #     acad_period_id = self.request.query_params.get('acad_period')
-    #
-    #     study_plan = org_models.StudyPlan.objects.get(pk=study_plan_id)
-    #
-    #     if acad_period_id:
-    #         acad_period = org_models.AcadPeriod.objects.get(pk=acad_period_id)
-    #
-    #         try:
-    #             StudentDisciplineInfo.objects.get(
-    #                 study_plan=study_plan,
-    #                 acad_period_id=acad_period_id,
-    #                 status_id=student_discipline_info_status['confirmed'],
-    #             )
-    #         except StudentDisciplineInfo.DoesNotExist:
-    #             return Response(
-    #                 {
-    #                     'message': 'not_found',
-    #                 },
-    #                 status=status.HTTP_404_NOT_FOUND,
-    #             )
-    #
-    #         student_disciplines = org_models.StudentDiscipline.objects.filter(
-    #             study_plan_id=study_plan_id,
-    #             acad_period_id=acad_period_id,
-    #             is_active=True,
-    #         )
-    #         serializer = self.serializer_class(student_disciplines,
-    #                                            many=True)
-    #
-    #         resp = {
-    #             'acad_period': acad_period.repr_name,
-    #             'discipline': serializer.data
-    #         }
-    #     else:
-    #         return Response(
-    #             {
-    #                 'message': 'acad_period_required'
-    #             },
-    #             status=status.HTTP_400_BAD_REQUEST
-    #         )
-    #
-    #     return Response(
-    #         resp,
-    #         status=status.HTTP_200_OK
-    #     )
 
 
 class RegisterResultView(generics.ListAPIView):
@@ -763,9 +715,10 @@ class NotRegisteredStudentListView(generics.ListAPIView):
     serializer_class = serializers.NotRegisteredStudentSerializer
 
 
-class GenerateExcelView(generics.RetrieveAPIView):
+class GenerateIupBidExcelView(generics.RetrieveAPIView):
     """Генерировать Excel для Заявки на ИУПы
-        study_year(!), study_form, faculty, cathedra, edu_prog_group, edu_prog, course, group,
+        study_year(!), study_form, faculty, cathedra, edu_prog_group, edu_prog,
+        course, group, acad_periods
     """
 
     def get(self, request, *args, **kwargs):
@@ -963,4 +916,82 @@ class GenerateExcelView(generics.RetrieveAPIView):
         # )
 
 
-# 1
+class GenerateIupExcelView(generics.RetrieveAPIView):
+    """
+    study_year(!), edu_prog(!), student(!), faculty, speciality, group,
+    """
+    def get(self, request, *args, **kwargs):
+        study_year = request.query_params.get('study_year')
+        faculty = request.query_params.get('faculty')
+        speciality = request.query_params.get('speciality')
+        edu_prog = request.query_params.get('edu_prog')
+        group = request.query_params.get('group')
+        student = request.query_params.get('student')
+
+        filters = {}
+
+        if faculty:
+            filters['faculty_id'] = faculty
+
+        if speciality:
+            filters['speciality_id'] = speciality
+
+        if group:
+            filters['group_id'] = group
+
+        try:
+            study_year_obj = org_models.StudyPeriod.objects.get(pk=study_year)
+            study_plan = org_models.StudyPlan.objects.get(
+                study_period__end__gt=study_year_obj.start,
+                education_program_id=edu_prog,
+                student_id=student,
+                is_active=True,
+                **filters,
+            )
+        except org_models.StudyPlan.DoesNotExist:
+            return Response(
+                {
+                    'message': 0  # Учебный план не найден
+                },
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        course = study_plan.get_course(study_year_obj)
+
+        acad_periods = org_models.StudentDiscipline.objects.filter(
+            study_year_id=study_year,
+            study_plan=study_plan,
+        ).distinct('acad_period').values('acad_period')
+
+        resp = []
+
+        for acad_period in acad_periods:
+            acad_period_id = acad_period['acad_period']
+            acad_period_obj = org_models.AcadPeriod.objects.get(pk=acad_period_id)
+
+            if StudentDisciplineInfo.objects.filter(
+                    study_plan=study_plan,
+                    acad_period_id=acad_period_id,
+                    status_id=student_discipline_info_status['confirmed'],
+            ).exists():
+                student_disciplines = org_models.StudentDiscipline.objects.filter(
+                    study_year_id=study_year,
+                    study_plan=study_plan,
+                    acad_period_id=acad_period_id,
+                )
+                serializer = self.serializer_class(student_disciplines,
+                                                   many=True)
+                item = {
+                    'acad_period': acad_period_obj.repr_name,
+                    'disciplines': serializer.data,
+                    'course': course
+                }
+                resp.append(item)
+
+        return Response(
+            resp,
+            status=status.HTTP_200_OK
+        )
+
+
+

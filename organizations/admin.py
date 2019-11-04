@@ -344,6 +344,7 @@ class StudyYearCourseAdmin(admin.ModelAdmin):
 class DisciplineCycleAdmin(admin.ModelAdmin):
     list_display = [
         'name',
+        'short_name',
         'uid',
     ]
 
@@ -355,5 +356,3 @@ class DisciplineComponentAdmin(admin.ModelAdmin):
         'short_name',
         'uid',
     ]
-
-#14

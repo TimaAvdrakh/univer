@@ -177,11 +177,15 @@ class StudyPlanDetailSerializer(serializers.ModelSerializer):
         )
 
     def to_representation(self, instance):
+        study_year_obj = self.context.get('study_year_obj')
+
         data = super().to_representation(instance)
         data['language'] = instance.group.language.name
         study_year_dict = get_current_study_year()
         data['current_study_year'] = '{}-{}'.format(study_year_dict['start'],
                                                     study_year_dict['end'])
+
+        data['course'] = instance.get_course(study_year_obj)
 
         return data
 
@@ -202,7 +206,7 @@ class ConfirmedStudentDisciplineShortSerializer(serializers.ModelSerializer):
     def to_representation(self, instance):
         data = super().to_representation(instance=instance)
         data['credit'] = instance.credit
-        data['component'] = instance.component.short_name
+        data['component'] = instance.component.short_name or instance.cycle.short_name
 
         return data
 
