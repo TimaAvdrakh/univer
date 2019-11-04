@@ -458,3 +458,12 @@ class AvatarUploadView(generics.CreateAPIView):
     serializer_class = serializers.AvatarSerializer
     queryset = models.Profile.objects.filter(is_active=True)
 
+
+class RoleGetView(generics.RetrieveAPIView):
+    """Получить своих ролей"""
+    serializer_class = serializers.RoleSerializer
+
+    def get_object(self):
+        profile = self.request.user.profile
+        return models.Role.objects.filter(profile=profile).first()
+

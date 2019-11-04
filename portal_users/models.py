@@ -275,7 +275,7 @@ class Role(BaseModel):
     )
     is_supervisor = models.BooleanField(
         default=False,
-        verbose_name='Супервизор',
+        verbose_name='Эдвайзор',
     )
 
     def __str__(self):

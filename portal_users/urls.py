@@ -34,4 +34,6 @@ urlpatterns = [
 
     path('avatar/upload/', views.AvatarUploadView.as_view(), name='avatar_upload'),
 
+    path('my_roles/', views.RoleGetView.as_view(), name='my_roles'),
+
 ]

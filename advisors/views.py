@@ -322,7 +322,8 @@ class EducationProgramListView(generics.ListAPIView):
 
 
 class GroupListView(generics.ListAPIView):
-    """Получить список групп, query_params: study_year, study_form, faculty, cathedra, edu_prog, course"""
+    """Получить список групп,
+    study_year, study_form, faculty, cathedra, edu_prog, course"""
 
     queryset = org_models.Group.objects.filter(is_active=True)
     serializer_class = serializers.GroupShortSerializer
