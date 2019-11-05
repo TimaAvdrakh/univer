@@ -9,3 +9,4 @@ local_settings_prod.txt
 curr_settings.py
 curr_settings_prod.txt
 media/*
+temp_files/*

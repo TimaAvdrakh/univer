@@ -818,7 +818,7 @@ class GenerateIupBidExcelView(generics.RetrieveAPIView):
         ws['B13'] = now.strftime("%d:%m:%Y, %H:%M:%S")
 
         for i, study_plan in enumerate(queryset):
-            row_num = str(16 + i)
+            row_num = str(15 + i)
 
             a = 'A' + row_num
             ws[a] = i + 1
@@ -897,20 +897,27 @@ class GenerateIupBidExcelView(generics.RetrieveAPIView):
 
                     mark_text += mark
 
+            gos_attestation_label = columns[current_col_num] + '14'
+            ws[gos_attestation_label] = 'Государственная аттестация'
             gos_attestation = columns[current_col_num] + row_num
             ws[gos_attestation] = 'не выбрана'
 
             current_col_num += 1
+            sum_credit_label = columns[current_col_num] + '14'
+            ws[sum_credit_label] = 'Общее количество кредитов'
             sum_credit_cell = columns[current_col_num] + row_num
             ws[sum_credit_cell] = sum_credit
 
             current_col_num += 1
+            advisor_mark_label = columns[current_col_num] + '14'
+            ws[advisor_mark_label] = 'Отметка эдвайзера'
             mark_cell = columns[current_col_num] + row_num
             ws[mark_cell] = mark_text
 
-        wb.save('advisors/excel/template.xlsx')
+        file_name = 'temp_files/zayavki{}.xlsx'.format(str(uuid4()))
+        wb.save(file_name)
 
-        with open('advisors/excel/template.xlsx', 'rb') as f:
+        with open(file_name, 'rb') as f:
             response = HttpResponse(f, content_type='application/ms-excel')
             response['Content-Disposition'] = 'attachment; filename="zayavki' + str(uuid4()) + '.xls"'
             return response
@@ -1061,9 +1068,10 @@ class GenerateIupExcelView(generics.RetrieveAPIView):
         row_num += 2
         ws['A' + str(row_num)] = 'Обучающийся:'
 
-        wb.save('advisors/excel/template2.xlsx')
+        file_name = 'temp_files/iupi{}.xlsx'.format(str(uuid4()))
+        wb.save(file_name)
 
-        with open('advisors/excel/template.xlsx', 'rb') as f:
+        with open(file_name, 'rb') as f:
             response = HttpResponse(f, content_type='application/ms-excel')
             response['Content-Disposition'] = 'attachment; filename="zayavki' + str(uuid4()) + '.xls"'
             return response
