@@ -15,7 +15,7 @@ from common.paginators import CustomPagination
 from . import permissions as adv_permission
 from rest_framework.permissions import IsAuthenticated
 from . import models
-from django.db.models import Q, Count
+from django.db.models import Q, Count, Max
 from openpyxl import Workbook, load_workbook
 from datetime import datetime
 from django.shortcuts import HttpResponse
@@ -937,7 +937,7 @@ class GenerateIupExcelView(generics.RetrieveAPIView):
         speciality = request.query_params.get('speciality')
         group = request.query_params.get('group')
 
-        wb = load_workbook('advisors/excel/template2.xlt')
+        wb = load_workbook('advisors/excel/template2.xlsx')
         ws = wb.active
 
         filters = {}
@@ -979,7 +979,8 @@ class GenerateIupExcelView(generics.RetrieveAPIView):
                                                study_plan.speciality.code)
 
         study_form_cell = 'D22'
-        ws[study_form_cell] = '{}, {}'.format(study_plan.study_form.name, 4)  # TODO
+        max_course = org_models.StudyYearCourse.objects.filter(study_plan=study_plan).aggregate(max_course=Max('course'))['max_course']
+        ws[study_form_cell] = '{}, {} года'.format(study_plan.study_form.name, max_course)
 
         current_course_cell = 'D24'
         ws[current_course_cell] = study_plan.current_course
@@ -1030,7 +1031,7 @@ class GenerateIupExcelView(generics.RetrieveAPIView):
                     ws[num_cell] = sd_num
 
                     component_cell = 'B' + str(row_num)
-                    ws[component_cell] = sd.component.name or sd.cycle.name
+                    ws[component_cell] = sd.component.short_name or sd.cycle.short_name
 
                     discipline_code_cell = 'C' + str(row_num)
                     ws[discipline_code_cell] = sd.discipline_code
@@ -1051,17 +1052,25 @@ class GenerateIupExcelView(generics.RetrieveAPIView):
                 row_num += 1
 
         ws['D' + str(row_num)] = 'Общее количество кредитов за курс: {}'.format(total_credit_in_course)
+        row_num += 2
+        ws['A' + str(row_num)] = 'Регистратор'
 
-        wb.save('advisors/excel/template2.xlt')
+        row_num += 2
+        ws['A' + str(row_num)] = 'Эдвайзер'
 
-        # with open('advisors/excel/template.xlsx', 'rb') as f:
-        #     response = HttpResponse(f, content_type='application/ms-excel')
-        #     response['Content-Disposition'] = 'attachment; filename="zayavki' + str(uuid4()) + '.xls"'
-        #     return response
+        row_num += 2
+        ws['A' + str(row_num)] = 'Обучающийся:'
 
-        return Response(
-            {
-                'message': 'ok'
-            },
-            status=status.HTTP_200_OK
-        )
+        wb.save('advisors/excel/template2.xlsx')
+
+        with open('advisors/excel/template.xlsx', 'rb') as f:
+            response = HttpResponse(f, content_type='application/ms-excel')
+            response['Content-Disposition'] = 'attachment; filename="zayavki' + str(uuid4()) + '.xls"'
+            return response
+
+        # return Response(
+        #     {
+        #         'message': 'ok'
+        #     },
+        #     status=status.HTTP_200_OK
+        # )
