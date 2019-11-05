@@ -35,4 +35,7 @@ urlpatterns = [
 
     path('excel/', views.GenerateIupBidExcelView.as_view(),
          name='generate_excel'),
+
+    path('iup_excel/', views.GenerateIupExcelView.as_view(),
+         name='generate_iup_excel'),
 ]

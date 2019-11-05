@@ -20,6 +20,7 @@ from openpyxl import Workbook, load_workbook
 from datetime import datetime
 from django.shortcuts import HttpResponse
 from uuid import uuid4
+from portal_users.utils import get_current_study_year
 
 
 class StudyPlansListView(generics.ListAPIView):
@@ -414,21 +415,26 @@ class FilteredStudentsListView(generics.ListAPIView):
 
         study_year = request.query_params.get('study_year')
         faculty = request.query_params.get('faculty')
-        speciality = request.query_params.get('speciality')  # TODO АПИ для получения специальностей
+        speciality = request.query_params.get('speciality')
         edu_prog = request.query_params.get('edu_prog')
         group = request.query_params.get('group')
 
         study_year_obj = org_models.StudyPeriod.objects.get(pk=study_year)
 
         study_plans = org_models.StudyPlan.objects.filter(
-            education_program_id=edu_prog,
             study_period__end__gt=study_year_obj.start,
             is_active=True,
         )
+
+        if edu_prog:
+            study_plans = study_plans.filter(education_program_id=edu_prog)
+
         if faculty:
             study_plans = study_plans.filter(faculty_id=faculty)
+
         if speciality:
             study_plans = study_plans.filter(speciality_id=speciality)
+
         if group:
             study_plans = study_plans.filter(group_id=group)
 
@@ -921,13 +927,18 @@ class GenerateIupExcelView(generics.RetrieveAPIView):
     """
     study_year(!), edu_prog(!), student(!), faculty, speciality, group,
     """
+
     def get(self, request, *args, **kwargs):
         study_year = request.query_params.get('study_year')
+        edu_prog = request.query_params.get('edu_prog')
+        student = request.query_params.get('student')
+
         faculty = request.query_params.get('faculty')
         speciality = request.query_params.get('speciality')
-        edu_prog = request.query_params.get('edu_prog')
         group = request.query_params.get('group')
-        student = request.query_params.get('student')
+
+        wb = load_workbook('advisors/excel/template2.xlt')
+        ws = wb.active
 
         filters = {}
 
@@ -957,14 +968,42 @@ class GenerateIupExcelView(generics.RetrieveAPIView):
                 status=status.HTTP_404_NOT_FOUND
             )
 
+        student_name_cell = 'D17'
+        ws[student_name_cell] = study_plan.student.full_name
+
+        acad_degree_cell = 'D19'
+        ws[acad_degree_cell] = study_plan.preparation_level.name
+
+        speciality_cell = 'D20'
+        ws[speciality_cell] = '{} ({})'.format(study_plan.speciality.name,
+                                               study_plan.speciality.code)
+
+        study_form_cell = 'D22'
+        ws[study_form_cell] = '{}, {}'.format(study_plan.study_form.name, 4)  # TODO
+
+        current_course_cell = 'D24'
+        ws[current_course_cell] = study_plan.current_course
+
+        lang_cell = 'D25'
+        ws[lang_cell] = study_plan.group.language.name
+
+        current_study_year_cell = 'D26'
+        study_year_dict = get_current_study_year()
+        ws[current_study_year_cell] = '{}-{}'.format(study_year_dict['start'],
+                                                     study_year_dict['end'])
+
         course = study_plan.get_course(study_year_obj)
+        ws['D30'] = '{} Курс обучения  {} учебный год'.format(course,
+                                                              str(study_year_obj))
 
         acad_periods = org_models.StudentDiscipline.objects.filter(
             study_year_id=study_year,
             study_plan=study_plan,
         ).distinct('acad_period').values('acad_period')
 
-        resp = []
+        row_num = 31
+        sd_num = 1
+        total_credit_in_course = 0
 
         for acad_period in acad_periods:
             acad_period_id = acad_period['acad_period']
@@ -979,20 +1018,50 @@ class GenerateIupExcelView(generics.RetrieveAPIView):
                     study_year_id=study_year,
                     study_plan=study_plan,
                     acad_period_id=acad_period_id,
-                )
-                serializer = self.serializer_class(student_disciplines,
-                                                   many=True)
-                item = {
-                    'acad_period': acad_period_obj.repr_name,
-                    'disciplines': serializer.data,
-                    'course': course
-                }
-                resp.append(item)
+                ).distinct('discipline')
+
+                ws['D' + str(row_num)] = acad_period_obj.repr_name
+                row_num += 1
+
+                total_credit_in_acad_period = 0
+
+                for sd in student_disciplines:
+                    num_cell = 'A' + str(row_num)
+                    ws[num_cell] = sd_num
+
+                    component_cell = 'B' + str(row_num)
+                    ws[component_cell] = sd.component.name or sd.cycle.name
+
+                    discipline_code_cell = 'C' + str(row_num)
+                    ws[discipline_code_cell] = sd.discipline_code
+
+                    discipline_name_cell = 'D' + str(row_num)
+                    ws[discipline_name_cell] = sd.discipline.name
+
+                    credit_cell = 'E' + str(row_num)
+                    ws[credit_cell] = sd.credit
+
+                    total_credit_in_acad_period += sd.credit
+
+                    row_num += 1
+                    sd_num += 1
+
+                total_credit_in_course += total_credit_in_acad_period
+                ws['D' + str(row_num)] = 'Общее количество кредитов: {}'.format(total_credit_in_acad_period)
+                row_num += 1
+
+        ws['D' + str(row_num)] = 'Общее количество кредитов за курс: {}'.format(total_credit_in_course)
+
+        wb.save('advisors/excel/template2.xlt')
+
+        # with open('advisors/excel/template.xlsx', 'rb') as f:
+        #     response = HttpResponse(f, content_type='application/ms-excel')
+        #     response['Content-Disposition'] = 'attachment; filename="zayavki' + str(uuid4()) + '.xls"'
+        #     return response
 
         return Response(
-            resp,
+            {
+                'message': 'ok'
+            },
             status=status.HTTP_200_OK
         )
-
-
-
