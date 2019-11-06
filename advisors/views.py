@@ -575,7 +575,9 @@ class ConfirmedStudentDisciplineListView(generics.ListAPIView):
 
 
 class RegisterResultView(generics.ListAPIView):
-    """Результат регистрации"""
+    """Результат регистрации
+        study_year, acad_period, faculty, speciality, edu_prog, course, group
+    """
     serializer_class = serializers.StudentDisciplineSerializer
     queryset = org_models.StudentDiscipline.objects.filter(is_active=True)
 
