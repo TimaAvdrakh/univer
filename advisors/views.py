@@ -178,30 +178,30 @@ class AcadPeriodListView(generics.ListAPIView):
 
         acad_periods = self.queryset.filter(pk__in=acad_period_pks)
 
-        # sd = org_models.StudentDiscipline.objects.filter(
-        #     study_plan__advisor=profile,
-        #     study_year_id=study_year,
-        # )
-        #
-        # if study_form:
-        #     sd = sd.filter(study_plan__study_form_id=study_form)
-        # if faculty:
-        #     sd = sd.filter(study_plan__faculty_id=faculty)
-        # if cathedra:
-        #     sd = sd.filter(study_plan__cathedra_id=cathedra)
-        # if edu_prog_group:
-        #     sd = sd.filter(study_plan__education_program__group_id=edu_prog_group)
-        # if edu_prog:
-        #     sd = sd.filter(study_plan__education_program_id=edu_prog)
-        # if group:
-        #     sd = sd.filter(study_plan__group_id=group)
-        # if status_id:
-        #     status_obj = org_models.StudentDisciplineStatus.objects.get(number=status_id)
-        #     sd = sd.filter(status=status_obj)
-        #
-        # acad_period_pks_from_sd = sd.values('acad_period')
-        #
-        # acad_periods = acad_periods.filter(pk__in=acad_period_pks_from_sd)
+        sd = org_models.StudentDiscipline.objects.filter(
+            # study_plan__advisor=profile,
+            study_year_id=study_year,
+        )
+
+        if study_form:
+            sd = sd.filter(study_plan__study_form_id=study_form)
+        if faculty:
+            sd = sd.filter(study_plan__faculty_id=faculty)
+        if cathedra:
+            sd = sd.filter(study_plan__cathedra_id=cathedra)
+        if edu_prog_group:
+            sd = sd.filter(study_plan__education_program__group_id=edu_prog_group)
+        if edu_prog:
+            sd = sd.filter(study_plan__education_program_id=edu_prog)
+        if group:
+            sd = sd.filter(study_plan__group_id=group)
+        if status_id:
+            status_obj = org_models.StudentDisciplineStatus.objects.get(number=status_id)
+            sd = sd.filter(status=status_obj)
+
+        acad_period_pks_from_sd = sd.values('acad_period')
+
+        acad_periods = acad_periods.filter(pk__in=acad_period_pks_from_sd)
 
         return acad_periods
 
