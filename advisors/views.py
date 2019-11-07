@@ -422,6 +422,7 @@ class FilteredStudentsListView(generics.ListAPIView):
 
     def get_queryset(self):
         request = self.request
+        profile = request.user.profile
 
         study_year = request.query_params.get('study_year')
         faculty = request.query_params.get('faculty')
@@ -433,6 +434,7 @@ class FilteredStudentsListView(generics.ListAPIView):
 
         study_plans = org_models.StudyPlan.objects.filter(
             study_period__end__gt=study_year_obj.start,
+            advisor=profile,
             is_active=True,
         )
 
