@@ -281,3 +281,5 @@ class NotRegisteredStudentSerializer(serializers.ModelSerializer):
         data['student'] = instance.student.full_name
 
         return data
+
+# 1
