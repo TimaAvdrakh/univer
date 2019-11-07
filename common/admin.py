@@ -4,6 +4,10 @@ from . import models
 
 @admin.register(models.CourseAcadPeriodPermission)
 class CourseAcadPeriodPermissionAdmin(admin.ModelAdmin):
+    list_filter = (
+        'registration_period',
+        'course',
+    )
     list_display = [
         'registration_period',
         'uid',
