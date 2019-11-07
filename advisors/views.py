@@ -179,7 +179,7 @@ class AcadPeriodListView(generics.ListAPIView):
         acad_periods = self.queryset.filter(pk__in=acad_period_pks)
 
         sd = org_models.StudentDiscipline.objects.filter(
-            # study_plan__advisor=profile,
+            study_plan__advisor=profile,
             study_year_id=study_year,
         )
 
