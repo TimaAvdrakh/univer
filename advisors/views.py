@@ -21,6 +21,7 @@ from datetime import datetime
 from django.shortcuts import HttpResponse
 from uuid import uuid4
 from portal_users.utils import get_current_study_year
+from openpyxl.styles import Border, Side, Font, Alignment
 
 
 class StudyPlansListView(generics.ListAPIView):
@@ -1015,6 +1016,27 @@ class GenerateIupExcelView(generics.RetrieveAPIView):
         wb = load_workbook('advisors/excel/template2.xlsx')
         ws = wb.active
 
+        border = Border(left=Side(border_style='thin', color='000000'),
+                        right=Side(border_style='thin', color='000000'),
+                        top=Side(border_style='thin', color='000000'),
+                        bottom=Side(border_style='thin', color='000000'))
+        font = Font(
+            name='New Times Roman',
+            size=11
+        )
+        font_bold = Font(
+            name='New Times Roman',
+            bold=True,
+            size=11
+        )
+        font_large = Font(
+            name='New Times Roman',
+            bold=True,
+            size=12
+        )
+        # alignment = Alignment(
+        #     horizontal="center"
+        # )
         filters = {}
 
         if faculty:
@@ -1043,43 +1065,45 @@ class GenerateIupExcelView(generics.RetrieveAPIView):
                 status=status.HTTP_404_NOT_FOUND
             )
 
-        student_name_cell = 'D17'
+        student_name_cell = 'C17'
         ws[student_name_cell] = study_plan.student.full_name
+        ws[student_name_cell].font = font
 
-        acad_degree_cell = 'D19'
+        acad_degree_cell = 'C18'
         ws[acad_degree_cell] = study_plan.preparation_level.name
 
-        speciality_cell = 'D20'
+        speciality_cell = 'C19'
         ws[speciality_cell] = '{} ({})'.format(study_plan.speciality.name,
                                                study_plan.speciality.code)
 
-        study_form_cell = 'D22'
+        study_form_cell = 'C20'
         max_course = \
             org_models.StudyYearCourse.objects.filter(study_plan=study_plan).aggregate(max_course=Max('course'))[
                 'max_course']
         ws[study_form_cell] = '{}, {} года'.format(study_plan.study_form.name, max_course)
 
-        current_course_cell = 'D24'
+        current_course_cell = 'C21'
         ws[current_course_cell] = study_plan.current_course
 
-        lang_cell = 'D25'
+        lang_cell = 'C22'
         ws[lang_cell] = study_plan.group.language.name
 
-        current_study_year_cell = 'D26'
+        current_study_year_cell = 'A23'
         study_year_dict = get_current_study_year()
         ws[current_study_year_cell] = '{}-{}'.format(study_year_dict['start'],
                                                      study_year_dict['end'])
 
         course = study_plan.get_course(study_year_obj)
-        ws['D30'] = '{} Курс обучения  {} учебный год'.format(course,
+        ws['D27'] = '{} Курс обучения  {} учебный год'.format(course,
                                                               str(study_year_obj))
+        ws['D27'].font = font_large
 
         acad_periods = org_models.StudentDiscipline.objects.filter(
             study_year_id=study_year,
             study_plan=study_plan,
         ).distinct('acad_period').values('acad_period')
 
-        row_num = 31
+        row_num = 28
         sd_num = 1
         total_credit_in_course = 0
 
@@ -1099,6 +1123,7 @@ class GenerateIupExcelView(generics.RetrieveAPIView):
                 ).distinct('discipline')
 
                 ws['D' + str(row_num)] = acad_period_obj.repr_name
+                ws['D' + str(row_num)].font = font_bold
                 row_num += 1
 
                 total_credit_in_acad_period = 0
@@ -1106,18 +1131,28 @@ class GenerateIupExcelView(generics.RetrieveAPIView):
                 for sd in student_disciplines:
                     num_cell = 'A' + str(row_num)
                     ws[num_cell] = sd_num
+                    ws[num_cell].border = border
+                    ws[num_cell].font = font
 
                     component_cell = 'B' + str(row_num)
                     ws[component_cell] = sd.component.short_name or sd.cycle.short_name
+                    ws[component_cell].border = border
+                    ws[component_cell].font = font
 
                     discipline_code_cell = 'C' + str(row_num)
                     ws[discipline_code_cell] = sd.discipline_code
+                    ws[discipline_code_cell].border = border
+                    ws[discipline_code_cell].font = font
 
                     discipline_name_cell = 'D' + str(row_num)
                     ws[discipline_name_cell] = sd.discipline.name
+                    ws[discipline_name_cell].border = border
+                    ws[discipline_name_cell].font = font
 
                     credit_cell = 'E' + str(row_num)
                     ws[credit_cell] = sd.credit
+                    ws[credit_cell].border = border
+                    ws[credit_cell].font = font
 
                     total_credit_in_acad_period += sd.credit
 
@@ -1125,18 +1160,37 @@ class GenerateIupExcelView(generics.RetrieveAPIView):
                     sd_num += 1
 
                 total_credit_in_course += total_credit_in_acad_period
-                ws['D' + str(row_num)] = 'Общее количество кредитов: {}'.format(total_credit_in_acad_period)
+                ws['B' + str(row_num)] = 'Общее количество кредитов: {}'.format(total_credit_in_acad_period)
+                ws['B' + str(row_num)].font = font
+
+                ws['B' + str(row_num)].border = border
+                ws['A' + str(row_num)].border = border
+                ws['C' + str(row_num)].border = border
+                ws['D' + str(row_num)].border = border
+                ws['E' + str(row_num)].border = border
+
                 row_num += 1
 
-        ws['D' + str(row_num)] = 'Общее количество кредитов за курс: {}'.format(total_credit_in_course)
+        ws['B' + str(row_num)] = 'Общее количество кредитов за курс: {}'.format(total_credit_in_course)
+        ws['B' + str(row_num)].font = font
+
+        ws['B' + str(row_num)].border = border
+        ws['A' + str(row_num)].border = border
+        ws['C' + str(row_num)].border = border
+        ws['D' + str(row_num)].border = border
+        ws['E' + str(row_num)].border = border
+
         row_num += 2
         ws['A' + str(row_num)] = 'Регистратор'
+        ws['A' + str(row_num)].font = font
 
         row_num += 2
         ws['A' + str(row_num)] = 'Эдвайзер'
+        ws['A' + str(row_num)].font = font
 
         row_num += 2
         ws['A' + str(row_num)] = 'Обучающийся:'
+        ws['A' + str(row_num)].font = font
 
         file_name = 'temp_files/iupi{}.xlsx'.format(str(uuid4()))
         wb.save(file_name)
