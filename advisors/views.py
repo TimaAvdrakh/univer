@@ -26,7 +26,7 @@ from portal_users.utils import get_current_study_year
 class StudyPlansListView(generics.ListAPIView):
     """
     Получение учебных планов,
-    study_year(!), study_form, faculty, cathedra, edu_prog_group, edu_prog, course, group,
+    study_year(!), study_form, faculty, cathedra, edu_prog_group, edu_prog, course, group, status
     """
     queryset = org_models.StudyPlan.objects.filter(is_active=True)
     serializer_class = serializers.StudyPlanSerializer
@@ -41,10 +41,20 @@ class StudyPlansListView(generics.ListAPIView):
         course = self.request.query_params.get('course')  # Дисциплина студента
         group = self.request.query_params.get('group')
 
-        # status = self.request.query_params.get('status')  # В Дисциплине студента
+        status_id = self.request.query_params.get('status')  # В Дисциплине студента
         # reg_period = self.request.query_params.get('reg_period')  # Дисциплина студента
 
         queryset = self.queryset.filter(advisor=self.request.user.profile)
+
+        if status_id:
+            status_obj = org_models.StudentDisciplineStatus.objects.get(number=status_id)
+
+            study_plan_pks_from_sd = org_models.StudentDiscipline.objects.filter(
+                study_year_id=study_year,
+                status=status_obj,
+            ).values('study_plan')
+
+            queryset = queryset.filter(pk__in=study_plan_pks_from_sd)
 
         if study_form:
             queryset = queryset.filter(study_form_id=study_form)
@@ -584,7 +594,8 @@ class RegisterResultView(generics.ListAPIView):
 
     def list(self, request, *args, **kwargs):
         study_year = request.query_params.get('study_year')
-        reg_period = request.query_params.get('reg_period')  # TODO если не указан акад период, брать акад периоды из периода регистрации
+        reg_period = request.query_params.get(
+            'reg_period')  # TODO если не указан акад период, брать акад периоды из периода регистрации
         acad_period = self.request.query_params.get('acad_period')
         faculty = request.query_params.get('faculty')
         speciality = request.query_params.get('speciality')
@@ -660,7 +671,8 @@ class RegisterStatisticsView(generics.ListAPIView):
 
     def list(self, request, *args, **kwargs):
         study_year = request.query_params.get('study_year')
-        reg_period = request.query_params.get('reg_period')  # TODO если не указан акад период, брать акад периоды из периода регистрации
+        reg_period = request.query_params.get(
+            'reg_period')  # TODO если не указан акад период, брать акад периоды из периода регистрации
         acad_period = request.query_params.get('acad_period')
         faculty = request.query_params.get('faculty')
         speciality = request.query_params.get('speciality')
@@ -741,7 +753,8 @@ class NotRegisteredStudentListView(generics.ListAPIView):
 
     def get_queryset(self):
         study_year = self.request.query_params.get('study_year')
-        reg_period = self.request.query_params.get('reg_period')  # TODO если не указан акад период, брать акад периоды из периода регистрации
+        reg_period = self.request.query_params.get(
+            'reg_period')  # TODO если не указан акад период, брать акад периоды из периода регистрации
         acad_period = self.request.query_params.get('acad_period')
         faculty = self.request.query_params.get('faculty')
         speciality = self.request.query_params.get('speciality')
@@ -1039,7 +1052,9 @@ class GenerateIupExcelView(generics.RetrieveAPIView):
                                                study_plan.speciality.code)
 
         study_form_cell = 'D22'
-        max_course = org_models.StudyYearCourse.objects.filter(study_plan=study_plan).aggregate(max_course=Max('course'))['max_course']
+        max_course = \
+            org_models.StudyYearCourse.objects.filter(study_plan=study_plan).aggregate(max_course=Max('course'))[
+                'max_course']
         ws[study_form_cell] = '{}, {} года'.format(study_plan.study_form.name, max_course)
 
         current_course_cell = 'D24'
