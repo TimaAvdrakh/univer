@@ -1021,16 +1021,16 @@ class GenerateIupExcelView(generics.RetrieveAPIView):
                         top=Side(border_style='thin', color='000000'),
                         bottom=Side(border_style='thin', color='000000'))
         font = Font(
-            name='New Times Roman',
+            name='Times New Roman',
             size=11
         )
         font_bold = Font(
-            name='New Times Roman',
+            name='Times New Roman',
             bold=True,
             size=11
         )
         font_large = Font(
-            name='New Times Roman',
+            name='Times New Roman',
             bold=True,
             size=12
         )
