@@ -1082,13 +1082,13 @@ class GenerateIupExcelView(generics.RetrieveAPIView):
                 'max_course']
         ws[study_form_cell] = '{}, {} года'.format(study_plan.study_form.name, max_course)
 
-        current_course_cell = 'C21'
+        current_course_cell = 'B21'
         ws[current_course_cell] = study_plan.current_course
 
         lang_cell = 'C22'
         ws[lang_cell] = study_plan.group.language.name
 
-        current_study_year_cell = 'A23'
+        current_study_year_cell = 'C23'
         study_year_dict = get_current_study_year()
         ws[current_study_year_cell] = '{}-{}'.format(study_year_dict['start'],
                                                      study_year_dict['end'])
@@ -1160,8 +1160,10 @@ class GenerateIupExcelView(generics.RetrieveAPIView):
                     sd_num += 1
 
                 total_credit_in_course += total_credit_in_acad_period
-                ws['B' + str(row_num)] = 'Общее количество кредитов: {}'.format(total_credit_in_acad_period)
+                ws['B' + str(row_num)] = 'Общее количество кредитов'
                 ws['B' + str(row_num)].font = font
+                ws['E' + str(row_num)] = total_credit_in_acad_period
+                ws['E' + str(row_num)].font = font
 
                 ws['B' + str(row_num)].border = border
                 ws['A' + str(row_num)].border = border
@@ -1171,8 +1173,10 @@ class GenerateIupExcelView(generics.RetrieveAPIView):
 
                 row_num += 1
 
-        ws['B' + str(row_num)] = 'Общее количество кредитов за курс: {}'.format(total_credit_in_course)
+        ws['B' + str(row_num)] = 'Общее количество кредитов за курс'
         ws['B' + str(row_num)].font = font
+        ws['E' + str(row_num)] = total_credit_in_course
+        ws['E' + str(row_num)].font = font
 
         ws['B' + str(row_num)].border = border
         ws['A' + str(row_num)].border = border
@@ -1189,7 +1193,7 @@ class GenerateIupExcelView(generics.RetrieveAPIView):
         ws['A' + str(row_num)].font = font
 
         row_num += 2
-        ws['A' + str(row_num)] = 'Обучающийся:'
+        ws['A' + str(row_num)] = 'Обучающийся'
         ws['A' + str(row_num)].font = font
 
         file_name = 'temp_files/iupi{}.xlsx'.format(str(uuid4()))
