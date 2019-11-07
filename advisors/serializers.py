@@ -206,7 +206,11 @@ class ConfirmedStudentDisciplineShortSerializer(serializers.ModelSerializer):
     def to_representation(self, instance):
         data = super().to_representation(instance=instance)
         data['credit'] = instance.credit
-        data['component'] = instance.component.short_name or instance.cycle.short_name
+
+        if instance.component is not None:
+            data['component'] = instance.component.short_name
+        else:
+            data['component'] = instance.cycle.short_name
 
         return data
 
