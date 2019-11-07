@@ -269,6 +269,10 @@ class StatusAdmin(admin.ModelAdmin):
 
 @admin.register(models.StudentDisciplineInfo)
 class StudentDisciplineInfoAdmin(admin.ModelAdmin):
+    list_filter = (
+        'study_plan',
+        'status',
+    )
     list_display = [
         'student',
         'acad_period',
