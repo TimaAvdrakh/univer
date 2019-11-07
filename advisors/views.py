@@ -164,7 +164,7 @@ class AcadPeriodListView(generics.ListAPIView):
         group = self.request.query_params.get('group')
         status_id = self.request.query_params.get('status')
 
-        profile = self.request.user.profile
+        # profile = self.request.user.profile
 
         if course:
             acad_period_pks = common_models.CourseAcadPeriodPermission.objects.filter(
@@ -179,7 +179,7 @@ class AcadPeriodListView(generics.ListAPIView):
         acad_periods = self.queryset.filter(pk__in=acad_period_pks)
 
         sd = org_models.StudentDiscipline.objects.filter(
-            study_plan__advisor=profile,
+            # study_plan__advisor=profile,
             study_year_id=study_year,
         )
 
