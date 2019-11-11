@@ -6,6 +6,7 @@ from datetime import date
 from rest_framework.response import Response
 from rest_framework import status
 from portal_users.models import Level, AchievementType
+from datetime import date
 
 
 class AcadPeriodListView(generics.ListAPIView):
@@ -70,9 +71,27 @@ class StudyYearListView(generics.ListAPIView):
 
 
 class RegistrationPeriodListView(generics.ListAPIView):
-    """Справочник периодов регистрации"""
+    """Справочник периодов регистрации
+    study_year"""
     queryset = models.RegistrationPeriod.objects.filter(is_active=True)
     serializer_class = serializers.RegistrationPeriodSerializer
+
+    def get_queryset(self):
+        study_year = self.request.query_params.get('study_year')
+        queryset = self.queryset.all()
+
+        if study_year:
+            study_year_obj = org_models.StudyPeriod.objects.get(pk=study_year)
+
+            study_year_start = date(year=study_year_obj.start,
+                                    month=9,
+                                    day=1)
+            study_year_end = date(year=study_year_obj.end,
+                                  month=9,
+                                  day=1)
+            queryset = queryset.filter(start_date__gte=study_year_start,
+                                       end_date__lte=study_year_end)
+        return queryset
 
 
 class StudyFormListView(generics.ListAPIView):
