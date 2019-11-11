@@ -1150,7 +1150,13 @@ class GenerateIupExcelView(generics.RetrieveAPIView):
                     ws[num_cell].font = font
 
                     component_cell = 'B' + str(row_num)
-                    ws[component_cell] = sd.component.short_name or sd.cycle.short_name
+                    if sd.component:
+                        ws[component_cell] = sd.component.short_name
+                    elif sd.cycle:
+                        ws[component_cell] = sd.cycle.short_name
+                    else:
+                        ws[component_cell] = ''
+
                     ws[component_cell].border = border
                     ws[component_cell].font = font
 

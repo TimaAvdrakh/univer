@@ -104,6 +104,8 @@ class StudyFormListView(generics.ListAPIView):
     def get_queryset(self):
         profile = self.request.user.profile
         study_year = self.request.query_params.get('study_year')
+        reg_period = self.request.query_params.get('reg_period')  # TODO
+
         study_plans = org_models.StudyPlan.objects.filter(advisor=profile,
                                                           is_active=True)
         if study_year:
