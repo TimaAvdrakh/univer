@@ -208,7 +208,8 @@ class AcadPeriodListView(generics.ListAPIView):
 
 
 class FacultyListView(generics.ListAPIView):
-    """Получить список факультетов доступных для эдвайзеру, query_params: study_year(!), study_form"""
+    """Получить список факультетов доступных для эдвайзеру,
+    study_year(!), study_form"""
     queryset = org_models.Faculty.objects.filter(is_active=True)
     serializer_class = serializers.FacultySerializer
 
@@ -232,7 +233,8 @@ class FacultyListView(generics.ListAPIView):
 
 
 class CathedraListView(generics.ListAPIView):
-    """Получить список кафедр доступных для эдвайзеру, query_params: study_year, study_form, faculty"""
+    """Получить список кафедр доступных для эдвайзеру,
+    study_year, study_form, faculty"""
 
     queryset = org_models.Cathedra.objects.filter(is_active=True)
     serializer_class = serializers.CathedraSerializer
@@ -273,11 +275,12 @@ class EducationProgramGroupListView(generics.ListAPIView):
 
         study_year = self.request.query_params.get('study_year')
         study_form = self.request.query_params.get('study_form')
-        cathedra = self.request.query_params.get('cathedra')
         faculty = self.request.query_params.get('faculty')
+        cathedra = self.request.query_params.get('cathedra')
         speciality = self.request.query_params.get('speciality')  # Для утвержденных дисциплин
 
-        study_plans = org_models.StudyPlan.objects.filter(advisor=profile)
+        study_plans = org_models.StudyPlan.objects.filter(advisor=profile,
+                                                          is_active=True)
 
         if study_form:
             study_plans = study_plans.filter(study_form_id=study_form)
@@ -299,7 +302,7 @@ class EducationProgramGroupListView(generics.ListAPIView):
 
 class EducationProgramListView(generics.ListAPIView):
     """Получить список образовательных программ,
-    edu_prog_group=<uid edu_prog_group>, study_year"""
+    edu_prog_group, study_year, study_form, faculty, cathedra"""
 
     queryset = org_models.EducationProgram.objects.filter(is_active=True)
     serializer_class = EducationProgramSerializer
@@ -312,8 +315,10 @@ class EducationProgramListView(generics.ListAPIView):
         edu_prog_group = self.request.query_params.get('edu_prog_group')
         cathedra = self.request.query_params.get('cathedra')
         faculty = self.request.query_params.get('faculty')
+        speciality = self.request.query_params.get('speciality')
 
-        study_plans = org_models.StudyPlan.objects.filter(advisor=profile)
+        study_plans = org_models.StudyPlan.objects.filter(advisor=profile,
+                                                          is_active=True)
 
         if study_form:
             study_plans = study_plans.filter(study_form_id=study_form)
@@ -324,6 +329,8 @@ class EducationProgramListView(generics.ListAPIView):
             study_plans = study_plans.filter(faculty_id=faculty)
         if cathedra:
             study_plans = study_plans.filter(cathedra_id=cathedra)
+        if speciality:
+            study_plans = study_plans.filter(speciality_id=speciality)
 
         education_program_pks = study_plans.values('education_program')
         queryset = self.queryset.filter(pk__in=education_program_pks)
@@ -335,7 +342,7 @@ class EducationProgramListView(generics.ListAPIView):
 
 class GroupListView(generics.ListAPIView):
     """Получить список групп,
-    study_year, study_form, faculty, cathedra, edu_prog, course"""
+    study_year, study_form, faculty, cathedra, edu_prog_group, edu_prog, course"""
 
     queryset = org_models.Group.objects.filter(is_active=True)
     serializer_class = serializers.GroupShortSerializer
@@ -349,6 +356,7 @@ class GroupListView(generics.ListAPIView):
         faculty = self.request.query_params.get('faculty')
 
         edu_prog = self.request.query_params.get('edu_prog')
+        edu_prog_group = self.request.query_params.get('edu_prog_group')
         course = self.request.query_params.get('course')
         speciality = self.request.query_params.get('speciality')  # Для утвержденных дисциплин
 
@@ -356,8 +364,11 @@ class GroupListView(generics.ListAPIView):
 
         if study_form:
             study_plans = study_plans.filter(study_form_id=study_form)
+
         if edu_prog:
             study_plans = study_plans.filter(education_program_id=edu_prog)
+        elif edu_prog_group:
+            study_plans = study_plans.filter(education_program__group_id=edu_prog_group)
 
         if course and study_year:
             study_plan_pks = org_models.StudyYearCourse.objects.filter(
@@ -418,7 +429,7 @@ class CheckStudentChoices(generics.CreateAPIView):
 
 class FilteredStudentsListView(generics.ListAPIView):
     """Фильтровать студентов для селекта (Эдвайзер)
-        study_year(!), edu_prog(!), faculty, speciality, group"""
+        study_year(!), edu_prog(!), edu_prog_group, faculty, speciality, group"""
     serializer_class = ProfileShortSerializer
 
     def get_queryset(self):
@@ -429,6 +440,7 @@ class FilteredStudentsListView(generics.ListAPIView):
         faculty = request.query_params.get('faculty')
         speciality = request.query_params.get('speciality')
         edu_prog = request.query_params.get('edu_prog')
+        edu_prog_group = self.request.query_params.get('edu_prog_group')
         group = request.query_params.get('group')
 
         study_year_obj = org_models.StudyPeriod.objects.get(pk=study_year)
@@ -441,6 +453,8 @@ class FilteredStudentsListView(generics.ListAPIView):
 
         if edu_prog:
             study_plans = study_plans.filter(education_program_id=edu_prog)
+        elif edu_prog_group:
+            study_plans = study_plans.filter(education_program__group_id=edu_prog_group)
 
         if faculty:
             study_plans = study_plans.filter(faculty_id=faculty)
@@ -470,7 +484,8 @@ class SpecialityListView(generics.ListAPIView):
         study_year = self.request.query_params.get('study_year')
         faculty = self.request.query_params.get('faculty')
 
-        study_plans = org_models.StudyPlan.objects.filter(advisor=profile)
+        study_plans = org_models.StudyPlan.objects.filter(advisor=profile,
+                                                          is_active=True)
 
         if faculty:
             study_plans = study_plans.filter(faculty_id=faculty)
@@ -1082,7 +1097,7 @@ class GenerateIupExcelView(generics.RetrieveAPIView):
                 'max_course']
         ws[study_form_cell] = '{}, {} года'.format(study_plan.study_form.name, max_course)
 
-        current_course_cell = 'B21'
+        current_course_cell = 'C21'
         ws[current_course_cell] = study_plan.current_course
 
         lang_cell = 'C22'
@@ -1167,8 +1182,8 @@ class GenerateIupExcelView(generics.RetrieveAPIView):
 
                 ws['B' + str(row_num)].border = border
                 ws['A' + str(row_num)].border = border
-                ws['C' + str(row_num)].border = border
-                ws['D' + str(row_num)].border = border
+                # ws['C' + str(row_num)].border = border
+                # ws['D' + str(row_num)].border = border
                 ws['E' + str(row_num)].border = border
 
                 row_num += 1
@@ -1180,8 +1195,8 @@ class GenerateIupExcelView(generics.RetrieveAPIView):
 
         ws['B' + str(row_num)].border = border
         ws['A' + str(row_num)].border = border
-        ws['C' + str(row_num)].border = border
-        ws['D' + str(row_num)].border = border
+        # ws['C' + str(row_num)].border = border
+        # ws['D' + str(row_num)].border = border
         ws['E' + str(row_num)].border = border
 
         row_num += 2
