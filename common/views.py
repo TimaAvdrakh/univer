@@ -95,6 +95,22 @@ class RegistrationPeriodListView(generics.ListAPIView):
 
 
 class StudyFormListView(generics.ListAPIView):
-    """Справочник учебных форм"""
+    """Справочник учебных форм
+    study_year(!), reg_period"""
+
     queryset = org_models.StudyForm.objects.filter(is_active=True)
     serializer_class = serializers.StudyFormSerializer
+
+    def get_queryset(self):
+        profile = self.request.user.profile
+        study_year = self.request.query_params.get('study_year')
+        study_plans = org_models.StudyPlan.objects.filter(advisor=profile,
+                                                          is_active=True)
+        if study_year:
+            study_year_obj = org_models.StudyPeriod.objects.get(pk=study_year)
+            study_plans = study_plans.filter(study_period__end__gt=study_year_obj.start)
+
+        study_form_pks = study_plans.values('study_form')
+        study_forms = self.queryset.filter(pk__in=study_form_pks)
+
+        return study_forms
