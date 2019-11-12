@@ -611,6 +611,8 @@ class RegisterResultView(generics.ListAPIView):
     pagination_class = CustomPagination
 
     def list(self, request, *args, **kwargs):
+        profile = request.user.profile
+
         study_year = request.query_params.get('study_year')
         reg_period = request.query_params.get(
             'reg_period')  # TODO если не указан акад период, брать акад периоды из периода регистрации
@@ -621,8 +623,11 @@ class RegisterResultView(generics.ListAPIView):
         course = request.query_params.get('course')
         group = request.query_params.get('group')
 
-        queryset = self.queryset
-        queryset = queryset.filter(status_id=student_discipline_status['confirmed'])
+        queryset = self.queryset.all()
+        queryset = queryset.filter(
+            status_id=student_discipline_status['confirmed'],
+            study_plan__advisor=profile,
+        )
 
         if acad_period:
             queryset = queryset.filter(acad_period_id=acad_period)
@@ -688,6 +693,8 @@ class RegisterStatisticsView(generics.ListAPIView):
     pagination_class = CustomPagination
 
     def list(self, request, *args, **kwargs):
+        profile = request.user.profile
+
         study_year = request.query_params.get('study_year')
         reg_period = request.query_params.get(
             'reg_period')  # TODO если не указан акад период, брать акад периоды из периода регистрации
@@ -698,8 +705,11 @@ class RegisterStatisticsView(generics.ListAPIView):
         course = request.query_params.get('course')
         group = request.query_params.get('group')
 
-        queryset = self.queryset
-        queryset = queryset.filter(status_id=student_discipline_status['not_chosen'])
+        queryset = self.queryset.all()
+        queryset = queryset.filter(
+            status_id=student_discipline_status['not_chosen'],
+            study_plan__advisor=profile,
+        )
 
         if acad_period:
             queryset = queryset.filter(acad_period_id=acad_period)
@@ -770,6 +780,7 @@ class NotRegisteredStudentListView(generics.ListAPIView):
     serializer_class = serializers.NotRegisteredStudentSerializer
 
     def get_queryset(self):
+        profile = self.request.user.profile
         study_year = self.request.query_params.get('study_year')
         reg_period = self.request.query_params.get(
             'reg_period')  # TODO если не указан акад период, брать акад периоды из периода регистрации
@@ -780,8 +791,11 @@ class NotRegisteredStudentListView(generics.ListAPIView):
         course = self.request.query_params.get('course')
         group = self.request.query_params.get('group')
 
-        queryset = self.queryset
-        queryset = queryset.filter(status_id=student_discipline_status['not_chosen'])
+        queryset = self.queryset.all()
+        queryset = queryset.filter(
+            status_id=student_discipline_status['not_chosen'],
+            study_plan__advisor=profile,
+        )
 
         if acad_period:
             queryset = queryset.filter(acad_period_id=acad_period)
