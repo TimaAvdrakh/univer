@@ -83,13 +83,13 @@ class RegistrationPeriodListView(generics.ListAPIView):
         if study_year:
             study_year_obj = org_models.StudyPeriod.objects.get(pk=study_year)
 
-            study_year_start = date(year=study_year_obj.start,
-                                    month=9,
-                                    day=1)
+            # study_year_start = date(year=study_year_obj.start,
+            #                         month=9,
+            #                         day=1)
             study_year_end = date(year=study_year_obj.end,
                                   month=9,
                                   day=1)
-            queryset = queryset.filter(start_date__gte=study_year_start,
+            queryset = queryset.filter(start_date__year__gte=study_year_obj.start,
                                        end_date__lte=study_year_end)
         return queryset
 

@@ -85,7 +85,7 @@ class StudyPlansListView(generics.ListAPIView):
 class StudentDisciplineListView(generics.ListAPIView):
     """
     Получение дисциплин студента, query_params:
-    study_plan(!), acad_period(!), status, short(!) (если значение 1, вернет только первые три записи)
+    study_plan(!), study_year(!), acad_period(!), status, short(!) (если значение 1, вернет только первые три записи)
     """
     queryset = org_models.StudentDiscipline.objects.filter(is_active=True)
     serializer_class = serializers.StudentDisciplineShortSerializer
@@ -94,7 +94,7 @@ class StudentDisciplineListView(generics.ListAPIView):
         short = self.request.query_params.get('short')
 
         study_plan = self.request.query_params.get('study_plan')
-        # study_year = self.request.query_params.get('study_year')
+        study_year = self.request.query_params.get('study_year')
         acad_period = self.request.query_params.get('acad_period')
         status_id = self.request.query_params.get('status')
         # reg_period = self.request.query_params.get('reg_period')
@@ -113,8 +113,8 @@ class StudentDisciplineListView(generics.ListAPIView):
         if status_id:
             status_obj = org_models.StudentDisciplineStatus.objects.get(number=status_id)
             queryset = queryset.filter(status=status_obj)
-        # if study_year:
-        #     queryset = queryset.filter(study_year_id=study_year)
+        if study_year:
+            queryset = queryset.filter(study_year_id=study_year)
         if acad_period:
             queryset = queryset.filter(acad_period_id=acad_period)
 
