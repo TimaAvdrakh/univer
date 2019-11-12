@@ -143,6 +143,12 @@ class RegistrationPeriod(BaseCatalog):
     end_date = models.DateField(
         verbose_name='Дата завершения',
     )
+    study_year = models.ForeignKey(
+        'organizations.StudyPeriod',
+        null=True,
+        on_delete=models.CASCADE,
+        verbose_name='Учебный год',
+    )
 
     def __str__(self):
         return '{}:{}-{}'.format(self.name,
