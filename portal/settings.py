@@ -31,6 +31,7 @@ INSTALLED_APPS = [
     'organizations',
     'modeltranslation',
     'advisors',
+    'reports',
 ]
 
 MIDDLEWARE = [
