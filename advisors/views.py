@@ -1093,17 +1093,17 @@ class GenerateIupBidExcelView(generics.RetrieveAPIView):
         file_name = 'temp_files/zayavki{}.xlsx'.format(str(uuid4()))
         wb.save(file_name)
 
-        # with open(file_name, 'rb') as f:
-        #     response = HttpResponse(f, content_type='application/ms-excel')
-        #     response['Content-Disposition'] = 'attachment; filename="zayavki' + str(uuid4()) + '.xls"'
-        #     return response
+        with open(file_name, 'rb') as f:
+            response = HttpResponse(f, content_type='application/ms-excel')
+            response['Content-Disposition'] = 'attachment; filename="zayavki' + str(uuid4()) + '.xls"'
+            return response
 
-        return Response(
-            {
-                'message': 'ok'
-            },
-            status=status.HTTP_200_OK
-        )
+        # return Response(
+        #     {
+        #         'message': 'ok'
+        #     },
+        #     status=status.HTTP_200_OK
+        # )
 
 
 class GenerateIupExcelView(generics.RetrieveAPIView):
