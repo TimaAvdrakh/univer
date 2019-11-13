@@ -823,7 +823,7 @@ class NotRegisteredStudentListView(generics.ListAPIView):
 class GenerateIupBidExcelView(generics.RetrieveAPIView):
     """Генерировать Excel для Заявки на ИУПы
         study_year(!), study_form, faculty, cathedra, edu_prog_group, edu_prog,
-        course, group, acad_periods
+        course, group, acad_periods, status, reg_period
     """
 
     def get(self, request, *args, **kwargs):
@@ -849,12 +849,17 @@ class GenerateIupBidExcelView(generics.RetrieveAPIView):
             name='Times New Roman',
             size=11
         )
+        font_bold = Font(
+            name='Times New Roman',
+            size=11,
+            bold=True,
+        )
         alignment = Alignment(
             vertical="center",
             horizontal="center"
         )
-        queryset = org_models.StudyPlan.objects.filter(is_active=True). \
-            filter(advisor=self.request.user.profile)
+        queryset = org_models.StudyPlan.objects.filter(is_active=True,
+                                                       advisor=request.user.profile)
 
         if reg_period:
             reg_period_obj = common_models.RegistrationPeriod.objects.get(pk=reg_period)
@@ -999,6 +1004,7 @@ class GenerateIupBidExcelView(generics.RetrieveAPIView):
                     student_disciplines = org_models.StudentDiscipline.objects.filter(
                         is_active=True,
                         study_plan=study_plan,
+                        study_year_id=study_year,
                         acad_period_id=acad_period,
                     ).distinct('discipline')
 
@@ -1015,7 +1021,7 @@ class GenerateIupBidExcelView(generics.RetrieveAPIView):
 
                     head_cell = columns[current_col_num] + '14'
                     ws[head_cell] = head
-                    ws[head_cell].font = font
+                    ws[head_cell].font = font_bold
                     ws[head_cell].border = border
                     # ws[head_cell].alignment = alignment
 
@@ -1054,7 +1060,7 @@ class GenerateIupBidExcelView(generics.RetrieveAPIView):
 
             gos_attestation_label = columns[current_col_num] + '14'
             ws[gos_attestation_label] = 'Государственная аттестация'
-            ws[gos_attestation_label].font = font
+            ws[gos_attestation_label].font = font_bold
             ws[gos_attestation_label].alignment = alignment
             ws[gos_attestation_label].border = border
 
@@ -1067,7 +1073,7 @@ class GenerateIupBidExcelView(generics.RetrieveAPIView):
             current_col_num += 1
             sum_credit_label = columns[current_col_num] + '14'
             ws[sum_credit_label] = 'Общее количество кредитов'
-            ws[sum_credit_label].font = font
+            ws[sum_credit_label].font = font_bold
             ws[sum_credit_label].alignment = alignment
             ws[sum_credit_label].border = border
 
@@ -1080,7 +1086,7 @@ class GenerateIupBidExcelView(generics.RetrieveAPIView):
             current_col_num += 1
             advisor_mark_label = columns[current_col_num] + '14'
             ws[advisor_mark_label] = 'Отметка эдвайзера'
-            ws[advisor_mark_label].font = font
+            ws[advisor_mark_label].font = font_bold
             ws[advisor_mark_label].alignment = alignment
             ws[advisor_mark_label].border = border
 
