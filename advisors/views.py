@@ -841,21 +841,44 @@ class GenerateIupBidExcelView(generics.RetrieveAPIView):
 
         wb = load_workbook('advisors/excel/template.xlsx')
         ws = wb.active
-
+        border = Border(left=Side(border_style='thin', color='000000'),
+                        right=Side(border_style='thin', color='000000'),
+                        top=Side(border_style='thin', color='000000'),
+                        bottom=Side(border_style='thin', color='000000'))
+        font = Font(
+            name='Times New Roman',
+            size=11
+        )
+        alignment = Alignment(
+            vertical="center",
+            horizontal="center"
+        )
         queryset = org_models.StudyPlan.objects.filter(is_active=True). \
             filter(advisor=self.request.user.profile)
 
         if reg_period:
             reg_period_obj = common_models.RegistrationPeriod.objects.get(pk=reg_period)
             ws['B4'] = reg_period_obj.name
+            ws['B4'].font = font
+
         if course:
             ws['B5'] = course
+        else:
+            ws['B5'] = 'Все'
+        ws['B5'].font = font
 
         if status_id:
             status_obj = org_models.StudentDisciplineStatus.objects.get(number=status_id)
+            study_plan_pks_from_sd = org_models.StudentDiscipline.objects.filter(
+                study_year_id=study_year,
+                status=status_obj,
+            ).values('study_plan')
+            queryset = queryset.filter(pk__in=study_plan_pks_from_sd)
+
             ws['B6'] = status_obj.name
         else:
             ws['B6'] = 'Все'
+        ws['B6'].font = font
 
         if study_form:
             study_form_obj = org_models.StudyForm.objects.get(pk=study_form)
@@ -863,6 +886,7 @@ class GenerateIupBidExcelView(generics.RetrieveAPIView):
             queryset = queryset.filter(study_form_id=study_form)
         else:
             ws['B7'] = 'Все'
+        ws['B7'].font = font
 
         if faculty:
             faculty_obj = org_models.Faculty.objects.get(pk=faculty)
@@ -870,6 +894,7 @@ class GenerateIupBidExcelView(generics.RetrieveAPIView):
             ws['B8'] = faculty_obj.name
         else:
             ws['B8'] = 'Все'
+        ws['B8'].font = font
 
         if cathedra:
             cathedra_obj = org_models.Cathedra.objects.get(pk=cathedra)
@@ -877,6 +902,7 @@ class GenerateIupBidExcelView(generics.RetrieveAPIView):
             ws['B9'] = cathedra_obj.name
         else:
             ws['B9'] = 'Все'
+        ws['B9'].font = font
 
         if edu_prog_group:
             queryset = queryset.filter(education_program__group_id=edu_prog_group)
@@ -884,6 +910,7 @@ class GenerateIupBidExcelView(generics.RetrieveAPIView):
             ws['B10'] = edu_prog_group_obj.name
         else:
             ws['B10'] = 'Все'
+        ws['B10'].font = font
 
         if edu_prog:
             queryset = queryset.filter(education_program_id=edu_prog)
@@ -891,6 +918,7 @@ class GenerateIupBidExcelView(generics.RetrieveAPIView):
             ws['B11'] = edu_prog_obj.name
         else:
             ws['B11'] = 'Все'
+        ws['B11'].font = font
 
         if group:
             queryset = queryset.filter(group_id=group)
@@ -898,12 +926,14 @@ class GenerateIupBidExcelView(generics.RetrieveAPIView):
             ws['B12'] = group_obj.name
         else:
             ws['B12'] = 'Все'
+        ws['B12'].font = font
 
         if study_year:
             study_year_obj = org_models.StudyPeriod.objects.get(pk=study_year)
             queryset = queryset.filter(study_period__end__gt=study_year_obj.start)
             ws['B3'] = '{} - {}'.format(study_year_obj.start,
                                         study_year_obj.end)
+            ws['B3'].font = font
 
         if course and study_year:
             study_plan_pks = org_models.StudyYearCourse.objects.filter(
@@ -914,24 +944,40 @@ class GenerateIupBidExcelView(generics.RetrieveAPIView):
 
         now = datetime.now()
         ws['B13'] = now.strftime("%d:%m:%Y, %H:%M:%S")
+        ws['B13'].font = font
 
         for i, study_plan in enumerate(queryset):
             row_num = str(15 + i)
 
             a = 'A' + row_num
             ws[a] = i + 1
+            ws[a].font = font
+            ws[a].alignment = alignment
+            ws[a].border = border
 
             b = 'B' + row_num
             ws[b] = study_plan.education_program.group.code
+            ws[b].font = font
+            ws[b].alignment = alignment
+            ws[b].border = border
 
             c = 'C' + row_num
             ws[c] = study_plan.education_program.name
+            ws[c].font = font
+            ws[c].alignment = alignment
+            ws[c].border = border
 
             d = 'D' + row_num
             ws[d] = study_plan.group.name
+            ws[d].font = font
+            ws[d].alignment = alignment
+            ws[d].border = border
 
             e = 'E' + row_num
             ws[e] = study_plan.student.full_name
+            ws[e].font = font
+            ws[e].alignment = alignment
+            ws[e].border = border
 
             columns = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J',
                        'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T']
@@ -964,14 +1010,25 @@ class GenerateIupBidExcelView(generics.RetrieveAPIView):
                     text = 'Кредиты: {}\n'.format(total_credit)
 
                     for stud_discipline in student_disciplines:
-                        text += '{} ({})\n'.format(stud_discipline.discipline.name,
+                        text += '{} ({}), '.format(stud_discipline.discipline.name,
                                                    stud_discipline.credit)
 
                     head_cell = columns[current_col_num] + '14'
                     ws[head_cell] = head
+                    ws[head_cell].font = font
+                    ws[head_cell].border = border
+                    # ws[head_cell].alignment = alignment
 
                     text_cell = columns[current_col_num] + row_num
                     ws[text_cell] = text
+                    ws[text_cell].font = font
+                    ws[text_cell].border = border
+                    ws[text_cell].alignment = alignment
+
+                    ws.row_dimensions[int(row_num)].height = 70
+
+                    # if len(text) > 200:
+                    #     ws.row_dimensions[row_num].height = 50  # Test
 
                     current_col_num += 1
 
@@ -997,35 +1054,56 @@ class GenerateIupBidExcelView(generics.RetrieveAPIView):
 
             gos_attestation_label = columns[current_col_num] + '14'
             ws[gos_attestation_label] = 'Государственная аттестация'
+            ws[gos_attestation_label].font = font
+            ws[gos_attestation_label].alignment = alignment
+            ws[gos_attestation_label].border = border
+
             gos_attestation = columns[current_col_num] + row_num
             ws[gos_attestation] = 'не выбрана'
+            ws[gos_attestation].font = font
+            ws[gos_attestation].alignment = alignment
+            ws[gos_attestation].border = border
 
             current_col_num += 1
             sum_credit_label = columns[current_col_num] + '14'
             ws[sum_credit_label] = 'Общее количество кредитов'
+            ws[sum_credit_label].font = font
+            ws[sum_credit_label].alignment = alignment
+            ws[sum_credit_label].border = border
+
             sum_credit_cell = columns[current_col_num] + row_num
             ws[sum_credit_cell] = sum_credit
+            ws[sum_credit_cell].font = font
+            ws[sum_credit_cell].alignment = alignment
+            ws[sum_credit_cell].border = border
 
             current_col_num += 1
             advisor_mark_label = columns[current_col_num] + '14'
             ws[advisor_mark_label] = 'Отметка эдвайзера'
+            ws[advisor_mark_label].font = font
+            ws[advisor_mark_label].alignment = alignment
+            ws[advisor_mark_label].border = border
+
             mark_cell = columns[current_col_num] + row_num
             ws[mark_cell] = mark_text
+            ws[mark_cell].font = font
+            ws[mark_cell].border = border
+            # ws[mark_cell].alignment = alignment
 
         file_name = 'temp_files/zayavki{}.xlsx'.format(str(uuid4()))
         wb.save(file_name)
 
-        with open(file_name, 'rb') as f:
-            response = HttpResponse(f, content_type='application/ms-excel')
-            response['Content-Disposition'] = 'attachment; filename="zayavki' + str(uuid4()) + '.xls"'
-            return response
+        # with open(file_name, 'rb') as f:
+        #     response = HttpResponse(f, content_type='application/ms-excel')
+        #     response['Content-Disposition'] = 'attachment; filename="zayavki' + str(uuid4()) + '.xls"'
+        #     return response
 
-        # return Response(
-        #     {
-        #         'message': 'ok'
-        #     },
-        #     status=status.HTTP_200_OK
-        # )
+        return Response(
+            {
+                'message': 'ok'
+            },
+            status=status.HTTP_200_OK
+        )
 
 
 class GenerateIupExcelView(generics.RetrieveAPIView):
