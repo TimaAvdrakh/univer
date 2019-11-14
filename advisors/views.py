@@ -508,6 +508,8 @@ class GetStudyPlanView(generics.RetrieveAPIView):
     serializer_class = serializers.StudyPlanDetailSerializer
 
     def get(self, request, *args, **kwargs):
+        profile = request.user.profile
+
         study_year = request.query_params.get('study_year')
         faculty = request.query_params.get('faculty')
         speciality = request.query_params.get('speciality')
@@ -529,6 +531,7 @@ class GetStudyPlanView(generics.RetrieveAPIView):
         try:
             study_year_obj = org_models.StudyPeriod.objects.get(pk=study_year)
             study_plan = org_models.StudyPlan.objects.get(
+                advisor=profile,
                 study_period__end__gt=study_year_obj.start,
                 education_program_id=edu_prog,
                 student_id=student,
@@ -553,47 +556,53 @@ class GetStudyPlanView(generics.RetrieveAPIView):
 
 class ConfirmedStudentDisciplineListView(generics.ListAPIView):
     """Получить все утвержденные дисциплины выбранного учебного плана
-        study_plan(!), study_year(!)"""
+        study_plan(!), study_year(!), reg_period(!)"""
 
     serializer_class = serializers.ConfirmedStudentDisciplineShortSerializer
 
     def list(self, request, *args, **kwargs):
         study_plan_id = request.query_params.get('study_plan')
         study_year = request.query_params.get('study_year')
+        reg_period = self.request.query_params.get('reg_period')
 
-        # study_plan = org_models.StudyPlan.objects.get(pk=study_plan_id,
-        #                                               is_active=True)
-        # study_year_obj = org_models.StudyPeriod.objects.get(pk=study_year)
-        # course = study_plan.get_course(study_year_obj)
+        study_plan = org_models.StudyPlan.objects.get(pk=study_plan_id,
+                                                      is_active=True)
+        study_year_obj = org_models.StudyPeriod.objects.get(pk=study_year)
+        course = study_plan.get_course(study_year_obj)
 
-        acad_periods = org_models.StudentDiscipline.objects.filter(
+        acad_period_pks_from_sd = org_models.StudentDiscipline.objects.filter(
             study_year_id=study_year,
             study_plan_id=study_plan_id
         ).distinct('acad_period').values('acad_period')
 
+        acad_periods = org_models.AcadPeriod.objects.filter(pk__in=acad_period_pks_from_sd)
+
+        acad_period_pks_from_rule = common_models.CourseAcadPeriodPermission.objects.filter(
+            registration_period_id=reg_period,
+            course=course
+        ).values('acad_period')
+
+        acad_periods = acad_periods.filter(pk__in=acad_period_pks_from_rule)
+
         resp = []
 
         for acad_period in acad_periods:
-            acad_period_id = acad_period['acad_period']
-            acad_period_obj = org_models.AcadPeriod.objects.get(pk=acad_period_id)
-
             if StudentDisciplineInfo.objects.filter(
                     study_plan_id=study_plan_id,
-                    acad_period_id=acad_period_id,
+                    acad_period=acad_period,
                     status_id=student_discipline_info_status['confirmed'],
             ).exists():
                 student_disciplines = org_models.StudentDiscipline.objects.filter(
                     study_year_id=study_year,
                     study_plan_id=study_plan_id,
-                    acad_period_id=acad_period_id,
+                    acad_period=acad_period,
                 ).distinct('discipline')
 
                 serializer = self.serializer_class(student_disciplines,
                                                    many=True)
                 item = {
-                    'acad_period': acad_period_obj.repr_name,
+                    'acad_period': acad_period.repr_name,
                     'disciplines': serializer.data,
-                    # 'course': course
                 }
                 resp.append(item)
 
