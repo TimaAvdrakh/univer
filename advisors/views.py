@@ -624,8 +624,7 @@ class RegisterResultView(generics.ListAPIView):
         profile = request.user.profile
 
         study_year = request.query_params.get('study_year')
-        reg_period = request.query_params.get(
-            'reg_period')  # TODO если не указан акад период, брать акад периоды из периода регистрации
+        reg_period = request.query_params.get('reg_period')
         acad_period = self.request.query_params.get('acad_period')
         faculty = request.query_params.get('faculty')
         speciality = request.query_params.get('speciality')
@@ -641,6 +640,13 @@ class RegisterResultView(generics.ListAPIView):
 
         if acad_period:
             queryset = queryset.filter(acad_period_id=acad_period)
+        elif reg_period:
+            acad_period_pks = common_models.CourseAcadPeriodPermission.objects.filter(
+                registration_period_id=reg_period,
+                # course=course
+            ).values('acad_period')
+            queryset = queryset.filter(acad_period__in=acad_period_pks)
+
         if faculty:
             queryset = queryset.filter(study_plan__faculty_id=faculty)
         if speciality:
@@ -686,13 +692,6 @@ class RegisterResultView(generics.ListAPIView):
                                                many=True)
             return self.get_paginated_response(serializer.data)
 
-        # serializer = self.serializer_class(student_discipline_list,
-        #                                    many=True)
-        # return Response(
-        #     serializer.data,
-        #     status=status.HTTP_200_OK,
-        # )
-
 
 class RegisterStatisticsView(generics.ListAPIView):
     """Статистика регистрации
@@ -706,8 +705,7 @@ class RegisterStatisticsView(generics.ListAPIView):
         profile = request.user.profile
 
         study_year = request.query_params.get('study_year')
-        reg_period = request.query_params.get(
-            'reg_period')  # TODO если не указан акад период, брать акад периоды из периода регистрации
+        reg_period = request.query_params.get('reg_period')
         acad_period = request.query_params.get('acad_period')
         faculty = request.query_params.get('faculty')
         speciality = request.query_params.get('speciality')
@@ -723,6 +721,13 @@ class RegisterStatisticsView(generics.ListAPIView):
 
         if acad_period:
             queryset = queryset.filter(acad_period_id=acad_period)
+        elif reg_period:
+            acad_period_pks = common_models.CourseAcadPeriodPermission.objects.filter(
+                registration_period_id=reg_period,
+                # course=course
+            ).values('acad_period')
+            queryset = queryset.filter(acad_period__in=acad_period_pks)
+
         if faculty:
             queryset = queryset.filter(study_plan__faculty_id=faculty)
         if speciality:
@@ -773,11 +778,6 @@ class RegisterStatisticsView(generics.ListAPIView):
                                                many=True)
             return self.get_paginated_response(serializer.data)
 
-        # return Response(
-        #     serializer.data,
-        #     status=status.HTTP_200_OK,
-        # )
-
 
 class NotRegisteredStudentListView(generics.ListAPIView):
     """Списке незарегистрированных
@@ -792,8 +792,7 @@ class NotRegisteredStudentListView(generics.ListAPIView):
     def get_queryset(self):
         profile = self.request.user.profile
         study_year = self.request.query_params.get('study_year')
-        reg_period = self.request.query_params.get(
-            'reg_period')  # TODO если не указан акад период, брать акад периоды из периода регистрации
+        reg_period = self.request.query_params.get('reg_period')
         acad_period = self.request.query_params.get('acad_period')
         faculty = self.request.query_params.get('faculty')
         speciality = self.request.query_params.get('speciality')
@@ -809,6 +808,13 @@ class NotRegisteredStudentListView(generics.ListAPIView):
 
         if acad_period:
             queryset = queryset.filter(acad_period_id=acad_period)
+        elif reg_period:
+            acad_period_pks = common_models.CourseAcadPeriodPermission.objects.filter(
+                registration_period_id=reg_period,
+                # course=course
+            ).values('acad_period')
+            queryset = queryset.filter(acad_period__in=acad_period_pks)
+
         if faculty:
             queryset = queryset.filter(study_plan__faculty_id=faculty)
         if speciality:
