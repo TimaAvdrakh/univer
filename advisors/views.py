@@ -780,31 +780,29 @@ class RegisterStatisticsView(generics.ListAPIView):
 
 
 class NotRegisteredStudentListView(generics.ListAPIView):
-    """Списке незарегистрированных
+    """Список незарегистрированных
     study_year(!), reg_period(!), acad_period, faculty, speciality, edu_prog, course, group
     """
-    pagination_class = CustomPagination
-    queryset = org_models.StudentDiscipline.objects.filter(
-        is_active=True
-    ).distinct('student')
+    queryset = org_models.StudentDiscipline.objects.filter(is_active=True)
     serializer_class = serializers.NotRegisteredStudentSerializer
+    pagination_class = CustomPagination
 
-    def get_queryset(self):
-        profile = self.request.user.profile
-        study_year = self.request.query_params.get('study_year')
-        reg_period = self.request.query_params.get('reg_period')
-        acad_period = self.request.query_params.get('acad_period')
-        faculty = self.request.query_params.get('faculty')
-        speciality = self.request.query_params.get('speciality')
-        edu_prog = self.request.query_params.get('edu_prog')
-        course = self.request.query_params.get('course')
-        group = self.request.query_params.get('group')
+    def list(self, request, *args, **kwargs):
+        profile = request.user.profile
+        study_year = request.query_params.get('study_year')
+        reg_period = request.query_params.get('reg_period')
+        acad_period = request.query_params.get('acad_period')
+        faculty = request.query_params.get('faculty')
+        speciality = request.query_params.get('speciality')
+        edu_prog = request.query_params.get('edu_prog')
+        course = request.query_params.get('course')
+        group = request.query_params.get('group')
 
         queryset = self.queryset.all()
         queryset = queryset.filter(
             status_id=student_discipline_status['not_chosen'],
             study_plan__advisor=profile,
-        )
+        ).distinct('student')
 
         if acad_period:
             queryset = queryset.filter(acad_period_id=acad_period)
@@ -833,7 +831,40 @@ class NotRegisteredStudentListView(generics.ListAPIView):
             ).values('study_plan')
             queryset = queryset.filter(study_plan__in=study_plan_pks)
 
-        return queryset
+        distincted_queryset = queryset.distinct(
+            'study_plan__faculty',
+            'study_plan__cathedra',
+            'study_plan__speciality',
+            'study_plan__group',
+            'discipline',
+        )
+        student_discipline_list = []
+        for item in distincted_queryset:
+            sds = queryset.filter(
+                study_plan__faculty=item.study_plan.faculty,
+                study_plan__cathedra=item.study_plan.cathedra,
+                study_plan__speciality=item.study_plan.speciality,
+                study_plan__group=item.study_plan.group,
+                discipline=item.discipline
+            )
+            student_name_list = [sd.study_plan.student.full_name.strip() for sd in sds]
+            student_names = ', '.join(student_name_list)
+
+            d = {
+                'faculty': item.study_plan.faculty.name,
+                'cathedra': item.study_plan.cathedra.name,
+                'speciality': item.study_plan.speciality.name,
+                'group': item.study_plan.group.name,
+                'discipline': item.discipline.name,
+                'student': student_names,
+            }
+            student_discipline_list.append(d)
+
+        page = self.paginate_queryset(student_discipline_list)
+        if page is not None:
+            serializer = self.serializer_class(page,
+                                               many=True)
+            return self.get_paginated_response(serializer.data)
 
 
 class GenerateIupBidExcelView(generics.RetrieveAPIView):

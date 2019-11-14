@@ -262,24 +262,29 @@ class RegisterStatisticsSerializer(serializers.Serializer):
     percent_of_non_chosen_student = serializers.FloatField()
 
 
-class NotRegisteredStudentSerializer(serializers.ModelSerializer):
+class NotRegisteredStudentSerializer(serializers.Serializer):
     """Используется в Списке незарегистрированных"""
 
+    faculty = serializers.CharField()
+    cathedra = serializers.CharField()
+    speciality = serializers.CharField()
+    group = serializers.CharField()
     discipline = serializers.CharField()
+    student = serializers.CharField()
 
-    class Meta:
-        model = org_models.StudentDiscipline
-        fields = (
-            'uid',
-            'discipline',
-        )
-
-    def to_representation(self, instance):
-        data = super().to_representation(instance)
-        data['faculty'] = instance.study_plan.faculty.name
-        data['cathedra'] = instance.study_plan.cathedra.name
-        data['speciality'] = instance.study_plan.speciality.name
-        data['group'] = instance.study_plan.group.name
-        data['student'] = instance.student.full_name
-
-        return data
+    # class Meta:
+    #     model = org_models.StudentDiscipline
+    #     fields = (
+    #         'uid',
+    #         'discipline',
+    #     )
+    #
+    # def to_representation(self, instance):
+    #     data = super().to_representation(instance)
+    #     data['faculty'] = instance.study_plan.faculty.name
+    #     data['cathedra'] = instance.study_plan.cathedra.name
+    #     data['speciality'] = instance.study_plan.speciality.name
+    #     data['group'] = instance.study_plan.group.name
+    #     data['student'] = instance.student.full_name
+    #
+    #     return data
