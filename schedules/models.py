@@ -135,10 +135,6 @@ class Lesson(BaseModel):
         on_delete=models.CASCADE,
         verbose_name='Статус занятия',
     )
-    replacement = models.BooleanField(
-        default=False,
-        verbose_name='Замена',
-    )
 
     def __str__(self):
         return '{}'.format(self.subject)
