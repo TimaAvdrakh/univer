@@ -385,7 +385,7 @@ class RegisterStatisticsExcelView(generics.RetrieveAPIView):
 
         with open(file_name, 'rb') as f:
             response = HttpResponse(f, content_type='application/ms-excel')
-            response['Content-Disposition'] = 'attachment; filename="reg_stat' + str(uuid4()) + '.xls"'
+            response['Content-Disposition'] = 'attachment; filename="reg_stat' + str(uuid4()) + '.xlsx"'
             return response
 
 
@@ -579,6 +579,6 @@ class NotRegisteredStudentListExcelView(generics.RetrieveAPIView):
 
         with open(file_name, 'rb') as f:
             response = HttpResponse(f, content_type='application/ms-excel')
-            response['Content-Disposition'] = 'attachment; filename="not_registered' + str(uuid4()) + '.xls"'
+            response['Content-Disposition'] = 'attachment; filename="not_registered' + str(uuid4()) + '.xlsx"'
             return response
 

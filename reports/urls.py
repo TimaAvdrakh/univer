@@ -10,6 +10,6 @@ urlpatterns = [
     path('excel/reg_stat/', views.RegisterStatisticsExcelView.as_view(),
          name='reg_stat_excel'),
 
-    path('excel/not_registered/', views.NotRegisteredStudentListExcelView.as_view(),   # TODO получить изменение из advisors
+    path('excel/not_registered/', views.NotRegisteredStudentListExcelView.as_view(),
          name='not_registered_excel'),
 ]
