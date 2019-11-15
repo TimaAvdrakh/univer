@@ -21,8 +21,7 @@ class RegisterResultExcelView(generics.RetrieveAPIView):
         profile = request.user.profile
 
         study_year = request.query_params.get('study_year')
-        reg_period = request.query_params.get(
-            'reg_period')  # TODO если не указан акад период, брать акад периоды из периода регистрации
+        reg_period = request.query_params.get('reg_period')
         acad_period = self.request.query_params.get('acad_period')
         faculty = request.query_params.get('faculty')
         speciality = request.query_params.get('speciality')
@@ -66,6 +65,12 @@ class RegisterResultExcelView(generics.RetrieveAPIView):
             ws['B7'] = acad_period_obj.repr_name
         else:
             ws['B7'] = 'Все'
+            acad_period_pks = common_models.CourseAcadPeriodPermission.objects.filter(
+                registration_period_id=reg_period,
+                # course=course
+            ).values('acad_period')
+            queryset = queryset.filter(acad_period__in=acad_period_pks)
+
         ws['B7'].font = font_small
 
         if faculty:
@@ -197,8 +202,7 @@ class RegisterStatisticsExcelView(generics.RetrieveAPIView):
         profile = request.user.profile
 
         study_year = request.query_params.get('study_year')
-        reg_period = request.query_params.get(
-            'reg_period')  # TODO если не указан акад период, брать акад периоды из периода регистрации
+        reg_period = request.query_params.get('reg_period')
         acad_period = request.query_params.get('acad_period')
         faculty = request.query_params.get('faculty')
         speciality = request.query_params.get('speciality')
@@ -242,6 +246,13 @@ class RegisterStatisticsExcelView(generics.RetrieveAPIView):
             ws['B7'] = acad_period_obj.repr_name
         else:
             ws['B7'] = 'Все'
+
+            acad_period_pks = common_models.CourseAcadPeriodPermission.objects.filter(
+                registration_period_id=reg_period,
+                # course=course
+            ).values('acad_period')
+            queryset = queryset.filter(acad_period__in=acad_period_pks)
+
         ws['B7'].font = font_small
 
         if faculty:
@@ -382,15 +393,12 @@ class NotRegisteredStudentListExcelView(generics.RetrieveAPIView):
     """Список незарегистрированных Excel
     study_year(!), reg_period(!), acad_period, faculty, speciality, edu_prog, course, group
     """
-    queryset = org_models.StudentDiscipline.objects.filter(
-        is_active=True
-    ).distinct('student')
+    queryset = org_models.StudentDiscipline.objects.filter(is_active=True)
 
     def get(self, request, *args, **kwargs):
         profile = self.request.user.profile
         study_year = self.request.query_params.get('study_year')
-        reg_period = self.request.query_params.get(
-            'reg_period')  # TODO если не указан акад период, брать акад периоды из периода регистрации
+        reg_period = self.request.query_params.get('reg_period')
         acad_period = self.request.query_params.get('acad_period')
         faculty = self.request.query_params.get('faculty')
         speciality = self.request.query_params.get('speciality')
@@ -402,7 +410,7 @@ class NotRegisteredStudentListExcelView(generics.RetrieveAPIView):
         queryset = queryset.filter(
             status_id=student_discipline_status['not_chosen'],
             study_plan__advisor=profile,
-        )
+        ).distinct('student')
 
         wb = load_workbook('advisors/excel/not_registered_students.xlsx')
         ws = wb.active
@@ -418,10 +426,10 @@ class NotRegisteredStudentListExcelView(generics.RetrieveAPIView):
             name='Times New Roman',
             size=8,
         )
-        alignment = Alignment(
-            vertical="center",
-            horizontal="center"
-        )
+        # alignment = Alignment(
+        #     vertical="center",
+        #     horizontal="center"
+        # )
 
         if reg_period:
             reg_period_obj = common_models.RegistrationPeriod.objects.get(pk=reg_period)
@@ -430,14 +438,23 @@ class NotRegisteredStudentListExcelView(generics.RetrieveAPIView):
 
         if acad_period:
             queryset = queryset.filter(acad_period_id=acad_period)
+
             acad_period_obj = org_models.AcadPeriod.objects.get(pk=acad_period)
             ws['B7'] = acad_period_obj.repr_name
         else:
             ws['B7'] = 'Все'
+
+            acad_period_pks = common_models.CourseAcadPeriodPermission.objects.filter(
+                registration_period_id=reg_period,
+                # course=course
+            ).values('acad_period')
+            queryset = queryset.filter(acad_period__in=acad_period_pks)
+
         ws['B7'].font = font_small
 
         if faculty:
             queryset = queryset.filter(study_plan__faculty_id=faculty)
+
             faculty_obj = org_models.Faculty.objects.get(pk=faculty)
             ws['B8'] = faculty_obj.name
         else:
@@ -446,6 +463,7 @@ class NotRegisteredStudentListExcelView(generics.RetrieveAPIView):
 
         if speciality:
             queryset = queryset.filter(study_plan__speciality_id=speciality)
+
             speciality_obj = org_models.Speciality.objects.get(pk=speciality)
             ws['B9'] = speciality_obj.name
         else:
@@ -454,6 +472,7 @@ class NotRegisteredStudentListExcelView(generics.RetrieveAPIView):
 
         if edu_prog:
             queryset = queryset.filter(study_plan__education_program_id=edu_prog)
+
             edu_prog_obj = org_models.EducationProgram.objects.get(pk=edu_prog)
             ws['B10'] = edu_prog_obj.name
         else:
@@ -468,6 +487,7 @@ class NotRegisteredStudentListExcelView(generics.RetrieveAPIView):
 
         if group:
             queryset = queryset.filter(study_plan__group_id=group)
+
             group_obj = org_models.Group.objects.get(pk=group)
             ws['B12'] = group_obj.name
         else:
@@ -493,35 +513,64 @@ class NotRegisteredStudentListExcelView(generics.RetrieveAPIView):
             ).values('study_plan')
             queryset = queryset.filter(study_plan__in=study_plan_pks)
 
-        for i, sd in enumerate(queryset):
+        distincted_queryset = queryset.distinct(
+            'study_plan__faculty',
+            'study_plan__cathedra',
+            'study_plan__speciality',
+            'study_plan__group',
+            'discipline',
+        )
+        student_discipline_list = []
+        for item in distincted_queryset:
+            sds = queryset.filter(
+                study_plan__faculty=item.study_plan.faculty,
+                study_plan__cathedra=item.study_plan.cathedra,
+                study_plan__speciality=item.study_plan.speciality,
+                study_plan__group=item.study_plan.group,
+                discipline=item.discipline
+            )
+            student_name_list = [sd.study_plan.student.full_name.strip() for sd in sds]
+            student_names = ', '.join(student_name_list)
+
+            d = {
+                'faculty': item.study_plan.faculty.name,
+                'cathedra': item.study_plan.cathedra.name,
+                'speciality': item.study_plan.speciality.name,
+                'group': item.study_plan.group.name,
+                'discipline': item.discipline.name,
+                'student': student_names,
+            }
+            student_discipline_list.append(d)
+
+        for i, sd in enumerate(student_discipline_list):
             row_num = str(15 + i)
             a = 'A' + row_num
-            ws[a] = sd.study_plan.faculty.name
+            ws[a] = sd['faculty']
             ws[a].font = font
             ws[a].border = border
 
             b = 'B' + row_num
-            ws[b] = sd.study_plan.cathedra.name
+            ws[b] = sd['cathedra']
             ws[b].font = font
             ws[b].border = border
 
             c = 'C' + row_num
-            ws[c] = sd.study_plan.speciality.name
+            ws[c] = sd['speciality']
             ws[c].font = font
             ws[c].border = border
 
             d = 'D' + row_num
-            ws[d] = sd.study_plan.group.name
+            ws[d] = sd['group']
             ws[d].font = font
             ws[d].border = border
 
             e = 'E' + row_num
-            ws[e] = sd.discipline.name
+            ws[e] = sd['discipline']
             ws[e].font = font
             ws[e].border = border
 
             f = 'F' + row_num
-            ws[f] = sd.study_plan.student.full_name
+            ws[f] = sd['student']
             ws[f].font = font
             ws[f].border = border
 

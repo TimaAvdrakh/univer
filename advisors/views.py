@@ -905,8 +905,10 @@ class GenerateIupBidExcelView(generics.RetrieveAPIView):
             vertical="center",
             horizontal="center"
         )
-        queryset = org_models.StudyPlan.objects.filter(is_active=True,
-                                                       advisor=request.user.profile)
+        queryset = org_models.StudyPlan.objects.filter(
+            is_active=True,
+            advisor=request.user.profile,
+        )
 
         if reg_period:
             reg_period_obj = common_models.RegistrationPeriod.objects.get(pk=reg_period)
@@ -1151,23 +1153,20 @@ class GenerateIupBidExcelView(generics.RetrieveAPIView):
             response['Content-Disposition'] = 'attachment; filename="zayavki' + str(uuid4()) + '.xls"'
             return response
 
-        # return Response(
-        #     {
-        #         'message': 'ok'
-        #     },
-        #     status=status.HTTP_200_OK
-        # )
-
 
 class GenerateIupExcelView(generics.RetrieveAPIView):
     """
-    study_year(!), edu_prog(!), student(!), faculty, speciality, group,
+    Excel ИУПы обучающихся (2 стр, Утвержденные)
+    study_year(!), edu_prog(!), student(!), reg_period(!) faculty, speciality, group,
     """
 
     def get(self, request, *args, **kwargs):
+        profile = request.user.profile
+
         study_year = request.query_params.get('study_year')
         edu_prog = request.query_params.get('edu_prog')
         student = request.query_params.get('student')
+        reg_period = self.request.query_params.get('reg_period')
 
         faculty = request.query_params.get('faculty')
         speciality = request.query_params.get('speciality')
@@ -1180,6 +1179,7 @@ class GenerateIupExcelView(generics.RetrieveAPIView):
                         right=Side(border_style='thin', color='000000'),
                         top=Side(border_style='thin', color='000000'),
                         bottom=Side(border_style='thin', color='000000'))
+        bottom_border = Border(bottom=Side(border_style='thin', color='000000'))
         font = Font(
             name='Times New Roman',
             size=11
@@ -1194,9 +1194,9 @@ class GenerateIupExcelView(generics.RetrieveAPIView):
             bold=True,
             size=12
         )
-        # alignment = Alignment(
-        #     horizontal="center"
-        # )
+        left_alignment = Alignment(
+            horizontal="left"
+        )
         filters = {}
 
         if faculty:
@@ -1211,6 +1211,7 @@ class GenerateIupExcelView(generics.RetrieveAPIView):
         try:
             study_year_obj = org_models.StudyPeriod.objects.get(pk=study_year)
             study_plan = org_models.StudyPlan.objects.get(
+                advisor=profile,
                 study_period__end__gt=study_year_obj.start,
                 education_program_id=edu_prog,
                 student_id=student,
@@ -1244,6 +1245,7 @@ class GenerateIupExcelView(generics.RetrieveAPIView):
 
         current_course_cell = 'C21'
         ws[current_course_cell] = study_plan.current_course
+        ws[current_course_cell].alignment = left_alignment
 
         lang_cell = 'C22'
         ws[lang_cell] = study_plan.group.language.name
@@ -1258,31 +1260,38 @@ class GenerateIupExcelView(generics.RetrieveAPIView):
                                                               str(study_year_obj))
         ws['D27'].font = font_large
 
-        acad_periods = org_models.StudentDiscipline.objects.filter(
+        acad_period_pks_from_sd = org_models.StudentDiscipline.objects.filter(
             study_year_id=study_year,
             study_plan=study_plan,
         ).distinct('acad_period').values('acad_period')
+
+        acad_periods = org_models.AcadPeriod.objects.filter(
+            pk__in=acad_period_pks_from_sd,
+        )
+
+        acad_period_pks_from_rule = common_models.CourseAcadPeriodPermission.objects.filter(
+            registration_period_id=reg_period,
+            course=course,
+        ).values('acad_period')
+        acad_periods = acad_periods.filter(pk__in=acad_period_pks_from_rule)
 
         row_num = 28
         sd_num = 1
         total_credit_in_course = 0
 
         for acad_period in acad_periods:
-            acad_period_id = acad_period['acad_period']
-            acad_period_obj = org_models.AcadPeriod.objects.get(pk=acad_period_id)
-
             if StudentDisciplineInfo.objects.filter(
                     study_plan=study_plan,
-                    acad_period_id=acad_period_id,
+                    acad_period=acad_period,
                     status_id=student_discipline_info_status['confirmed'],
             ).exists():
                 student_disciplines = org_models.StudentDiscipline.objects.filter(
                     study_year_id=study_year,
                     study_plan=study_plan,
-                    acad_period_id=acad_period_id,
+                    acad_period=acad_period,
                 ).distinct('discipline')
 
-                ws['D' + str(row_num)] = acad_period_obj.repr_name
+                ws['D' + str(row_num)] = acad_period.repr_name
                 ws['D' + str(row_num)].font = font_bold
                 row_num += 1
 
@@ -1333,8 +1342,8 @@ class GenerateIupExcelView(generics.RetrieveAPIView):
 
                 ws['B' + str(row_num)].border = border
                 ws['A' + str(row_num)].border = border
-                # ws['C' + str(row_num)].border = border
-                # ws['D' + str(row_num)].border = border
+                ws['C' + str(row_num)].border = bottom_border
+                ws['D' + str(row_num)].border = bottom_border
                 ws['E' + str(row_num)].border = border
 
                 row_num += 1
@@ -1346,8 +1355,8 @@ class GenerateIupExcelView(generics.RetrieveAPIView):
 
         ws['B' + str(row_num)].border = border
         ws['A' + str(row_num)].border = border
-        # ws['C' + str(row_num)].border = border
-        # ws['D' + str(row_num)].border = border
+        ws['C' + str(row_num)].border = bottom_border
+        ws['D' + str(row_num)].border = bottom_border
         ws['E' + str(row_num)].border = border
 
         row_num += 2
@@ -1369,12 +1378,3 @@ class GenerateIupExcelView(generics.RetrieveAPIView):
             response = HttpResponse(f, content_type='application/ms-excel')
             response['Content-Disposition'] = 'attachment; filename="zayavki' + str(uuid4()) + '.xls"'
             return response
-
-        # return Response(
-        #     {
-        #         'message': 'ok'
-        #     },
-        #     status=status.HTTP_200_OK
-        # )
-
-# 1
