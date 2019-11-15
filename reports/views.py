@@ -188,7 +188,7 @@ class RegisterResultExcelView(generics.RetrieveAPIView):
 
         with open(file_name, 'rb') as f:
             response = HttpResponse(f, content_type='application/ms-excel')
-            response['Content-Disposition'] = 'attachment; filename="reg_result' + str(uuid4()) + '.xls"'
+            response['Content-Disposition'] = 'attachment; filename="reg_result' + str(uuid4()) + '.xlsx"'
             return response
 
 
