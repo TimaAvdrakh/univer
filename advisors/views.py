@@ -31,7 +31,7 @@ class StudyPlansListView(generics.ListAPIView):
     """
     queryset = org_models.StudyPlan.objects.filter(is_active=True)
     serializer_class = serializers.StudyPlanSerializer
-    pagination_class = CustomPagination
+    # pagination_class = CustomPagination
 
     def get_queryset(self):
         study_year = self.request.query_params.get('study_year')  # Дисциплина студента
