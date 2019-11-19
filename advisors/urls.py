@@ -39,4 +39,7 @@ urlpatterns = [
 
     path('iup_excel/', views.GenerateIupExcelView.as_view(),
          name='generate_iup_excel'),
+
+    path('study_plans/copy/', views.CopyStudyPlansListView.as_view(),  # TODO FOR TEST
+         name='registration_bid_list_copy'),
 ]

@@ -1378,3 +1378,62 @@ class GenerateIupExcelView(generics.RetrieveAPIView):
             response = HttpResponse(f, content_type='application/ms-excel')
             response['Content-Disposition'] = 'attachment; filename="zayavki' + str(uuid4()) + '.xls"'
             return response
+
+
+class CopyStudyPlansListView(generics.ListAPIView):  # TODO FOR TEST
+    """
+    Получение учебных планов,
+    study_year(!), study_form, faculty, cathedra, edu_prog_group, edu_prog, course, group, status
+    """
+    queryset = org_models.StudyPlan.objects.filter(is_active=True)
+    serializer_class = serializers.StudyPlanSerializer
+    pagination_class = CustomPagination
+
+    def get_queryset(self):
+        study_year = self.request.query_params.get('study_year')  # Дисциплина студента
+        study_form = self.request.query_params.get('study_form')
+        faculty = self.request.query_params.get('faculty')
+        cathedra = self.request.query_params.get('cathedra')
+        edu_prog_group = self.request.query_params.get('edu_prog_group')
+        edu_prog = self.request.query_params.get('edu_prog')
+        course = self.request.query_params.get('course')  # Дисциплина студента
+        group = self.request.query_params.get('group')
+
+        status_id = self.request.query_params.get('status')  # В Дисциплине студента
+        # reg_period = self.request.query_params.get('reg_period')  # Дисциплина студента
+
+        queryset = self.queryset.filter(advisor=self.request.user.profile)
+
+        if status_id:
+            status_obj = org_models.StudentDisciplineStatus.objects.get(number=status_id)
+
+            study_plan_pks_from_sd = org_models.StudentDiscipline.objects.filter(
+                study_year_id=study_year,
+                status=status_obj,
+            ).values('study_plan')
+
+            queryset = queryset.filter(pk__in=study_plan_pks_from_sd)
+
+        if study_form:
+            queryset = queryset.filter(study_form_id=study_form)
+        if faculty:
+            queryset = queryset.filter(faculty_id=faculty)
+        if cathedra:
+            queryset = queryset.filter(cathedra_id=cathedra)
+        if edu_prog:
+            queryset = queryset.filter(education_program_id=edu_prog)
+        if edu_prog_group:
+            queryset = queryset.filter(education_program__group_id=edu_prog_group)
+        if group:
+            queryset = queryset.filter(group_id=group)
+        if study_year:
+            study_year_obj = org_models.StudyPeriod.objects.get(pk=study_year)
+            queryset = queryset.filter(study_period__end__gt=study_year_obj.start)
+        if course and study_year:
+            study_plan_pks = org_models.StudyYearCourse.objects.filter(
+                study_year_id=study_year,
+                course=course
+            ).values('study_plan')
+            queryset = queryset.filter(pk__in=study_plan_pks)
+
+        return queryset
