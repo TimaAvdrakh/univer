@@ -15,7 +15,7 @@ class Room(BaseCatalog):
         ContentType,
         on_delete=models.CASCADE,
     )
-    object_id = models.PositiveIntegerField()
+    object_id = models.UUIDField(null=True)
     department = GenericForeignKey(
         'content_type',
         'object_id',
@@ -31,7 +31,7 @@ class Room(BaseCatalog):
     )
 
     def __str__(self):
-        return '{} - {}'.format(self.name,
+        return '{} ({})'.format(self.name,
                                 self.capacity)
 
     class Meta:
@@ -46,6 +46,10 @@ class TimeWindow(BaseCatalog):
     to_time = models.TimeField(
         verbose_name='Время по',
     )
+
+    def __str__(self):
+        return '{} - {}'.format(self.from_time,
+                                self.to_time)
 
     class Meta:
         verbose_name = 'Временное окно'
@@ -96,10 +100,9 @@ class Lesson(BaseModel):
         on_delete=models.CASCADE,
         verbose_name='Аудитория',
     )
-    group = models.ForeignKey(
+    groups = models.ManyToManyField(
         'organizations.Group',
-        on_delete=models.CASCADE,
-        verbose_name='Группа',
+        verbose_name='Группы',
     )
     load_type = models.ForeignKey(
         'organizations.LoadType2',

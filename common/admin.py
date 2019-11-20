@@ -1,5 +1,6 @@
 from django.contrib import admin
 from . import models
+from django.contrib.contenttypes.models import ContentType
 
 
 @admin.register(models.CourseAcadPeriodPermission)
@@ -92,4 +93,12 @@ class CreditCoeffAdmin(admin.ModelAdmin):
     list_display = (
         'start_year',
         'coeff'
+    )
+
+
+@admin.register(ContentType)
+class ContentTypeAdmin(admin.ModelAdmin):
+    list_display = (
+        'id',
+        'model',
     )

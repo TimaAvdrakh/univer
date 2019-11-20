@@ -15,7 +15,7 @@ class RoomAdmin(admin.ModelAdmin):
     list_display = (
         'name',
         'uid',
-        'department',
+        # 'department',
         'type',
         'capacity',
     )
@@ -54,7 +54,6 @@ class LessonAdmin(admin.ModelAdmin):
         'subject',
         'uid',
         'teacher',
-        'group',
         'acad_period',
         'study_year',
         'status',

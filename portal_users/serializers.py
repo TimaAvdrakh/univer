@@ -1032,3 +1032,12 @@ class TeacherPositionSerializer(serializers.ModelSerializer):
             'cathedra',
             'is_main',
         )
+
+
+class TeacherShortSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.Profile
+        fields = (
+            'uid',
+            'full_name',
+        )

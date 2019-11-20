@@ -28,6 +28,7 @@ urlpatterns = [
     path('api/v1/common/', include('common.urls', namespace="common")),
     path('api/v1/advisors/', include('advisors.urls', namespace='advisors')),
     path('api/v1/reports/', include('reports.urls', namespace='reports')),
+    path('api/v1/schedules/', include('schedules.urls', namespace='schedules')),
 ]
 
 # urlpatterns += i18n_patterns(
