@@ -3,11 +3,12 @@ from rest_framework import status
 from . import serializers
 from . import models
 import calendar
-from datetime import date
+import datetime
 from rest_framework.response import Response
-from .utils import weeks_of_year
+from .utils import get_weeks_of_year
 from portal_users.models import Role
 from organizations import models as org_models
+from portal.local_settings import CURRENT_API
 
 
 class TimeWindowListView(generics.ListAPIView):
@@ -33,6 +34,9 @@ class ScheduleListView(generics.ListAPIView):
         date_param = request.query_params.get('date')
         my_schedule = request.query_params.get('my')  # my=1 Мое расписание
 
+        next_week = request.query_params.get('next_week')
+        prev_week = request.query_params.get('prev_week')
+
         lessons = self.queryset.all()
 
         if group:
@@ -49,32 +53,59 @@ class ScheduleListView(generics.ListAPIView):
 
         if date_param:
             """Выбрать дату из параметра"""
-            chosen_date = date.today()  # TODO get date from date_param
+            chosen_date = datetime.datetime.strptime(date_param, '%d.%m.%Y').date()
+            weeks = get_weeks_of_year(chosen_date.year)
+            week = [w for w in weeks if chosen_date in w][0]
+
+            if next_week:
+                index = weeks.index(week)
+                try:
+                    week = weeks[index + 1]
+                except IndexError:  # Next year
+                    weeks = get_weeks_of_year(chosen_date.year + 1)
+                    if weeks[0][0].year == chosen_date.year:
+                        week = weeks[1]
+                    else:
+                        week = weeks[0]
+
+            elif prev_week:
+                index = weeks.index(week)
+                try:
+                    week = weeks[index - 1]
+                except IndexError:  # Previous year
+                    weeks = get_weeks_of_year(chosen_date.year - 1)
+                    if weeks[-1][-1].year == chosen_date.year:
+                        week = weeks[-2]
+                    else:
+                        week = weeks[-1]
         else:
             """Выбрать текущую дату"""
-            chosen_date = date.today()
+            chosen_date = datetime.date.today()
+            weeks = get_weeks_of_year(chosen_date.year)
+            week = [w for w in weeks if chosen_date in w][0]
 
-        weeks = weeks_of_year(date.today().year)
-        week = [w for w in weeks if chosen_date in w]
-        monday = week[0][0].strftime("%d.%m.%Y")
-        sunday = week[0][5].strftime("%d.%m.%Y")
+        work_week = week[:6]  # Without Sunday
+        monday = week[0].strftime("%d.%m.%Y")
+        saturday = week[5].strftime("%d.%m.%Y")
 
         # print(current_week)
         resp = dict()
         resp['first_date'] = monday
-        resp['last_date'] = sunday
+        resp['last_date'] = saturday
 
         if my_schedule and my_schedule == '1':
             """Мое расписание"""
 
             resp['teacher'] = []
             resp['student'] = []
-            resp['is_teacher'] = True
-            resp['is_student'] = True
+            resp['is_teacher'] = Role.objects.filter(profile=profile,
+                                                     is_teacher=True).exists()
+            resp['is_student'] = Role.objects.filter(profile=profile,
+                                                     is_student=True).exists()
 
             teacher_lessons = lessons.filter(teacher=profile)
 
-            for day in week[0][:6]:
+            for day in work_week:
                 teacher_day_lessons = teacher_lessons.filter(date=day).order_by('time__from_time')
                 teacher_day = {
                     'date': day.strftime("%d.%m.%Y"),
@@ -97,10 +128,11 @@ class ScheduleListView(generics.ListAPIView):
                 }
                 stud_lessons = lessons.filter(groups__in=[my_group])
 
-                for day in week[0][:6]:
+                for day in work_week:
                     stud_day_lessons = stud_lessons.filter(date=day).order_by('time__from_time')
                     stud_day = {
                         'date': day.strftime("%d.%m.%Y"),
+                        'week_day': 'Понедельник',
                         'periods': self.serializer_class(stud_day_lessons,
                                                          many=True).data
                     }
@@ -109,7 +141,7 @@ class ScheduleListView(generics.ListAPIView):
         else:
             resp['days'] = []
 
-            for day in week[0][:6]:
+            for day in work_week:
                 day_lessons = lessons.filter(date=day).order_by('time__from_time')
                 d = {
                     'date': day.strftime("%d.%m.%Y"),
@@ -120,7 +152,13 @@ class ScheduleListView(generics.ListAPIView):
 
                 resp['days'].append(d)
 
+        resp_wrapper = {
+            'next': CURRENT_API + '/schedules/?date={}&next_week=1'.format(monday),
+            'prev': CURRENT_API + '/schedules/?date={}&prev_week=1'.format(monday),
+            'results': resp
+        }
+
         return Response(
-            resp,
+            resp_wrapper,
             status=status.HTTP_200_OK
         )

@@ -146,3 +146,7 @@ CRON_CLASSES = [
 ]
 
 # SESSION_COOKIE_AGE = 60
+
+LOCALE_PATHS = [
+    os.path.join(BASE_DIR, 'locale'),
+]

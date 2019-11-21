@@ -44,13 +44,14 @@ from datetime import date
 #     return weeks
 
 
-def weeks_of_year(year):
+def get_weeks_of_year(year):
     c = calendar.Calendar()
     weeks = list()
     for i, month in enumerate(c.yeardatescalendar(year, width=1)):
         # print(i + 1)
         for week in month[0]:
             # print(week)
-            weeks.append(week)
+            if not week in weeks:
+                weeks.append(week)
     return weeks
 

@@ -183,12 +183,12 @@ class RegisterResultExcelView(generics.RetrieveAPIView):
             ws[f].font = font
             ws[f].border = border
 
-        file_name = 'temp_files/register_result{}.xlsx'.format(str(uuid4()))
+        file_name = 'temp_files/regresult{}.xlsx'.format(str(uuid4()))
         wb.save(file_name)
 
         with open(file_name, 'rb') as f:
             response = HttpResponse(f, content_type='application/ms-excel')
-            response['Content-Disposition'] = 'attachment; filename="reg_result' + str(uuid4()) + '.xlsx"'
+            response['Content-Disposition'] = 'attachment; filename="regresult' + str(uuid4()) + '.xls"'
             return response
 
 
