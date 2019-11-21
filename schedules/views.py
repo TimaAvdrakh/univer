@@ -6,16 +6,49 @@ import calendar
 import datetime
 from rest_framework.response import Response
 from .utils import get_weeks_of_year
-from portal_users.models import Role
+from portal_users.models import Role, Profile
 from organizations import models as org_models
 from portal.local_settings import CURRENT_API
 from django.utils.translation import gettext as _
+from advisors.serializers import GroupShortSerializer
+from organizations.serializers import DisciplineSerializer
+from portal_users.serializers import ProfileShortSerializer
 
 
 class TimeWindowListView(generics.ListAPIView):
     """Получить список временных окон"""
     queryset = models.TimeWindow.objects.filter(is_active=True)
     serializer_class = serializers.TimeWindowSerializer
+
+
+class GroupListView(generics.ListAPIView):
+    """Получить все группы"""
+    queryset = org_models.Group.objects.filter(is_active=True)
+    serializer_class = GroupShortSerializer
+
+
+class DisciplineListView(generics.ListAPIView):
+    """Получить все дисциплины"""
+    queryset = org_models.Discipline.objects.filter(is_active=True)
+    serializer_class = DisciplineSerializer
+
+
+class TeacherListView(generics.ListAPIView):
+    """Получить всех преподов"""
+    queryset = Profile.objects.filter(is_active=True)
+    serializer_class = ProfileShortSerializer
+
+    def get_queryset(self):
+        teacher_pks = Role.objects.filter(is_teacher=True,
+                                          is_active=True).values('profile')
+        queryset = self.queryset.filter(pk__in=teacher_pks)
+        return queryset
+
+
+class ClassRoomListView(generics.ListAPIView):
+    """Получить все аудитории"""
+    queryset = models.Room.objects.filter(is_active=True)
+    serializer_class = serializers.RoomSerializer
 
 
 class ScheduleListView(generics.ListAPIView):
