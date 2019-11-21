@@ -3,6 +3,7 @@ from . import models
 from organizations.serializers import DisciplineSerializer
 from advisors.serializers import GroupShortSerializer
 from portal_users.serializers import TeacherShortSerializer
+from portal.local_settings import CURRENT_API
 
 
 class TimeWindowSerializer(serializers.ModelSerializer):
@@ -24,14 +25,20 @@ class RoomSerializer(serializers.ModelSerializer):
             'capacity',
         )
 
+    # def to_representation(self, instance):
+    #     data = super().to_representation(instance)
+    #     data['url'] = CURRENT_API + '/schedules/?class_room={}'.format(instance.uid)
+    #
+    #     return data
+
 
 class LessonSerializer(serializers.ModelSerializer):
     discipline = DisciplineSerializer()
     groups = GroupShortSerializer(many=True)
     classroom = RoomSerializer()
-    time = TimeWindowSerializer()
+    # time = TimeWindowSerializer()
     load_type = serializers.CharField()
-    teacher = TeacherShortSerializer()
+    teachers = TeacherShortSerializer(many=True)
 
     class Meta:
         model = models.Lesson
@@ -40,8 +47,8 @@ class LessonSerializer(serializers.ModelSerializer):
             'discipline',
             'groups',
             'classroom',
-            'time',
-            'teacher',
+            # 'time',
+            'teachers',
             'load_type',
         )
 

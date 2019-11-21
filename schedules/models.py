@@ -48,8 +48,9 @@ class TimeWindow(BaseCatalog):
     )
 
     def __str__(self):
-        return '{} - {}'.format(self.from_time,
-                                self.to_time)
+        return '{} {} - {}'.format(self.name,
+                                   self.from_time,
+                                   self.to_time)
 
     class Meta:
         verbose_name = 'Временное окно'
@@ -85,10 +86,9 @@ class Lesson(BaseModel):
         on_delete=models.CASCADE,
         verbose_name='Дисциплина',
     )
-    teacher = models.ForeignKey(
+    teachers = models.ManyToManyField(
         'portal_users.Profile',
-        on_delete=models.CASCADE,
-        verbose_name='Преподаватель',
+        verbose_name='Преподаватели',
     )
     language = models.ForeignKey(
         'organizations.Language',

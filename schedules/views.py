@@ -9,6 +9,7 @@ from .utils import get_weeks_of_year
 from portal_users.models import Role
 from organizations import models as org_models
 from portal.local_settings import CURRENT_API
+from django.utils.translation import gettext as _
 
 
 class TimeWindowListView(generics.ListAPIView):
@@ -40,13 +41,13 @@ class ScheduleListView(generics.ListAPIView):
         lessons = self.queryset.all()
 
         if group:
-            lessons = lessons.filter(group__in=group)
+            lessons = lessons.filter(groups__in=[group])
 
         if discipline:
             lessons = lessons.filter(discipline_id=discipline)
 
         if teacher:
-            lessons = lessons.filter(teacher_id=teacher)
+            lessons = lessons.filter(teachers__in=[teacher])
 
         if class_room:
             lessons = lessons.filter(class_room_id=class_room)
@@ -103,15 +104,35 @@ class ScheduleListView(generics.ListAPIView):
             resp['is_student'] = Role.objects.filter(profile=profile,
                                                      is_student=True).exists()
 
-            teacher_lessons = lessons.filter(teacher=profile)
+            teacher_lessons = lessons.filter(teachers__in=[profile])
 
             for day in work_week:
                 teacher_day_lessons = teacher_lessons.filter(date=day).order_by('time__from_time')
+
+                time_windows = models.TimeWindow.objects.filter(is_active=True).order_by('from_time')
+
+                window_list = []
+                for time_window in time_windows:
+                    window_item = {
+                        'id': time_window.uid,
+                        'name': time_window.name,
+                        'start': time_window.from_time,
+                        'end': time_window.to_time,
+                        'lesson': {},
+                    }
+
+                    try:
+                        lesson = teacher_day_lessons.get(time=time_window)
+                        window_item['lesson'] = self.serializer_class(lesson).data
+                    except models.Lesson.DoesNotExist:
+                        pass
+
+                    window_list.append(window_item)
+
                 teacher_day = {
                     'date': day.strftime("%d.%m.%Y"),
-                    'week_day': 'Понедельник',
-                    'periods': self.serializer_class(teacher_day_lessons,
-                                                     many=True).data
+                    'week_day': _(day.strftime('%A')),
+                    'windows': window_list
                 }
                 resp['teacher'].append(teacher_day)
 
@@ -124,30 +145,70 @@ class ScheduleListView(generics.ListAPIView):
             for my_group in my_groups:
                 d = {
                     'group': my_group.name,
-                    'lessons': []
+                    'days': []
                 }
                 stud_lessons = lessons.filter(groups__in=[my_group])
 
                 for day in work_week:
                     stud_day_lessons = stud_lessons.filter(date=day).order_by('time__from_time')
+
+                    time_windows = models.TimeWindow.objects.filter(is_active=True).order_by('from_time')
+
+                    window_list = []
+                    for time_window in time_windows:
+                        window_item = {
+                            'id': time_window.uid,
+                            'name': time_window.name,
+                            'start': time_window.from_time,
+                            'end': time_window.to_time,
+                            'lesson': {},
+                        }
+
+                        try:
+                            lesson = stud_day_lessons.get(time=time_window)
+                            window_item['lesson'] = self.serializer_class(lesson).data
+                        except models.Lesson.DoesNotExist:
+                            pass
+
+                        window_list.append(window_item)
+
                     stud_day = {
                         'date': day.strftime("%d.%m.%Y"),
-                        'week_day': 'Понедельник',
-                        'periods': self.serializer_class(stud_day_lessons,
-                                                         many=True).data
+                        'week_day': _(day.strftime('%A')),
+                        'windows': window_list,
                     }
-                    d['lessons'].append(stud_day)
+                    d['days'].append(stud_day)
                 resp['student'].append(d)
         else:
             resp['days'] = []
 
             for day in work_week:
                 day_lessons = lessons.filter(date=day).order_by('time__from_time')
+
+                time_windows = models.TimeWindow.objects.filter(is_active=True).order_by('from_time')
+
+                window_list = []
+                for time_window in time_windows:
+                    window_item = {
+                        'id': time_window.uid,
+                        'name': time_window.name,
+                        'start': time_window.from_time,
+                        'end': time_window.to_time,
+                        'lesson': {},
+                    }
+
+                    try:
+                        lesson = day_lessons.get(time=time_window)
+                        window_item['lesson'] = self.serializer_class(lesson).data
+                    except models.Lesson.DoesNotExist:
+                        pass
+
+                    window_list.append(window_item)
+
                 d = {
                     'date': day.strftime("%d.%m.%Y"),
-                    'week_day': 'Понедельник',
-                    'periods': self.serializer_class(day_lessons,
-                                                     many=True).data
+                    'week_day': _(day.strftime('%A')),
+                    'windows': window_list
                 }
 
                 resp['days'].append(d)

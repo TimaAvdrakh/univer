@@ -53,7 +53,6 @@ class LessonAdmin(admin.ModelAdmin):
         'discipline',
         'subject',
         'uid',
-        'teacher',
         'acad_period',
         'study_year',
         'status',
