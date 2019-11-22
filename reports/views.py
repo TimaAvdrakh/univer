@@ -380,6 +380,29 @@ class RegisterStatisticsExcelView(generics.RetrieveAPIView):
             ws[f].font = font
             ws[f].border = border
 
+        # Test
+        #
+        # def as_text(value):
+        #     if value is None:
+        #         return ""
+        #     return str(value)
+        #
+        # cols = []
+        #
+        # for column_cells in ws.columns:
+        #     length = max(len(as_text(cell.value)) for cell in column_cells)
+        #     col_label = column_cells[0].column_letter
+        #     print(col_label, length)
+        #     cols.append((col_label, length))
+            # ws.column_dimensions[col_label].width = length
+
+            # ws.column_dimensions[column_cells[0].column].width = length
+
+        # ws.column_dimensions['A'].width = 61
+        # for col in cols:
+        #     ws.column_dimensions[col[0]].width = col[1]
+        # Test
+
         file_name = 'temp_files/register_stat{}.xlsx'.format(str(uuid4()))
         wb.save(file_name)
 

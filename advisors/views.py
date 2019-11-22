@@ -31,6 +31,7 @@ class StudyPlansListView(generics.ListAPIView):
     """
     queryset = org_models.StudyPlan.objects.filter(is_active=True)
     serializer_class = serializers.StudyPlanSerializer
+
     # pagination_class = CustomPagination
 
     def get_queryset(self):
@@ -905,6 +906,12 @@ class GenerateIupBidExcelView(generics.RetrieveAPIView):
             vertical="center",
             horizontal="center"
         )
+        wrap_alignment = Alignment(
+            wrapText=True,
+            vertical="center",
+            horizontal="center",
+        )
+
         queryset = org_models.StudyPlan.objects.filter(
             is_active=True,
             advisor=request.user.profile,
@@ -1078,7 +1085,7 @@ class GenerateIupBidExcelView(generics.RetrieveAPIView):
                     ws[text_cell] = text
                     ws[text_cell].font = font
                     ws[text_cell].border = border
-                    ws[text_cell].alignment = alignment
+                    ws[text_cell].alignment = wrap_alignment
 
                     ws.row_dimensions[int(row_num)].height = 70
 
@@ -1143,7 +1150,7 @@ class GenerateIupBidExcelView(generics.RetrieveAPIView):
             ws[mark_cell] = mark_text
             ws[mark_cell].font = font
             ws[mark_cell].border = border
-            # ws[mark_cell].alignment = alignment
+            ws[mark_cell].alignment = wrap_alignment
 
         file_name = 'temp_files/zayavki{}.xlsx'.format(str(uuid4()))
         wb.save(file_name)
