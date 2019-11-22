@@ -30,3 +30,11 @@ class LessonStatusTranslationOptions(TranslationOptions):
 @register(models.Lesson)
 class LessonTranslationOptions(TranslationOptions):
     fields = ('subject',)
+
+
+@register(models.Mark)
+class MarkTranslationOptions(TranslationOptions):
+    fields = (
+        'name',
+        'value_traditional',
+    )

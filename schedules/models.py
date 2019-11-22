@@ -144,8 +144,73 @@ class Lesson(BaseModel):
     )
 
     def __str__(self):
-        return '{}'.format(self.subject)
+        return '{} {}'.format(self.discipline.name,
+                              self.subject)
 
     class Meta:
         verbose_name = 'Занятие'
         verbose_name_plural = 'Занятия'
+
+
+class Mark(BaseCatalog):
+    weight = models.FloatField(
+        verbose_name='Вес оценки',
+    )
+    grading_system = models.ForeignKey(
+        GradingSystem,
+        on_delete=models.CASCADE,
+        verbose_name='Система оценивания',
+    )
+    value_letter = models.CharField(
+        max_length=200,
+        verbose_name='Оценка по буквенной системе',
+    )
+    value_number = models.FloatField(
+        verbose_name='Цифровой эквивалент',
+    )
+    value_traditional = models.CharField(
+        max_length=200,
+        verbose_name='Оценка по традиционной системе',
+    )
+
+    class Meta:
+        verbose_name = 'Оценка'
+        verbose_name_plural = 'Оценки'
+
+
+class StudentPerformance(BaseModel):
+    lesson = models.ForeignKey(
+        Lesson,
+        on_delete=models.CASCADE,
+        verbose_name='Занятие',
+    )
+    student = models.ForeignKey(
+        'portal_users.Profile',
+        on_delete=models.CASCADE,
+        verbose_name='Студент',
+    )
+    mark = models.ForeignKey(
+        Mark,
+        null=True,
+        blank=True,
+        on_delete=models.CASCADE,
+        verbose_name='Оценка',
+    )
+    missed = models.BooleanField(
+        default=False,
+        verbose_name='Отсутствовал',
+    )
+    reason = models.CharField(
+        max_length=500,
+        default='',
+        blank=True,
+        verbose_name='Причина отсутствия',
+    )
+
+    def __str__(self):
+        return '{} {}'.format(self.student.first_name,
+                              self.lesson.discipline.name)
+
+    class Meta:
+        verbose_name = 'Успеваемость студента'
+        verbose_name_plural = 'Успеваемости студентов'

@@ -57,3 +57,25 @@ class LessonAdmin(admin.ModelAdmin):
         'study_year',
         'status',
     )
+
+
+@admin.register(models.Mark)
+class MarkAdmin(admin.ModelAdmin):
+    list_display = (
+        'weight',
+        'grading_system',
+        'value_letter',
+        'value_number',
+        'value_traditional',
+    )
+
+
+@admin.register(models.StudentPerformance)
+class StudentPerformanceAdmin(admin.ModelAdmin):
+    list_display = (
+        'lesson',
+        'student',
+        'mark',
+        'missed',
+        'reason',
+    )
