@@ -911,6 +911,11 @@ class GenerateIupBidExcelView(generics.RetrieveAPIView):
             vertical="center",
             horizontal="center",
         )
+        wrap_left_alignment = Alignment(
+            wrapText=True,
+            vertical="center",
+            horizontal="left",
+        )
 
         queryset = org_models.StudyPlan.objects.filter(
             is_active=True,
@@ -921,6 +926,7 @@ class GenerateIupBidExcelView(generics.RetrieveAPIView):
             reg_period_obj = common_models.RegistrationPeriod.objects.get(pk=reg_period)
             ws['B4'] = reg_period_obj.name
             ws['B4'].font = font
+            ws['B4'].alignment = wrap_left_alignment
 
         if course:
             ws['B5'] = course
@@ -944,6 +950,7 @@ class GenerateIupBidExcelView(generics.RetrieveAPIView):
         if study_form:
             study_form_obj = org_models.StudyForm.objects.get(pk=study_form)
             ws['B7'] = study_form_obj.name
+            ws['B7'].alignment = wrap_left_alignment
             queryset = queryset.filter(study_form_id=study_form)
         else:
             ws['B7'] = 'Все'
@@ -953,6 +960,7 @@ class GenerateIupBidExcelView(generics.RetrieveAPIView):
             faculty_obj = org_models.Faculty.objects.get(pk=faculty)
             queryset = queryset.filter(faculty_id=faculty)
             ws['B8'] = faculty_obj.name
+            ws['B8'].alignment = wrap_left_alignment
         else:
             ws['B8'] = 'Все'
         ws['B8'].font = font
@@ -961,6 +969,7 @@ class GenerateIupBidExcelView(generics.RetrieveAPIView):
             cathedra_obj = org_models.Cathedra.objects.get(pk=cathedra)
             queryset = queryset.filter(cathedra_id=cathedra)
             ws['B9'] = cathedra_obj.name
+            ws['B9'].alignment = wrap_left_alignment
         else:
             ws['B9'] = 'Все'
         ws['B9'].font = font
@@ -969,6 +978,7 @@ class GenerateIupBidExcelView(generics.RetrieveAPIView):
             queryset = queryset.filter(education_program__group_id=edu_prog_group)
             edu_prog_group_obj = org_models.EducationProgramGroup.objects.get(pk=edu_prog_group)
             ws['B10'] = edu_prog_group_obj.name
+            ws['B10'].alignment = wrap_left_alignment
         else:
             ws['B10'] = 'Все'
         ws['B10'].font = font
@@ -977,6 +987,7 @@ class GenerateIupBidExcelView(generics.RetrieveAPIView):
             queryset = queryset.filter(education_program_id=edu_prog)
             edu_prog_obj = org_models.EducationProgram.objects.get(pk=edu_prog)
             ws['B11'] = edu_prog_obj.name
+            ws['B11'].alignment = wrap_left_alignment
         else:
             ws['B11'] = 'Все'
         ws['B11'].font = font
@@ -985,6 +996,7 @@ class GenerateIupBidExcelView(generics.RetrieveAPIView):
             queryset = queryset.filter(group_id=group)
             group_obj = org_models.Group.objects.get(pk=group)
             ws['B12'] = group_obj.name
+            ws['B12'].alignment = wrap_left_alignment
         else:
             ws['B12'] = 'Все'
         ws['B12'].font = font
@@ -1019,25 +1031,25 @@ class GenerateIupBidExcelView(generics.RetrieveAPIView):
             b = 'B' + row_num
             ws[b] = study_plan.education_program.group.code
             ws[b].font = font
-            ws[b].alignment = alignment
+            ws[b].alignment = wrap_alignment
             ws[b].border = border
 
             c = 'C' + row_num
             ws[c] = study_plan.education_program.name
             ws[c].font = font
-            ws[c].alignment = alignment
+            ws[c].alignment = wrap_alignment
             ws[c].border = border
 
             d = 'D' + row_num
             ws[d] = study_plan.group.name
             ws[d].font = font
-            ws[d].alignment = alignment
+            ws[d].alignment = wrap_alignment
             ws[d].border = border
 
             e = 'E' + row_num
             ws[e] = study_plan.student.full_name
             ws[e].font = font
-            ws[e].alignment = alignment
+            ws[e].alignment = wrap_alignment
             ws[e].border = border
 
             columns = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J',

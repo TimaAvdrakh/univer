@@ -138,6 +138,10 @@ class Lesson(BaseModel):
         on_delete=models.CASCADE,
         verbose_name='Статус занятия',
     )
+    intermediate_control = models.BooleanField(
+        default=False,
+        verbose_name='Промежуточный контроль',
+    )
 
     def __str__(self):
         return '{}'.format(self.subject)

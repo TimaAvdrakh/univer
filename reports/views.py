@@ -54,15 +54,23 @@ class RegisterResultExcelView(generics.RetrieveAPIView):
             horizontal="center"
         )
 
+        wrap_left_alignment = Alignment(
+            wrapText=True,
+            vertical="center",
+            horizontal="left",
+        )
+
         if reg_period:
             reg_period_obj = common_models.RegistrationPeriod.objects.get(pk=reg_period)
             ws['B6'] = reg_period_obj.name
             ws['B6'].font = font_small
+            ws['B6'].alignment = wrap_left_alignment
 
         if acad_period:
             queryset = queryset.filter(acad_period_id=acad_period)
             acad_period_obj = org_models.AcadPeriod.objects.get(pk=acad_period)
             ws['B7'] = acad_period_obj.repr_name
+            ws['B7'].alignment = wrap_left_alignment
         else:
             ws['B7'] = 'Все'
             acad_period_pks = common_models.CourseAcadPeriodPermission.objects.filter(
@@ -77,6 +85,7 @@ class RegisterResultExcelView(generics.RetrieveAPIView):
             queryset = queryset.filter(study_plan__faculty_id=faculty)
             faculty_obj = org_models.Faculty.objects.get(pk=faculty)
             ws['B8'] = faculty_obj.name
+            ws['B8'].alignment = wrap_left_alignment
         else:
             ws['B8'] = 'Все'
         ws['B8'].font = font_small
@@ -85,6 +94,7 @@ class RegisterResultExcelView(generics.RetrieveAPIView):
             queryset = queryset.filter(study_plan__speciality_id=speciality)
             speciality_obj = org_models.Speciality.objects.get(pk=speciality)
             ws['B9'] = speciality_obj.name
+            ws['B9'].alignment = wrap_left_alignment
         else:
             ws['B9'] = 'Все'
         ws['B9'].font = font_small
@@ -93,6 +103,7 @@ class RegisterResultExcelView(generics.RetrieveAPIView):
             queryset = queryset.filter(study_plan__education_program_id=edu_prog)
             edu_prog_obj = org_models.EducationProgram.objects.get(pk=edu_prog)
             ws['B10'] = edu_prog_obj.name
+            ws['B10'].alignment = wrap_left_alignment
         else:
             ws['B10'] = 'Все'
         ws['B10'].font = font_small
@@ -107,6 +118,7 @@ class RegisterResultExcelView(generics.RetrieveAPIView):
             queryset = queryset.filter(study_plan__group_id=group)
             group_obj = org_models.Group.objects.get(pk=group)
             ws['B12'] = group_obj.name
+            ws['B12'].alignment = wrap_left_alignment
         else:
             ws['B12'] = 'Все'
         ws['B12'].font = font_small
@@ -120,6 +132,7 @@ class RegisterResultExcelView(generics.RetrieveAPIView):
             ws['B5'] = '{} - {}'.format(study_year_obj.start,
                                         study_year_obj.end)
             ws['B5'].font = font_small
+            ws['B5'].alignment = wrap_left_alignment
 
             queryset = queryset.filter(study_year_id=study_year)
 
@@ -157,31 +170,37 @@ class RegisterResultExcelView(generics.RetrieveAPIView):
             ws[a] = sd['discipline']
             ws[a].font = font
             ws[a].border = border
+            ws[a].alignment = wrap_left_alignment
 
             b = 'B' + row_num
             ws[b] = sd['load_type']
             ws[b].font = font
             ws[b].border = border
+            ws[b].alignment = wrap_left_alignment
 
             c = 'C' + row_num
             ws[c] = sd['hours']
             ws[c].font = font
             ws[c].border = border
+            ws[c].alignment = wrap_left_alignment
 
             d = 'D' + row_num
             ws[d] = sd['language']
             ws[d].font = font
             ws[d].border = border
+            ws[d].alignment = wrap_left_alignment
 
             e = 'E' + row_num
             ws[e] = sd['teacher']
             ws[e].font = font
             ws[e].border = border
+            ws[e].alignment = wrap_left_alignment
 
             f = 'F' + row_num
             ws[f] = sd['student_count']
             ws[f].font = font
             ws[f].border = border
+            ws[f].alignment = wrap_left_alignment
 
         file_name = 'temp_files/regresult{}.xlsx'.format(str(uuid4()))
         wb.save(file_name)
@@ -235,15 +254,23 @@ class RegisterStatisticsExcelView(generics.RetrieveAPIView):
             horizontal="center"
         )
 
+        wrap_left_alignment = Alignment(
+            wrapText=True,
+            vertical="center",
+            horizontal="left",
+        )
+
         if reg_period:
             reg_period_obj = common_models.RegistrationPeriod.objects.get(pk=reg_period)
             ws['B6'] = reg_period_obj.name
             ws['B6'].font = font_small
+            ws['B6'].alignment = wrap_left_alignment
 
         if acad_period:
             queryset = queryset.filter(acad_period_id=acad_period)
             acad_period_obj = org_models.AcadPeriod.objects.get(pk=acad_period)
             ws['B7'] = acad_period_obj.repr_name
+            ws['B7'].alignment = wrap_left_alignment
         else:
             ws['B7'] = 'Все'
 
@@ -259,6 +286,7 @@ class RegisterStatisticsExcelView(generics.RetrieveAPIView):
             queryset = queryset.filter(study_plan__faculty_id=faculty)
             faculty_obj = org_models.Faculty.objects.get(pk=faculty)
             ws['B8'] = faculty_obj.name
+            ws['B8'].alignment = wrap_left_alignment
         else:
             ws['B8'] = 'Все'
         ws['B8'].font = font_small
@@ -267,6 +295,7 @@ class RegisterStatisticsExcelView(generics.RetrieveAPIView):
             queryset = queryset.filter(study_plan__speciality_id=speciality)
             speciality_obj = org_models.Speciality.objects.get(pk=speciality)
             ws['B9'] = speciality_obj.name
+            ws['B9'].alignment = wrap_left_alignment
         else:
             ws['B9'] = 'Все'
         ws['B9'].font = font_small
@@ -275,6 +304,7 @@ class RegisterStatisticsExcelView(generics.RetrieveAPIView):
             queryset = queryset.filter(study_plan__education_program_id=edu_prog)
             edu_prog_obj = org_models.EducationProgram.objects.get(pk=edu_prog)
             ws['B10'] = edu_prog_obj.name
+            ws['B10'].alignment = wrap_left_alignment
         else:
             ws['B10'] = 'Все'
         ws['B10'].font = font_small
@@ -289,6 +319,7 @@ class RegisterStatisticsExcelView(generics.RetrieveAPIView):
             queryset = queryset.filter(study_plan__group_id=group)
             group_obj = org_models.Group.objects.get(pk=group)
             ws['B12'] = group_obj.name
+            ws['B12'].alignment = wrap_left_alignment
         else:
             ws['B12'] = 'Все'
         ws['B12'].font = font_small
@@ -302,6 +333,7 @@ class RegisterStatisticsExcelView(generics.RetrieveAPIView):
             ws['B5'] = '{} - {}'.format(study_year_obj.start,
                                         study_year_obj.end)
             ws['B5'].font = font_small
+            ws['B5'].alignment = wrap_left_alignment
 
             queryset = queryset.filter(study_year_id=study_year)
 
@@ -344,64 +376,49 @@ class RegisterStatisticsExcelView(generics.RetrieveAPIView):
             ws[a] = sd['faculty']
             ws[a].font = font
             ws[a].border = border
+            ws[a].alignment = wrap_left_alignment
 
             b = 'B' + row_num
             ws[b] = sd['cathedra']
             ws[b].font = font
             ws[b].border = border
+            ws[b].alignment = wrap_left_alignment
 
             c = 'C' + row_num
             ws[c] = sd['speciality']
             ws[c].font = font
             ws[c].border = border
+            ws[c].alignment = wrap_left_alignment
 
             d = 'D' + row_num
             ws[d] = sd['group']
             ws[d].font = font
             ws[d].border = border
+            ws[d].alignment = wrap_left_alignment
 
             e = 'E' + row_num
             ws[e] = sd['student_count']
             ws[e].font = font
             ws[e].border = border
+            ws[e].alignment = wrap_left_alignment
 
             f = 'F' + row_num
             ws[f] = sd['discipline']
             ws[f].font = font
             ws[f].border = border
+            ws[f].alignment = wrap_left_alignment
 
-            f = 'G' + row_num
-            ws[f] = sd['not_chosen_student_count']
-            ws[f].font = font
-            ws[f].border = border
+            g = 'G' + row_num
+            ws[g] = sd['not_chosen_student_count']
+            ws[g].font = font
+            ws[g].border = border
+            ws[g].alignment = wrap_left_alignment
 
-            f = 'H' + row_num
-            ws[f] = sd['percent_of_non_chosen_student']
-            ws[f].font = font
-            ws[f].border = border
-
-        # Test
-        #
-        # def as_text(value):
-        #     if value is None:
-        #         return ""
-        #     return str(value)
-        #
-        # cols = []
-        #
-        # for column_cells in ws.columns:
-        #     length = max(len(as_text(cell.value)) for cell in column_cells)
-        #     col_label = column_cells[0].column_letter
-        #     print(col_label, length)
-        #     cols.append((col_label, length))
-            # ws.column_dimensions[col_label].width = length
-
-            # ws.column_dimensions[column_cells[0].column].width = length
-
-        # ws.column_dimensions['A'].width = 61
-        # for col in cols:
-        #     ws.column_dimensions[col[0]].width = col[1]
-        # Test
+            h = 'H' + row_num
+            ws[h] = sd['percent_of_non_chosen_student']
+            ws[h].font = font
+            ws[h].border = border
+            ws[h].alignment = wrap_left_alignment
 
         file_name = 'temp_files/register_stat{}.xlsx'.format(str(uuid4()))
         wb.save(file_name)
@@ -449,21 +466,25 @@ class NotRegisteredStudentListExcelView(generics.RetrieveAPIView):
             name='Times New Roman',
             size=8,
         )
-        # alignment = Alignment(
-        #     vertical="center",
-        #     horizontal="center"
-        # )
+
+        wrap_left_alignment = Alignment(
+            wrapText=True,
+            vertical="center",
+            horizontal="left",
+        )
 
         if reg_period:
             reg_period_obj = common_models.RegistrationPeriod.objects.get(pk=reg_period)
             ws['B6'] = reg_period_obj.name
             ws['B6'].font = font_small
+            ws['B6'].alignment = wrap_left_alignment
 
         if acad_period:
             queryset = queryset.filter(acad_period_id=acad_period)
 
             acad_period_obj = org_models.AcadPeriod.objects.get(pk=acad_period)
             ws['B7'] = acad_period_obj.repr_name
+            ws['B7'].alignment = wrap_left_alignment
         else:
             ws['B7'] = 'Все'
 
@@ -480,6 +501,7 @@ class NotRegisteredStudentListExcelView(generics.RetrieveAPIView):
 
             faculty_obj = org_models.Faculty.objects.get(pk=faculty)
             ws['B8'] = faculty_obj.name
+            ws['B8'].alignment = wrap_left_alignment
         else:
             ws['B8'] = 'Все'
         ws['B8'].font = font_small
@@ -489,6 +511,7 @@ class NotRegisteredStudentListExcelView(generics.RetrieveAPIView):
 
             speciality_obj = org_models.Speciality.objects.get(pk=speciality)
             ws['B9'] = speciality_obj.name
+            ws['B9'].alignment = wrap_left_alignment
         else:
             ws['B9'] = 'Все'
         ws['B9'].font = font_small
@@ -498,6 +521,7 @@ class NotRegisteredStudentListExcelView(generics.RetrieveAPIView):
 
             edu_prog_obj = org_models.EducationProgram.objects.get(pk=edu_prog)
             ws['B10'] = edu_prog_obj.name
+            ws['B10'].alignment = wrap_left_alignment
         else:
             ws['B10'] = 'Все'
         ws['B10'].font = font_small
@@ -513,6 +537,7 @@ class NotRegisteredStudentListExcelView(generics.RetrieveAPIView):
 
             group_obj = org_models.Group.objects.get(pk=group)
             ws['B12'] = group_obj.name
+            ws['B12'].alignment = wrap_left_alignment
         else:
             ws['B12'] = 'Все'
         ws['B12'].font = font_small
@@ -526,6 +551,7 @@ class NotRegisteredStudentListExcelView(generics.RetrieveAPIView):
             ws['B5'] = '{} - {}'.format(study_year_obj.start,
                                         study_year_obj.end)
             ws['B5'].font = font_small
+            ws['B5'].alignment = wrap_left_alignment
 
             queryset = queryset.filter(study_year_id=study_year)
 
@@ -571,31 +597,37 @@ class NotRegisteredStudentListExcelView(generics.RetrieveAPIView):
             ws[a] = sd['faculty']
             ws[a].font = font
             ws[a].border = border
+            ws[a].alignment = wrap_left_alignment
 
             b = 'B' + row_num
             ws[b] = sd['cathedra']
             ws[b].font = font
             ws[b].border = border
+            ws[b].alignment = wrap_left_alignment
 
             c = 'C' + row_num
             ws[c] = sd['speciality']
             ws[c].font = font
             ws[c].border = border
+            ws[c].alignment = wrap_left_alignment
 
             d = 'D' + row_num
             ws[d] = sd['group']
             ws[d].font = font
             ws[d].border = border
+            ws[d].alignment = wrap_left_alignment
 
             e = 'E' + row_num
             ws[e] = sd['discipline']
             ws[e].font = font
             ws[e].border = border
+            ws[e].alignment = wrap_left_alignment
 
             f = 'F' + row_num
             ws[f] = sd['student']
             ws[f].font = font
             ws[f].border = border
+            ws[f].alignment = wrap_left_alignment
 
         file_name = 'temp_files/not_registered{}.xlsx'.format(str(uuid4()))
         wb.save(file_name)
