@@ -179,6 +179,7 @@ class Mark(BaseCatalog):
 
 
 class StudentPerformance(BaseModel):
+    # el = models.ForeignKey()  # TODO ЭЖ ссылка
     lesson = models.ForeignKey(
         Lesson,
         on_delete=models.CASCADE,

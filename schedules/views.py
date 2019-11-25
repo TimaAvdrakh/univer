@@ -83,7 +83,7 @@ class ScheduleListView(generics.ListAPIView):
             lessons = lessons.filter(teachers__in=[teacher])
 
         if class_room:
-            lessons = lessons.filter(class_room_id=class_room)
+            lessons = lessons.filter(classroom_id=class_room)
 
         if date_param:
             """Выбрать дату из параметра"""
