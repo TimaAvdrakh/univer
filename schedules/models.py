@@ -264,3 +264,5 @@ class StudentPerformance(BaseModel):
     class Meta:
         verbose_name = 'Успеваемость студента'
         verbose_name_plural = 'Успеваемости студентов'
+
+# 1
