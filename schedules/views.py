@@ -259,13 +259,17 @@ class ScheduleListView(generics.ListAPIView):
 
 
 class ElJournalListView(generics.ListAPIView):
+    """
+    Получить список ЭЖ
+    discipline, load_type, group
+    """
     serializer_class = serializers.ElectronicJournalSerializer
     queryset = models.ElectronicJournal.objects.filter(is_active=True)
 
     def get_queryset(self):
         profile = self.request.user.profile
         discipline = self.request.query_params.get('discipline')
-        load_type = self.request.query_params.get('load_type')
+        load_type = self.request.query_params.get('load_type')  # TODO endpoint
         group = self.request.query_params.get('group')
 
         queryset = self.queryset.filter(teachers__in=[profile])
@@ -273,8 +277,150 @@ class ElJournalListView(generics.ListAPIView):
         if discipline:
             queryset = queryset.filter(discipline_id=discipline)
         if load_type:
-            queryset = queryset.filter()
+            queryset = queryset.filter(load_type_id=load_type)
         if group:
-            queryset = queryset.filter()
+            queryset = queryset.filter(lesson__groups__in=[group])
 
         return queryset
+
+
+class JournalDetailView(generics.RetrieveAPIView):
+    # queryset = models.Lesson.objects.filter(is_active=True)
+
+    def get(self, request, *args, **kwargs):
+        profile = request.user.profile
+        journal_id = request.query_params.get('id')
+        next_month = request.query_params.get('next_month')
+        prev_month = request.query_params.get('prev_month')
+        date_param = request.query_params.get('date')
+
+        journal = models.ElectronicJournal.objects.get(pk=journal_id)
+        # lessons = self.queryset.filter(
+        #     discipline=journal.discipline,
+        #     load_type=journal.load_type,
+        #
+        # )
+
+        lessons = journal.lessons.filter(
+            teachers__in=[profile],
+            is_active=True,
+        )
+
+        if date_param:
+            """Выбрать дату из параметра"""
+            chosen_date = datetime.datetime.strptime(date_param,
+                                                     '%d.%m.%Y').date()
+
+            if next_month:
+                if chosen_date.month == 12:
+                    year = chosen_date.year + 1
+                    month = 1
+                else:
+                    year = chosen_date.year
+                    month = chosen_date.month + 1
+
+                days = lessons.filter(
+                    date__year=year,
+                    date__month=month
+                ).distinct('date').values('date')
+                date_str = datetime.date(year, month, 1).strftime("%d.%m.%Y")
+
+            elif prev_month:
+                if chosen_date.month == 1:
+                    year = chosen_date.year - 1
+                    month = 12
+                else:
+                    year = chosen_date.year
+                    month = chosen_date.month - 1
+
+                days = lessons.filter(
+                    date__year=year,
+                    date__month=month,
+                ).distinct('date').values('date')
+
+                date_str = datetime.date(year, month, 1).strftime("%d.%m.%Y")
+
+            else:
+                days = lessons.filter(
+                    date__year=chosen_date.year,
+                    date__month=chosen_date.month,
+                ).distinct('date').values('date')
+
+                date_str = chosen_date.strftime("%d.%m.%Y")
+
+        else:
+            """Выбрать текущую дату"""
+            today = datetime.date.today()
+            current_month = today.month
+            current_year = today.year
+
+            days = lessons.filter(
+                date__year=current_year,
+                date__month=current_month,
+            ).distinct('date').values('date')
+            date_str = today.strftime("%d.%m.%Y")
+
+        day_list = []
+        for day in days:
+            day_d = {}
+            lessons = lessons.filter(date=day['date'])
+
+            groups = lessons[0].groups.filter(is_active=True)
+            student_pks = org_models.StudyPlan.objects.filter(is_active=True,
+                                                              group__in=groups).values('student')
+            students = Profile.objects.filter(pk__in=student_pks)
+
+            student_list = []
+            for student in students:
+                stud_d = {}
+
+                lesson_list = []
+                for lesson in lessons:
+                    lesson_d = {}
+
+                    student_performances = models.StudentPerformance.objects.filter(
+                        student=student,
+                        lesson=lesson,
+                        is_active=True,
+                    )
+
+                    if student_performances.exists():
+                        try:
+                            sp = student_performances.get(mark__grading_system=lesson.grading_system)
+                            mark = sp.mark.value_number
+                        except models.StudentPerformance.DoesNotExist:
+                            sp = student_performances.first()
+                            if sp.mark is not None:
+                                mark = sp.mark.value_number
+                            else:
+                                mark = 'H'
+                    else:
+                        mark = ''
+
+                    lesson_d['lesson_id'] = lesson.uid
+                    lesson_d['mark'] = mark
+                    lesson_list.append(lesson_d)
+
+                stud_d['lessons'] = lesson_list
+                stud_d['student'] = {
+                    'id': student.uid,
+                    'name': student.full_name,
+                }
+                student_list.append(stud_d)
+
+            day_d['date'] = day['date']
+            day_d['students'] = student_list
+            day_list.append(day_d)
+
+        resp_wrapper = {
+            'next': CURRENT_API + '/schedules/journal/?id={}&date={}&next_month=1'.format(journal_id,
+                                                                                          date_str),
+            'prev': CURRENT_API + '/schedules/journal/?id={}&date={}&prev_month=1'.format(journal_id,
+                                                                                          date_str),
+            'results': day_list
+        }
+
+        return Response(
+            resp_wrapper,
+            status=status.HTTP_200_OK
+        )

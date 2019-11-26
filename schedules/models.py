@@ -117,6 +117,7 @@ class Lesson(BaseModel):
         on_delete=models.CASCADE,
         null=True,
         blank=True,
+        related_name='lessons',
         verbose_name='Электронный журнал',
     )
     flow_uid = models.UUIDField(
