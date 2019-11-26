@@ -1041,3 +1041,17 @@ class TeacherShortSerializer(serializers.ModelSerializer):
             'uid',
             'full_name',
         )
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+
+        data['name'] = '{} {}.'.format(instance.last_name,
+                                       instance.first_name[0])
+
+        try:
+            middle_name = instance.middle_name[0]
+            data['name'] += '{}.'.format(middle_name)
+        except IndexError:
+            pass
+
+        return data
