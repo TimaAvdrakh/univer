@@ -304,7 +304,7 @@ class JournalDetailView(generics.RetrieveAPIView):
         lessons = journal.lessons.filter(
             teachers__in=[profile],
             is_active=True,
-        )
+        ).order_by('date')
 
         if date_param:
             """Выбрать дату из параметра"""
@@ -341,9 +341,12 @@ class JournalDetailView(generics.RetrieveAPIView):
                 date_str = datetime.date(year, month, 1).strftime("%d.%m.%Y")
 
             else:
+                month = chosen_date.month
+                year = chosen_date.year
+
                 days = lessons.filter(
-                    date__year=chosen_date.year,
-                    date__month=chosen_date.month,
+                    date__year=year,
+                    date__month=month,
                 ).distinct('date').values('date')
 
                 date_str = chosen_date.strftime("%d.%m.%Y")
@@ -351,12 +354,12 @@ class JournalDetailView(generics.RetrieveAPIView):
         else:
             """Выбрать текущую дату"""
             today = datetime.date.today()
-            current_month = today.month
-            current_year = today.year
+            month = today.month
+            year = today.year
 
             days = lessons.filter(
-                date__year=current_year,
-                date__month=current_month,
+                date__year=year,
+                date__month=month,
             ).distinct('date').values('date')
             date_str = today.strftime("%d.%m.%Y")
 
@@ -408,19 +411,26 @@ class JournalDetailView(generics.RetrieveAPIView):
                 }
                 student_list.append(stud_d)
 
-            day_d['date'] = day['date']
+            day_d['date'] = day['date'].day
             day_d['students'] = student_list
             day_list.append(day_d)
 
+        resp = {
+            'month': _(datetime.date(year=year, month=month, day=1).strftime("%B")),
+            'year': year,
+            'days': day_list
+        }
         resp_wrapper = {
             'next': CURRENT_API + '/schedules/journal/?id={}&date={}&next_month=1'.format(journal_id,
                                                                                           date_str),
             'prev': CURRENT_API + '/schedules/journal/?id={}&date={}&prev_month=1'.format(journal_id,
                                                                                           date_str),
-            'results': day_list
+            'results': resp
         }
 
         return Response(
             resp_wrapper,
             status=status.HTTP_200_OK
         )
+
+

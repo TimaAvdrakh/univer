@@ -762,91 +762,91 @@ msgstr ""
 
 #: .\venv\Lib\site-packages\django\utils\dates.py:14
 msgid "January"
-msgstr ""
+msgstr "Қаңтар"
 
 #: .\venv\Lib\site-packages\django\utils\dates.py:14
 msgid "February"
-msgstr ""
+msgstr "Ақпан"
 
 #: .\venv\Lib\site-packages\django\utils\dates.py:14
 msgid "March"
-msgstr ""
+msgstr "Наурыз"
 
 #: .\venv\Lib\site-packages\django\utils\dates.py:14
 msgid "April"
-msgstr ""
+msgstr "Сәуір"
 
 #: .\venv\Lib\site-packages\django\utils\dates.py:14
 msgid "May"
-msgstr ""
+msgstr "Мамыр"
 
 #: .\venv\Lib\site-packages\django\utils\dates.py:14
 msgid "June"
-msgstr ""
+msgstr "Маусым"
 
 #: .\venv\Lib\site-packages\django\utils\dates.py:15
 msgid "July"
-msgstr ""
+msgstr "Шілде"
 
 #: .\venv\Lib\site-packages\django\utils\dates.py:15
 msgid "August"
-msgstr ""
+msgstr "Тамыз"
 
 #: .\venv\Lib\site-packages\django\utils\dates.py:15
 msgid "September"
-msgstr ""
+msgstr "Қыркүйек"
 
 #: .\venv\Lib\site-packages\django\utils\dates.py:15
 msgid "October"
-msgstr ""
+msgstr "Қазан"
 
 #: .\venv\Lib\site-packages\django\utils\dates.py:15
 msgid "November"
-msgstr ""
+msgstr "Қараша"
 
 #: .\venv\Lib\site-packages\django\utils\dates.py:16
 msgid "December"
-msgstr ""
+msgstr "Желтоқсан"
 
 #: .\venv\Lib\site-packages\django\utils\dates.py:19
 msgid "jan"
-msgstr ""
+msgstr "Қаңтар"
 
 #: .\venv\Lib\site-packages\django\utils\dates.py:19
 msgid "feb"
-msgstr ""
+msgstr "Ақпан"
 
 #: .\venv\Lib\site-packages\django\utils\dates.py:19
 msgid "mar"
-msgstr ""
+msgstr "Наурыз"
 
 #: .\venv\Lib\site-packages\django\utils\dates.py:19
 msgid "apr"
-msgstr ""
+msgstr "Сәуір"
 
 #: .\venv\Lib\site-packages\django\utils\dates.py:19
 msgid "may"
-msgstr ""
+msgstr "Мамыр"
 
 #: .\venv\Lib\site-packages\django\utils\dates.py:19
 msgid "jun"
-msgstr ""
+msgstr "Маусым"
 
 #: .\venv\Lib\site-packages\django\utils\dates.py:20
 msgid "jul"
-msgstr ""
+msgstr "Шілде"
 
 #: .\venv\Lib\site-packages\django\utils\dates.py:20
 msgid "aug"
-msgstr ""
+msgstr "Тамыз"
 
 #: .\venv\Lib\site-packages\django\utils\dates.py:20
 msgid "sep"
-msgstr ""
+msgstr "Қыркүйек"
 
 #: .\venv\Lib\site-packages\django\utils\dates.py:20
 msgid "oct"
-msgstr ""
+msgstr "Қазан"
 
 #: .\venv\Lib\site-packages\django\utils\dates.py:20
 msgid "nov"
