@@ -56,6 +56,8 @@ class LessonAdmin(admin.ModelAdmin):
     list_display = (
         'discipline',
         'subject',
+        'date',
+        'time',
         'uid',
         'acad_period',
         'study_year',
