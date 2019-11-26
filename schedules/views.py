@@ -256,3 +256,25 @@ class ScheduleListView(generics.ListAPIView):
             resp_wrapper,
             status=status.HTTP_200_OK
         )
+
+
+class ElJournalListView(generics.ListAPIView):
+    serializer_class = serializers.ElectronicJournalSerializer
+    queryset = models.ElectronicJournal.objects.filter(is_active=True)
+
+    def get_queryset(self):
+        profile = self.request.user.profile
+        discipline = self.request.query_params.get('discipline')
+        load_type = self.request.query_params.get('load_type')
+        group = self.request.query_params.get('group')
+
+        queryset = self.queryset.filter(teachers__in=[profile])
+
+        if discipline:
+            queryset = queryset.filter(discipline_id=discipline)
+        if load_type:
+            queryset = queryset.filter()
+        if group:
+            queryset = queryset.filter()
+
+        return queryset

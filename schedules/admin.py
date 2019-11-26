@@ -49,6 +49,10 @@ class LessonStatusAdmin(admin.ModelAdmin):
 
 @admin.register(models.Lesson)
 class LessonAdmin(admin.ModelAdmin):
+    list_filter = (
+        'date',
+        'time',
+    )
     list_display = (
         'discipline',
         'subject',
@@ -78,4 +82,23 @@ class StudentPerformanceAdmin(admin.ModelAdmin):
         'mark',
         'missed',
         'reason',
+    )
+
+
+@admin.register(models.JournalStatus)
+class JournalStatusAdmin(admin.ModelAdmin):
+    list_display = (
+        'name',
+        'uid',
+    )
+
+
+@admin.register(models.ElectronicJournal)
+class ElectronicJournalAdmin(admin.ModelAdmin):
+    list_display = (
+        'discipline',
+        'load_type',
+        'status',
+        'study_start',
+        'study_end',
     )

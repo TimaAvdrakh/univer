@@ -38,3 +38,8 @@ class MarkTranslationOptions(TranslationOptions):
         'name',
         'value_traditional',
     )
+
+
+@register(models.JournalStatus)
+class JournalStatusTranslationOptions(TranslationOptions):
+    fields = ('name',)

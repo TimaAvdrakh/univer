@@ -69,7 +69,55 @@ class LessonStatus(BaseCatalog):
         verbose_name_plural = 'Статусы занятий'
 
 
+class JournalStatus(BaseCatalog):
+    class Meta:
+        verbose_name = 'Статус журнала'
+        verbose_name_plural = 'Статусы журналов'
+
+
+class ElectronicJournal(BaseModel):
+    teachers = models.ManyToManyField(
+        'portal_users.Profile',
+        verbose_name='Преподаватели',
+    )
+    discipline = models.ForeignKey(
+        'organizations.Discipline',
+        on_delete=models.CASCADE,
+        verbose_name='Дисциплина',
+    )
+    load_type = models.ForeignKey(
+        'organizations.LoadType2',
+        on_delete=models.CASCADE,
+        verbose_name='Тип нагрузки',
+    )
+    status = models.ForeignKey(
+        JournalStatus,
+        on_delete=models.CASCADE,
+        verbose_name='Статус',
+    )
+    study_start = models.DateField(
+        verbose_name='Начало обучения',
+    )
+    study_end = models.DateField(
+        verbose_name='Конец обучения',
+    )
+    stud_disciplines = models.ManyToManyField(
+        'organizations.StudentDiscipline',
+        verbose_name='Дисциплины студентов',
+    )
+
+    class Meta:
+        verbose_name = 'Электронный журнал'
+        verbose_name_plural = 'Электронные журналы'
+
+
 class Lesson(BaseModel):
+    el_journal = models.ForeignKey(
+        ElectronicJournal,
+        on_delete=models.CASCADE,
+        null=True,
+        verbose_name='Электронный журнал',
+    )
     flow_uid = models.UUIDField(
         verbose_name='UID потока',
     )
@@ -95,11 +143,6 @@ class Lesson(BaseModel):
         on_delete=models.CASCADE,
         verbose_name='Язык преподавания',
     )
-    classroom = models.ForeignKey(
-        Room,
-        on_delete=models.CASCADE,
-        verbose_name='Аудитория',
-    )
     groups = models.ManyToManyField(
         'organizations.Group',
         verbose_name='Группы',
@@ -107,6 +150,7 @@ class Lesson(BaseModel):
     load_type = models.ForeignKey(
         'organizations.LoadType2',
         on_delete=models.CASCADE,
+        verbose_name='Тип нагрузки',
     )
     acad_period = models.ForeignKey(
         'organizations.AcadPeriod',
@@ -141,6 +185,11 @@ class Lesson(BaseModel):
     intermediate_control = models.BooleanField(
         default=False,
         verbose_name='Промежуточный контроль',
+    )
+    classroom = models.ForeignKey(
+        Room,
+        on_delete=models.CASCADE,
+        verbose_name='Аудитория',
     )
 
     def __str__(self):
@@ -179,7 +228,6 @@ class Mark(BaseCatalog):
 
 
 class StudentPerformance(BaseModel):
-    # el = models.ForeignKey()  # TODO ЭЖ ссылка
     lesson = models.ForeignKey(
         Lesson,
         on_delete=models.CASCADE,

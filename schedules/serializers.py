@@ -25,18 +25,11 @@ class RoomSerializer(serializers.ModelSerializer):
             'capacity',
         )
 
-    # def to_representation(self, instance):
-    #     data = super().to_representation(instance)
-    #     data['url'] = CURRENT_API + '/schedules/?class_room={}'.format(instance.uid)
-    #
-    #     return data
-
 
 class LessonSerializer(serializers.ModelSerializer):
     discipline = DisciplineSerializer()
     groups = GroupShortSerializer(many=True)
     classroom = RoomSerializer()
-    # time = TimeWindowSerializer()
     load_type = serializers.CharField()
     teachers = TeacherShortSerializer(many=True)
 
@@ -47,8 +40,21 @@ class LessonSerializer(serializers.ModelSerializer):
             'discipline',
             'groups',
             'classroom',
-            # 'time',
             'teachers',
             'load_type',
         )
 
+
+class ElectronicJournalSerializer(serializers.ModelSerializer):
+    status = serializers.CharField()
+    load_type = serializers.CharField()
+    discipline = serializers.CharField()
+
+    class Meta:
+        model = models.ElectronicJournal
+        fields = (
+            'uid',
+            'discipline',
+            'load_type',
+            'status',
+        )
