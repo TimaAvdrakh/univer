@@ -17,4 +17,13 @@ urlpatterns = [
     # Electronic Journal
     path('journals/', views.ElJournalListView.as_view(), name='journals'),
     path('journal/', views.JournalDetailView.as_view(), name='journal_detail'),
+
+    path('performance/', views.StudentPerformanceView.as_view(), name='performance'),
+
+    path('lesson/grading_system/', views.GetGradingSystemView.as_view(), name='grading_system'),
+    path('evaluate/', views.EvaluateView.as_view(), name='evaluate'),
+
+    path('grading_systems/', views.GradingSystemListView.as_view(), name='grading_systems'),
+
+    path('lesson/<pk>/', views.ChangeLessonView.as_view(), name='change_lesson'),
 ]

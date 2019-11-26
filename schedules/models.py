@@ -58,6 +58,11 @@ class TimeWindow(BaseCatalog):
 
 
 class GradingSystem(BaseCatalog):
+    number = models.SmallIntegerField(
+        default=0,
+        verbose_name='Номер',
+    )
+
     class Meta:
         verbose_name = 'Система оценивания'
         verbose_name_plural = 'Системы оценивании'

@@ -13,6 +13,8 @@ from django.utils.translation import gettext as _
 from advisors.serializers import GroupShortSerializer
 from organizations.serializers import DisciplineSerializer
 from portal_users.serializers import ProfileShortSerializer
+from rest_framework.permissions import IsAuthenticated
+from . import permissions
 
 
 class TimeWindowListView(generics.ListAPIView):
@@ -434,3 +436,134 @@ class JournalDetailView(generics.RetrieveAPIView):
         )
 
 
+class StudentPerformanceView(generics.RetrieveAPIView):
+    """
+    Получить инфо об успеваемости студента (1 клик по ячейке)
+    student, lesson
+    """
+    permission_classes = (
+        IsAuthenticated,
+        permissions.TeacherPermission,
+    )
+
+    def get(self, request, *args, **kwargs):
+        student_id = request.query_params.get('student')
+        lesson_id = request.query_params.get('lesson')
+
+        student = Profile.objects.get(pk=student_id)
+        lesson = models.Lesson.objects.get(pk=lesson_id)
+
+        self.check_object_permissions(request,
+                                      lesson)
+
+        performances = models.StudentPerformance.objects.filter(
+            lesson=lesson,
+            student_id=student_id,
+            is_active=True,
+        )
+
+        if performances.exists():
+            try:
+                sp = performances.get(mark__grading_system=lesson.grading_system)
+                mark = sp.mark.value_number
+            except models.StudentPerformance.DoesNotExist:
+                sp = performances.first()
+                if sp.mark is not None:
+                    mark = sp.mark.value_number
+                else:
+                    mark = 'H'
+        else:
+            mark = ''
+
+        resp = {
+            'student': student.full_name,
+            'date': lesson.date,
+            'time': lesson.time.from_time,
+            'mark': mark,
+        }
+
+        return Response(
+            resp,
+            status=status.HTTP_200_OK
+        )
+
+
+class GetGradingSystemView(generics.RetrieveAPIView):
+    """
+    Получить систему оценивания занятия
+    lesson
+    """
+    permission_classes = (
+        IsAuthenticated,
+        permissions.TeacherPermission,
+    )
+
+    def get(self, request, *args, **kwargs):
+        lesson_id = request.query_params.get('lesson')
+        lesson = models.Lesson.objects.get(pk=lesson_id)
+        self.check_object_permissions(request,
+                                      lesson)
+
+        if lesson.grading_system:
+            num = lesson.grading_system.number
+        else:
+            num = 0
+
+        resp = {
+            'grading_system_number': num
+        }
+
+        return Response(
+            resp,
+            status=status.HTTP_200_OK,
+        )
+
+
+class EvaluateView(generics.CreateAPIView):
+    """Поставить оценку или изменить оценку
+    student, lesson, mark, missed, reason (Все параметры в теле POST запроса)
+    """
+    serializer_class = serializers.EvaluateSerializer
+    permission_classes = (
+        IsAuthenticated,
+        permissions.TeacherPermission,
+    )
+
+    def create(self, request, *args, **kwargs):
+        lesson_id = request.data.get('lesson')
+        lesson = models.Lesson.objects.get(pk=lesson_id)
+
+        self.check_object_permissions(request,
+                                      lesson)
+
+        serializer = self.serializer_class(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+
+        return Response(
+            {
+                'message': 'ok',
+            },
+            status=status.HTTP_200_OK
+        )
+
+
+class GradingSystemListView(generics.ListAPIView):
+    """Получить все системы оценивания"""
+    queryset = models.GradingSystem.objects.filter(is_active=True)
+    serializer_class = serializers.GradingSystemSerializer
+
+
+class ChangeLessonView(generics.UpdateAPIView):
+    """Изменить тему и систему оценивания занятия"""
+    permission_classes = (
+        IsAuthenticated,
+        permissions.TeacherPermission,
+    )
+    queryset = models.Lesson.objects.filter(is_active=True)
+    serializer_class = serializers.LessonUpdateSerializer
+
+
+class ChooseControlView(generics.CreateAPIView):
+    """Выбор занятия как контрольное"""
+    pass
