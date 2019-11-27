@@ -132,6 +132,7 @@ class ScheduleListView(generics.ListAPIView):
         if my_schedule and my_schedule == '1':
             """Мое расписание"""
 
+            is_teacher_empty = True
             resp['teacher'] = []
             resp['student'] = []
             resp['is_teacher'] = Role.objects.filter(profile=profile,
@@ -159,6 +160,7 @@ class ScheduleListView(generics.ListAPIView):
                     try:
                         lesson = teacher_day_lessons.get(time=time_window)
                         window_item['lesson'] = self.serializer_class(lesson).data
+                        is_teacher_empty = False
                     except models.Lesson.DoesNotExist:
                         pass
 
@@ -171,6 +173,8 @@ class ScheduleListView(generics.ListAPIView):
                 }
                 resp['teacher'].append(teacher_day)
 
+            resp['is_teacher_empty'] = is_teacher_empty
+
             my_group_pks = org_models.StudyPlan.objects.filter(
                 student=profile,
                 is_active=True,
@@ -178,6 +182,7 @@ class ScheduleListView(generics.ListAPIView):
             my_groups = org_models.Group.objects.filter(pk__in=my_group_pks)
 
             for my_group in my_groups:
+                is_empty = True
                 d = {
                     'group': my_group.name,
                     'days': []
@@ -202,6 +207,7 @@ class ScheduleListView(generics.ListAPIView):
                         try:
                             lesson = stud_day_lessons.get(time=time_window)
                             window_item['lesson'] = self.serializer_class(lesson).data
+                            is_empty = False
                         except models.Lesson.DoesNotExist:
                             pass
 
@@ -213,8 +219,10 @@ class ScheduleListView(generics.ListAPIView):
                         'windows': window_list,
                     }
                     d['days'].append(stud_day)
+                d['is_empty'] = is_empty
                 resp['student'].append(d)
         else:
+            is_empty = True
             resp['days'] = []
 
             for day in work_week:
@@ -235,6 +243,7 @@ class ScheduleListView(generics.ListAPIView):
                     try:
                         lesson = day_lessons.get(time=time_window)
                         window_item['lesson'] = self.serializer_class(lesson).data
+                        is_empty = False
                     except models.Lesson.DoesNotExist:
                         pass
 
@@ -247,10 +256,25 @@ class ScheduleListView(generics.ListAPIView):
                 }
 
                 resp['days'].append(d)
+            resp['is_empty'] = is_empty
 
         resp_wrapper = {
-            'next': CURRENT_API + '/schedules/?date={}&next_week=1'.format(monday),
-            'prev': CURRENT_API + '/schedules/?date={}&prev_week=1'.format(monday),
+            'next': CURRENT_API + '/schedules/?date={0}&next_week=1&group={1}&discipline={2}&teacher={3}&class_room={4}&my={5}'.format(
+                monday,
+                group,
+                discipline,
+                teacher,
+                class_room,
+                my_schedule,
+            ),
+            'prev': CURRENT_API + '/schedules/?date={0}&prev_week=1&group={1}&discipline={2}&teacher={3}&class_room={4}&my={5}'.format(
+                monday,
+                group,
+                discipline,
+                teacher,
+                class_room,
+                my_schedule,
+            ),
             'results': resp
         }
 
