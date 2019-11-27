@@ -5,6 +5,8 @@ from advisors.serializers import GroupShortSerializer
 from portal_users.serializers import TeacherShortSerializer
 from portal.local_settings import CURRENT_API
 from portal_users.models import Profile
+from common.exceptions import CustomException
+import datetime
 
 
 class TimeWindowSerializer(serializers.ModelSerializer):
@@ -68,9 +70,9 @@ class EvaluateSerializer(serializers.Serializer):
     lesson = serializers.PrimaryKeyRelatedField(
         queryset=models.Lesson.objects.filter(is_active=True),
     )
-    mark = serializers.CharField(
+    mark = serializers.PrimaryKeyRelatedField(
+        queryset=models.Mark.objects.filter(is_active=True),
         required=False,
-        allow_blank=True,
     )
     missed = serializers.BooleanField(
         default=False,
@@ -84,80 +86,48 @@ class EvaluateSerializer(serializers.Serializer):
     def save(self, **kwargs):
         lesson = self.validated_data.get('lesson')
         student = self.validated_data.get('student')
-        mark_value = self.validated_data.get('mark')
+        mark = self.validated_data.get('mark')
         missed = self.validated_data.get('missed')
         reason = self.validated_data.get('reason')
 
-        performances = models.StudentPerformance.objects.filter(
-            lesson=lesson,
-            student=student,
-            is_active=True,
-        )
+        if datetime.date.today() < lesson.date:
+            """Невозможно поставить оценку на будущее занятие"""
+            raise CustomException()
 
-        if performances.exists():
-            try:
-                sp = performances.get(mark__grading_system=lesson.grading_system)
+        try:
+            sp = models.StudentPerformance.objects.get(
+                lesson=lesson,
+                student=student,
+                is_active=True,
+            )
 
-                if missed:
-                    sp.missed = True
-                    sp.mark = None
-                    sp.save()
-                else:
-                    mark = sp.mark
-                    mark.value_number = mark_value
-                    # mark.weight =
-                    # mark.value_letter =   TODO
-                    # mark.value_traditional =
-                    mark.save()
+            if sp.mark and missed is True:
+                """Запрещено поставить Н если оценка уже поставлена"""
+                raise CustomException()
+            elif sp.mark is None and missed is True:
+                sp.missed = True
+                sp.save()
 
-            except models.StudentPerformance.DoesNotExist:
-                # TODO N
-                try:
-                    sp = performances.get(missed=True)
-                except models.StudentPerformance.DoesNotExist:
-                    pass
+            if mark and missed is False:
+                sp.mark = mark
+                sp.save()
 
-                # if missed:
-                #     models.StudentPerformance.objects.create(
-                #         student=student,
-                #         lesson=lesson,
-                #         missed=True,
-                #         reason=reason,
-                #     )
-                # else:
-                #     mark = models.Mark.objects.create(
-                #         weight=45,
-                #         grading_system=lesson.grading_system,
-                #         value_letter='A',
-                #         value_number=mark_value,
-                #         value_traditional='Хорошо',
-                #     )
-                #     sp = models.StudentPerformance.objects.create(
-                #         lesson=lesson,
-                #         student=student,
-                #         mark=mark,
-                #     )
-        else:
+        except models.StudentPerformance.DoesNotExist:
             if missed:
-                models.StudentPerformance.objects.create(
+                sp = models.StudentPerformance.objects.create(
                     student=student,
                     lesson=lesson,
                     missed=True,
                     reason=reason,
                 )
             else:
-                mark = models.Mark.objects.create(
-                    weight=45,
-                    grading_system=lesson.grading_system,
-                    value_letter='A',
-                    value_number=mark_value,
-                    value_traditional='Хорошо',
-                )
                 sp = models.StudentPerformance.objects.create(
                     lesson=lesson,
                     student=student,
                     mark=mark,
                 )
+
+        return sp
 
 
 class GradingSystemSerializer(serializers.ModelSerializer):
@@ -166,7 +136,7 @@ class GradingSystemSerializer(serializers.ModelSerializer):
         fields = (
             'uid',
             'name',
-            'code',
+            'number',
         )
 
 
@@ -185,4 +155,18 @@ class LessonUpdateSerializer(serializers.ModelSerializer):
 
         instance.save()
         return instance
+
+
+class MarkSerializer(serializers.ModelSerializer):
+    grading_system = serializers.CharField()
+
+    class Meta:
+        model = models.Mark
+        fields = (
+            'uid',
+            'name',
+            'grading_system',
+            'value_number',
+            'value_traditional',
+        )
 

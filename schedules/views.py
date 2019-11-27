@@ -400,35 +400,45 @@ class JournalDetailView(generics.RetrieveAPIView):
             students = Profile.objects.filter(pk__in=student_pks)
 
             student_list = []
+            times = []
+
             for student in students:
                 stud_d = {}
 
                 lesson_list = []
+                times = []
                 for lesson in lessons:
                     lesson_d = {}
+                    time_d = {}
 
-                    student_performances = models.StudentPerformance.objects.filter(
-                        student=student,
-                        lesson=lesson,
-                        is_active=True,
-                    )
+                    try:
+                        student_performance = models.StudentPerformance.objects.get(
+                            student=student,
+                            lesson=lesson,
+                            is_active=True,
+                        )
+                        if student_performance.mark:
+                            mark = student_performance.mark.value_number
+                        else:
+                            mark = ''
 
-                    if student_performances.exists():
-                        try:
-                            sp = student_performances.get(mark__grading_system=lesson.grading_system)
-                            mark = sp.mark.value_number
-                        except models.StudentPerformance.DoesNotExist:
-                            sp = student_performances.first()
-                            if sp.mark is not None:
-                                mark = sp.mark.value_number
-                            else:
-                                mark = 'H'
-                    else:
+                        if student_performance.missed:
+                            missed = 'H'
+                        else:
+                            missed = ''
+                    except models.StudentPerformance.DoesNotExist:
                         mark = ''
+                        missed = ''
 
                     lesson_d['lesson_id'] = lesson.uid
                     lesson_d['mark'] = mark
+                    lesson_d['missed'] = missed
                     lesson_list.append(lesson_d)
+
+                    # time_d['date'] = day['date'].day
+                    time_d['lesson_id'] = lesson.uid
+                    time_d['start'] = lesson.time.from_time
+                    times.append(time_d)
 
                 stud_d['lessons'] = lesson_list
                 stud_d['student'] = {
@@ -438,6 +448,8 @@ class JournalDetailView(generics.RetrieveAPIView):
                 student_list.append(stud_d)
 
             day_d['date'] = day['date'].day
+            day_d['lessons'] = times
+
             day_d['students'] = student_list
             day_list.append(day_d)
 
@@ -480,30 +492,31 @@ class StudentPerformanceView(generics.RetrieveAPIView):
         self.check_object_permissions(request,
                                       lesson)
 
-        performances = models.StudentPerformance.objects.filter(
-            lesson=lesson,
-            student_id=student_id,
-            is_active=True,
-        )
+        try:
+            student_performance = models.StudentPerformance.objects.get(
+                student=student,
+                lesson=lesson,
+                is_active=True,
+            )
+            if student_performance.mark:
+                mark = student_performance.mark.value_number
+            else:
+                mark = ''
 
-        if performances.exists():
-            try:
-                sp = performances.get(mark__grading_system=lesson.grading_system)
-                mark = sp.mark.value_number
-            except models.StudentPerformance.DoesNotExist:
-                sp = performances.first()
-                if sp.mark is not None:
-                    mark = sp.mark.value_number
-                else:
-                    mark = 'H'
-        else:
+            if student_performance.missed:
+                missed = 'H'
+            else:
+                missed = ''
+        except models.StudentPerformance.DoesNotExist:
             mark = ''
+            missed = ''
 
         resp = {
             'student': student.full_name,
             'date': lesson.date,
             'time': lesson.time.from_time,
             'mark': mark,
+            'missed': missed,
         }
 
         return Response(
@@ -521,6 +534,8 @@ class GetGradingSystemView(generics.RetrieveAPIView):
         IsAuthenticated,
         permissions.TeacherPermission,
     )
+    queryset = models.GradingSystem.objects.filter(is_active=True)
+    serializer_class = serializers.GradingSystemSerializer
 
     def get(self, request, *args, **kwargs):
         lesson_id = request.query_params.get('lesson')
@@ -529,13 +544,13 @@ class GetGradingSystemView(generics.RetrieveAPIView):
                                       lesson)
 
         if lesson.grading_system:
-            num = lesson.grading_system.number
+            grading_system = lesson.grading_system
+            serializer = self.serializer_class(grading_system)
+            resp = serializer.data
         else:
-            num = 0
-
-        resp = {
-            'grading_system_number': num
-        }
+            resp = {
+                'message': 'no_grading_system',
+            }
 
         return Response(
             resp,
@@ -591,3 +606,18 @@ class ChangeLessonView(generics.UpdateAPIView):
 class ChooseControlView(generics.CreateAPIView):
     """Выбор занятия как контрольное"""
     pass
+
+
+class MarkListView(generics.ListAPIView):
+    """Получить все оценки выбранной системы оценивания
+    grading_system
+    """
+    queryset = models.Mark.objects.filter(is_active=True)
+    serializer_class = serializers.MarkSerializer
+
+    def get_queryset(self):
+        grading_system = self.request.query_params.get('grading_system')
+        queryset = self.queryset.filter(grading_system_id=grading_system).order_by('value_number')
+
+        return queryset
+

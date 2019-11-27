@@ -25,5 +25,8 @@ urlpatterns = [
 
     path('grading_systems/', views.GradingSystemListView.as_view(), name='grading_systems'),
 
-    path('lesson/<pk>/', views.ChangeLessonView.as_view(), name='change_lesson'),
+    path('lesson/<pk>/edit/', views.ChangeLessonView.as_view(), name='change_lesson'),
+
+    path('marks/', views.MarkListView.as_view(), name='marks'),
 ]
+
