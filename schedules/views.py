@@ -316,6 +316,7 @@ class ElJournalListView(generics.ListAPIView):
         if study_year:
             queryset = queryset.filter(lessons__study_year_id=study_year)
 
+        queryset = queryset.distinct()
         return queryset
 
 
