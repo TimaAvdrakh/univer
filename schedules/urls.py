@@ -17,6 +17,8 @@ urlpatterns = [
 
     # Electronic Journal
     path('journals/', views.ElJournalListView.as_view(), name='journals'),
+    path('journal/info/', views.JournalInfoView.as_view(), name='journal_info'),
+
     path('journal/', views.JournalDetailView.as_view(), name='journal_detail'),
 
     path('performance/', views.StudentPerformanceView.as_view(), name='performance'),

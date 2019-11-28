@@ -7,7 +7,8 @@ from portal.local_settings import CURRENT_API
 from portal_users.models import Profile
 from common.exceptions import CustomException
 import datetime
-from organizations.models import LoadType2
+from organizations.models import LoadType2, AcadPeriod
+from common.serializers import AcadPeriodSerializer
 
 
 class TimeWindowSerializer(serializers.ModelSerializer):
@@ -77,6 +78,27 @@ class ElectronicJournalDetailSerializer(serializers.ModelSerializer):
             'load_type',
             'status',
         )
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        lessons = instance.lessons.filter(is_active=True)
+        if len(lessons) > 0:
+            groups = lessons.first().groups.filter(is_active=True)
+
+            serializer = GroupShortSerializer(groups,
+                                              many=True)
+            data['groups'] = serializer.data
+        else:
+            data['groups'] = []
+
+        acad_period_pks = lessons.distinct('acad_period').values('acad_period')
+        acad_periods = AcadPeriod.objects.filter(pk__in=acad_period_pks,
+                                                 is_active=True)
+        acad_period_serializer = AcadPeriodSerializer(acad_periods,
+                                                      many=True)
+        data['acad_periods'] = acad_period_serializer.data
+
+        return data
 
 
 class EvaluateSerializer(serializers.Serializer):

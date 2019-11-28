@@ -320,15 +320,46 @@ class ElJournalListView(generics.ListAPIView):
 
 
 class JournalInfoView(generics.RetrieveAPIView):  # TODO
-    # queryset = models.Lesson.objects.filter(is_active=True)
+    """
+    Получить инфо о журнале
+    id
+    """
+    permission_classes = (
+        IsAuthenticated,
+        permissions.ElJournalPermission,
+    )
+    serializer_class = serializers.ElectronicJournalDetailSerializer
 
     def get(self, request, *args, **kwargs):
-        profile = request.user.profile
         journal_id = request.query_params.get('id')
+        try:
+            journal = models.ElectronicJournal.objects.get(pk=journal_id)
+        except models.ElectronicJournal.DoesNotExist:
+            return Response(
+                {
+                    'message': 'not_found',
+                },
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        self.check_object_permissions(request,
+                                      journal)
+        serializer = self.serializer_class(journal)
+        return Response(
+            serializer.data,
+            status=status.HTTP_200_OK,
+        )
 
 
 class JournalDetailView(generics.RetrieveAPIView):
-    # queryset = models.Lesson.objects.filter(is_active=True)
+    """
+    Получить журнал
+    id, next_month, prev_month, date
+    """
+    permission_classes = (
+        IsAuthenticated,
+        permissions.ElJournalPermission,
+    )
 
     def get(self, request, *args, **kwargs):
         profile = request.user.profile
@@ -338,6 +369,8 @@ class JournalDetailView(generics.RetrieveAPIView):
         date_param = request.query_params.get('date')
 
         journal = models.ElectronicJournal.objects.get(pk=journal_id)
+        self.check_object_permissions(request,
+                                      journal)
         # lessons = self.queryset.filter(
         #     discipline=journal.discipline,
         #     load_type=journal.load_type,
