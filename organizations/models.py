@@ -404,6 +404,16 @@ class Discipline(BaseCatalog):
         verbose_name = 'Дисциплина'
         verbose_name_plural = 'Дисциплины'
 
+    def save(self, force_insert=False, force_update=False, using=None,
+             update_fields=None):
+
+        if self.exchange:
+            # gggggggggggggggggggggggggggggggggggg
+            # TODO postrequ is_active = False
+            pass
+
+        super(Discipline, self).save()
+
 
 class LoadType2(BaseCatalog):
     number = models.PositiveSmallIntegerField(

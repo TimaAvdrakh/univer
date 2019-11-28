@@ -7,6 +7,7 @@ from portal.local_settings import CURRENT_API
 from portal_users.models import Profile
 from common.exceptions import CustomException
 import datetime
+from organizations.models import LoadType2
 
 
 class TimeWindowSerializer(serializers.ModelSerializer):
@@ -170,3 +171,52 @@ class MarkSerializer(serializers.ModelSerializer):
             'value_traditional',
         )
 
+
+class ChooseControlSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.Lesson
+        fields = (
+            'uid',
+            'intermediate_control',
+        )
+
+    def update(self, instance, validated_data):
+        today = datetime.date.today()
+        if today >= instance.date:
+            raise CustomException()
+
+        instance.intermediate_control = not instance.intermediate_control
+        instance.save()
+
+        return instance
+
+
+class LessonShortSerializer(serializers.ModelSerializer):
+    discipline = DisciplineSerializer()
+    groups = GroupShortSerializer(many=True)
+    classroom = RoomSerializer()
+    load_type = serializers.CharField()
+    teachers = TeacherShortSerializer(many=True)
+    time = TimeWindowSerializer()
+
+    class Meta:
+        model = models.Lesson
+        fields = (
+            'uid',
+            'discipline',
+            'date',
+            'time',
+            'groups',
+            'classroom',
+            'teachers',
+            'load_type',
+        )
+
+
+class LoadType2Serializer(serializers.ModelSerializer):
+    class Meta:
+        model = LoadType2
+        fields = (
+            'uid',
+            'name',
+        )

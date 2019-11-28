@@ -29,6 +29,7 @@ class BaseModel(models.Model):
         null=True,
         blank=True,
     )
+    exchange = False
 
 
 class BaseCatalog(BaseModel):

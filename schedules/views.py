@@ -29,6 +29,12 @@ class GroupListView(generics.ListAPIView):
     serializer_class = GroupShortSerializer
 
 
+class LoadType2ListView(generics.ListAPIView):
+    """Получить все типы нагрузки"""
+    queryset = org_models.LoadType2.objects.filter(is_active=True)
+    serializer_class = serializers.LoadType2Serializer
+
+
 class DisciplineListView(generics.ListAPIView):
     """Получить все дисциплины"""
     queryset = org_models.Discipline.objects.filter(is_active=True)
@@ -431,6 +437,7 @@ class JournalDetailView(generics.RetrieveAPIView):
                         missed = ''
 
                     lesson_d['lesson_id'] = lesson.uid
+                    lesson_d['control'] = lesson.intermediate_control
                     lesson_d['mark'] = mark
                     lesson_d['missed'] = missed
                     lesson_list.append(lesson_d)
@@ -603,11 +610,6 @@ class ChangeLessonView(generics.UpdateAPIView):
     serializer_class = serializers.LessonUpdateSerializer
 
 
-class ChooseControlView(generics.CreateAPIView):
-    """Выбор занятия как контрольное"""
-    pass
-
-
 class MarkListView(generics.ListAPIView):
     """Получить все оценки выбранной системы оценивания
     grading_system
@@ -621,3 +623,41 @@ class MarkListView(generics.ListAPIView):
 
         return queryset
 
+
+class ChooseControlView(generics.UpdateAPIView):
+    """Выбор занятия как контрольное"""
+    permission_classes = (
+        IsAuthenticated,
+        permissions.TeacherPermission,
+    )
+    queryset = models.Lesson.objects.filter(is_active=True)
+    serializer_class = serializers.ChooseControlSerializer
+
+
+class LessonListView(generics.ListAPIView):
+    """Список занятии для выбора контрольного"""
+    queryset = models.Lesson.objects.filter(is_active=True)
+    serializer_class = serializers.LessonShortSerializer
+
+    def get_queryset(self):
+        profile = self.request.user.profile
+        discipline = self.request.query_params.get('discipline')
+        load_type = self.request.query_params.get('load_type')
+        flow_uid = self.request.query_params.get('flow_uid')
+
+        today = datetime.date.today()
+
+        queryset = self.queryset.filter(
+            teachers__in=[profile],
+            date__gt=today,
+            is_active=True,
+        ).order_by('date', 'time__from_time')
+
+        if discipline:
+            queryset = queryset.filter(discipline_id=discipline)
+        if load_type:
+            queryset = queryset.filter(load_type_id=load_type)
+        if flow_uid:
+            queryset = queryset.filter(flow_uid=flow_uid)
+
+        return queryset

@@ -33,6 +33,7 @@ INSTALLED_APPS = [
     'advisors',
     'reports',
     'schedules',
+    # 'c1',
 ]
 
 MIDDLEWARE = [

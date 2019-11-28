@@ -81,6 +81,10 @@ class JournalStatus(BaseCatalog):
 
 
 class ElectronicJournal(BaseModel):
+    flow_uid = models.UUIDField(
+        null=True,
+        verbose_name='UID потока',
+    )
     teachers = models.ManyToManyField(
         'portal_users.Profile',
         verbose_name='Преподаватели',
