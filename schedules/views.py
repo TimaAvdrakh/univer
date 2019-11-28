@@ -293,7 +293,7 @@ class ScheduleListView(generics.ListAPIView):
 class ElJournalListView(generics.ListAPIView):
     """
     Получить список ЭЖ
-    discipline, load_type, group
+    discipline, load_type, group, study_year
     """
     serializer_class = serializers.ElectronicJournalSerializer
     queryset = models.ElectronicJournal.objects.filter(is_active=True)
@@ -303,6 +303,7 @@ class ElJournalListView(generics.ListAPIView):
         discipline = self.request.query_params.get('discipline')
         load_type = self.request.query_params.get('load_type')  # TODO endpoint
         group = self.request.query_params.get('group')
+        study_year = self.request.query_params.get('study_year')
 
         queryset = self.queryset.filter(teachers__in=[profile])
 
@@ -312,8 +313,18 @@ class ElJournalListView(generics.ListAPIView):
             queryset = queryset.filter(load_type_id=load_type)
         if group:
             queryset = queryset.filter(lesson__groups__in=[group])
+        if study_year:
+            queryset = queryset.filter(lessons__study_year_id=study_year)
 
         return queryset
+
+
+class JournalInfoView(generics.RetrieveAPIView):  # TODO
+    # queryset = models.Lesson.objects.filter(is_active=True)
+
+    def get(self, request, *args, **kwargs):
+        profile = request.user.profile
+        journal_id = request.query_params.get('id')
 
 
 class JournalDetailView(generics.RetrieveAPIView):
@@ -398,9 +409,12 @@ class JournalDetailView(generics.RetrieveAPIView):
         day_list = []
         for day in days:
             day_d = {}
-            lessons = lessons.filter(date=day['date'])
+            day_lessons = lessons.filter(date=day['date'])
 
-            groups = lessons[0].groups.filter(is_active=True)
+            # if not day_lessons.exists():
+            #     continue
+
+            groups = day_lessons[0].groups.filter(is_active=True)
             student_pks = org_models.StudyPlan.objects.filter(is_active=True,
                                                               group__in=groups).values('student')
             students = Profile.objects.filter(pk__in=student_pks)
@@ -413,7 +427,7 @@ class JournalDetailView(generics.RetrieveAPIView):
 
                 lesson_list = []
                 times = []
-                for lesson in lessons:
+                for lesson in day_lessons:
                     lesson_d = {}
                     time_d = {}
 
@@ -661,3 +675,5 @@ class LessonListView(generics.ListAPIView):
             queryset = queryset.filter(flow_uid=flow_uid)
 
         return queryset
+
+

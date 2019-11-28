@@ -64,6 +64,21 @@ class ElectronicJournalSerializer(serializers.ModelSerializer):
         )
 
 
+class ElectronicJournalDetailSerializer(serializers.ModelSerializer):
+    status = serializers.CharField()
+    load_type = serializers.CharField()
+    discipline = serializers.CharField()
+
+    class Meta:
+        model = models.ElectronicJournal
+        fields = (
+            'uid',
+            'discipline',
+            'load_type',
+            'status',
+        )
+
+
 class EvaluateSerializer(serializers.Serializer):
     student = serializers.PrimaryKeyRelatedField(
         queryset=Profile.objects.filter(is_active=True),

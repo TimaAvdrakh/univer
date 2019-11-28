@@ -115,6 +115,10 @@ class ElectronicJournal(BaseModel):
         verbose_name='Дисциплины студентов',
     )
 
+    def __str__(self):
+        return '{} {}'.format(self.discipline,
+                              self.load_type)
+
     class Meta:
         verbose_name = 'Электронный журнал'
         verbose_name_plural = 'Электронные журналы'

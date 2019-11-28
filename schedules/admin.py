@@ -52,6 +52,7 @@ class LessonAdmin(admin.ModelAdmin):
     list_filter = (
         'date',
         'time',
+        'el_journal',
     )
     list_display = (
         'discipline',
