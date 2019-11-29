@@ -791,7 +791,7 @@ class GroupDetailSerializer(serializers.ModelSerializer):
             'headman',
             'kurator',
             'language',
-            'students',
+            # 'students',
         )
 
     def to_representation(self, instance):
