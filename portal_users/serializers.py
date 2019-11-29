@@ -835,9 +835,9 @@ class GroupDetailSerializer(serializers.ModelSerializer):
                                        many=True)
         data['students'] = serializer.data
 
-        # for student in data['students']:
-        #     if student['profile']['profileId'] == data['headman']['profileId']:
-        #         data['students'].remove(student)
+        for student in data['students']:
+            if student['profile']['avatar']:
+                student['profile']['avatar'] = current_site + student['profile']['avatar']
 
         return data
 
