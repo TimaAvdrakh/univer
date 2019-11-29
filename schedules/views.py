@@ -440,10 +440,13 @@ class JournalDetailView(generics.RetrieveAPIView):
             ).distinct('date').values('date')
             date_str = today.strftime("%d.%m.%Y")
 
+        lesson_nums = []
         day_list = []
         for day in days:
             day_d = {}
             day_lessons = lessons.filter(date=day['date'])
+            lesson_num_in_day = len(day_lessons)
+            lesson_nums.append(lesson_num_in_day)
 
             # if not day_lessons.exists():
             #     continue
@@ -503,16 +506,19 @@ class JournalDetailView(generics.RetrieveAPIView):
                 student_list.append(stud_d)
 
             day_d['date'] = day['date'].day
-            day_d['lesson_num'] = len(times)
+            day_d['lesson_num'] = lesson_num_in_day
             day_d['lessons'] = times
 
             day_d['students'] = student_list
             day_list.append(day_d)
 
+        max_lesson_num = max(lesson_nums)
+
         resp = {
             'month': _(datetime.date(year=year, month=month, day=1).strftime("%B")),
             'year': year,
-            'days': day_list
+            'days': day_list,
+            'max_lesson_num': max_lesson_num
         }
         resp_wrapper = {
             'next': CURRENT_API + '/schedules/journal/?id={}&date={}&next_month=1'.format(journal_id,
