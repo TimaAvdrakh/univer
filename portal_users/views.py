@@ -437,18 +437,30 @@ class ProfileDetailView(generics.RetrieveAPIView):
 
 class ContactEditView(generics.UpdateAPIView):
     """Редактировать контактные данные"""
+    permission_classes = (
+        IsAuthenticated,
+        permissions.ProfilePermission,
+    )
     queryset = models.Profile.objects.filter(is_active=True)
     serializer_class = serializers.ProfileContactEditSerializer
 
 
 class InterestsEditView(generics.UpdateAPIView):
     """Редактировать интересы"""
+    permission_classes = (
+        IsAuthenticated,
+        permissions.ProfilePermission,
+    )
     queryset = models.Profile.objects.filter(is_active=True)
     serializer_class = serializers.ProfileInterestsEditSerializer
 
 
 class AchievementsEditView(generics.UpdateAPIView):
     """Редактировать достижения"""
+    permission_classes = (
+        IsAuthenticated,
+        permissions.ProfilePermission,
+    )
     queryset = models.Profile.objects.filter(is_active=True)
     serializer_class = serializers.ProfileAchievementsEditSerializer
 
