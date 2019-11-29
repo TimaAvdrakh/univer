@@ -14,6 +14,7 @@ class ProfileAdmin(admin.ModelAdmin):
         'last_name',
         'first_name',
         'middle_name',
+        'status',
     ]
 
 
@@ -156,3 +157,10 @@ class ProfilePhoneAdmin(admin.ModelAdmin):
         "is_active",
     ]
 
+
+@admin.register(models.StudentStatus)
+class StudentStatusAdmin(admin.ModelAdmin):
+    list_display = [
+        "name",
+        "uid",
+    ]

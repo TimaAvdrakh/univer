@@ -18,6 +18,12 @@ class MaritalStatus(BaseCatalog):
         verbose_name_plural = 'Семейное положение'
 
 
+class StudentStatus(BaseCatalog):
+    class Meta:
+        verbose_name = 'Статус студента'
+        verbose_name_plural = 'Статусы студентов'
+
+
 class Profile(BaseModel):
     user = models.OneToOneField(
         User,
@@ -138,6 +144,13 @@ class Profile(BaseModel):
         default='',
         blank=True,
         verbose_name='Дополнительная информация',
+    )
+    status = models.ForeignKey(
+        StudentStatus,
+        null=True,
+        blank=True,
+        on_delete=models.CASCADE,
+        verbose_name='Статус студента',
     )
 
     def __str__(self):
@@ -408,3 +421,6 @@ class ProfilePhone(BaseModel):
     class Meta:
         verbose_name = 'Телефон Пользователя'
         verbose_name_plural = 'Телефоны Пользователей'
+
+
+

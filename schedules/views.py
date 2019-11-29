@@ -506,7 +506,7 @@ class JournalDetailView(generics.RetrieveAPIView):
                 student_list.append(stud_d)
 
             day_d['date'] = day['date'].day
-            day_d['lesson_num'] = lesson_num_in_day
+            # day_d['lesson_num'] = lesson_num_in_day
             day_d['lessons'] = times
 
             day_d['students'] = student_list
