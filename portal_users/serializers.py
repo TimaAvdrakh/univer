@@ -768,17 +768,18 @@ class ChooseTeacherSerializer(serializers.ModelSerializer):
 class StudentSerializer(serializers.Serializer):
     profile = ProfileDetailSerializer()
 
-    # class Meta:
-    #     model = org_models.Student
-    #     fields = (
-    #         'profile',
-    #     )
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+
+        if data['profile']['avatar']:
+            data['profile']['avatar'] = current_site + data['profile']['avatar']
+
+        return data
 
 
 class GroupDetailSerializer(serializers.ModelSerializer):
     headman = ProfileDetailSerializer()
     kurator = ProfileDetailSerializer()
-    # students = StudentSerializer(many=True)
     active = serializers.BooleanField(
         default=False,
     )
@@ -791,7 +792,6 @@ class GroupDetailSerializer(serializers.ModelSerializer):
             'headman',
             'kurator',
             'language',
-            # 'students',
         )
 
     def to_representation(self, instance):
@@ -835,9 +835,9 @@ class GroupDetailSerializer(serializers.ModelSerializer):
                                        many=True)
         data['students'] = serializer.data
 
-        for student in data['students']:
-            if student['profile']['avatar']:
-                student['profile']['avatar'] = current_site + student['profile']['avatar']
+        # for student in data['students']:
+        #     if student['profile']['avatar']:
+        #         student['profile']['avatar'] = current_site + student['profile']['avatar']
 
         return data
 
