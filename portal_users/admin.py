@@ -137,3 +137,22 @@ class PositionAdmin(admin.ModelAdmin):
         "cathedra",
         "is_main",
     ]
+
+
+@admin.register(models.PhoneType)
+class PhoneTypeAdmin(admin.ModelAdmin):
+    list_display = [
+        "name",
+        "uid",
+    ]
+
+
+@admin.register(models.ProfilePhone)
+class ProfilePhoneAdmin(admin.ModelAdmin):
+    list_display = [
+        "profile",
+        "phone_type",
+        "value",
+        "is_active",
+    ]
+

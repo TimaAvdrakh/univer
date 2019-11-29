@@ -375,3 +375,36 @@ class Achievement(BaseModel):
     class Meta:
         verbose_name = 'Достижение'
         verbose_name_plural = 'Достижения'
+
+
+class PhoneType(BaseCatalog):
+    class Meta:
+        verbose_name = 'Тип телефона'
+        verbose_name_plural = 'Типы телефона'
+
+
+class ProfilePhone(BaseModel):
+    profile = models.ForeignKey(
+        Profile,
+        on_delete=models.CASCADE,
+        verbose_name='Профиль',
+        related_name='phones',
+    )
+    phone_type = models.ForeignKey(
+        PhoneType,
+        on_delete=models.CASCADE,
+        verbose_name='Тип телефона',
+        related_name='phones',
+    )
+    value = models.CharField(
+        max_length=15,
+        verbose_name='Номер телефона',
+    )
+
+    def __str__(self):
+        return '{} {}'.format(self.profile.first_name,
+                              self.value)
+
+    class Meta:
+        verbose_name = 'Телефон Пользователя'
+        verbose_name_plural = 'Телефоны Пользователей'

@@ -25,3 +25,8 @@ class AchievementTypeTranslationOptions(TranslationOptions):
 @register(models.Position)
 class PositionTranslationOptions(TranslationOptions):
     fields = ('name',)
+
+
+@register(models.PhoneType)
+class PhoneTypeTranslationOptions(TranslationOptions):
+    fields = ('name',)
