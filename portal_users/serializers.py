@@ -765,20 +765,20 @@ class ChooseTeacherSerializer(serializers.ModelSerializer):
         return teacher_disciplines
 
 
-class StudentSerializer(serializers.ModelSerializer):
+class StudentSerializer(serializers.Serializer):
     profile = ProfileDetailSerializer()
 
-    class Meta:
-        model = org_models.Student
-        fields = (
-            'profile',
-        )
+    # class Meta:
+    #     model = org_models.Student
+    #     fields = (
+    #         'profile',
+    #     )
 
 
 class GroupDetailSerializer(serializers.ModelSerializer):
     headman = ProfileDetailSerializer()
     kurator = ProfileDetailSerializer()
-    students = StudentSerializer(many=True)
+    # students = StudentSerializer(many=True)
     active = serializers.BooleanField(
         default=False,
     )
@@ -819,9 +819,25 @@ class GroupDetailSerializer(serializers.ModelSerializer):
             }
             data['supervisors'].append(item)
 
-        for student in data['students']:
-            if student['profile']['profileId'] == data['headman']['profileId']:
-                data['students'].remove(student)
+        student_pks = org_models.StudyPlan.objects.filter(group=instance).exclude(
+            student_id=data['headman']['profileId']).values('student')
+
+        students = models.Profile.objects.filter(pk__in=student_pks,
+                                                 is_active=True)
+        student_list = []
+        for student in students:
+            d = {
+                'profile': student
+            }
+            student_list.append(d)
+
+        serializer = StudentSerializer(student_list,
+                                       many=True)
+        data['students'] = serializer.data
+
+        # for student in data['students']:
+        #     if student['profile']['profileId'] == data['headman']['profileId']:
+        #         data['students'].remove(student)
 
         return data
 

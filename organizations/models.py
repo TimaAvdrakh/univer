@@ -94,27 +94,27 @@ class Group(BaseCatalog):
         verbose_name_plural = 'Группы'
 
 
-class Student(BaseModel):
-    profile = models.ForeignKey(
-        'portal_users.Profile',
-        on_delete=models.CASCADE,
-        verbose_name='Профиль',
-        related_name='students',
-    )
-    group = models.ForeignKey(
-        Group,
-        on_delete=models.CASCADE,
-        verbose_name='Группа',
-        related_name='students',
-    )
-
-    def __str__(self):
-        return '{}'.format(self.profile,
-                           self.group)
-
-    class Meta:
-        verbose_name = 'Студент'
-        verbose_name_plural = 'Студенты'
+# class Student(BaseModel):
+#     profile = models.ForeignKey(
+#         'portal_users.Profile',
+#         on_delete=models.CASCADE,
+#         verbose_name='Профиль',
+#         related_name='students',
+#     )
+#     group = models.ForeignKey(
+#         Group,
+#         on_delete=models.CASCADE,
+#         verbose_name='Группа',
+#         related_name='students',
+#     )
+#
+#     def __str__(self):
+#         return '{}'.format(self.profile,
+#                            self.group)
+#
+#     class Meta:
+#         verbose_name = 'Студент'
+#         verbose_name_plural = 'Студенты'
 
 
 class EducationBase(BaseCatalog):

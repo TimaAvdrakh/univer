@@ -197,28 +197,28 @@ class StudyPlanAdmin(admin.ModelAdmin):
     ]
 
 
-@admin.register(models.Student)
-class StudentAdmin(admin.ModelAdmin):
-    list_display = [
-        'profile',
-        'group',
-    ]
+# @admin.register(models.Student)
+# class StudentAdmin(admin.ModelAdmin):
+#     list_display = [
+#         'profile',
+#         'group',
+#     ]
 
 
-class StudentModelInline(admin.TabularInline):
-    model = models.Student
-    extra = 0
+# class StudentModelInline(admin.TabularInline):
+#     model = models.Student
+#     extra = 0
 
 
-@admin.register(models.Group)
-class GroupAdmin(admin.ModelAdmin):
-    inlines = [StudentModelInline]
-    list_display = [
-        'name',
-        'headman',
-        'kurator',
-        'language'
-    ]
+# @admin.register(models.Group)
+# class GroupAdmin(admin.ModelAdmin):
+#     inlines = [StudentModelInline]
+#     list_display = [
+#         'name',
+#         'headman',
+#         'kurator',
+#         'language'
+#     ]
 
 
 @admin.register(models.Prerequisite)
