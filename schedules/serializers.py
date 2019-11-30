@@ -77,6 +77,7 @@ class ElectronicJournalDetailSerializer(serializers.ModelSerializer):
             'discipline',
             'load_type',
             'status',
+            'flow_uid',
         )
 
     def to_representation(self, instance):

@@ -704,7 +704,8 @@ class ChooseControlView(generics.UpdateAPIView):
 
 
 class LessonListView(generics.ListAPIView):
-    """Список занятии для выбора контрольного"""
+    """Список занятии для выбора контрольного
+    discipline, load_type, flow_uid (Query Params)"""
     queryset = models.Lesson.objects.filter(is_active=True)
     serializer_class = serializers.LessonShortSerializer
 
