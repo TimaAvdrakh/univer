@@ -22,10 +22,6 @@ class C1Object(BaseCatalog):
 
 
 class C1ObjectCompare(BaseCatalog):
-    class Meta:
-        verbose_name = 'Поле'
-        verbose_name_plural = 'Поля'
-
     c1_object = models.ForeignKey(
         C1Object,
         on_delete=models.CASCADE,
@@ -49,3 +45,7 @@ class C1ObjectCompare(BaseCatalog):
         default=False,
         verbose_name='Двоичные данные',
     )
+
+    class Meta:
+        verbose_name = 'Поле'
+        verbose_name_plural = 'Поля'

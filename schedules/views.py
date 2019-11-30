@@ -577,11 +577,14 @@ class StudentPerformanceView(generics.RetrieveAPIView):
 
             if student_performance.missed:
                 missed = 'H'
+                reason = student_performance.reason
             else:
                 missed = ''
+                reason = ''
         except models.StudentPerformance.DoesNotExist:
             mark = ''
             missed = ''
+            reason = ''
 
         resp = {
             'student': student.full_name,
@@ -589,6 +592,7 @@ class StudentPerformanceView(generics.RetrieveAPIView):
             'time': lesson.time.from_time,
             'mark': mark,
             'missed': missed,
+            'reason': reason,
         }
 
         return Response(
