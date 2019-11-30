@@ -442,6 +442,20 @@ class JournalDetailView(generics.RetrieveAPIView):
 
         lesson_nums = []
         day_list = []
+        student_list2 = []
+
+        groups = lessons[0].groups.filter(is_active=True)
+        student_pks = org_models.StudyPlan.objects.filter(is_active=True,
+                                                          group__in=groups).values('student')
+        students = Profile.objects.filter(pk__in=student_pks)
+        for s in students:
+            d = {
+                'name': s.full_name,
+                'short_name': s.name_initial,
+                'id': s.uid,
+            }
+            student_list2.append(d)
+
         for day in days:
             day_d = {}
             day_lessons = lessons.filter(date=day['date'])
@@ -450,11 +464,6 @@ class JournalDetailView(generics.RetrieveAPIView):
 
             # if not day_lessons.exists():
             #     continue
-
-            groups = day_lessons[0].groups.filter(is_active=True)
-            student_pks = org_models.StudyPlan.objects.filter(is_active=True,
-                                                              group__in=groups).values('student')
-            students = Profile.objects.filter(pk__in=student_pks)
 
             student_list = []
             times = []
@@ -518,6 +527,7 @@ class JournalDetailView(generics.RetrieveAPIView):
             'month': _(datetime.date(year=year, month=month, day=1).strftime("%B")),
             'year': year,
             'days': day_list,
+            'students': student_list2,
             'max_lesson_num': max_lesson_num
         }
         resp_wrapper = {

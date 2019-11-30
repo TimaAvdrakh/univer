@@ -165,6 +165,15 @@ class Profile(BaseModel):
             self.middle_name
         )
 
+    @property
+    def name_initial(self):
+        """Фамилия инициалы"""
+        name = '{} {}.'.format(self.last_name,
+                               self.first_name[0])
+        if len(self.middle_name) > 0:
+            name += '{}.'.format(self.middle_name[0])
+        return name
+
     class Meta:
         verbose_name = 'Профиль'
         verbose_name_plural = 'Профили'
