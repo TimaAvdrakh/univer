@@ -37,3 +37,4 @@ urlpatterns = [
     path('lessons/', views.LessonListView.as_view(), name='lessons'),
 ]
 
+# 1
