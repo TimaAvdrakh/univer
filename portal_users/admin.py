@@ -133,7 +133,7 @@ class PositionAdmin(admin.ModelAdmin):
 @admin.register(models.TeacherPosition)
 class PositionAdmin(admin.ModelAdmin):
     list_display = [
-        "teacher",
+        "profile",
         "position",
         "cathedra",
         "is_main",

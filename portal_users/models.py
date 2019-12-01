@@ -226,11 +226,18 @@ class Position(BaseCatalog):
 
 
 class TeacherPosition(BaseModel):
-    teacher = models.ForeignKey(
-        Teacher,
-        models.CASCADE,
-        verbose_name='Сотрудник',
+    profile = models.ForeignKey(
+        Profile,
+        on_delete=models.CASCADE,
+        null=True,
+        verbose_name='Профиль'
     )
+    # teacher = models.ForeignKey(
+    #     Teacher,  # TODO Profile
+    #     models.CASCADE,
+    #     null=True,
+    #     verbose_name='Сотрудник',
+    # )
     position = models.ForeignKey(
         Position,
         on_delete=models.CASCADE,
@@ -247,7 +254,7 @@ class TeacherPosition(BaseModel):
     )
 
     def __str__(self):
-        return '{} {}'.format(self.teacher.profile.full_name,
+        return '{} {}'.format(self.profile.full_name,
                               self.position)
 
     class Meta:

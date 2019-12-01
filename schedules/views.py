@@ -521,7 +521,10 @@ class JournalDetailView(generics.RetrieveAPIView):
             day_d['students'] = student_list
             day_list.append(day_d)
 
-        max_lesson_num = max(lesson_nums)
+        if len(lesson_nums) > 0:
+            max_lesson_num = max(lesson_nums)
+        else:
+            max_lesson_num = 0
 
         resp = {
             'month': _(datetime.date(year=year, month=month, day=1).strftime("%B")),

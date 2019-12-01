@@ -10,7 +10,7 @@ class RoomType(BaseCatalog):
         verbose_name_plural = 'Типы помещений'
 
 
-class Room(BaseCatalog):
+class Room(BaseCatalog):  # TODO FOR 1C
     content_type = models.ForeignKey(
         ContentType,
         on_delete=models.CASCADE,
