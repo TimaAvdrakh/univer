@@ -188,6 +188,9 @@ class EvaluateSerializer(serializers.Serializer):
                     mark=mark,
                 )
 
+        lesson.status_id = lesson_statuses['executed']
+        lesson.save()
+
         return sp
 
 

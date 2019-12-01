@@ -369,14 +369,11 @@ class JournalDetailView(generics.RetrieveAPIView):
         prev_month = request.query_params.get('prev_month')
         date_param = request.query_params.get('date')
 
+        today = datetime.date.today()
+
         journal = models.ElectronicJournal.objects.get(pk=journal_id)
         self.check_object_permissions(request,
                                       journal)
-        # lessons = self.queryset.filter(
-        #     discipline=journal.discipline,
-        #     load_type=journal.load_type,
-        #
-        # )
 
         lessons = journal.lessons.filter(
             teachers__in=[profile],
@@ -477,6 +474,13 @@ class JournalDetailView(generics.RetrieveAPIView):
                     lesson_d = {}
                     time_d = {}
 
+                    allow_mark = True
+                    if today < lesson.date:
+                        allow_mark = False
+
+                    # TODO проверка недели
+                    # lesson_week = calendar.week
+
                     try:
                         student_performance = models.StudentPerformance.objects.get(
                             student=student,
@@ -500,11 +504,13 @@ class JournalDetailView(generics.RetrieveAPIView):
                     lesson_d['control'] = lesson.intermediate_control
                     lesson_d['mark'] = mark
                     lesson_d['missed'] = missed
+                    lesson_d['allow_mark'] = allow_mark
                     lesson_list.append(lesson_d)
 
                     # time_d['date'] = day['date'].day
                     time_d['lesson_id'] = lesson.uid
                     time_d['start'] = lesson.time.from_time
+                    time_d['edit_subject'] = True  # TODO
                     times.append(time_d)
 
                 stud_d['lessons'] = lesson_list
