@@ -102,6 +102,6 @@ class ElectronicJournalAdmin(admin.ModelAdmin):
         'discipline',
         'load_type',
         'status',
-        'study_start',
-        'study_end',
+        # 'study_start',
+        # 'study_end',
     )

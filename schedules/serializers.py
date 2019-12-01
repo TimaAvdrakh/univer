@@ -9,6 +9,10 @@ from common.exceptions import CustomException
 import datetime
 from organizations.models import LoadType2, AcadPeriod
 from common.serializers import AcadPeriodSerializer
+from organizations.models import StudentDiscipline
+from django.db.models import Max, Min
+from portal.curr_settings import lesson_statuses
+from django.utils.translation import gettext_lazy as _
 
 
 class TimeWindowSerializer(serializers.ModelSerializer):
@@ -98,6 +102,24 @@ class ElectronicJournalDetailSerializer(serializers.ModelSerializer):
         acad_period_serializer = AcadPeriodSerializer(acad_periods,
                                                       many=True)
         data['acad_periods'] = acad_period_serializer.data
+
+        student_count = StudentDiscipline.objects.filter(
+            discipline=instance.discipline,
+            load_type__load_type2=instance.load_type,
+            teacher__in=instance.teachers.filter(is_active=True),
+        ).distinct('student').count()
+
+        data['student_nums'] = student_count
+
+        data['lesson_start'] = lessons.aggregate(start=Min('date'))['start']
+        data['lesson_end'] = lessons.aggregate(end=Max('date'))['end']
+
+        executed_lesson_count = lessons.filter(status_id=lesson_statuses['executed']).count()
+        lesson_count = lessons.count()
+        data['lesson_count'] = '{}/{}'.format(executed_lesson_count,
+                                              lesson_count)
+
+        data['control_count'] = lessons.filter(intermediate_control=True).count()
 
         return data
 

@@ -104,16 +104,16 @@ class ElectronicJournal(BaseModel):
         on_delete=models.CASCADE,
         verbose_name='Статус',
     )
-    study_start = models.DateField(
-        verbose_name='Начало обучения',
-    )
-    study_end = models.DateField(
-        verbose_name='Конец обучения',
-    )
-    stud_disciplines = models.ManyToManyField(
-        'organizations.StudentDiscipline',
-        verbose_name='Дисциплины студентов',
-    )
+    # study_start = models.DateField(
+    #     verbose_name='Начало обучения',
+    # )
+    # study_end = models.DateField(
+    #     verbose_name='Конец обучения',
+    # )
+    # stud_disciplines = models.ManyToManyField(
+    #     'organizations.StudentDiscipline',
+    #     verbose_name='Дисциплины студентов',
+    # )
 
     def __str__(self):
         return '{} {}'.format(self.discipline,

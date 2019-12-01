@@ -1306,3 +1306,10 @@ msgstr ""
 #: .\venv\Lib\site-packages\modeltranslation\widgets.py:25
 msgid "None"
 msgstr ""
+
+msgid "executed"
+msgstr "Өткізілген"
+
+msgid "all"
+msgstr "барлығы"
+
