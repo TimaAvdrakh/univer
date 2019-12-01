@@ -15,6 +15,15 @@ from portal.curr_settings import lesson_statuses
 from django.utils.translation import gettext_lazy as _
 
 
+class LoadType2Serializer(serializers.ModelSerializer):
+    class Meta:
+        model = LoadType2
+        fields = (
+            'uid',
+            'name',
+        )
+
+
 class TimeWindowSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.TimeWindow
@@ -71,8 +80,8 @@ class ElectronicJournalSerializer(serializers.ModelSerializer):
 
 class ElectronicJournalDetailSerializer(serializers.ModelSerializer):
     status = serializers.CharField()
-    load_type = serializers.CharField()
-    discipline = serializers.CharField()
+    load_type = LoadType2Serializer()
+    discipline = DisciplineSerializer()
 
     class Meta:
         model = models.ElectronicJournal
@@ -276,10 +285,4 @@ class LessonShortSerializer(serializers.ModelSerializer):
         )
 
 
-class LoadType2Serializer(serializers.ModelSerializer):
-    class Meta:
-        model = LoadType2
-        fields = (
-            'uid',
-            'name',
-        )
+
