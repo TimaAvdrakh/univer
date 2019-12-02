@@ -41,8 +41,8 @@ def putfrom1c(request):
                 # cache.set('rule1c', rules)
 
         stri = request.POST['structure']
-        stri = stri.replace('muachuille', ';')
-        stri = stri.replace('huyachuille', '&')
+        # stri = stri.replace('muachuille', ';')
+        # stri = stri.replace('huyachuille', '&')
         d = json.loads(stri)  # Словарь
         has_not_saved = False
         for each in d:

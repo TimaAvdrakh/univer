@@ -1,9 +1,10 @@
 from django.conf.urls import url
+from django.urls import path
 from . import views
 
 
 urlpatterns = [
-    url('^putfrom1c/$', views.putfrom1c, name='putfrom1c'),
+    path('putfrom1c/', views.putfrom1c, name='putfrom1c'),
 
 
     # url('^putpicturefrom1c/$', views.putpicturefrom1c, name='putpicturefrom1c'),
