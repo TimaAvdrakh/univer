@@ -5,6 +5,7 @@ from django.core.exceptions import MultipleObjectsReturned
 from base64 import b64decode
 import json
 from common import models as models_common
+from organizations import models as models_organizations
 
 from .models import *
 # import cmartsite.models as models
