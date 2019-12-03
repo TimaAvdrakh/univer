@@ -8,8 +8,10 @@ from common import models as models_common
 
 from .models import *
 # import cmartsite.models as models
+from django.views.decorators.csrf import csrf_exempt
 
 
+@csrf_exempt
 def putfrom1c(request):
     # if not request.user.is_superuser:
     #     return HttpResponse('Forbidden')
