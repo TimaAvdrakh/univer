@@ -153,6 +153,15 @@ class Profile(BaseModel):
         verbose_name='Статус студента',
     )
 
+    def save(self, *args, **kwargs):
+
+        if self.exchange:
+            # gggggggggggggggggggggggggggggggggggg
+            # TODO postrequ is_active = False
+            pass
+
+        super(Profile, self).save()
+
     def __str__(self):
         return self.full_name
 
@@ -233,7 +242,7 @@ class TeacherPosition(BaseModel):
         verbose_name='Профиль'
     )
     # teacher = models.ForeignKey(
-    #     Teacher,  # TODO Profile
+    #     Teacher,
     #     models.CASCADE,
     #     null=True,
     #     verbose_name='Сотрудник',
