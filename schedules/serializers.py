@@ -160,7 +160,7 @@ class EvaluateSerializer(serializers.Serializer):
         missed = self.validated_data.get('missed')
         reason = self.validated_data.get('reason')
 
-        if datetime.date.today() < lesson.date:
+        if datetime.date.today() < lesson.date:  # TODO проверка на этой неделе можно
             """Невозможно поставить оценку на будущее занятие"""
             raise CustomException()
 
@@ -173,7 +173,7 @@ class EvaluateSerializer(serializers.Serializer):
 
             if sp.mark and missed is True:
                 """Запрещено поставить Н если оценка уже поставлена"""
-                raise CustomException()
+                raise CustomException(detail="Запрещено поставить Н если оценка уже поставлена")
             elif sp.mark is None and missed is True:
                 sp.missed = True
                 sp.save()
@@ -183,19 +183,20 @@ class EvaluateSerializer(serializers.Serializer):
                 sp.save()
 
         except models.StudentPerformance.DoesNotExist:
-            if missed:
-                sp = models.StudentPerformance.objects.create(
-                    student=student,
-                    lesson=lesson,
-                    missed=True,
-                    reason=reason,
-                )
-            else:
-                sp = models.StudentPerformance.objects.create(
-                    lesson=lesson,
-                    student=student,
-                    mark=mark,
-                )
+            # if missed:
+            sp = models.StudentPerformance.objects.create(
+                student=student,
+                lesson=lesson,
+                mark=mark,
+                missed=missed,
+                reason=reason,
+            )
+            # else:
+            #     sp = models.StudentPerformance.objects.create(
+            #         lesson=lesson,
+            #         student=student,
+            #         mark=mark,
+            #     )
 
         lesson.status_id = lesson_statuses['executed']
         lesson.save()
