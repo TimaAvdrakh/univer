@@ -502,7 +502,10 @@ class JournalDetailView(generics.RetrieveAPIView):
                         mark = ''
                         missed = ''
 
+                    grading_system = serializers.GradingSystemSerializer(lesson.grading_system).data
+
                     lesson_d['lesson_id'] = lesson.uid
+                    lesson_d['grading_system'] = grading_system
                     lesson_d['control'] = lesson.intermediate_control
                     lesson_d['mark'] = mark
                     lesson_d['missed'] = missed
@@ -514,7 +517,7 @@ class JournalDetailView(generics.RetrieveAPIView):
                     time_d['lesson_id'] = lesson.uid
                     time_d['start'] = lesson.time.from_time
                     time_d['edit_subject'] = True  # TODO
-                    time_d['grading_system'] = serializers.GradingSystemSerializer(lesson.grading_system).data
+                    time_d['grading_system'] = grading_system
                     time_d['subject_ru'] = lesson.subject_ru
                     time_d['subject_kk'] = lesson.subject_kk
                     time_d['subject_en'] = lesson.subject_en
