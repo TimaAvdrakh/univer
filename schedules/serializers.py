@@ -219,11 +219,18 @@ class LessonUpdateSerializer(serializers.ModelSerializer):
         fields = (
             'uid',
             'subject',
+            'subject_ru',
+            'subject_en',
+            'subject_kk',
             'grading_system',
         )
 
     def update(self, instance, validated_data):
-        instance.subject = validated_data.get('subject')
+        # instance.subject = validated_data.get('subject')
+        instance.subject_ru = validated_data.get('subject_ru')
+        instance.subject_en = validated_data.get('subject_en')
+        instance.subject_kk = validated_data.get('subject_kk')
+
         instance.grading_system = validated_data.get('grading_system')
 
         instance.save()
