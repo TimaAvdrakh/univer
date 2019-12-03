@@ -4,6 +4,8 @@ from django.contrib.auth.models import User
 from uuid import uuid4
 from organizations import models as org_models
 from common.utils import get_sentinel_user
+from common.utils import password_generator
+from cron_app.models import CredentialsEmailTask
 
 
 class Gender(BaseCatalog):
@@ -27,6 +29,7 @@ class StudentStatus(BaseCatalog):
 class Profile(BaseModel):
     user = models.OneToOneField(
         User,
+        null=True,
         related_name='profile',
         on_delete=models.CASCADE,
     )
@@ -154,11 +157,23 @@ class Profile(BaseModel):
     )
 
     def save(self, *args, **kwargs):
-
         if self.exchange:
-            # gggggggggggggggggggggggggggggggggggg
-            # TODO создать юзера с паролем и отправка емайл
-            pass
+            if self.user is None:
+                password = password_generator(size=8)
+                user = User.objects.create(
+                    username=self.iin,
+                    email=self.email,
+                    first_name=self.first_name,
+                    last_name=self.last_name,
+                )
+                user.set_password(password)
+                user.save()
+                self.user = user
+                CredentialsEmailTask.objects.create(
+                    to=user.email,
+                    username=user.username,
+                    password=password
+                )
 
         super(Profile, self).save()
 

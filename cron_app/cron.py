@@ -5,6 +5,7 @@ from portal.curr_settings import PASSWORD_RESET_ENDPOINT
 from django.utils import timezone
 from django.core.mail import send_mail
 from django.template.loader import render_to_string
+from portal.curr_settings import current_site
 
 
 class EmailCronJob(CronJobBase):
@@ -69,9 +70,11 @@ class SendCredentialsJob(CronJobBase):
         tasks = models.CredentialsEmailTask.objects.filter(is_success=False)
         for task in tasks:
             msg_plain = render_to_string('emails/credentials_email.txt', {'username': task.username,
-                                                                          'password': task.password})
+                                                                          'password': task.password,
+                                                                          'site': current_site})
             msg_html = render_to_string('emails/credentials_email.html', {'username': task.username,
-                                                                          'password': task.password})
+                                                                          'password': task.password,
+                                                                          'site': current_site})
 
             send_mail(
                 'Логин и пароль',
