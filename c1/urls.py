@@ -19,3 +19,5 @@ urlpatterns = [
     # url('^clear_123_cache/$', views.clear_cache, name='clear_123_cache'),
     # url('^login1c/$', views.logon1c, name="logon1c")
 ]
+
+# 1
