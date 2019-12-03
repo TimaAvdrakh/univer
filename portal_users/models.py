@@ -157,7 +157,7 @@ class Profile(BaseModel):
 
         if self.exchange:
             # gggggggggggggggggggggggggggggggggggg
-            # TODO postrequ is_active = False
+            # TODO создать юзера с паролем и отправка емайл
             pass
 
         super(Profile, self).save()

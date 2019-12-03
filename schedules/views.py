@@ -481,6 +481,7 @@ class JournalDetailView(generics.RetrieveAPIView):
                     # TODO проверка недели
                     # lesson_week = calendar.week
 
+                    reason = ''
                     try:
                         student_performance = models.StudentPerformance.objects.get(
                             student=student,
@@ -494,6 +495,7 @@ class JournalDetailView(generics.RetrieveAPIView):
 
                         if student_performance.missed:
                             missed = 'H'
+                            reason = student_performance.reason
                         else:
                             missed = ''
                     except models.StudentPerformance.DoesNotExist:
@@ -505,6 +507,7 @@ class JournalDetailView(generics.RetrieveAPIView):
                     lesson_d['mark'] = mark
                     lesson_d['missed'] = missed
                     lesson_d['allow_mark'] = allow_mark
+                    lesson_d['reason'] = reason
                     lesson_list.append(lesson_d)
 
                     # time_d['date'] = day['date'].day
