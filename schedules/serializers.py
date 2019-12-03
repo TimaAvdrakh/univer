@@ -277,6 +277,7 @@ class LessonShortSerializer(serializers.ModelSerializer):
     load_type = serializers.CharField()
     teachers = TeacherShortSerializer(many=True)
     time = TimeWindowSerializer()
+    status = serializers.CharField()
 
     class Meta:
         model = models.Lesson
@@ -293,5 +294,11 @@ class LessonShortSerializer(serializers.ModelSerializer):
             'status',
         )
 
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        if data['status'] is None:
+            data['status'] = ''
+
+        return data
 
 
