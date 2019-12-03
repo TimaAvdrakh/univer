@@ -283,6 +283,7 @@ class LessonShortSerializer(serializers.ModelSerializer):
             'teachers',
             'load_type',
             'intermediate_control',
+            'status',
         )
 
 
