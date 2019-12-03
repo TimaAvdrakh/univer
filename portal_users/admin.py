@@ -164,3 +164,11 @@ class StudentStatusAdmin(admin.ModelAdmin):
         "name",
         "uid",
     ]
+
+
+@admin.register(models.UsernameRule)
+class UsernameRuleAdmin(admin.ModelAdmin):
+    list_display = [
+        "raw_username",
+        "order",
+    ]
