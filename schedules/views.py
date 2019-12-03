@@ -515,7 +515,9 @@ class JournalDetailView(generics.RetrieveAPIView):
                     time_d['start'] = lesson.time.from_time
                     time_d['edit_subject'] = True  # TODO
                     time_d['grading_system'] = serializers.GradingSystemSerializer(lesson.grading_system).data
-                    time_d['subject'] = lesson.subject
+                    time_d['subject_ru'] = lesson.subject_ru
+                    time_d['subject_kk'] = lesson.subject_kk
+                    time_d['subject_en'] = lesson.subject_en
                     times.append(time_d)
 
                 stud_d['lessons'] = lesson_list
