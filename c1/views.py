@@ -11,7 +11,10 @@ from .models import *
 
 
 def putfrom1c(request):
-    if not request.user.is_superuser:
+    # if not request.user.is_superuser:
+    #     return HttpResponse('Forbidden')
+
+    if request.POST['token'] != 'lsdfgflg45454adsa5d645':
         return HttpResponse('Forbidden')
 
     if request.method == 'POST':

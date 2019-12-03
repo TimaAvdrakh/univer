@@ -6,6 +6,7 @@ from organizations import models as org_models
 from common.utils import get_sentinel_user
 from common.utils import password_generator
 from cron_app.models import CredentialsEmailTask
+from django.db.models import Max
 
 
 class Gender(BaseCatalog):
@@ -24,6 +25,24 @@ class StudentStatus(BaseCatalog):
     class Meta:
         verbose_name = 'Статус студента'
         verbose_name_plural = 'Статусы студентов'
+
+
+class UsernameRule(BaseModel):
+    raw_username = models.CharField(
+        max_length=500,
+        verbose_name='Логин',
+    )
+    order = models.IntegerField(
+        verbose_name='Порядок',
+    )
+
+    def __str__(self):
+        return '{}_{}'.format(self.raw_username,
+                              self.order)
+
+    class Meta:
+        verbose_name = 'Правило создания логина'
+        verbose_name_plural = 'Правила создания логина'
 
 
 class Profile(BaseModel):
@@ -160,8 +179,31 @@ class Profile(BaseModel):
         if self.exchange:
             if self.user is None:
                 password = password_generator(size=8)
+                raw_username = '{}{}'.format(self.last_name,
+                                             self.first_name[0])
+                if len(self.middle_name) > 0:
+                    raw_username += self.middle_name[0]
+
+                if not UsernameRule.objects.filter(raw_username=raw_username).exists():
+                    UsernameRule.objects.create(
+                        raw_username=raw_username,
+                        order=0,
+                    )
+                    username = raw_username
+                else:
+                    max_order = UsernameRule.objects.filter(raw_username=raw_username).aggregate(max_order=Max('order'))[
+                        'max_order']
+                    new_max = max_order + 1
+                    UsernameRule.objects.create(
+                        raw_username=raw_username,
+                        order=new_max,
+                    )
+
+                    username = '{}_{}'.format(raw_username,
+                                              new_max)
+
                 user = User.objects.create(
-                    username=self.iin,
+                    username=username,
                     email=self.email,
                     first_name=self.first_name,
                     last_name=self.last_name,
@@ -461,6 +503,3 @@ class ProfilePhone(BaseModel):
     class Meta:
         verbose_name = 'Телефон Пользователя'
         verbose_name_plural = 'Телефоны Пользователей'
-
-
-
