@@ -7,6 +7,9 @@ import json
 from common import models as models_common
 from organizations import models as models_organizations
 from portal_users import models as models_portal_users
+from schedules import models as models_schedules
+from portal.curr_settings import journal_statuses
+
 
 from .models import *
 # import cmartsite.models as models
@@ -179,3 +182,23 @@ def putfrom1c(request):
             cache.set('main_tree', None)
             # models.GoodGroup.objects.rebuild()
             return HttpResponse('ok')
+
+
+def create_electronic_journals():
+    """Создаем электронные журналы после загрузки Занятии"""
+    flow_uids = models_schedules.Lesson.objects.filter(is_active=True).distinct('flow_uid').values('flow_uid')
+
+    for flow in flow_uids:
+        lessons = models_schedules.Lesson.objects.filter(flow_uid=flow['flow_uid'])
+        first_lesson = lessons.first()
+        ej = models_schedules.ElectronicJournal.objects.create(
+            flow_uid=flow['flow_uid'],
+            discipline=first_lesson.discipline,
+            load_type=first_lesson.load_type,
+            status_id=journal_statuses['not_confirmed'],
+        )
+        ej.teachers.set(first_lesson.teachers.filter(is_active=True))
+
+        for lesson in lessons:
+            lesson.el_journal = ej
+            lesson.save()
