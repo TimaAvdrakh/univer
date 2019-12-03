@@ -6,6 +6,7 @@ from base64 import b64decode
 import json
 from common import models as models_common
 from organizations import models as models_organizations
+from portal_users import models as models_portal_users
 
 from .models import *
 # import cmartsite.models as models
@@ -47,8 +48,8 @@ def putfrom1c(request):
                 # cache.set('rule1c', rules)
 
         stri = request.POST['structure']
-        # stri = stri.replace('muachuille', ';')
-        # stri = stri.replace('huyachuille', '&')
+        stri = stri.replace('muachuille', ';')
+        stri = stri.replace('huyachuille', '&')
         d = json.loads(stri)  # Словарь
         has_not_saved = False
         for each in d:
