@@ -9,7 +9,7 @@ from common.exceptions import CustomException
 import datetime
 from organizations.models import LoadType2, AcadPeriod
 from common.serializers import AcadPeriodSerializer
-from organizations.models import StudentDiscipline
+from organizations.models import StudentDiscipline, StudyPlan
 from django.db.models import Max, Min
 from portal.curr_settings import lesson_statuses
 from django.utils.translation import gettext_lazy as _
@@ -183,20 +183,20 @@ class EvaluateSerializer(serializers.Serializer):
                 sp.save()
 
         except models.StudentPerformance.DoesNotExist:
-            # if missed:
-            sp = models.StudentPerformance.objects.create(
-                student=student,
-                lesson=lesson,
-                mark=mark,
-                missed=missed,
-                reason=reason,
-            )
-            # else:
-            #     sp = models.StudentPerformance.objects.create(
-            #         lesson=lesson,
-            #         student=student,
-            #         mark=mark,
-            #     )
+            if missed:
+                sp = models.StudentPerformance.objects.create(
+                    student=student,
+                    lesson=lesson,
+                    missed=True,
+                    reason=reason,
+                )
+            else:
+                sp = models.StudentPerformance.objects.create(
+                    lesson=lesson,
+                    student=student,
+                    mark=mark,
+                    missed=False,
+                )
 
         lesson.status_id = lesson_statuses['executed']
         lesson.save()
@@ -267,6 +267,10 @@ class ChooseControlSerializer(serializers.ModelSerializer):
 
         instance.intermediate_control = not instance.intermediate_control
         instance.save()
+
+        if instance.intermediate_control:
+            """Отправим email всем студентам занятия"""
+            groups = instance.groups.filter(is_active=True)
 
         return instance
 
