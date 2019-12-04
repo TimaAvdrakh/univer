@@ -178,7 +178,7 @@ class EvaluateSerializer(serializers.Serializer):
                 sp.missed = True
                 sp.save()
 
-            if mark and missed is False:
+            if mark:
                 sp.mark = mark
                 sp.save()
 
