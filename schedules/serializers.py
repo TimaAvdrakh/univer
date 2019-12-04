@@ -284,7 +284,7 @@ class ChooseControlSerializer(serializers.ModelSerializer):
         instance.save()
 
         if instance.intermediate_control:
-            """Отправим email всем студентам занятия"""
+            """Отправим уведомление всем студентам занятия"""
             ControlNotifyTask.objects.create(lesson=instance)
 
         return instance
