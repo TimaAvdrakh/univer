@@ -174,9 +174,10 @@ class EvaluateSerializer(serializers.Serializer):
             if sp.mark and missed is True:
                 """Запрещено поставить Н если оценка уже поставлена"""
                 raise CustomException(detail="Запрещено поставить Н если оценка уже поставлена")
-            elif sp.mark is None and missed is True:
-                sp.missed = True
-                sp.save()
+
+            # elif sp.mark is None and missed is True:
+            #     sp.missed = True
+            #     sp.save()
 
             if mark:
                 sp.mark = mark
@@ -184,6 +185,7 @@ class EvaluateSerializer(serializers.Serializer):
 
         except models.StudentPerformance.DoesNotExist:
             if missed:
+                """Пропустил урок"""
                 sp = models.StudentPerformance.objects.create(
                     student=student,
                     lesson=lesson,
