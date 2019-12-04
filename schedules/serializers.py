@@ -143,6 +143,7 @@ class EvaluateSerializer(serializers.Serializer):
     mark = serializers.PrimaryKeyRelatedField(
         queryset=models.Mark.objects.filter(is_active=True),
         required=False,
+        allow_null=True,
     )
     missed = serializers.BooleanField(
         default=False,
@@ -171,9 +172,9 @@ class EvaluateSerializer(serializers.Serializer):
                 is_active=True,
             )
 
-            if sp.mark and missed is True:
-                """Запрещено поставить Н если оценка уже поставлена"""
-                raise CustomException(detail="Запрещено поставить Н если оценка уже поставлена")
+            # if sp.mark and missed is True:
+            #     """Запрещено поставить Н если оценка уже поставлена"""
+            #     raise CustomException(detail="Запрещено поставить Н если оценка уже поставлена")
 
             # elif sp.mark is None and missed is True:
             #     sp.missed = True
