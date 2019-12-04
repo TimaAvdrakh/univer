@@ -96,6 +96,7 @@ class StudPerformanceChangedTask(BaseTask):
     old_mark = models.ForeignKey(
         'schedules.Mark',
         on_delete=models.CASCADE,
+        related_name='tasks',
         verbose_name='Старая оценка',
     )
     new_mark = models.ForeignKey(
@@ -103,3 +104,5 @@ class StudPerformanceChangedTask(BaseTask):
         on_delete=models.CASCADE,
         verbose_name='Новая оценка',
     )
+
+# 1
