@@ -444,7 +444,7 @@ class JournalDetailView(generics.RetrieveAPIView):
         groups = lessons[0].groups.filter(is_active=True)
         student_pks = org_models.StudyPlan.objects.filter(is_active=True,
                                                           group__in=groups).values('student')
-        students = Profile.objects.filter(pk__in=student_pks)
+        students = Profile.objects.filter(pk__in=student_pks).order_by('last_name', 'first_name')
         for s in students:
             d = {
                 'name': s.full_name,
