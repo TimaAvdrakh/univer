@@ -489,9 +489,9 @@ class JournalDetailView(generics.RetrieveAPIView):
                             is_active=True,
                         )
                         if student_performance.mark:
-                            mark = student_performance.mark.value_number
+                            mark = serializers.MarkSerializer(student_performance.mark).data
                         else:
-                            mark = ''
+                            mark = {}
 
                         if student_performance.missed:
                             missed = 'H'
@@ -499,7 +499,7 @@ class JournalDetailView(generics.RetrieveAPIView):
                         else:
                             missed = ''
                     except models.StudentPerformance.DoesNotExist:
-                        mark = ''
+                        mark = {}
                         missed = ''
 
                     grading_system = serializers.GradingSystemSerializer(lesson.grading_system).data
@@ -508,9 +508,13 @@ class JournalDetailView(generics.RetrieveAPIView):
                     lesson_d['grading_system'] = grading_system
                     lesson_d['control'] = lesson.intermediate_control
                     lesson_d['mark'] = mark
-                    lesson_d['missed'] = missed
+                    lesson_d['missed'] = {
+                        'missed': missed,
+                        'reason': reason,
+                    }
+                    # lesson_d['reason'] = reason
+
                     lesson_d['allow_mark'] = allow_mark
-                    lesson_d['reason'] = reason
                     lesson_list.append(lesson_d)
 
                     # time_d['date'] = day['date'].day
