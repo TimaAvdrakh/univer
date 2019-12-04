@@ -145,6 +145,7 @@ CRON_CLASSES = [
     "cron_app.cron.NotifyAdvisorJob",
     "cron_app.cron.AdvisorRejectBidJob",
     "cron_app.cron.StudPerformanceChangedJob",
+    "cron_app.cron.ControlNotifyJob",
 ]
 
 # SESSION_COOKIE_AGE = 60

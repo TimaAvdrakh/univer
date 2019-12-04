@@ -7,6 +7,7 @@ from django.core.mail import send_mail
 from django.template.loader import render_to_string
 from portal.curr_settings import current_site
 from portal_users import models as user_models
+from organizations import models as org_models
 
 
 class EmailCronJob(CronJobBase):
@@ -195,6 +196,46 @@ class StudPerformanceChangedJob(CronJobBase):
                     msg_plain,
                     'avtoexpertastana@gmail.com',
                     [role.profile.email],
+                    html_message=msg_html,
+                )
+            task.is_success = True
+            task.save()
+
+
+class ControlNotifyJob(CronJobBase):
+    """Задача для уведомления студентов о промежуточном контроле"""
+
+    RUN_EVERY_MINS = 1
+    schedule = Schedule(run_every_mins=RUN_EVERY_MINS)
+    code = 'crop_app.control_notify'
+
+    def do(self):
+        mail_subject = 'Назначен промежуточный контроль'
+        tasks = models.ControlNotifyTask.objects.filter(is_success=False)
+        for task in tasks:
+            lesson = task.lesson
+
+            date = lesson.date.strftime('%d.%m.%Y')
+
+            groups = lesson.groups.filter(is_active=True)
+            study_plans = org_models.StudyPlan.objects.filter(group__in=groups,
+                                                              is_active=True)
+
+            msg_plain = render_to_string('schedules/email/control_notify/control_notify.txt',
+                                         {'discipline': lesson.discipline.name,
+                                          'date': date}
+                                         )
+            msg_html = render_to_string('schedules/email/control_notify/control_notify.html',
+                                        {'discipline': lesson.discipline.name,
+                                         'date': date}
+                                        )
+
+            for sp in study_plans:
+                send_mail(
+                    mail_subject,
+                    msg_plain,
+                    'avtoexpertastana@gmail.com',
+                    [sp.student.email],
                     html_message=msg_html,
                 )
             task.is_success = True

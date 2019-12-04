@@ -13,7 +13,7 @@ from organizations.models import StudentDiscipline, StudyPlan
 from django.db.models import Max, Min
 from portal.curr_settings import lesson_statuses
 from django.utils.translation import gettext_lazy as _
-from cron_app.models import StudPerformanceChangedTask
+from cron_app.models import StudPerformanceChangedTask, ControlNotifyTask
 
 
 class LoadType2Serializer(serializers.ModelSerializer):
@@ -285,7 +285,7 @@ class ChooseControlSerializer(serializers.ModelSerializer):
 
         if instance.intermediate_control:
             """Отправим email всем студентам занятия"""
-            groups = instance.groups.filter(is_active=True)
+            ControlNotifyTask.objects.create(lesson=instance)
 
         return instance
 
@@ -320,5 +320,3 @@ class LessonShortSerializer(serializers.ModelSerializer):
             data['status'] = ''
 
         return data
-
-

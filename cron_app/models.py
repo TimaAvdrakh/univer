@@ -105,4 +105,11 @@ class StudPerformanceChangedTask(BaseTask):
         verbose_name='Новая оценка',
     )
 
-# 1
+
+class ControlNotifyTask(BaseTask):
+    """Задача для уведомления студентов о промежуточном контроле"""
+    lesson = models.ForeignKey(
+        'schedules.Lesson',
+        on_delete=models.CASCADE,
+        verbose_name='Занятие',
+    )
