@@ -674,7 +674,8 @@ class EvaluateView(generics.CreateAPIView):
         self.check_object_permissions(request,
                                       lesson)
 
-        serializer = self.serializer_class(data=request.data)
+        serializer = self.serializer_class(data=request.data,
+                                           context={'request': request})
         serializer.is_valid(raise_exception=True)
         serializer.save()
 

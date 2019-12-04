@@ -144,6 +144,7 @@ CRON_CLASSES = [
     "cron_app.cron.SendCredentialsJob",
     "cron_app.cron.NotifyAdvisorJob",
     "cron_app.cron.AdvisorRejectBidJob",
+    "cron_app.cron.StudPerformanceChangedJob",
 ]
 
 # SESSION_COOKIE_AGE = 60

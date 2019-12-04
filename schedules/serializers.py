@@ -13,6 +13,7 @@ from organizations.models import StudentDiscipline, StudyPlan
 from django.db.models import Max, Min
 from portal.curr_settings import lesson_statuses
 from django.utils.translation import gettext_lazy as _
+from cron_app.models import StudPerformanceChangedTask
 
 
 class LoadType2Serializer(serializers.ModelSerializer):
@@ -155,6 +156,8 @@ class EvaluateSerializer(serializers.Serializer):
     )
 
     def save(self, **kwargs):
+        request = self.context.get('request')
+
         lesson = self.validated_data.get('lesson')
         student = self.validated_data.get('student')
         mark = self.validated_data.get('mark')
@@ -172,17 +175,19 @@ class EvaluateSerializer(serializers.Serializer):
                 is_active=True,
             )
 
-            # if sp.mark and missed is True:
-            #     """Запрещено поставить Н если оценка уже поставлена"""
-            #     raise CustomException(detail="Запрещено поставить Н если оценка уже поставлена")
-
-            # elif sp.mark is None and missed is True:
-            #     sp.missed = True
-            #     sp.save()
-
+            old_mark = sp.mark
             if mark:
                 sp.mark = mark
                 sp.save()
+
+                if old_mark is not None and mark != old_mark:
+                    """Создаем задачу для уведомления админов об изменени оценки"""
+                    StudPerformanceChangedTask.objects.create(
+                        author=request.user.profile,
+                        stud_perf=sp,
+                        old_mark=old_mark,
+                        new_mark=mark,
+                    )
 
         except models.StudentPerformance.DoesNotExist:
             if missed:
@@ -203,6 +208,13 @@ class EvaluateSerializer(serializers.Serializer):
 
         lesson.status_id = lesson_statuses['executed']
         lesson.save()
+        models.StudentPerformanceLog.objects.create(
+            author=request.user.profile,
+            stud_perf=sp,
+            mark=sp.mark,
+            missed=sp.missed,
+            reason=sp.reason,
+        )
 
         return sp
 

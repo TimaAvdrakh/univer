@@ -282,3 +282,42 @@ class StudentPerformance(BaseModel):
             'lesson',
             'student',
         )
+
+
+class StudentPerformanceLog(BaseModel):
+    author = models.ForeignKey(
+        'portal_users.Profile',
+        on_delete=models.CASCADE,
+        verbose_name='Автор',
+    )
+    stud_perf = models.ForeignKey(
+        StudentPerformance,
+        on_delete=models.CASCADE,
+        verbose_name='Успеваемость студента',
+    )
+    mark = models.ForeignKey(
+        Mark,
+        null=True,
+        blank=True,
+        on_delete=models.CASCADE,
+        verbose_name='Оценка',
+    )
+    missed = models.BooleanField(
+        default=False,
+        verbose_name='Отсутствовал',
+    )
+    reason = models.CharField(
+        max_length=500,
+        default='',
+        blank=True,
+        verbose_name='Причина отсутствия',
+    )
+
+    def __str__(self):
+        return '{} {}'.format(self.author.first_name,
+                              self.stud_perf)
+
+    class Meta:
+        verbose_name = 'Лог успеваемости студента'
+        verbose_name_plural = 'Логи успеваемости студентов'
+

@@ -79,3 +79,27 @@ class AdvisorRejectedBidTask(BaseTask):
         max_length=500,
         verbose_name='Комментарий',
     )
+
+
+class StudPerformanceChangedTask(BaseTask):
+    """Задача для уведомления админов об изменении оценки"""
+    author = models.ForeignKey(
+        'portal_users.Profile',
+        on_delete=models.CASCADE,
+        verbose_name='Автор',
+    )
+    stud_perf = models.ForeignKey(
+        'schedules.StudentPerformance',
+        on_delete=models.CASCADE,
+        verbose_name='Успеваемость студента',
+    )
+    old_mark = models.ForeignKey(
+        'schedules.Mark',
+        on_delete=models.CASCADE,
+        verbose_name='Старая оценка',
+    )
+    new_mark = models.ForeignKey(
+        'schedules.Mark',
+        on_delete=models.CASCADE,
+        verbose_name='Новая оценка',
+    )

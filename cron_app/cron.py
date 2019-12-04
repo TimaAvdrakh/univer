@@ -6,6 +6,7 @@ from django.utils import timezone
 from django.core.mail import send_mail
 from django.template.loader import render_to_string
 from portal.curr_settings import current_site
+from portal_users import models as user_models
 
 
 class EmailCronJob(CronJobBase):
@@ -156,5 +157,45 @@ class AdvisorRejectBidJob(CronJobBase):
                 [student.email],
                 html_message=msg_html,
             )
+            task.is_success = True
+            task.save()
+
+
+class StudPerformanceChangedJob(CronJobBase):
+    """Задача для уведомления админов об изменении оценки"""
+
+    RUN_EVERY_MINS = 1
+    schedule = Schedule(run_every_mins=RUN_EVERY_MINS)
+    code = 'crop_app.stud_performance_changed'
+
+    def do(self):
+        mail_subject = 'Изменена оценка'
+        tasks = models.StudPerformanceChangedTask.objects.filter(is_success=False)
+        for task in tasks:
+            discipline = task.stud_perf.lesson.discipline
+
+            msg_plain = render_to_string('schedules/email/mark_changed.txt',
+                                         {'teacher': task.author.name_initial,
+                                          'discipline': discipline.name,
+                                          'old_mark': task.old_mark.value_number,
+                                          'new_mark': task.new_mark.value_number}
+                                         )
+            msg_html = render_to_string('schedules/email/mark_changed.html',
+                                        {'teacher': task.author.name_initial,
+                                         'discipline': discipline.name,
+                                         'old_mark': task.old_mark.value_number,
+                                         'new_mark': task.new_mark.value_number}
+                                        )
+
+            roles = user_models.Role.objects.filter(is_org_admin=True).distinct('profile')
+
+            for role in roles:
+                send_mail(
+                    mail_subject,
+                    msg_plain,
+                    'avtoexpertastana@gmail.com',
+                    [role.profile.email],
+                    html_message=msg_html,
+                )
             task.is_success = True
             task.save()
