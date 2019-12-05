@@ -88,6 +88,7 @@ def putfrom1c(request):
                             finding_object.exchange = True  # TODO реализовать в Дисциплине
                         except Manager.DoesNotExist:
                             finding_object = Manager()
+                            finding_object.exchange = True
                         except MultipleObjectsReturned:
                             print(q, 'MultipleObjectsReturned: ' + str(cnt + 1) + current_rule['model'])
                             continue
@@ -104,6 +105,7 @@ def putfrom1c(request):
                                     elif str(i) == rule_field['django']:
                                         q[str(i)] = each_elem[rule_field['c1']]
                             finding_object = Manager.objects.get(**q)
+                            finding_object.exchange = True
                         except Manager.DoesNotExist:
                             finding_object = Manager()
                             finding_object.exchange = True
@@ -114,8 +116,10 @@ def putfrom1c(request):
                     """Не связанная модель"""
                     try:
                         finding_object = Manager.objects.get(uid=each_elem[u'uid'])
+                        finding_object.exchange = True
                     except:
                         finding_object = Manager()
+                        finding_object.exchange = True
                         # if not current_rule['is_related']:
                         finding_object.uid = each_elem[u'uid']
 

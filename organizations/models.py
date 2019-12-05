@@ -389,6 +389,70 @@ class StudyPlan(BaseModel):
         )
 
 
+class Prerequisite(BaseModel):
+    study_period = models.ForeignKey(
+        StudyPeriod,
+        on_delete=models.CASCADE,
+        verbose_name='Учебный период',
+    )
+    discipline = models.ForeignKey(
+        'organizations.Discipline',
+        on_delete=models.CASCADE,
+        verbose_name='Дисциплина',
+        related_name='prerequisites',
+    )
+    required_discipline = models.ForeignKey(
+        'organizations.Discipline',
+        on_delete=models.CASCADE,
+        verbose_name='Требуемая дисциплина',
+    )
+    speciality = models.ForeignKey(
+        Speciality,
+        on_delete=models.CASCADE,
+        verbose_name='Направление подготовки',
+    )
+
+    def __str__(self):
+        return '{} - {}'.format(self.required_discipline,
+                                self.discipline)
+
+    class Meta:
+        verbose_name = 'Пререквизит'
+        verbose_name_plural = 'Пререквизиты'
+
+
+class Postrequisite(BaseModel):
+    study_period = models.ForeignKey(
+        StudyPeriod,
+        on_delete=models.CASCADE,
+        verbose_name='Учебный период',
+    )
+    discipline = models.ForeignKey(
+        'organizations.Discipline',
+        on_delete=models.CASCADE,
+        verbose_name='Дисциплина',
+        related_name='postrequisites',
+    )
+    available_discipline = models.ForeignKey(
+        'organizations.Discipline',
+        on_delete=models.CASCADE,
+        verbose_name='Доступная дисциплина',
+    )
+    speciality = models.ForeignKey(
+        Speciality,
+        on_delete=models.CASCADE,
+        verbose_name='Направление подготовки',
+    )
+
+    def __str__(self):
+        return '{} - {}'.format(self.discipline,
+                                self.available_discipline)
+
+    class Meta:
+        verbose_name = 'Постреквизит'
+        verbose_name_plural = 'Постреквизиты'
+
+
 class Discipline(BaseCatalog):
     description = models.TextField(
         verbose_name='Описание',
@@ -404,13 +468,16 @@ class Discipline(BaseCatalog):
         verbose_name = 'Дисциплина'
         verbose_name_plural = 'Дисциплины'
 
-    def save(self, force_insert=False, force_update=False, using=None,
-             update_fields=None):
-
+    def save(self, *args, **kwargs):
         if self.exchange:
-            # gggggggggggggggggggggggggggggggggggg
-            # TODO postrequ is_active = False
-            pass
+            """При выгрузке деактивируем существующие пре и постреквизити"""
+            for pos_req in Postrequisite.objects.all():
+                pos_req.is_active = False
+                pos_req.save()
+
+            for pre_req in Prerequisite.objects.all():
+                pre_req.is_active = False
+                pre_req.save()
 
         super(Discipline, self).save()
 
@@ -670,67 +737,3 @@ class TeacherDiscipline(BaseModel):
     class Meta:
         verbose_name = 'Закрепление дисциплин'
         verbose_name_plural = 'Закрепление дисциплин'
-
-
-class Prerequisite(BaseModel):
-    study_period = models.ForeignKey(
-        StudyPeriod,
-        on_delete=models.CASCADE,
-        verbose_name='Учебный период',
-    )
-    discipline = models.ForeignKey(
-        Discipline,
-        on_delete=models.CASCADE,
-        verbose_name='Дисциплина',
-        related_name='prerequisites',
-    )
-    required_discipline = models.ForeignKey(
-        Discipline,
-        on_delete=models.CASCADE,
-        verbose_name='Требуемая дисциплина',
-    )
-    speciality = models.ForeignKey(
-        Speciality,
-        on_delete=models.CASCADE,
-        verbose_name='Направление подготовки',
-    )
-
-    def __str__(self):
-        return '{} - {}'.format(self.required_discipline,
-                                self.discipline)
-
-    class Meta:
-        verbose_name = 'Пререквизит'
-        verbose_name_plural = 'Пререквизиты'
-
-
-class Postrequisite(BaseModel):
-    study_period = models.ForeignKey(
-        StudyPeriod,
-        on_delete=models.CASCADE,
-        verbose_name='Учебный период',
-    )
-    discipline = models.ForeignKey(
-        Discipline,
-        on_delete=models.CASCADE,
-        verbose_name='Дисциплина',
-        related_name='postrequisites',
-    )
-    available_discipline = models.ForeignKey(
-        Discipline,
-        on_delete=models.CASCADE,
-        verbose_name='Доступная дисциплина',
-    )
-    speciality = models.ForeignKey(
-        Speciality,
-        on_delete=models.CASCADE,
-        verbose_name='Направление подготовки',
-    )
-
-    def __str__(self):
-        return '{} - {}'.format(self.discipline,
-                                self.available_discipline)
-
-    class Meta:
-        verbose_name = 'Постреквизит'
-        verbose_name_plural = 'Постреквизиты'
