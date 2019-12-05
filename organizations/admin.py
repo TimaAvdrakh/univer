@@ -55,6 +55,17 @@ class CathedraAdmin(admin.ModelAdmin):
     ]
 
 
+@admin.register(models.Group)
+class GroupAdmin(admin.ModelAdmin):
+    list_display = [
+        'name',
+        'uid',
+        'headman',
+        'kurator',
+        'language',
+    ]
+
+
 @admin.register(models.EducationProgram)
 class EducationProgramAdmin(admin.ModelAdmin):
     list_filter = (
