@@ -448,9 +448,9 @@ class JournalDetailView(generics.RetrieveAPIView):
 
         # Студенты берем из StudentDiscipline
         student_pks_from_sd = org_models.StudentDiscipline.objects.filter(
-            discipline=lesson.discipline,
-            load_type__load_type2=lesson.load_type,
-            teacher__in=lesson.teachers.filter(is_active=True),
+            discipline=journal.discipline,
+            load_type__load_type2=journal.load_type,
+            teacher__in=journal.teachers.filter(is_active=True),
         ).distinct('student').values('student')
 
         students = Profile.objects.filter(pk__in=student_pks)
