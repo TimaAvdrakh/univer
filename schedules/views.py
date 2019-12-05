@@ -441,10 +441,21 @@ class JournalDetailView(generics.RetrieveAPIView):
         day_list = []
         student_list2 = []
 
-        groups = lessons[0].groups.filter(is_active=True)
+        lesson = lessons.first()
+        groups = lesson.groups.filter(is_active=True)
         student_pks = org_models.StudyPlan.objects.filter(is_active=True,
                                                           group__in=groups).values('student')
-        students = Profile.objects.filter(pk__in=student_pks).order_by('last_name', 'first_name')
+
+        # Студенты берем из StudentDiscipline
+        student_pks_from_sd = org_models.StudentDiscipline.objects.filter(
+            discipline=lesson.discipline,
+            load_type__load_type2=lesson.load_type,
+            teacher__in=lesson.teachers.filter(is_active=True),
+        ).distinct('student').values('student')
+
+        students = Profile.objects.filter(pk__in=student_pks)
+        students = students.filter(pk__in=student_pks_from_sd).order_by('last_name', 'first_name')
+
         for s in students:
             d = {
                 'name': s.full_name,
