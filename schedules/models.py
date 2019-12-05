@@ -321,3 +321,4 @@ class StudentPerformanceLog(BaseModel):
         verbose_name = 'Лог успеваемости студента'
         verbose_name_plural = 'Логи успеваемости студентов'
 
+# 1
