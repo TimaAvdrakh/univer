@@ -376,9 +376,17 @@ class JournalDetailView(generics.RetrieveAPIView):
                                       journal)
 
         lessons = journal.lessons.filter(
-            teachers__in=[profile],
+            # teachers__in=[profile],
             is_active=True,
         ).order_by('date', 'time__from_time')
+
+        if len(lessons) == 0:
+            return Response(
+                {
+                    "message": "no_lessons",
+                },
+                status=status.HTTP_404_NOT_FOUND
+            )
 
         if date_param:
             """Выбрать дату из параметра"""
