@@ -724,7 +724,7 @@ class MarkListView(generics.ListAPIView):
 
     def get_queryset(self):
         grading_system = self.request.query_params.get('grading_system')
-        queryset = self.queryset.filter(grading_system_id=grading_system).order_by('value_number')
+        queryset = self.queryset.filter(grading_system_id=grading_system).order_by('weight')
 
         return queryset
 

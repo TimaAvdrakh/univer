@@ -261,6 +261,7 @@ class MarkSerializer(serializers.ModelSerializer):
         fields = (
             'uid',
             'name',
+            'weight',
             'grading_system',
             'value_number',
             'value_traditional',
