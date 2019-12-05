@@ -9,3 +9,6 @@ class TeacherPermission(BasePermission):
 class ElJournalPermission(BasePermission):
     def has_object_permission(self, request, view, obj):
         return request.user.profile in obj.teachers.filter(is_active=True)
+
+
+# 1
