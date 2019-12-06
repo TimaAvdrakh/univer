@@ -15,6 +15,7 @@ from organizations.serializers import DisciplineSerializer
 from portal_users.serializers import ProfileShortSerializer
 from rest_framework.permissions import IsAuthenticated
 from . import permissions
+from django.db.models import Avg
 
 
 class TimeWindowListView(generics.ListAPIView):
@@ -644,6 +645,43 @@ class StudentPerformanceView(generics.RetrieveAPIView):
         )
 
 
+class AverageMarkView(generics.RetrieveAPIView):
+    """
+    Получить среднюю оценку студента по дисциплине
+    student, discipline
+    """
+    permission_classes = (
+        IsAuthenticated,
+        permissions.TeacherPermission,
+    )
+
+    def get(self, request, *args, **kwargs):
+        student_id = request.query_params.get('student')
+        discipline_id = request.query_params.get('discipline')
+
+        student = Profile.objects.get(pk=student_id)
+        discipline = org_models.Discipline.objects.get(pk=discipline_id)
+
+        lessons = models.Lesson.objects.filter(discipline=discipline,
+                                               is_active=True)
+        mark_pks = models.StudentPerformance.objects.filter(
+            student=student,
+            lesson__in=lessons,
+            is_active=True,
+        ).values('mark')
+        marks = models.Mark.objects.filter(pk__in=mark_pks)
+        avg = marks.aggregate(avg=Avg('weight'))['avg']
+        resp = {
+            'avg': avg,
+            'discipline': discipline.name,
+            'student': student.name_initial,
+        }
+        return Response(
+            resp,
+            status=status.HTTP_200_OK
+        )
+
+
 class GetGradingSystemView(generics.RetrieveAPIView):
     """
     Получить систему оценивания занятия
@@ -775,6 +813,5 @@ class LessonListView(generics.ListAPIView):
             queryset = queryset.filter(flow_uid=flow_uid)
 
         return queryset
-
 
 # 1

@@ -35,4 +35,6 @@ urlpatterns = [
     path('lesson/<pk>/choose_control/', views.ChooseControlView.as_view(), name='choose_control'),
 
     path('lessons/', views.LessonListView.as_view(), name='lessons'),
+
+    path('avg_mark/', views.AverageMarkView.as_view(), name='average_mark'),
 ]

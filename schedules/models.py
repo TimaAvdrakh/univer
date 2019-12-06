@@ -149,6 +149,11 @@ class Lesson(BaseModel):
         on_delete=models.CASCADE,
         verbose_name='Дисциплина',
     )
+    load_type = models.ForeignKey(
+        'organizations.LoadType2',
+        on_delete=models.CASCADE,
+        verbose_name='Тип нагрузки',
+    )
     teachers = models.ManyToManyField(
         'portal_users.Profile',
         verbose_name='Преподаватели',
@@ -161,11 +166,6 @@ class Lesson(BaseModel):
     groups = models.ManyToManyField(
         'organizations.Group',
         verbose_name='Группы',
-    )
-    load_type = models.ForeignKey(
-        'organizations.LoadType2',
-        on_delete=models.CASCADE,
-        verbose_name='Тип нагрузки',
     )
     acad_period = models.ForeignKey(
         'organizations.AcadPeriod',
