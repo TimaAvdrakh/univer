@@ -302,7 +302,7 @@ class ElJournalListView(generics.ListAPIView):
     def get_queryset(self):
         profile = self.request.user.profile
         discipline = self.request.query_params.get('discipline')
-        load_type = self.request.query_params.get('load_type')  # TODO endpoint
+        load_type = self.request.query_params.get('load_type')
         group = self.request.query_params.get('group')
         study_year = self.request.query_params.get('study_year')
 

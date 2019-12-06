@@ -232,6 +232,11 @@ class StudyPeriod(BaseModel):
         verbose_name='Учебный год',
     )
 
+    @property
+    def repr_name(self):
+        return '{}-{}'.format(self.start,
+                              self.end)
+
     def __str__(self):
         return '{}-{}'.format(self.start,
                               self.end)

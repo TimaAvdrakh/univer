@@ -78,6 +78,32 @@ class ElectronicJournalSerializer(serializers.ModelSerializer):
             'status',
         )
 
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+
+        lessons = instance.lessons.filter(is_active=True)
+        if len(lessons) > 0:
+            lesson = lessons.first()
+            groups = lesson.groups.filter(is_active=True)
+
+            serializer = GroupShortSerializer(groups,
+                                              many=True)
+            data['groups'] = serializer.data
+            data['study_year'] = lesson.study_year.repr_name
+
+            acad_period_pks = lessons.distinct('acad_period').values('acad_period')
+            acad_periods = AcadPeriod.objects.filter(pk__in=acad_period_pks,
+                                                     is_active=True)
+            acad_period_serializer = AcadPeriodSerializer(acad_periods,
+                                                          many=True)
+            data['acad_periods'] = acad_period_serializer.data
+        else:
+            data['groups'] = []
+            data['study_year'] = ''
+            data['acad_periods'] = []
+
+        return data
+
 
 class ElectronicJournalDetailSerializer(serializers.ModelSerializer):
     status = serializers.CharField()
