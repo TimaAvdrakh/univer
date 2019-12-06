@@ -506,6 +506,14 @@ class LoadType(BaseCatalog):
         verbose_name='Тип нагрузки',
     )
 
+    def save(self, *args, **kwargs):
+        if self.exchange:
+            """Находим Тип нагрузки по названию и прикрепим к виду нагрузки"""  # TODO TEST
+            load_type2 = LoadType2.objects.get(name=self.load_type2_id)
+            self.load_type2 = load_type2
+
+        super(LoadType, self).save(*args, **kwargs)
+
     class Meta:
         verbose_name = 'Вид нагрузки'
         verbose_name_plural = 'Виды нагрузок'
