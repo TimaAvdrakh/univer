@@ -74,10 +74,10 @@ class LessonStatus(BaseCatalog):
         verbose_name_plural = 'Статусы занятий'
 
 
-class JournalStatus(BaseCatalog):
-    class Meta:
-        verbose_name = 'Статус журнала'
-        verbose_name_plural = 'Статусы журналов'
+# class JournalStatus(BaseCatalog):
+#     class Meta:
+#         verbose_name = 'Статус журнала'
+#         verbose_name_plural = 'Статусы журналов'
 
 
 class ElectronicJournal(BaseModel):

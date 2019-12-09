@@ -40,6 +40,6 @@ class MarkTranslationOptions(TranslationOptions):
     )
 
 
-@register(models.JournalStatus)
-class JournalStatusTranslationOptions(TranslationOptions):
-    fields = ('name',)
+# @register(models.JournalStatus)
+# class JournalStatusTranslationOptions(TranslationOptions):
+#     fields = ('name',)

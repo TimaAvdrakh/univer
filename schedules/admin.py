@@ -88,12 +88,12 @@ class StudentPerformanceAdmin(admin.ModelAdmin):
     )
 
 
-@admin.register(models.JournalStatus)
-class JournalStatusAdmin(admin.ModelAdmin):
-    list_display = (
-        'name',
-        'uid',
-    )
+# @admin.register(models.JournalStatus)
+# class JournalStatusAdmin(admin.ModelAdmin):
+#     list_display = (
+#         'name',
+#         'uid',
+#     )
 
 
 @admin.register(models.ElectronicJournal)
