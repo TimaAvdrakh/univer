@@ -74,12 +74,16 @@ class Cathedra(BaseCatalog):
 class Group(BaseCatalog):
     headman = models.ForeignKey(
         'portal_users.Profile',
+        null=True,
+        blank=True,
         on_delete=models.CASCADE,
         related_name='my_groups',
         verbose_name='Староста',
     )
     kurator = models.ForeignKey(
         'portal_users.Profile',
+        null=True,
+        blank=True,
         on_delete=models.CASCADE,
         verbose_name='Куратор',
     )
