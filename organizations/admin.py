@@ -317,7 +317,7 @@ class EducationBaseAdmin(admin.ModelAdmin):
 @admin.register(models.Education)
 class EducationAdmin(admin.ModelAdmin):
     list_filter = (
-        'profile',
+        # 'profile',
         'document_type',
         'edu_type',
         'serial_number',
