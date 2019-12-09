@@ -141,7 +141,7 @@ CORS_ALLOW_CREDENTIALS = True
 CRON_CLASSES = [
     "cron_app.cron.EmailCronJob",
     "cron_app.cron.PasswordResetUrlSendJob",
-    "cron_app.cron.SendCredentialsJob",
+    # "cron_app.cron.SendCredentialsJob",
     "cron_app.cron.NotifyAdvisorJob",
     "cron_app.cron.AdvisorRejectBidJob",
     "cron_app.cron.StudPerformanceChangedJob",

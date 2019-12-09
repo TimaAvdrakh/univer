@@ -61,32 +61,32 @@ class PasswordResetUrlSendJob(CronJobBase):
             #     item.save()
 
 
-class SendCredentialsJob(CronJobBase):
-    """Отправляет логин и пароль на email"""
-    RUN_EVERY_MINS = 1
-
-    schedule = Schedule(run_every_mins=RUN_EVERY_MINS)
-    code = 'crop_app.send_credentials'
-
-    def do(self):
-        tasks = models.CredentialsEmailTask.objects.filter(is_success=False)
-        for task in tasks:
-            msg_plain = render_to_string('emails/credentials_email.txt', {'username': task.username,
-                                                                          'password': task.password,
-                                                                          'site': current_site})
-            msg_html = render_to_string('emails/credentials_email.html', {'username': task.username,
-                                                                          'password': task.password,
-                                                                          'site': current_site})
-
-            send_mail(
-                'Логин и пароль',
-                msg_plain,
-                'avtoexpertastana@gmail.com',
-                [task.to],
-                html_message=msg_html,
-            )
-            task.is_success = True
-            task.save()
+# class SendCredentialsJob(CronJobBase):
+#     """Отправляет логин и пароль на email"""
+#     RUN_EVERY_MINS = 1
+#
+#     schedule = Schedule(run_every_mins=RUN_EVERY_MINS)
+#     code = 'crop_app.send_credentials'
+#
+#     def do(self):
+#         tasks = models.CredentialsEmailTask.objects.filter(is_success=False)
+#         for task in tasks:
+#             msg_plain = render_to_string('emails/credentials_email.txt', {'username': task.username,
+#                                                                           'password': task.password,
+#                                                                           'site': current_site})
+#             msg_html = render_to_string('emails/credentials_email.html', {'username': task.username,
+#                                                                           'password': task.password,
+#                                                                           'site': current_site})
+#
+#             send_mail(
+#                 'Логин и пароль',
+#                 msg_plain,
+#                 'avtoexpertastana@gmail.com',
+#                 [task.to],
+#                 html_message=msg_html,
+#             )
+#             task.is_success = True
+#             task.save()
 
 
 class NotifyAdvisorJob(CronJobBase):
