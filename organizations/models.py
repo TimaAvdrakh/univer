@@ -422,6 +422,11 @@ class Prerequisite(BaseModel):
         verbose_name='Направление подготовки',
     )
 
+    def save(self, *args, **kwargs):
+        if self.exchange:
+            self.uid = uuid4()
+        super(Prerequisite, self).save(*args, **kwargs)
+
     def __str__(self):
         return '{} - {}'.format(self.required_discipline,
                                 self.discipline)
@@ -453,6 +458,11 @@ class Postrequisite(BaseModel):
         on_delete=models.CASCADE,
         verbose_name='Направление подготовки',
     )
+
+    def save(self, *args, **kwargs):
+        if self.exchange:
+            self.uid = uuid4()
+        super(Postrequisite, self).save(*args, **kwargs)
 
     def __str__(self):
         return '{} - {}'.format(self.discipline,
