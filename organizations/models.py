@@ -528,6 +528,7 @@ class LoadType(BaseCatalog):
         verbose_name = 'Вид нагрузки'
         verbose_name_plural = 'Виды нагрузок'
 
+#1
 
 class AcadPeriodType(BaseCatalog):
     class Meta:
