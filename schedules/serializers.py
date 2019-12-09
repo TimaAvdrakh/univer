@@ -65,7 +65,6 @@ class LessonSerializer(serializers.ModelSerializer):
 
 
 class ElectronicJournalSerializer(serializers.ModelSerializer):
-    status = serializers.CharField()
     load_type = serializers.CharField()
     discipline = serializers.CharField()
 
@@ -106,7 +105,6 @@ class ElectronicJournalSerializer(serializers.ModelSerializer):
 
 
 class ElectronicJournalDetailSerializer(serializers.ModelSerializer):
-    status = serializers.CharField()
     load_type = LoadType2Serializer()
     discipline = DisciplineSerializer()
 
