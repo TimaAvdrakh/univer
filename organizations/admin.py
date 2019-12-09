@@ -103,6 +103,7 @@ class LoadTypeAdmin(admin.ModelAdmin):
         'name',
         'uid',
         'created',
+        'updated',
     ]
 
 
@@ -113,6 +114,7 @@ class LoadType2Admin(admin.ModelAdmin):
         'uid',
         'number',
         'created',
+        'updated',
     ]
 
 
