@@ -101,7 +101,5 @@ class ElectronicJournalAdmin(admin.ModelAdmin):
     list_display = (
         'discipline',
         'load_type',
-        'status',
-        # 'study_start',
-        # 'study_end',
+        'closed',
     )

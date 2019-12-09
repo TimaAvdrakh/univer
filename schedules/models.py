@@ -99,17 +99,10 @@ class ElectronicJournal(BaseModel):
         on_delete=models.CASCADE,
         verbose_name='Тип нагрузки',
     )
-    status = models.ForeignKey(
-        JournalStatus,
-        on_delete=models.CASCADE,
-        verbose_name='Статус',
+    closed = models.BooleanField(
+        default=False,
+        verbose_name='Закрыт',
     )
-    # study_start = models.DateField(
-    #     verbose_name='Начало обучения',
-    # )
-    # study_end = models.DateField(
-    #     verbose_name='Конец обучения',
-    # )
     # stud_disciplines = models.ManyToManyField(
     #     'organizations.StudentDiscipline',
     #     verbose_name='Дисциплины студентов',
