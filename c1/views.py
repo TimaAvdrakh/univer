@@ -151,17 +151,17 @@ def putfrom1c(request):
                                 finding_object.save()
                                 finding_field.add(each_inserted[rule_field['many_to_many_field']])
 
-                    # if rule_field['is_binary_data']:
-                    #     base64_string = value  # .encode('utf-8')
-                    #     # data_index = base64_string.index('base64') + 7
-                    #     # filedata = base64_string[data_index:len(base64_string)]
-                    #     image = b64decode(base64_string)
-                    #
-                    #     setattr(
-                    #         finding_object,
-                    #         rule_field['django'],
-                    #         ContentFile(image, each_elem['uid'] + '.jpg')
-                    #     )
+                    if rule_field['is_binary_data']:
+                        base64_string = value  # .encode('utf-8')
+                        # data_index = base64_string.index('base64') + 7
+                        # filedata = base64_string[data_index:len(base64_string)]
+                        image = b64decode(base64_string)
+
+                        setattr(
+                            finding_object,
+                            rule_field['django'],
+                            ContentFile(image, each_elem['uid'] + '.jpg')
+                        )
 
                     if not is_related and not rule_field['is_binary_data']:
                         try:
