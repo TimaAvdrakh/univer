@@ -298,12 +298,6 @@ class TeacherPosition(BaseModel):
         null=True,
         verbose_name='Профиль'
     )
-    # teacher = models.ForeignKey(
-    #     Teacher,
-    #     models.CASCADE,
-    #     null=True,
-    #     verbose_name='Сотрудник',
-    # )
     position = models.ForeignKey(
         Position,
         on_delete=models.CASCADE,

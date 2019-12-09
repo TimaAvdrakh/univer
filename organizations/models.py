@@ -492,6 +492,11 @@ class LoadType2(BaseCatalog):
         default=0,
         verbose_name='Номер',
     )
+    uid_1c = models.CharField(
+        max_length=200,
+        default='',
+        verbose_name='УИД 1С',
+    )
 
     class Meta:
         verbose_name = 'Тип нагрузки'
