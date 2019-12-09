@@ -238,29 +238,25 @@ class StudyPlanAdmin(admin.ModelAdmin):
 
 @admin.register(models.Prerequisite)
 class PrerequisiteAdmin(admin.ModelAdmin):
-    list_filter = [
-        'discipline',
-        'required_discipline',
-    ]
     list_display = [
         'study_period',
         'discipline',
         'required_discipline',
         'speciality',
+        'created',
+        'updated',
     ]
 
 
 @admin.register(models.Postrequisite)
 class PostrequisiteAdmin(admin.ModelAdmin):
-    list_filter = [
-        'discipline',
-        'available_discipline',
-    ]
     list_display = [
         'study_period',
         'discipline',
         'available_discipline',
         'speciality',
+        'created',
+        'updated',
     ]
 
 
