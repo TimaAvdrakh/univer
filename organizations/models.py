@@ -6,6 +6,7 @@ from portal import curr_settings
 from datetime import date
 from portal_users.utils import get_current_study_year, get_current_course, get_course, divide_to_study_years
 from .utils import calculate_credit
+from uuid import uuid4
 
 
 class Language(BaseCatalog):
@@ -497,6 +498,12 @@ class LoadType2(BaseCatalog):
         default='',
         verbose_name='УИД 1С',
     )
+
+    def save(self, *args, **kwargs):
+        if self.exchange:
+            self.uid = uuid4()
+
+        super(LoadType2, self).save(*args, **kwargs)
 
     class Meta:
         verbose_name = 'Тип нагрузки'
