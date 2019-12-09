@@ -510,11 +510,16 @@ class LoadType(BaseCatalog):
         on_delete=models.CASCADE,
         verbose_name='Тип нагрузки',
     )
+    parent_uid_1c = models.CharField(
+        max_length=200,
+        default='',
+        verbose_name='УИД 1С родителя',
+    )
 
     def save(self, *args, **kwargs):
         if self.exchange:
             """Находим Тип нагрузки по названию и прикрепим к виду нагрузки"""  # TODO TEST
-            load_type2 = LoadType2.objects.get(uid_1c=self.load_type2_id)
+            load_type2 = LoadType2.objects.get(uid_1c=self.parent_uid_1c)
             self.load_type2 = load_type2
 
         super(LoadType, self).save(*args, **kwargs)
