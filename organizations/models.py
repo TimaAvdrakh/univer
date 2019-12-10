@@ -799,7 +799,7 @@ class TeacherDiscipline(BaseModel):
         if self.exchange:
             self.uid = uuid4()
 
-            """Находим Тип нагрузки по названию и прикрепим к виду нагрузки"""  # TODO TEST
+            """Находим Тип нагрузки по названию и прикрепим к виду нагрузки"""
             if self.load_type2_uid_1c:
                 try:
                     load_type2 = LoadType2.objects.get(uid_1c=self.load_type2_uid_1c)
