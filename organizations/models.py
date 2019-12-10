@@ -359,6 +359,8 @@ class StudyPlan(BaseModel):
     )
 
     def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+
         if self.exchange:
             old_items = StudyYearCourse.objects.filter(study_plan=self)
             for i in old_items:
@@ -375,8 +377,6 @@ class StudyPlan(BaseModel):
                     study_year=study_year,
                     course=study_years.index(study_year_item) + 1,
                 )
-
-        super().save(*args, **kwargs)
 
     def __str__(self):
         return 'Уч.план {}-{}-{}'.format(self.student.first_name,
