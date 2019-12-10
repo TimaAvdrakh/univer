@@ -775,7 +775,6 @@ class TeacherDiscipline(BaseModel):
         on_delete=models.CASCADE,
         verbose_name='Дисциплина',
     )
-
     load_type2 = models.ForeignKey(
         LoadType2,
         null=True,

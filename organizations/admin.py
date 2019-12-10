@@ -179,6 +179,7 @@ class TeacherDisciplineAdmin(admin.ModelAdmin):
     # ]
     list_display = [
         'teacher',
+        'study_period',
         'discipline',
         'load_type2',
         'language'
