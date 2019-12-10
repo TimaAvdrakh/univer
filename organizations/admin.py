@@ -187,17 +187,9 @@ class TeacherDisciplineAdmin(admin.ModelAdmin):
 
 @admin.register(models.StudyPlan)
 class StudyPlanAdmin(admin.ModelAdmin):
-    # list_filter = (
-    #     'student',
-    #     'study_period',
-    #     'speciality',
-    #     'faculty',
-    #     'cathedra',
-    #     'group',
-    #     'advisor',
-    # )
     list_display = [
         'student',
+        'number',
         'study_period',
         'advisor',
         'speciality',
@@ -208,7 +200,9 @@ class StudyPlanAdmin(admin.ModelAdmin):
         'education_type',
         'preparation_level',
         'study_form',
+        'education_base',
         'on_base',
+        'entry_date',
     ]
 
 
