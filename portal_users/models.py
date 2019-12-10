@@ -314,6 +314,12 @@ class TeacherPosition(BaseModel):
         verbose_name='Основная должность',
     )
 
+    def save(self, *args, **kwargs):
+        if self.exchange:
+            self.uid = uuid4()
+
+        super(TeacherPosition, self).save(*args, **kwargs)
+
     def __str__(self):
         return '{} {}'.format(self.profile.full_name,
                               self.position)
