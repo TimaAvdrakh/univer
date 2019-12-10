@@ -685,6 +685,12 @@ class StudentDiscipline(BaseModel):
         verbose_name='Учебный год',
     )
 
+    def save(self, *args, **kwargs):
+        if self.exchange:
+            self.uid = uuid4()
+
+        super(StudentDiscipline, self).save(*args, **kwargs)
+
     @property
     def credit(self):
         """Возвращает кредит дисциплины"""
