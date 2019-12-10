@@ -137,6 +137,12 @@ class IdentityDocument(BaseModel):
         blank=True,
         verbose_name='Кем выдан',
     )
+    issued_by_str = models.CharField(
+        max_length=1000,
+        default='',
+        blank=True,
+        verbose_name='Кем выдан (строка)',
+    )
 
     def __str__(self):
         return '{}'.format(self.profile.full_name,
