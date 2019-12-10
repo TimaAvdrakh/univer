@@ -492,18 +492,18 @@ class Discipline(BaseCatalog):
         verbose_name = 'Дисциплина'
         verbose_name_plural = 'Дисциплины'
 
-    def save(self, *args, **kwargs):
-        if self.exchange:
-            """При выгрузке деактивируем существующие пре и постреквизити"""
-            for pos_req in Postrequisite.objects.all():
-                pos_req.is_active = False
-                pos_req.save()
-
-            for pre_req in Prerequisite.objects.all():
-                pre_req.is_active = False
-                pre_req.save()
-
-        super(Discipline, self).save()
+    # def save(self, *args, **kwargs):
+    #     if self.exchange:
+    #         """При выгрузке деактивируем существующие пре и постреквизити"""
+    #         for pos_req in Postrequisite.objects.all():
+    #             pos_req.is_active = False
+    #             pos_req.save()
+    #
+    #         for pre_req in Prerequisite.objects.all():
+    #             pre_req.is_active = False
+    #             pre_req.save()
+    #
+    #     super(Discipline, self).save()
 
 
 class LoadType2(BaseCatalog):
