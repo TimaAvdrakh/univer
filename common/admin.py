@@ -37,14 +37,6 @@ class RegistrationForDisciplineAdmin(admin.ModelAdmin):
 
 @admin.register(models.IdentityDocument)
 class IdentityDocumentAdmin(admin.ModelAdmin):
-    list_filter = (
-        'profile',
-        'document_type',
-        'serial_number',
-        'number',
-        'validity_date',
-        'issued_by',
-    )
     list_display = (
         'profile',
         'document_type',
