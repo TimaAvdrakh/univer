@@ -788,6 +788,12 @@ class TeacherDiscipline(BaseModel):
         verbose_name='Язык преподавания',
     )
 
+    def save(self, *args, **kwargs):
+        if self.exchange:
+            self.uid = uuid4()
+
+        super(TeacherDiscipline, self).save(*args, **kwargs)
+
     def __str__(self):
         return '{} {}'.format(self.teacher.user.get_full_name(),
                               self.discipline)
