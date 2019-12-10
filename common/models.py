@@ -103,28 +103,38 @@ class IdentityDocument(BaseModel):
     )
     document_type = models.ForeignKey(
         DocumentType,
+        null=True,
+        blank=True,
         on_delete=models.CASCADE,
         verbose_name='Тип документа',
     )
     serial_number = models.CharField(
         max_length=100,
+        default='',
+        blank=True,
         verbose_name='Серия',
     )
     number = models.CharField(
         max_length=100,
+        default='',
+        blank=True,
         verbose_name='Номер',
     )
     given_date = models.DateField(
         null=True,
+        blank=True,
         verbose_name='Дата выдачи',
     )
     validity_date = models.DateField(
+        null=True,
+        blank=True,
         verbose_name='Срок действия',
     )
     issued_by = models.ForeignKey(
         GovernmentAgency,
         on_delete=models.CASCADE,
         null=True,
+        blank=True,
         verbose_name='Кем выдан',
     )
 
