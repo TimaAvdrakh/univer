@@ -369,8 +369,12 @@ class StudyPlan(BaseModel):
             study_years = divide_to_study_years(self.study_period)
 
             for study_year_item in study_years:
-                study_year, created = StudyPeriod.objects.get_or_create(start=study_year_item[0],
-                                                                        end=study_year_item[1])
+
+                study_year = StudyPeriod.objects.filter(start=study_year_item[0],
+                                                        end=study_year_item[1]).first()
+                # if study_year is None:
+                #     study_year = StudyPeriod.objects.create(start=study_year_item[0],
+                #                                             end=study_year_item[1])
 
                 StudyYearCourse.objects.create(
                     study_plan=self,
@@ -553,7 +557,8 @@ class LoadType(BaseCatalog):
         verbose_name = 'Вид нагрузки'
         verbose_name_plural = 'Виды нагрузок'
 
-#1
+
+# 1
 
 class AcadPeriodType(BaseCatalog):
     class Meta:
