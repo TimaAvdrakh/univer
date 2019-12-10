@@ -171,12 +171,12 @@ class LanguageAdmin(admin.ModelAdmin):
 
 @admin.register(models.TeacherDiscipline)
 class TeacherDisciplineAdmin(admin.ModelAdmin):
-    list_filter = [
-        'teacher',
-        'discipline',
-        'load_type2',
-        'language'
-    ]
+    # list_filter = [
+    #     'teacher',
+    #     'discipline',
+    #     'load_type2',
+    #     'language'
+    # ]
     list_display = [
         'teacher',
         'discipline',
