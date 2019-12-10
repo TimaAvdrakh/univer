@@ -359,20 +359,23 @@ class StudyPlan(BaseModel):
     )
 
     def save(self, *args, **kwargs):
+        if self.exchange:
+
+            StudyYearCourse.objects.filter(study_plan=self).delete()
+
+            study_years = divide_to_study_years(self.study_period)
+
+            for study_year_item in study_years:
+                study_year, created = StudyPeriod.objects.get_or_create(start=study_year_item[0],
+                                                                        end=study_year_item[1])
+
+                StudyYearCourse.objects.create(
+                    study_plan=self,
+                    study_year=study_year,
+                    course=study_years.index(study_year_item) + 1,
+                )
+
         super().save(*args, **kwargs)
-        StudyYearCourse.objects.filter(study_plan=self).delete()
-
-        study_years = divide_to_study_years(self.study_period)
-
-        for study_year_item in study_years:
-            study_year, created = StudyPeriod.objects.get_or_create(start=study_year_item[0],
-                                                                    end=study_year_item[1])
-
-            StudyYearCourse.objects.create(
-                study_plan=self,
-                study_year=study_year,
-                course=study_years.index(study_year_item) + 1,
-            )
 
     def __str__(self):
         return 'Уч.план {}-{}-{}'.format(self.student.first_name,

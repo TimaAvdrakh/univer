@@ -177,7 +177,7 @@ class Profile(BaseModel):
 
     def save(self, *args, **kwargs):
         if self.exchange:
-            if self.user is None:
+            if self.user is None and len(self.email) > 0:
                 password = password_generator(size=8)
                 raw_username = '{}{}'.format(self.last_name,
                                              self.first_name[0])
