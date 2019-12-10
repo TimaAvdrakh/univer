@@ -7,6 +7,7 @@ from common.utils import get_sentinel_user
 from common.utils import password_generator
 from cron_app.models import CredentialsEmailTask
 from django.db.models import Max
+from validate_email import validate_email
 
 
 class Gender(BaseCatalog):
@@ -177,7 +178,7 @@ class Profile(BaseModel):
 
     def save(self, *args, **kwargs):
         if self.exchange:
-            if self.user is None and len(self.email) > 0:
+            if self.user is None and len(self.email) > 0 and validate_email(self.email):
                 password = password_generator(size=8)
                 raw_username = '{}{}'.format(self.last_name,
                                              self.first_name[0])
