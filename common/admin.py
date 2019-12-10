@@ -45,6 +45,7 @@ class IdentityDocumentAdmin(admin.ModelAdmin):
         'given_date',
         'validity_date',
         'issued_by',
+        'issued_by_str',
     )
 
 
