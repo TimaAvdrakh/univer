@@ -62,6 +62,21 @@ class AchievementSerializer(serializers.ModelSerializer):
         )
 
 
+class AchievementFullSerializer(serializers.ModelSerializer):
+    achievement_type = common_serializers.AchievementTypeSerializer()
+    level = common_serializers.LevelSerializer()
+
+    class Meta:
+        model = models.Achievement
+        list_serializer_class = common_serializers.FilteredListSerializer
+        fields = (
+            'uid',
+            'achievement_type',
+            'level',
+            'content',
+        )
+
+
 class ProfileFullSerializer(serializers.ModelSerializer):
     """Используется для получения и редактирования профиля"""
     profileId = serializers.CharField(
@@ -97,7 +112,7 @@ class ProfileFullSerializer(serializers.ModelSerializer):
         child=serializers.CharField(),
         required=False,
     )
-    achievements = AchievementSerializer(
+    achievements = AchievementFullSerializer(
         many=True,
         required=False,
     )
@@ -813,11 +828,10 @@ class GroupDetailSerializer(serializers.ModelSerializer):
             if advisor_data['avatar'] is not None:
                 advisor_data['avatar'] = current_site + advisor_data['avatar']
 
-            item = {
-                'supervisor': advisor_data,
-                'edu_program': study_plan.education_program.name,
-                'edu_program_code': study_plan.education_program.code,
-            }
+            item = advisor_data
+            item['edu_program'] = study_plan.education_program.name
+            item['edu_program_code'] = study_plan.education_program.code
+
             data['supervisors'].append(item)
 
         student_pks = org_models.StudyPlan.objects.filter(group=instance).exclude(
@@ -825,20 +839,13 @@ class GroupDetailSerializer(serializers.ModelSerializer):
 
         students = models.Profile.objects.filter(pk__in=student_pks,
                                                  is_active=True)
-        student_list = []
-        for student in students:
-            d = {
-                'profile': student
-            }
-            student_list.append(d)
-
-        serializer = StudentSerializer(student_list,
-                                       many=True)
+        serializer = ProfileDetailSerializer(students,
+                                             many=True)
         data['students'] = serializer.data
 
-        # for student in data['students']:
-        #     if student['profile']['avatar']:
-        #         student['profile']['avatar'] = current_site + student['profile']['avatar']
+        for student in data['students']:
+            if student['avatar']:
+                student['avatar'] = current_site + student['avatar']
 
         return data
 
