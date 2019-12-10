@@ -360,8 +360,9 @@ class StudyPlan(BaseModel):
 
     def save(self, *args, **kwargs):
         if self.exchange:
-
-            StudyYearCourse.objects.filter(study_plan=self).delete()
+            old_items = StudyYearCourse.objects.filter(study_plan=self)
+            for i in old_items:
+                i.delete()
 
             study_years = divide_to_study_years(self.study_period)
 
