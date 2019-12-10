@@ -783,6 +783,8 @@ class TeacherDiscipline(BaseModel):
     )
     language = models.ForeignKey(
         Language,
+        null=True,
+        blank=True,
         on_delete=models.CASCADE,
         verbose_name='Язык преподавания',
     )
