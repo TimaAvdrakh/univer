@@ -781,6 +781,12 @@ class TeacherDiscipline(BaseModel):
         on_delete=models.CASCADE,
         verbose_name='Тип нагрузки',
     )
+    load_type2_uid_1c = models.CharField(
+        max_length=200,
+        default='',
+        blank=True,
+        verbose_name='УИД 1С Типа нагрузки',
+    )
     language = models.ForeignKey(
         Language,
         null=True,
@@ -792,6 +798,14 @@ class TeacherDiscipline(BaseModel):
     def save(self, *args, **kwargs):
         if self.exchange:
             self.uid = uuid4()
+
+            """Находим Тип нагрузки по названию и прикрепим к виду нагрузки"""  # TODO TEST
+            if self.load_type2_uid_1c:
+                try:
+                    load_type2 = LoadType2.objects.get(uid_1c=self.load_type2_uid_1c)
+                    self.load_type2 = load_type2
+                except LoadType2.DoesNotExist:
+                    print('LoadType2 not found')
 
         super(TeacherDiscipline, self).save(*args, **kwargs)
 

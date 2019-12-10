@@ -182,7 +182,8 @@ class TeacherDisciplineAdmin(admin.ModelAdmin):
         'study_period',
         'discipline',
         'load_type2',
-        'language'
+        'load_type2_uid_1c',
+        'language',
     ]
 
 
