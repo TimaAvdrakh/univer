@@ -69,7 +69,7 @@ class InterestAdmin(admin.ModelAdmin):
 @admin.register(models.Role)
 class RoleAdmin(admin.ModelAdmin):
     list_display = [
-        "organization",
+        # "organization",
         "profile",
         "is_student",
         "is_teacher",
