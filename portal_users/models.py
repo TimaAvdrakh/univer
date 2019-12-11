@@ -549,11 +549,11 @@ class ProfilePhone(BaseModel):
         verbose_name='Номер телефона',
     )
 
-    def save(self, *args, **kwargs):
-        if self.exchange:
-            self.uid = uuid4()
-
-        super(ProfilePhone, self).save(*args, **kwargs)
+    # def save(self, *args, **kwargs):
+    #     if self.exchange and self._state.adding:
+    #         self.uid = uuid4()
+    #
+    #     super(ProfilePhone, self).save(*args, **kwargs)
 
     def __str__(self):
         return '{} {}'.format(self.profile.first_name,
@@ -562,3 +562,8 @@ class ProfilePhone(BaseModel):
     class Meta:
         verbose_name = 'Телефон Пользователя'
         verbose_name_plural = 'Телефоны Пользователей'
+        unique_together = (
+            'profile',
+            'phone_type',
+            'value',
+        )

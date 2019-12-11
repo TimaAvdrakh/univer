@@ -691,6 +691,7 @@ class StudentDiscipline(BaseModel):
     def save(self, *args, **kwargs):
         if self.exchange:
             self.uid = uuid4()
+            # self.status_id = curr_settings.student_discipline_status['not_chosen']
 
         super(StudentDiscipline, self).save(*args, **kwargs)
 
