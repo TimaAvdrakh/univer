@@ -391,14 +391,22 @@ class Role(BaseModel):
     organization = models.ForeignKey(
         org_models.Organization,
         on_delete=models.CASCADE,
+        null=True,
         verbose_name='Организация',
         related_name='roles',
     )
-    profile = models.ForeignKey(
+    # profile_old = models.ForeignKey(
+    #     'portal_users.Profile',
+    #     null=True,
+    #     on_delete=models.CASCADE,
+    #     related_name='roles',
+    #     verbose_name='Пользователь',
+    # )
+    profile = models.OneToOneField(
         'portal_users.Profile',
-        null=True,
         on_delete=models.CASCADE,
-        related_name='roles',
+        null=True,
+        related_name='role',
         verbose_name='Пользователь',
     )
     is_student = models.BooleanField(
@@ -544,6 +552,7 @@ class ProfilePhone(BaseModel):
     def save(self, *args, **kwargs):
         if self.exchange:
             self.uid = uuid4()
+
         super(ProfilePhone, self).save(*args, **kwargs)
 
     def __str__(self):
