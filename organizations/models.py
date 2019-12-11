@@ -538,15 +538,18 @@ class LoadType2(BaseCatalog):
         verbose_name='УИД 1С',
     )
 
-    def save(self, *args, **kwargs):
-        if self.exchange:
-            self.uid = uuid4()
-
-        super(LoadType2, self).save(*args, **kwargs)
+    # def save(self, *args, **kwargs):
+    #     if self.exchange:
+    #         self.uid = uuid4()
+    #
+    #     super(LoadType2, self).save(*args, **kwargs)
 
     class Meta:
         verbose_name = 'Тип нагрузки'
         verbose_name_plural = 'Типы нагрузок'
+        unique_together = (
+            'name_ru',
+        )
 
 
 class LoadType(BaseCatalog):
