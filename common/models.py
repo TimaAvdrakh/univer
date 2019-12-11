@@ -151,6 +151,10 @@ class IdentityDocument(BaseModel):
     class Meta:
         verbose_name = 'Документ удостоверяющий личность'
         verbose_name_plural = 'Документы удостоверяющий личность'
+        unique_together = (
+            'profile',
+            'document_type',
+        )
 
 
 class RegistrationPeriod(BaseCatalog):
