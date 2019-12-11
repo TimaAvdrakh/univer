@@ -567,7 +567,7 @@ class LoadType(BaseCatalog):
 
     def save(self, *args, **kwargs):
         if self.exchange:
-            """Находим Тип нагрузки по названию и прикрепим к виду нагрузки"""  # TODO TEST
+            """Находим Тип нагрузки по названию и прикрепим к виду нагрузки"""
             load_type2 = LoadType2.objects.get(uid_1c=self.parent_uid_1c)
             self.load_type2 = load_type2
 
