@@ -104,6 +104,7 @@ def putfrom1c(request):
                                             q[str(i) + '_id'] = each_elem[rule_field['c1']]
                                     elif str(i) == rule_field['django']:
                                         q[str(i)] = each_elem[rule_field['c1']]
+
                             finding_object = Manager.objects.get(**q)
                             finding_object.exchange = True
                         except Manager.DoesNotExist:

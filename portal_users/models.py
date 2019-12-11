@@ -46,6 +46,22 @@ class UsernameRule(BaseModel):
         verbose_name_plural = 'Правила создания логина'
 
 
+class UserCredential(BaseModel):
+    user = models.OneToOneField(
+        User,
+        on_delete=models.CASCADE,
+        verbose_name='Пользователь',
+    )
+    password = models.CharField(
+        max_length=50,
+        verbose_name='Пароль',
+    )
+
+    class Meta:
+        verbose_name = 'Пароль пользователя'
+        verbose_name_plural = 'Пароли пользователей'
+
+
 class Profile(BaseModel):
     user = models.OneToOneField(
         User,
@@ -175,10 +191,14 @@ class Profile(BaseModel):
         on_delete=models.CASCADE,
         verbose_name='Статус студента',
     )
+    login_sent = models.BooleanField(
+        default=False,
+        verbose_name='Логин отправлен',
+    )
 
     def save(self, *args, **kwargs):
         if self.exchange:
-            if self.user is None and len(self.email) > 0 and validate_email(self.email):
+            if self.user is None:
                 password = password_generator(size=8)
                 raw_username = '{}{}'.format(self.last_name,
                                              self.first_name[0])
@@ -212,11 +232,35 @@ class Profile(BaseModel):
                 user.set_password(password)
                 user.save()
                 self.user = user
-                CredentialsEmailTask.objects.create(
-                    to=user.email,
-                    username=user.username,
-                    password=password
+
+                UserCredential.objects.create(
+                    user=self.user,
+                    password=password,
                 )
+
+                if len(self.email) > 0 and validate_email(self.email):
+                    CredentialsEmailTask.objects.create(
+                        to=user.email,
+                        username=user.username,
+                        password=password,
+                    )
+                    self.login_sent = True
+
+            else:
+                if not self.login_sent:
+                    if len(self.email) > 0 and validate_email(self.email):
+                        user_credential = UserCredential.objects.get(user=self.user)
+
+                        CredentialsEmailTask.objects.create(
+                            to=self.email,
+                            username=self.user.username,
+                            password=user_credential.password,
+                        )
+                        self.login_sent = True
+
+        if self.user:
+            self.user.email = self.email
+            self.user.save()
 
         super(Profile, self).save()
 

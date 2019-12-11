@@ -816,3 +816,10 @@ class TeacherDiscipline(BaseModel):
     class Meta:
         verbose_name = 'Закрепление дисциплин'
         verbose_name_plural = 'Закрепление дисциплин'
+        unique_together = (
+            'teacher',
+            'study_period',
+            'discipline',
+            'load_type2_uid_1c',
+            'language',
+        )

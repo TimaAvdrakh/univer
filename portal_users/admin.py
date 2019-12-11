@@ -172,3 +172,12 @@ class UsernameRuleAdmin(admin.ModelAdmin):
         "raw_username",
         "order",
     ]
+
+
+@admin.register(models.UserCredential)
+class UserCredentialAdmin(admin.ModelAdmin):
+    list_display = [
+        "user",
+        "password",
+        "created",
+    ]
