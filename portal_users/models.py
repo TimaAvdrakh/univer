@@ -381,6 +381,7 @@ class TeacherPosition(BaseModel):
             'profile',
             'position',
             'cathedra',
+            'study_year',
             # 'is_main',
         )
 
