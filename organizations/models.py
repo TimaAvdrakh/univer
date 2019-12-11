@@ -730,7 +730,7 @@ class StudentDiscipline(BaseModel):
         unique_together = (
             'student',
             'study_plan',
-            'acad_period'
+            'acad_period',
             'discipline_code',
             'discipline',
             'load_type',
