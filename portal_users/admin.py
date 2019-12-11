@@ -121,6 +121,10 @@ class PositionAdmin(admin.ModelAdmin):
 
 @admin.register(models.Teacher)
 class PositionAdmin(admin.ModelAdmin):
+    search_fields = (
+        'profile__first_name',
+        'profile__last_name',
+    )
     list_display = [
         "profile",
         "academic_degree",
