@@ -357,6 +357,12 @@ class TeacherPosition(BaseModel):
         default=False,
         verbose_name='Основная должность',
     )
+    study_year = models.ForeignKey(
+        'organizations.StudyPeriod',
+        null=True,
+        on_delete=models.CASCADE,
+        verbose_name='Учебный год',
+    )
 
     # def save(self, *args, **kwargs):
     #     if self.exchange:
