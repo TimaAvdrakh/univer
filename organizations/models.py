@@ -828,8 +828,6 @@ class TeacherDiscipline(BaseModel):
 
     def save(self, *args, **kwargs):
         if self.exchange:
-            self.uid = uuid4()
-
             """Находим Тип нагрузки по названию и прикрепим к виду нагрузки"""
             if self.load_type2_uid_1c:
                 try:
