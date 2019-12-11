@@ -234,6 +234,10 @@ class CreditCoeff(BaseModel):
     class Meta:
         verbose_name = 'Коэффициент кредита'
         verbose_name_plural = 'Коэффициенты кредитов'
+        unique_together = (
+            'start_year',
+            'coeff',
+        )
 
 
 # class Log(BaseModel):

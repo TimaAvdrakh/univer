@@ -137,6 +137,7 @@ class PositionAdmin(admin.ModelAdmin):
         "position",
         "cathedra",
         "is_main",
+        "created",
     ]
 
 

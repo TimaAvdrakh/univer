@@ -223,6 +223,13 @@ class Education(BaseModel):
     class Meta:
         verbose_name = 'Образование'
         verbose_name_plural = 'Образования'
+        unique_together = (
+            'profile',
+            'document_type',
+            'edu_type',
+            'serial_number',
+            'number',
+        )
 
 
 class StudyPeriod(BaseModel):
@@ -428,10 +435,10 @@ class Prerequisite(BaseModel):
         verbose_name='Направление подготовки',
     )
 
-    def save(self, *args, **kwargs):
-        if self.exchange:
-            self.uid = uuid4()
-        super(Prerequisite, self).save(*args, **kwargs)
+    # def save(self, *args, **kwargs):
+    #     if self.exchange:
+    #         self.uid = uuid4()
+    #     super(Prerequisite, self).save(*args, **kwargs)
 
     def __str__(self):
         return '{} - {}'.format(self.required_discipline,
@@ -440,6 +447,12 @@ class Prerequisite(BaseModel):
     class Meta:
         verbose_name = 'Пререквизит'
         verbose_name_plural = 'Пререквизиты'
+        unique_together = (
+            'study_period',
+            'discipline',
+            'required_discipline',
+            'speciality',
+        )
 
 
 class Postrequisite(BaseModel):
@@ -465,10 +478,10 @@ class Postrequisite(BaseModel):
         verbose_name='Направление подготовки',
     )
 
-    def save(self, *args, **kwargs):
-        if self.exchange:
-            self.uid = uuid4()
-        super(Postrequisite, self).save(*args, **kwargs)
+    # def save(self, *args, **kwargs):
+    #     if self.exchange:
+    #         self.uid = uuid4()
+    #     super(Postrequisite, self).save(*args, **kwargs)
 
     def __str__(self):
         return '{} - {}'.format(self.discipline,
@@ -477,6 +490,12 @@ class Postrequisite(BaseModel):
     class Meta:
         verbose_name = 'Постреквизит'
         verbose_name_plural = 'Постреквизиты'
+        unique_together = (
+            'study_period',
+            'discipline',
+            'available_discipline',
+            'speciality',
+        )
 
 
 class Discipline(BaseCatalog):
@@ -689,9 +708,8 @@ class StudentDiscipline(BaseModel):
     )
 
     def save(self, *args, **kwargs):
-        if self.exchange:
-            self.uid = uuid4()
-            # self.status_id = curr_settings.student_discipline_status['not_chosen']
+        if self.exchange and self._state.adding:
+            self.status_id = curr_settings.student_discipline_status['not_chosen']
 
         super(StudentDiscipline, self).save(*args, **kwargs)
 
@@ -709,6 +727,18 @@ class StudentDiscipline(BaseModel):
     class Meta:
         verbose_name = 'Дисциплина студента'
         verbose_name_plural = 'Дисциплины студента'
+        unique_together = (
+            'student',
+            'study_plan',
+            'acad_period'
+            'discipline_code',
+            'discipline',
+            'load_type',
+            'hours',
+            'language',
+            'cycle',
+            'study_year',
+        )
 
 
 class StudentDisciplineInfoStatus(BaseCatalog):

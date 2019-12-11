@@ -358,11 +358,11 @@ class TeacherPosition(BaseModel):
         verbose_name='Основная должность',
     )
 
-    def save(self, *args, **kwargs):
-        if self.exchange:
-            self.uid = uuid4()
-
-        super(TeacherPosition, self).save(*args, **kwargs)
+    # def save(self, *args, **kwargs):
+    #     if self.exchange:
+    #         self.uid = uuid4()
+    #
+    #     super(TeacherPosition, self).save(*args, **kwargs)
 
     def __str__(self):
         return '{} {}'.format(self.profile.full_name,
@@ -371,6 +371,12 @@ class TeacherPosition(BaseModel):
     class Meta:
         verbose_name = 'Должность сотрудника'
         verbose_name_plural = 'Должности сотрудников'
+        unique_together = (
+            'profile',
+            'position',
+            'cathedra',
+            # 'is_main',
+        )
 
 
 class Interest(BaseCatalog):
