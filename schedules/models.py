@@ -2,6 +2,7 @@ from django.db import models
 from common.models import BaseCatalog, BaseModel
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
+from organizations.models import Group
 
 
 class RoomType(BaseCatalog):
@@ -352,5 +353,72 @@ class LessonTeacher(BaseModel):
         unique_together = (
             'lesson',
             'teacher',
+        )
+
+
+class LessonStudent(BaseModel):
+    flow_uid = models.UUIDField(
+        verbose_name='UID потока',
+    )
+    group_identificator = models.CharField(
+        max_length=200,
+        verbose_name='Идентификатор гр/подгр',
+        help_text='УИД группы или название подгруппы',
+    )
+    group = models.ForeignKey(
+        'organizations.Group',
+        on_delete=models.CASCADE,
+        related_name='lesson_students',
+        verbose_name='Группа/Подгруппа',
+    )
+    parent_group = models.ForeignKey(
+        'organizations.Group',
+        null=True,
+        blank=True,
+        on_delete=models.CASCADE,
+        verbose_name='Родитель подгруппы',
+    )
+    is_subgroup = models.BooleanField(
+        default=False,
+        verbose_name='Подгруппа',
+    )
+    student = models.ForeignKey(
+        'portal_users.Profile',
+        on_delete=models.CASCADE,
+        verbose_name='Студент',
+    )
+
+    def save(self, *args, **kwargs):
+        if self.exchange:
+            if self.is_subgroup:  # Если пришла подгруппа, создаю подгруппу
+                group = Group.objects.create(
+                    name_ru=self.group_identificator,
+                    is_subgroup=True,
+                    parent=self.parent_group,
+                )
+                self.group = group
+            else:  # Если пришла группа, найду группу по uid и привяжу
+                group = Group.objects.get(pk=self.group_identificator)
+                self.group = group
+
+            lessons = Lesson.objects.filter(flow_uid=self.flow_uid,
+                                            is_active=True)
+            for lesson in lessons:
+                if group not in lesson.groups.filter(is_active=True):
+                    lesson.groups.add(group)
+
+        super(LessonStudent, self).save(*args, **kwargs)
+
+    def __str__(self):
+        return '{}-{}'.format(self.flow_uid,
+                              self.student.first_name)
+
+    class Meta:
+        verbose_name = 'Студент Занятия'
+        verbose_name_plural = 'Студенты Занятии'
+        unique_together = (
+            'flow_uid',
+            'group_identificator',
+            'student',
         )
 

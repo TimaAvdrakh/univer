@@ -113,3 +113,15 @@ class LessonTeacherAdmin(admin.ModelAdmin):
         'is_active',
     )
 
+
+@admin.register(models.LessonStudent)
+class LessonTeacherAdmin(admin.ModelAdmin):
+    list_display = (
+        'flow_uid',
+        'group_identificator',
+        'group',
+        'parent_group',
+        'is_subgroup',
+        'student',
+        'is_active',
+    )
