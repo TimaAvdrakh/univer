@@ -319,4 +319,38 @@ class StudentPerformanceLog(BaseModel):
         verbose_name = 'Лог успеваемости студента'
         verbose_name_plural = 'Логи успеваемости студентов'
 
-# 1
+
+class LessonTeacher(BaseModel):
+    lesson = models.ForeignKey(
+        Lesson,
+        on_delete=models.CASCADE,
+        verbose_name='Занятие',
+    )
+    teacher = models.ForeignKey(
+        'portal_users.Profile',
+        on_delete=models.CASCADE,
+        verbose_name='Преподаватель',
+    )
+
+    def save(self, *args, **kwargs):
+        if self.exchange:
+            if self.is_active:
+                self.lesson.teachers.add(self.teacher)
+            else:
+                try:
+                    self.lesson.teachers.remove(self.teacher)
+                except:
+                    pass
+
+    def __str__(self):
+        return '{} - {}'.format(self.lesson.subject,
+                                self.teacher.first_name)
+
+    class Meta:
+        verbose_name = 'Препод-Занятие'
+        verbose_name_plural = 'Препод-Занятие'
+        unique_together = (
+            'lesson',
+            'teacher',
+        )
+

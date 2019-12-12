@@ -93,6 +93,18 @@ class Group(BaseCatalog):
         null=True,
         verbose_name='Язык обучения',
     )
+    parent = models.ForeignKey(
+        'self',
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        verbose_name='Родитель',
+        related_name='children',
+    )
+    is_subgroup = models.BooleanField(
+        default=False,
+        verbose_name='Подгруппа',
+    )
 
     class Meta:
         verbose_name = 'Группа'

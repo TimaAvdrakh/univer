@@ -63,6 +63,8 @@ class GroupAdmin(admin.ModelAdmin):
         'headman',
         'kurator',
         'language',
+        'parent',
+        'is_subgroup',
     ]
 
 

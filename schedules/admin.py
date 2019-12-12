@@ -103,3 +103,13 @@ class ElectronicJournalAdmin(admin.ModelAdmin):
         'load_type',
         'closed',
     )
+
+
+@admin.register(models.LessonTeacher)
+class LessonTeacherAdmin(admin.ModelAdmin):
+    list_display = (
+        'lesson',
+        'teacher',
+        'is_active',
+    )
+
