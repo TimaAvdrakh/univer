@@ -157,7 +157,7 @@ class Lesson(BaseModel):
         on_delete=models.CASCADE,
         verbose_name='Язык преподавания',
     )
-    groups = models.ManyToManyField(
+    groups = models.ManyToManyField(  # TODO убрать
         'organizations.Group',
         verbose_name='Группы',
     )
@@ -391,21 +391,30 @@ class LessonStudent(BaseModel):
     def save(self, *args, **kwargs):
         if self.exchange:
             if self.is_subgroup:  # Если пришла подгруппа, создаю подгруппу
-                group = Group.objects.create(
-                    name_ru=self.group_identificator,
-                    is_subgroup=True,
-                    parent=self.parent_group,
-                )
-                self.group = group
+                try:
+                    group = Group.objects.get(
+                        name_ru=self.group_identificator,
+                        is_subgroup=True,
+                        parent=self.parent_group,
+                        is_active=True,
+                    )
+                except Group.DoesNotExist:
+                    group = Group.objects.create(
+                        name_ru=self.group_identificator,
+                        is_subgroup=True,
+                        parent=self.parent_group,
+                    )
+
             else:  # Если пришла группа, найду группу по uid и привяжу
                 group = Group.objects.get(pk=self.group_identificator)
-                self.group = group
 
-            lessons = Lesson.objects.filter(flow_uid=self.flow_uid,
-                                            is_active=True)
-            for lesson in lessons:
-                if group not in lesson.groups.filter(is_active=True):
-                    lesson.groups.add(group)
+            self.group = group
+
+            # lessons = Lesson.objects.filter(flow_uid=self.flow_uid,
+            #                                 is_active=True)
+            # for lesson in lessons:
+            #     if group not in lesson.groups.filter(is_active=True):
+            #         lesson.groups.add(group)
 
         super(LessonStudent, self).save(*args, **kwargs)
 
