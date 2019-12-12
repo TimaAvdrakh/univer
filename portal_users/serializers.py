@@ -37,12 +37,16 @@ class RoleSerializer(serializers.ModelSerializer):
 
 
 class InterestSerializer(serializers.ModelSerializer):
+    content = serializers.CharField(
+        source='name',
+    )
+
     class Meta:
         model = models.Interest
         list_serializer_class = common_serializers.FilteredListSerializer
         fields = (
             'uid',
-            'name',
+            'content',
             'is_active',
         )
 

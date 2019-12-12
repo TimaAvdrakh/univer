@@ -8,7 +8,7 @@ from common import models as models_common
 from organizations import models as models_organizations
 from portal_users import models as models_portal_users
 from schedules import models as models_schedules
-from portal.curr_settings import journal_statuses
+# from portal.curr_settings import journal_statuses
 
 
 from .models import *
