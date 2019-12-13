@@ -9,6 +9,7 @@ urlpatterns = [
 
     path('c1_objects/', views.C1ObjectView.as_view(), name='C1Objects'),
     path('c1_object_compares/', views.C1ObjectCompareView.as_view(), name='c1_object_compares'),
+    path('copy_rules/', views.CopyRuleView.as_view(), name='copy_rules'),
 
     # url('^putpicturefrom1c/$', views.putpicturefrom1c, name='putpicturefrom1c'),
     # url('^putactfrom1c/$', views.putactfrom1c, name='putactfrom1c'),

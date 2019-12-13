@@ -13,6 +13,7 @@ from rest_framework import generics
 from rest_framework import status
 from rest_framework.response import Response
 from . import serializers
+import requests
 
 
 from .models import *
@@ -224,3 +225,60 @@ class C1ObjectCompareView(generics.ListAPIView):
     authentication_classes = ()
     serializer_class = serializers.C1ObjectCompareSerializer
     queryset = C1ObjectCompare.objects.all()
+
+
+class CopyRuleView(generics.RetrieveAPIView):
+    permission_classes = ()
+    authentication_classes = ()
+
+    def get(self, request, *args, **kwargs):
+        resp = requests.get(url='http://apiuniver.cskz.kz/api/v1/c1/c1_objects/')
+        if resp.status_code == 200:
+            c1_objects = json.loads(resp.content)
+
+            for item in c1_objects:
+                try:
+                    obj = C1Object.objects.get(pk=item['uid'])
+                    obj.name = item['name']
+                    obj.model = item['model']
+                    obj.is_related = item['is_related']
+
+                except C1Object.DoesNotExist:
+                    C1Object.objects.create(
+                        uid=item['uid'],
+                        name=item['name'],
+                        model=item['model'],
+                        is_related=item['is_related'],
+                    )
+
+        resp = requests.get(url='http://apiuniver.cskz.kz/api/v1/c1/c1_object_compares/')
+        if resp.status_code == 200:
+            c1_object_compares = json.loads(resp.content)
+
+            for item in c1_object_compares:
+                try:
+                    obj = C1ObjectCompare.objects.get(pk=item['uid'])
+                    obj.name = item['name']
+                    obj.c1_object_id = item['c1_object']
+                    obj.c1 = item['c1']
+                    obj.django = item['django']
+                    obj.main_field = item['main_field']
+                    obj.is_binary_data = item['is_binary_data']
+
+                except C1ObjectCompare.DoesNotExist:
+                    C1ObjectCompare.objects.create(
+                        uid=item['uid'],
+                        name=item['name'],
+                        c1_object_id=item['c1_object'],
+                        c1=item['c1'],
+                        django=item['django'],
+                        main_field=item['main_field'],
+                        is_binary_data=item['is_binary_data'],
+                    )
+
+        return Response(
+            {
+                'message': 'ok'
+            },
+            status=status.HTTP_200_OK,
+        )
