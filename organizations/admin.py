@@ -191,6 +191,11 @@ class TeacherDisciplineAdmin(admin.ModelAdmin):
 
 @admin.register(models.StudyPlan)
 class StudyPlanAdmin(admin.ModelAdmin):
+    autocomplete_fields = (
+        'student',
+        'advisor',
+        # 'study_period',
+    )
     list_display = [
         'student',
         'number',
