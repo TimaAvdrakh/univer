@@ -188,7 +188,7 @@ class ScheduleListView(generics.ListAPIView):
                 student=profile,
                 is_active=True,
             ).values('group')
-            my_groups = org_models.Group.objects.filter(pk__in=my_group_pks)  # TODO  учитывать ПодГруппы
+            my_groups = org_models.Group.objects.filter(pk__in=my_group_pks)
 
             for my_group in my_groups:
                 is_empty = True
@@ -197,13 +197,12 @@ class ScheduleListView(generics.ListAPIView):
                     'days': []
                 }
 
-                # my_group_flow_uids = models.LessonStudent.objects.filter(group=my_group,
-                #                                                          is_active=True).values('flow_uid')
-
                 my_group_flow_uids = models.LessonStudent.objects.filter(
                     Q(group=my_group,
+                      student=profile,
                       is_active=True) |
                     Q(parent_group=my_group,
+                      student=profile,                 # Учитываю подгруппы
                       is_active=True),
                 ).values('flow_uid')
 
