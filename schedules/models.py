@@ -2,7 +2,8 @@ from django.db import models
 from common.models import BaseCatalog, BaseModel
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
-from organizations.models import Group
+from organizations.models import Group, LoadType2
+from portal.curr_settings import lesson_statuses
 
 
 class RoomType(BaseCatalog):
@@ -148,6 +149,11 @@ class Lesson(BaseModel):
         on_delete=models.CASCADE,
         verbose_name='Тип нагрузки',
     )
+    load_type2_uid_1c = models.CharField(
+        max_length=200,
+        default='',
+        verbose_name='УИД 1С Типа нагрузки',
+    )
     teachers = models.ManyToManyField(
         'portal_users.Profile',
         verbose_name='Преподаватели',
@@ -200,6 +206,18 @@ class Lesson(BaseModel):
         on_delete=models.CASCADE,
         verbose_name='Аудитория',
     )
+
+    def save(self, *args, **kwargs):
+        if self.exchange:
+            if self._state.adding:
+                self.status_id = lesson_statuses['planned']
+
+            if self.load_type2_uid_1c:
+                try:
+                    load_type2 = LoadType2.objects.get(uid_1c=self.load_type2_uid_1c)
+                    self.load_type = load_type2
+                except LoadType2.DoesNotExist:
+                    print('LoadType2 not found')
 
     def __str__(self):
         return '{} {}'.format(self.discipline.name,
@@ -336,7 +354,8 @@ class LessonTeacher(BaseModel):
     def save(self, *args, **kwargs):
         if self.exchange:
             if self.is_active:
-                self.lesson.teachers.add(self.teacher)
+                if self.teacher not in self.lesson.teachers.filter(is_active=True):
+                    self.lesson.teachers.add(self.teacher)
             else:
                 try:
                     self.lesson.teachers.remove(self.teacher)
