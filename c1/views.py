@@ -234,7 +234,7 @@ class CopyRuleView(generics.RetrieveAPIView):
     def get(self, request, *args, **kwargs):
         resp = requests.get(url='http://apiuniver.cskz.kz/api/v1/c1/c1_objects/')
         if resp.status_code == 200:
-            c1_objects = json.loads(resp.content)
+            c1_objects = resp.json()  # json.loads(resp.content)
 
             for item in c1_objects:
                 try:
@@ -253,7 +253,7 @@ class CopyRuleView(generics.RetrieveAPIView):
 
         resp = requests.get(url='http://apiuniver.cskz.kz/api/v1/c1/c1_object_compares/')
         if resp.status_code == 200:
-            c1_object_compares = json.loads(resp.content)
+            c1_object_compares = resp.json()  # json.loads(resp.content)
 
             for item in c1_object_compares:
                 try:
