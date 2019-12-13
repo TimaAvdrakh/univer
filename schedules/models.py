@@ -326,11 +326,6 @@ class StudentPerformanceLog(BaseModel):
 
 
 class LessonTeacher(BaseModel):
-    # lesson = models.ForeignKey(
-    #     Lesson,
-    #     on_delete=models.CASCADE,
-    #     verbose_name='Занятие',
-    # )
     flow_uid = models.UUIDField(
         verbose_name='UID потока',
         null=True,

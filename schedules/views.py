@@ -202,7 +202,7 @@ class ScheduleListView(generics.ListAPIView):
                       student=profile,
                       is_active=True) |
                     Q(parent_group=my_group,
-                      student=profile,                 # Учитываю подгруппы
+                      student=profile,  # Учитываю подгруппы
                       is_active=True),
                 ).values('flow_uid')
 
@@ -327,9 +327,11 @@ class ElJournalListView(generics.ListAPIView):
         if load_type:
             queryset = queryset.filter(load_type_id=load_type)
         if group:
-            flow_uid_list = models.LessonStudent.objects.filter(group_id=group).values('flow_uid')
+            flow_uid_list = models.LessonStudent.objects.filter(
+                Q(group_id=group) | Q(parent_group_id=group),
+                is_active=True,
+            ).values('flow_uid')
             queryset = queryset.filter(flow_uid__in=flow_uid_list)
-            # queryset = queryset.filter(lesson__groups__in=[group])
         if study_year:
             queryset = queryset.filter(lessons__study_year_id=study_year)
 
@@ -463,8 +465,10 @@ class JournalDetailView(generics.RetrieveAPIView):
         lesson_nums = []
         day_list = []
         student_list2 = []
-        student_pks = models.LessonStudent.objects.filter(flow_uid=journal.flow_uid,
-                                                          is_active=True).values('student')
+        student_pks = models.LessonStudent.objects.filter(
+            flow_uid=journal.flow_uid,
+            is_active=True,
+        ).values('student')
         students = Profile.objects.filter(pk__in=student_pks)
 
         for s in students:

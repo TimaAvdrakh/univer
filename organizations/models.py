@@ -590,8 +590,6 @@ class LoadType(BaseCatalog):
         verbose_name_plural = 'Виды нагрузок'
 
 
-# 1
-
 class AcadPeriodType(BaseCatalog):
     class Meta:
         verbose_name = 'Вид академического периода'
@@ -606,6 +604,8 @@ class AcadPeriod(BaseCatalog):
     period_type = models.ForeignKey(
         AcadPeriodType,
         on_delete=models.CASCADE,
+        null=True,
+        blank=True,
         verbose_name='Вид академического периода',
     )
 
