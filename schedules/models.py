@@ -87,10 +87,10 @@ class ElectronicJournal(BaseModel):
         null=True,
         verbose_name='UID потока',
     )
-    teachers = models.ManyToManyField(
-        'portal_users.Profile',
-        verbose_name='Преподаватели',
-    )
+    # teachers = models.ManyToManyField(
+    #     'portal_users.Profile',
+    #     verbose_name='Преподаватели',
+    # )
     discipline = models.ForeignKey(
         'organizations.Discipline',
         on_delete=models.CASCADE,
@@ -163,10 +163,10 @@ class Lesson(BaseModel):
         on_delete=models.CASCADE,
         verbose_name='Язык преподавания',
     )
-    groups = models.ManyToManyField(  # TODO убрать
-        'organizations.Group',
-        verbose_name='Группы',
-    )
+    # groups = models.ManyToManyField(  # TODO убрать
+    #     'organizations.Group',
+    #     verbose_name='Группы',
+    # )
     acad_period = models.ForeignKey(
         'organizations.AcadPeriod',
         on_delete=models.CASCADE,
@@ -340,10 +340,14 @@ class StudentPerformanceLog(BaseModel):
 
 
 class LessonTeacher(BaseModel):
-    lesson = models.ForeignKey(
-        Lesson,
-        on_delete=models.CASCADE,
-        verbose_name='Занятие',
+    # lesson = models.ForeignKey(
+    #     Lesson,
+    #     on_delete=models.CASCADE,
+    #     verbose_name='Занятие',
+    # )
+    flow_uid = models.UUIDField(
+        verbose_name='UID потока',
+        null=True,
     )
     teacher = models.ForeignKey(
         'portal_users.Profile',
@@ -354,23 +358,36 @@ class LessonTeacher(BaseModel):
     def save(self, *args, **kwargs):
         if self.exchange:
             if self.is_active:
-                if self.teacher not in self.lesson.teachers.filter(is_active=True):
-                    self.lesson.teachers.add(self.teacher)
+                # if self.teacher not in self.lesson.teachers.filter(is_active=True):
+                #     self.lesson.teachers.add(self.teacher)
+
+                lessons = Lesson.objects.filter(is_active=True,
+                                                flow_uid=self.flow_uid)
+                for lesson in lessons:
+                    lesson.teachers.add(self.teacher)
             else:
-                try:
-                    self.lesson.teachers.remove(self.teacher)
-                except:
-                    pass
+                # try:
+                #     self.lesson.teachers.remove(self.teacher)
+                # except:
+                #     pass
+
+                lessons = Lesson.objects.filter(is_active=True,
+                                                flow_uid=self.flow_uid)
+                for lesson in lessons:
+                    try:
+                        lesson.teachers.remove(self.teacher)
+                    except:
+                        pass
 
     def __str__(self):
-        return '{} - {}'.format(self.lesson.subject,
+        return '{} - {}'.format(self.flow_uid,
                                 self.teacher.first_name)
 
     class Meta:
         verbose_name = 'Препод-Занятие'
         verbose_name_plural = 'Препод-Занятие'
         unique_together = (
-            'lesson',
+            'flow_uid',
             'teacher',
         )
 

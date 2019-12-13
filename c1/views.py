@@ -201,7 +201,7 @@ def create_electronic_journals():
             discipline=first_lesson.discipline,
             load_type=first_lesson.load_type,
         )
-        ej.teachers.set(first_lesson.teachers.filter(is_active=True))
+        # ej.teachers.set(first_lesson.teachers.filter(is_active=True))
 
         for lesson in lessons:
             lesson.el_journal = ej

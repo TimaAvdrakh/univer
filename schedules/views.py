@@ -306,14 +306,18 @@ class ElJournalListView(generics.ListAPIView):
         group = self.request.query_params.get('group')
         study_year = self.request.query_params.get('study_year')
 
-        queryset = self.queryset.filter(teachers__in=[profile])
+        flow_uids = models.LessonTeacher.objects.filter(teacher=profile).values('flow_uid')
+
+        queryset = self.queryset.filter(flow_uid__in=flow_uids)
 
         if discipline:
             queryset = queryset.filter(discipline_id=discipline)
         if load_type:
             queryset = queryset.filter(load_type_id=load_type)
         if group:
-            queryset = queryset.filter(lesson__groups__in=[group])
+            flow_uid_list = models.LessonStudent.objects.filter(group_id=group).values('flow_uid')
+            queryset = queryset.filter(flow_uid__in=flow_uid_list)
+            # queryset = queryset.filter(lesson__groups__in=[group])
         if study_year:
             queryset = queryset.filter(lessons__study_year_id=study_year)
 
@@ -328,7 +332,7 @@ class JournalInfoView(generics.RetrieveAPIView):  # TODO
     """
     permission_classes = (
         IsAuthenticated,
-        permissions.ElJournalPermission,
+        permissions.ElJournalTeacherPermission,
     )
     serializer_class = serializers.ElectronicJournalDetailSerializer
 
@@ -360,7 +364,7 @@ class JournalDetailView(generics.RetrieveAPIView):
     """
     permission_classes = (
         IsAuthenticated,
-        permissions.ElJournalPermission,
+        permissions.ElJournalTeacherPermission,
     )
 
     def get(self, request, *args, **kwargs):
@@ -377,7 +381,6 @@ class JournalDetailView(generics.RetrieveAPIView):
                                       journal)
 
         lessons = journal.lessons.filter(
-            # teachers__in=[profile],
             is_active=True,
         ).order_by('date', 'time__from_time')
 
@@ -451,19 +454,24 @@ class JournalDetailView(generics.RetrieveAPIView):
         student_list2 = []
 
         lesson = lessons.first()
-        groups = lesson.groups.filter(is_active=True)
-        student_pks = org_models.StudyPlan.objects.filter(is_active=True,
-                                                          group__in=groups).values('student')
+
+        # groups = lesson.groups.filter(is_active=True)
+        # student_pks = org_models.StudyPlan.objects.filter(is_active=True,
+        #                                                   group__in=groups).values('student')
 
         # Студенты берем из StudentDiscipline
-        student_pks_from_sd = org_models.StudentDiscipline.objects.filter(
-            discipline=journal.discipline,
-            load_type__load_type2=journal.load_type,
-            teacher__in=journal.teachers.filter(is_active=True),
-        ).distinct('student').values('student')
+        # student_pks_from_sd = org_models.StudentDiscipline.objects.filter(
+        #     discipline=journal.discipline,
+        #     load_type__load_type2=journal.load_type,
+        #     teacher__in=journal.teachers.filter(is_active=True),
+        # ).distinct('student').values('student')
 
+        # students = Profile.objects.filter(pk__in=student_pks)
+        # students = students.filter(pk__in=student_pks_from_sd).order_by('last_name', 'first_name')
+
+        student_pks = models.LessonStudent.objects.filter(flow_uid=journal.flow_uid,
+                                                          is_active=True).values('student')
         students = Profile.objects.filter(pk__in=student_pks)
-        students = students.filter(pk__in=student_pks_from_sd).order_by('last_name', 'first_name')
 
         for s in students:
             d = {
@@ -595,7 +603,7 @@ class StudentPerformanceView(generics.RetrieveAPIView):
     """
     permission_classes = (
         IsAuthenticated,
-        permissions.TeacherPermission,
+        permissions.LessonTeacherPermission,
     )
 
     def get(self, request, *args, **kwargs):
@@ -652,7 +660,7 @@ class AverageMarkView(generics.RetrieveAPIView):
     """
     permission_classes = (
         IsAuthenticated,
-        permissions.TeacherPermission,
+        permissions.LessonTeacherPermission,
     )
 
     def get(self, request, *args, **kwargs):
@@ -689,7 +697,7 @@ class GetGradingSystemView(generics.RetrieveAPIView):
     """
     permission_classes = (
         IsAuthenticated,
-        permissions.TeacherPermission,
+        permissions.LessonTeacherPermission,
     )
     queryset = models.GradingSystem.objects.filter(is_active=True)
     serializer_class = serializers.GradingSystemSerializer
@@ -722,7 +730,7 @@ class EvaluateView(generics.CreateAPIView):
     serializer_class = serializers.EvaluateSerializer
     permission_classes = (
         IsAuthenticated,
-        permissions.TeacherPermission,
+        permissions.LessonTeacherPermission,
     )
 
     def create(self, request, *args, **kwargs):
@@ -755,7 +763,7 @@ class ChangeLessonView(generics.UpdateAPIView):
     """Изменить тему и систему оценивания занятия"""
     permission_classes = (
         IsAuthenticated,
-        permissions.TeacherPermission,
+        permissions.LessonTeacherPermission,
     )
     queryset = models.Lesson.objects.filter(is_active=True)
     serializer_class = serializers.LessonUpdateSerializer
@@ -779,7 +787,7 @@ class ChooseControlView(generics.UpdateAPIView):
     """Выбор занятия как контрольное"""
     permission_classes = (
         IsAuthenticated,
-        permissions.TeacherPermission,
+        permissions.LessonTeacherPermission,
     )
     queryset = models.Lesson.objects.filter(is_active=True)
     serializer_class = serializers.ChooseControlSerializer

@@ -138,11 +138,10 @@ class ElectronicJournalAdmin(admin.ModelAdmin):
 @admin.register(models.LessonTeacher)
 class LessonTeacherAdmin(admin.ModelAdmin):
     autocomplete_fields = (
-        'lesson',
         'teacher',
     )
     list_display = (
-        'lesson',
+        'flow_uid',
         'teacher',
         'is_active',
     )
