@@ -76,21 +76,11 @@ class LessonStatus(BaseCatalog):
         verbose_name_plural = 'Статусы занятий'
 
 
-# class JournalStatus(BaseCatalog):
-#     class Meta:
-#         verbose_name = 'Статус журнала'
-#         verbose_name_plural = 'Статусы журналов'
-
-
 class ElectronicJournal(BaseModel):
     flow_uid = models.UUIDField(
         null=True,
         verbose_name='UID потока',
     )
-    # teachers = models.ManyToManyField(
-    #     'portal_users.Profile',
-    #     verbose_name='Преподаватели',
-    # )
     discipline = models.ForeignKey(
         'organizations.Discipline',
         on_delete=models.CASCADE,
@@ -154,7 +144,7 @@ class Lesson(BaseModel):
         default='',
         verbose_name='УИД 1С Типа нагрузки',
     )
-    teachers = models.ManyToManyField(
+    teachers = models.ManyToManyField(  # TODO delete
         'portal_users.Profile',
         verbose_name='Преподаватели',
     )
@@ -163,10 +153,6 @@ class Lesson(BaseModel):
         on_delete=models.CASCADE,
         verbose_name='Язык преподавания',
     )
-    # groups = models.ManyToManyField(  # TODO убрать
-    #     'organizations.Group',
-    #     verbose_name='Группы',
-    # )
     acad_period = models.ForeignKey(
         'organizations.AcadPeriod',
         on_delete=models.CASCADE,
@@ -358,19 +344,11 @@ class LessonTeacher(BaseModel):
     def save(self, *args, **kwargs):
         if self.exchange:
             if self.is_active:
-                # if self.teacher not in self.lesson.teachers.filter(is_active=True):
-                #     self.lesson.teachers.add(self.teacher)
-
                 lessons = Lesson.objects.filter(is_active=True,
                                                 flow_uid=self.flow_uid)
                 for lesson in lessons:
                     lesson.teachers.add(self.teacher)
             else:
-                # try:
-                #     self.lesson.teachers.remove(self.teacher)
-                # except:
-                #     pass
-
                 lessons = Lesson.objects.filter(is_active=True,
                                                 flow_uid=self.flow_uid)
                 for lesson in lessons:
@@ -445,12 +423,6 @@ class LessonStudent(BaseModel):
                 group = Group.objects.get(pk=self.group_identificator)
 
             self.group = group
-
-            # lessons = Lesson.objects.filter(flow_uid=self.flow_uid,
-            #                                 is_active=True)
-            # for lesson in lessons:
-            #     if group not in lesson.groups.filter(is_active=True):
-            #         lesson.groups.add(group)
 
         super(LessonStudent, self).save(*args, **kwargs)
 

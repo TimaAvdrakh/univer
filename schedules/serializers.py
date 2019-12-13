@@ -47,7 +47,7 @@ class RoomSerializer(serializers.ModelSerializer):
 
 class LessonSerializer(serializers.ModelSerializer):
     discipline = DisciplineSerializer()
-    # groups = GroupShortSerializer(many=True)  # TODO
+    # groups = GroupShortSerializer(many=True)
     classroom = RoomSerializer()
     load_type = serializers.CharField()
     teachers = TeacherShortSerializer(many=True)
@@ -57,7 +57,7 @@ class LessonSerializer(serializers.ModelSerializer):
         fields = (
             'uid',
             'discipline',
-            'groups',
+            # 'groups',
             'classroom',
             'teachers',
             'load_type',
@@ -163,10 +163,13 @@ class ElectronicJournalDetailSerializer(serializers.ModelSerializer):
                                                       many=True)
         data['acad_periods'] = acad_period_serializer.data
 
+        teacher_pks = models.LessonTeacher.objects.filter(flow_uid=instance.flow_uid,
+                                                          is_active=True).values('teacher')
+
         student_count = StudentDiscipline.objects.filter(
             discipline=instance.discipline,
             load_type__load_type2=instance.load_type,
-            teacher__in=instance.teachers.filter(is_active=True),  # TODO
+            teacher__in=teacher_pks,  # instance.teachers.filter(is_active=True)
         ).distinct('student').count()
 
         data['student_nums'] = student_count
@@ -343,7 +346,7 @@ class ChooseControlSerializer(serializers.ModelSerializer):
 
 class LessonShortSerializer(serializers.ModelSerializer):
     discipline = DisciplineSerializer()
-    groups = GroupShortSerializer(many=True) # TODO
+    # groups = GroupShortSerializer(many=True)
     classroom = RoomSerializer()
     load_type = serializers.CharField()
     teachers = TeacherShortSerializer(many=True)
@@ -357,7 +360,7 @@ class LessonShortSerializer(serializers.ModelSerializer):
             'discipline',
             'date',
             'time',
-            'groups',
+            # 'groups',
             'classroom',
             'teachers',
             'load_type',
@@ -369,5 +372,12 @@ class LessonShortSerializer(serializers.ModelSerializer):
         data = super().to_representation(instance)
         if data['status'] is None:
             data['status'] = ''
+
+        groups_pks = models.LessonStudent.objects.filter(flow_uid=instance.flow_uid,
+                                                         is_active=True).values('group')
+        groups = Group.objects.filter(pk__in=groups_pks)
+        serializer = GroupShortSerializer(instance=groups,
+                                          many=True)
+        data['groups'] = serializer.data
 
         return data

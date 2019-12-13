@@ -15,7 +15,7 @@ from organizations.serializers import DisciplineSerializer
 from portal_users.serializers import ProfileShortSerializer
 from rest_framework.permissions import IsAuthenticated
 from . import permissions
-from django.db.models import Avg
+from django.db.models import Avg, Q
 
 
 class TimeWindowListView(generics.ListAPIView):
@@ -83,7 +83,9 @@ class ScheduleListView(generics.ListAPIView):
         lessons = self.queryset.all()
 
         if group:
-            lessons = lessons.filter(groups__in=[group])
+            flow_uids = models.LessonStudent.objects.filter(group_id=group,
+                                                            is_active=True).values('flow_uid')
+            lessons = lessons.filter(flow_uid__in=flow_uids)
 
         if discipline:
             lessons = lessons.filter(discipline_id=discipline)
@@ -186,7 +188,7 @@ class ScheduleListView(generics.ListAPIView):
                 student=profile,
                 is_active=True,
             ).values('group')
-            my_groups = org_models.Group.objects.filter(pk__in=my_group_pks)
+            my_groups = org_models.Group.objects.filter(pk__in=my_group_pks)  # TODO  учитывать ПодГруппы
 
             for my_group in my_groups:
                 is_empty = True
@@ -194,7 +196,18 @@ class ScheduleListView(generics.ListAPIView):
                     'group': my_group.name,
                     'days': []
                 }
-                stud_lessons = lessons.filter(groups__in=[my_group])
+
+                # my_group_flow_uids = models.LessonStudent.objects.filter(group=my_group,
+                #                                                          is_active=True).values('flow_uid')
+
+                my_group_flow_uids = models.LessonStudent.objects.filter(
+                    Q(group=my_group,
+                      is_active=True) |
+                    Q(parent_group=my_group,
+                      is_active=True),
+                ).values('flow_uid')
+
+                stud_lessons = lessons.filter(flow_uid__in=my_group_flow_uids)
 
                 for day in work_week:
                     stud_day_lessons = stud_lessons.filter(date=day).order_by('time__from_time')
@@ -368,7 +381,6 @@ class JournalDetailView(generics.RetrieveAPIView):
     )
 
     def get(self, request, *args, **kwargs):
-        profile = request.user.profile
         journal_id = request.query_params.get('id')
         next_month = request.query_params.get('next_month')
         prev_month = request.query_params.get('prev_month')
@@ -452,23 +464,6 @@ class JournalDetailView(generics.RetrieveAPIView):
         lesson_nums = []
         day_list = []
         student_list2 = []
-
-        lesson = lessons.first()
-
-        # groups = lesson.groups.filter(is_active=True)
-        # student_pks = org_models.StudyPlan.objects.filter(is_active=True,
-        #                                                   group__in=groups).values('student')
-
-        # Студенты берем из StudentDiscipline
-        # student_pks_from_sd = org_models.StudentDiscipline.objects.filter(
-        #     discipline=journal.discipline,
-        #     load_type__load_type2=journal.load_type,
-        #     teacher__in=journal.teachers.filter(is_active=True),
-        # ).distinct('student').values('student')
-
-        # students = Profile.objects.filter(pk__in=student_pks)
-        # students = students.filter(pk__in=student_pks_from_sd).order_by('last_name', 'first_name')
-
         student_pks = models.LessonStudent.objects.filter(flow_uid=journal.flow_uid,
                                                           is_active=True).values('student')
         students = Profile.objects.filter(pk__in=student_pks)
@@ -821,5 +816,3 @@ class LessonListView(generics.ListAPIView):
             queryset = queryset.filter(flow_uid=flow_uid)
 
         return queryset
-
-# 1
