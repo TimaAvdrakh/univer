@@ -186,9 +186,9 @@ class StudentDisciplineAdmin(admin.ModelAdmin):
         'author',
         'discipline',
         'study_plan',
-        'study_year',
-        'acad_period',
-        'language',
+        # 'study_year',
+        # 'acad_period',
+        # 'language',
     )
     list_filter = [
         'status',
