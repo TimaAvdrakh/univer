@@ -23,6 +23,11 @@ class RoomAdmin(admin.ModelAdmin):
 
 @admin.register(models.TimeWindow)
 class TimeWindowAdmin(admin.ModelAdmin):
+    search_fields = (
+        'name',
+        'from_time',
+        'to_time',
+    )
     list_display = (
         'name',
         'from_time',
@@ -49,6 +54,16 @@ class LessonStatusAdmin(admin.ModelAdmin):
 
 @admin.register(models.Lesson)
 class LessonAdmin(admin.ModelAdmin):
+    search_fields = (
+        'subject',
+        'discipline__name',
+    )
+    autocomplete_fields = (
+        'discipline',
+        'acad_period',
+        'study_year',
+        'time',
+    )
     list_filter = (
         'date',
         'time',
@@ -68,6 +83,12 @@ class LessonAdmin(admin.ModelAdmin):
 
 @admin.register(models.Mark)
 class MarkAdmin(admin.ModelAdmin):
+    search_fields = (
+        'weight',
+        'value_traditional',
+        'value_letter',
+        'value_number',
+    )
     list_display = (
         'weight',
         'grading_system',
@@ -79,6 +100,11 @@ class MarkAdmin(admin.ModelAdmin):
 
 @admin.register(models.StudentPerformance)
 class StudentPerformanceAdmin(admin.ModelAdmin):
+    autocomplete_fields = (
+        'lesson',
+        'student',
+        'mark',
+    )
     list_display = (
         'lesson',
         'student',
@@ -98,6 +124,10 @@ class StudentPerformanceAdmin(admin.ModelAdmin):
 
 @admin.register(models.ElectronicJournal)
 class ElectronicJournalAdmin(admin.ModelAdmin):
+    autocomplete_fields = (
+        'discipline',
+        'load_type',
+    )
     list_display = (
         'discipline',
         'load_type',
@@ -107,6 +137,10 @@ class ElectronicJournalAdmin(admin.ModelAdmin):
 
 @admin.register(models.LessonTeacher)
 class LessonTeacherAdmin(admin.ModelAdmin):
+    autocomplete_fields = (
+        'lesson',
+        'teacher',
+    )
     list_display = (
         'lesson',
         'teacher',
@@ -116,6 +150,11 @@ class LessonTeacherAdmin(admin.ModelAdmin):
 
 @admin.register(models.LessonStudent)
 class LessonTeacherAdmin(admin.ModelAdmin):
+    autocomplete_fields = (
+        'group',
+        'parent_group',
+        'student',
+    )
     list_display = (
         'flow_uid',
         'group_identificator',

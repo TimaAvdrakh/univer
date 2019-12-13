@@ -4,6 +4,9 @@ from . import models
 
 @admin.register(models.Profile)
 class ProfileAdmin(admin.ModelAdmin):
+    autocomplete_fields = (
+        'user',
+    )
     search_fields = [
         'first_name',
         'last_name',
@@ -118,6 +121,9 @@ class AchievementAdmin(admin.ModelAdmin):
 
 @admin.register(models.Position)
 class PositionAdmin(admin.ModelAdmin):
+    search_fields = (
+        'name',
+    )
     list_display = [
         "name",
         "uid",
@@ -126,6 +132,9 @@ class PositionAdmin(admin.ModelAdmin):
 
 @admin.register(models.Teacher)
 class PositionAdmin(admin.ModelAdmin):
+    autocomplete_fields = (
+        'profile',
+    )
     search_fields = (
         'profile__first_name',
         'profile__last_name',
@@ -141,6 +150,11 @@ class PositionAdmin(admin.ModelAdmin):
 
 @admin.register(models.TeacherPosition)
 class PositionAdmin(admin.ModelAdmin):
+    autocomplete_fields = (
+        "profile",
+        "position",
+        "cathedra",
+    )
     list_display = [
         "profile",
         "position",

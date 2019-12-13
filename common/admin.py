@@ -37,6 +37,11 @@ class RegistrationForDisciplineAdmin(admin.ModelAdmin):
 
 @admin.register(models.IdentityDocument)
 class IdentityDocumentAdmin(admin.ModelAdmin):
+    autocomplete_fields = (
+        'profile',
+        'document_type',
+        'issued_by',
+    )
     list_display = (
         'profile',
         'document_type',
@@ -51,6 +56,9 @@ class IdentityDocumentAdmin(admin.ModelAdmin):
 
 @admin.register(models.DocumentType)
 class DocumentTypeAdmin(admin.ModelAdmin):
+    search_fields = (
+        'name',
+    )
     list_display = (
         'name',
         'uid'
@@ -59,6 +67,9 @@ class DocumentTypeAdmin(admin.ModelAdmin):
 
 @admin.register(models.GovernmentAgency)
 class GosOrganizationAdmin(admin.ModelAdmin):
+    search_fields = (
+        'name',
+    )
     list_display = (
         'name',
         'uid'

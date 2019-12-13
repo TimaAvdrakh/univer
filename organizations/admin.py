@@ -4,6 +4,9 @@ from . import models
 
 @admin.register(models.Organization)
 class OrganizationAdmin(admin.ModelAdmin):
+    search_fields = (
+        'name',
+    )
     list_display = [
         'name',
     ]
@@ -19,6 +22,10 @@ class StudyFormAdmin(admin.ModelAdmin):
 
 @admin.register(models.StudyPeriod)
 class StudyPeriodAdmin(admin.ModelAdmin):
+    search_fields = (
+        'start',
+        'end',
+    )
     list_filter = (
         'is_study_year',
     )
@@ -32,6 +39,9 @@ class StudyPeriodAdmin(admin.ModelAdmin):
 
 @admin.register(models.Speciality)
 class SpecialityAdmin(admin.ModelAdmin):
+    search_fields = (
+        'name',
+    )
     list_display = [
         'name',
         'code',
@@ -49,6 +59,9 @@ class FacultyAdmin(admin.ModelAdmin):
 
 @admin.register(models.Cathedra)
 class CathedraAdmin(admin.ModelAdmin):
+    search_fields = (
+        'name',
+    )
     list_display = [
         'name',
         'uid',
@@ -57,6 +70,14 @@ class CathedraAdmin(admin.ModelAdmin):
 
 @admin.register(models.Group)
 class GroupAdmin(admin.ModelAdmin):
+    autocomplete_fields = (
+        'headman',
+        'kurator',
+        'language',
+    )
+    search_fields = (
+        'name',
+    )
     list_display = [
         'name',
         'uid',
@@ -84,6 +105,9 @@ class EducationProgramAdmin(admin.ModelAdmin):
 
 @admin.register(models.EducationType)
 class EducationTypeAdmin(admin.ModelAdmin):
+    search_fields = (
+        'name',
+    )
     list_display = [
         'name',
         'uid',
@@ -100,6 +124,13 @@ class PreparationLevelAdmin(admin.ModelAdmin):
 
 @admin.register(models.LoadType)
 class LoadTypeAdmin(admin.ModelAdmin):
+    autocomplete_fields = (
+        'load_type2',
+    )
+    search_fields = (
+        'name',
+        'load_type2__name',
+    )
     list_display = [
         'load_type2',
         'name',
@@ -111,6 +142,9 @@ class LoadTypeAdmin(admin.ModelAdmin):
 
 @admin.register(models.LoadType2)
 class LoadType2Admin(admin.ModelAdmin):
+    search_fields = (
+        'name',
+    )
     list_display = [
         'name',
         'uid',
@@ -122,6 +156,9 @@ class LoadType2Admin(admin.ModelAdmin):
 
 @admin.register(models.AcadPeriodType)
 class AcadPeriodTypeAdmin(admin.ModelAdmin):
+    search_fields = (
+        'name',
+    )
     list_display = [
         'name',
         'uid',
@@ -130,6 +167,10 @@ class AcadPeriodTypeAdmin(admin.ModelAdmin):
 
 @admin.register(models.AcadPeriod)
 class AcadPeriodAdmin(admin.ModelAdmin):
+    search_fields = (
+        'name',
+        'number',
+    )
     list_display = [
         'name',
         'number',
@@ -139,15 +180,19 @@ class AcadPeriodAdmin(admin.ModelAdmin):
 
 @admin.register(models.StudentDiscipline)
 class StudentDisciplineAdmin(admin.ModelAdmin):
-    # list_filter = [
-    #     'student',
-    #     'acad_period',
-    #     'study_plan',
-    #     'study_plan__group',
-    #     'status',
-    #     'author',
-    #     'discipline',
-    # ]
+    autocomplete_fields = (
+        'student',
+        'teacher',
+        'author',
+        'discipline',
+        'study_plan',
+        'study_year',
+        'acad_period',
+        'language',
+    )
+    list_filter = [
+        'status',
+    ]
     list_display = [
         'student',
         'study_plan',
@@ -165,6 +210,9 @@ class StudentDisciplineAdmin(admin.ModelAdmin):
 
 @admin.register(models.Language)
 class LanguageAdmin(admin.ModelAdmin):
+    search_fields = (
+        'name',
+    )
     list_display = [
         'name',
         'uid',
@@ -173,6 +221,12 @@ class LanguageAdmin(admin.ModelAdmin):
 
 @admin.register(models.TeacherDiscipline)
 class TeacherDisciplineAdmin(admin.ModelAdmin):
+    autocomplete_fields = (
+        'teacher',
+        'discipline',
+        'language',
+        'study_period',
+    )
     # list_filter = [
     #     'teacher',
     #     'discipline',
@@ -191,10 +245,15 @@ class TeacherDisciplineAdmin(admin.ModelAdmin):
 
 @admin.register(models.StudyPlan)
 class StudyPlanAdmin(admin.ModelAdmin):
+    search_fields = (
+        'student__first_name',
+        'student__last_name',
+        'number',
+    )
     autocomplete_fields = (
         'student',
         'advisor',
-        # 'study_period',
+        'study_period',
     )
     list_display = [
         'student',
@@ -241,6 +300,12 @@ class StudyPlanAdmin(admin.ModelAdmin):
 
 @admin.register(models.Prerequisite)
 class PrerequisiteAdmin(admin.ModelAdmin):
+    autocomplete_fields = (
+        'discipline',
+        'required_discipline',
+        'speciality',
+        'study_period',
+    )
     list_display = [
         'study_period',
         'discipline',
@@ -253,6 +318,11 @@ class PrerequisiteAdmin(admin.ModelAdmin):
 
 @admin.register(models.Postrequisite)
 class PostrequisiteAdmin(admin.ModelAdmin):
+    autocomplete_fields = (
+        'discipline',
+        'available_discipline',
+        'speciality',
+    )
     list_display = [
         'study_period',
         'discipline',
@@ -265,6 +335,9 @@ class PostrequisiteAdmin(admin.ModelAdmin):
 
 @admin.register(models.Discipline)
 class DisciplineAdmin(admin.ModelAdmin):
+    search_fields = (
+        'name',
+    )
     list_display = [
         'name',
         'uid',
@@ -283,6 +356,11 @@ class StatusAdmin(admin.ModelAdmin):
 
 @admin.register(models.StudentDisciplineInfo)
 class StudentDisciplineInfoAdmin(admin.ModelAdmin):
+    autocomplete_fields = (
+        'acad_period',
+        'study_plan',
+        'student',
+    )
     list_filter = (
         'study_plan',
         'status',
@@ -315,6 +393,12 @@ class EducationBaseAdmin(admin.ModelAdmin):
 
 @admin.register(models.Education)
 class EducationAdmin(admin.ModelAdmin):
+    autocomplete_fields = (
+        'institute',
+        'profile',
+        'document_type',
+        'edu_type',
+    )
     search_fields = (
         'profile__first_name',
         'profile__last_name',
@@ -342,9 +426,16 @@ class EducationProgramGroupAdmin(admin.ModelAdmin):
 
 @admin.register(models.StudyYearCourse)
 class StudyYearCourseAdmin(admin.ModelAdmin):
-    list_filter = (
+    autocomplete_fields = (
+        'study_plan',
+        'study_year',
+    )
+    search_fields = (
         'study_plan',
     )
+    # list_filter = (
+    #     'study_plan',
+    # )
     list_display = [
         'study_plan',
         'study_year',
