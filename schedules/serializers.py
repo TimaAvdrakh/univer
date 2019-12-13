@@ -9,7 +9,7 @@ from common.exceptions import CustomException
 import datetime
 from organizations.models import LoadType2, AcadPeriod
 from common.serializers import AcadPeriodSerializer
-from organizations.models import StudentDiscipline, StudyPlan
+from organizations.models import StudentDiscipline, StudyPlan, Group
 from django.db.models import Max, Min
 from portal.curr_settings import lesson_statuses
 from django.utils.translation import gettext_lazy as _
@@ -47,7 +47,7 @@ class RoomSerializer(serializers.ModelSerializer):
 
 class LessonSerializer(serializers.ModelSerializer):
     discipline = DisciplineSerializer()
-    groups = GroupShortSerializer(many=True)
+    # groups = GroupShortSerializer(many=True)  # TODO
     classroom = RoomSerializer()
     load_type = serializers.CharField()
     teachers = TeacherShortSerializer(many=True)
@@ -62,6 +62,17 @@ class LessonSerializer(serializers.ModelSerializer):
             'teachers',
             'load_type',
         )
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        groups_pks = models.LessonStudent.objects.filter(flow_uid=instance.flow_uid,
+                                                         is_active=True).values('group')
+        groups = Group.objects.filter(pk__in=groups_pks)
+        serializer = GroupShortSerializer(instance=groups,
+                                          many=True)
+        data['groups'] = serializer.data
+
+        return data
 
 
 class ElectronicJournalSerializer(serializers.ModelSerializer):
@@ -83,11 +94,18 @@ class ElectronicJournalSerializer(serializers.ModelSerializer):
         lessons = instance.lessons.filter(is_active=True)
         if len(lessons) > 0:
             lesson = lessons.first()
-            groups = lesson.groups.filter(is_active=True)
 
-            serializer = GroupShortSerializer(groups,
+            # groups = lesson.groups.filter(is_active=True)
+            # serializer = GroupShortSerializer(groups,
+            #                                   many=True)
+
+            groups_pks = models.LessonStudent.objects.filter(flow_uid=instance.flow_uid,
+                                                             is_active=True).values('group')
+            groups = Group.objects.filter(pk__in=groups_pks)
+            serializer = GroupShortSerializer(instance=groups,
                                               many=True)
             data['groups'] = serializer.data
+
             data['study_year'] = lesson.study_year.repr_name
 
             acad_period_pks = lessons.distinct('acad_period').values('acad_period')
@@ -122,11 +140,19 @@ class ElectronicJournalDetailSerializer(serializers.ModelSerializer):
         data = super().to_representation(instance)
         lessons = instance.lessons.filter(is_active=True)
         if len(lessons) > 0:
-            groups = lessons.first().groups.filter(is_active=True)
+            # groups = lessons.first().groups.filter(is_active=True)
+            #
+            # serializer = GroupShortSerializer(groups,
+            #                                   many=True)
+            # data['groups'] = serializer.data
 
-            serializer = GroupShortSerializer(groups,
+            groups_pks = models.LessonStudent.objects.filter(flow_uid=instance.flow_uid,
+                                                             is_active=True).values('group')
+            groups = Group.objects.filter(pk__in=groups_pks)
+            serializer = GroupShortSerializer(instance=groups,
                                               many=True)
             data['groups'] = serializer.data
+
         else:
             data['groups'] = []
 
@@ -140,7 +166,7 @@ class ElectronicJournalDetailSerializer(serializers.ModelSerializer):
         student_count = StudentDiscipline.objects.filter(
             discipline=instance.discipline,
             load_type__load_type2=instance.load_type,
-            teacher__in=instance.teachers.filter(is_active=True),
+            teacher__in=instance.teachers.filter(is_active=True),  # TODO
         ).distinct('student').count()
 
         data['student_nums'] = student_count
@@ -317,7 +343,7 @@ class ChooseControlSerializer(serializers.ModelSerializer):
 
 class LessonShortSerializer(serializers.ModelSerializer):
     discipline = DisciplineSerializer()
-    groups = GroupShortSerializer(many=True)
+    groups = GroupShortSerializer(many=True) # TODO
     classroom = RoomSerializer()
     load_type = serializers.CharField()
     teachers = TeacherShortSerializer(many=True)

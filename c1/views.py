@@ -9,6 +9,10 @@ from organizations import models as models_organizations
 from portal_users import models as models_portal_users
 from schedules import models as models_schedules
 # from portal.curr_settings import journal_statuses
+from rest_framework import generics
+from rest_framework import status
+from rest_framework.response import Response
+from . import serializers
 
 
 from .models import *
@@ -206,3 +210,17 @@ def create_electronic_journals():
         for lesson in lessons:
             lesson.el_journal = ej
             lesson.save()
+
+
+class C1ObjectView(generics.ListAPIView):
+    permission_classes = ()
+    authentication_classes = ()
+    serializer_class = serializers.C1ObjectSerializer
+    queryset = C1Object.objects.all()
+
+
+class C1ObjectCompareView(generics.ListAPIView):
+    permission_classes = ()
+    authentication_classes = ()
+    serializer_class = serializers.C1ObjectCompareSerializer
+    queryset = C1ObjectCompare.objects.all()
