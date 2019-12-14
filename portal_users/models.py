@@ -557,7 +557,7 @@ class ProfilePhone(BaseModel):
         related_name='phones',
     )
     value = models.CharField(
-        max_length=15,
+        max_length=50,
         verbose_name='Номер телефона',
     )
 
