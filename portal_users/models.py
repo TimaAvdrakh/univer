@@ -75,27 +75,27 @@ class Profile(BaseModel):
         help_text='Из 1С',
     )
     first_name = models.CharField(
-        max_length=100,
+        max_length=200,
         verbose_name='Имя',
     )
     last_name = models.CharField(
-        max_length=100,
+        max_length=200,
         verbose_name='Фамилия',
     )
     middle_name = models.CharField(
-        max_length=100,
+        max_length=200,
         verbose_name='Отчество',
         default='',
         blank=True,
     )
     first_name_en = models.CharField(
-        max_length=100,
+        max_length=200,
         default='',
         blank=True,
         verbose_name='Имя на английском',
     )
     last_name_en = models.CharField(
-        max_length=100,
+        max_length=200,
         default='',
         blank=True,
         verbose_name='Фамилия на английском',
@@ -106,7 +106,7 @@ class Profile(BaseModel):
         verbose_name='Дата рождения',
     )
     birth_place = models.CharField(
-        max_length=200,
+        max_length=500,
         default='',
         blank=True,
         verbose_name='Место рождения',
@@ -140,7 +140,7 @@ class Profile(BaseModel):
         verbose_name='Семейное положение',
     )
     iin = models.CharField(
-        max_length=50,
+        max_length=100,
         verbose_name='ИИН',
         null=True,
         blank=True,
@@ -156,7 +156,7 @@ class Profile(BaseModel):
         verbose_name='Адрес',
     )
     phone = models.CharField(
-        max_length=20,
+        max_length=50,
         default='',
         blank=True,
         verbose_name='Телефон',
@@ -167,7 +167,7 @@ class Profile(BaseModel):
         blank=True,
     )
     skype = models.CharField(
-        max_length=100,
+        max_length=200,
         default='',
         blank=True,
         verbose_name='Skype',
@@ -297,13 +297,13 @@ class Teacher(BaseModel):
         verbose_name='Профиль',
     )
     academic_degree = models.CharField(
-        max_length=100,
+        max_length=200,
         default='',
         blank=True,
         verbose_name='Ученая степень',
     )
     academic_rank = models.CharField(
-        max_length=100,
+        max_length=200,
         default='',
         blank=True,
         verbose_name='Ученое звание',
@@ -311,7 +311,7 @@ class Teacher(BaseModel):
     work_experience_year = models.CharField(
         default='',
         blank=True,
-        max_length=100,
+        max_length=200,
         verbose_name='Стаж работы в ВУЗ (Год)',
     )
     work_experience_month = models.CharField(
