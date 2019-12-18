@@ -234,7 +234,7 @@ class CopyRuleView(generics.RetrieveAPIView):
     authentication_classes = ()
 
     def get(self, request, *args, **kwargs):
-        resp = requests.get(url='http://apiuniver.cskz.kz/api/v1/c1/c1_objects/')
+        resp = requests.get(url='http://kabinet.kazatu.kz:2050/api/v1/c1/c1_objects/')
         if resp.status_code == 200:
             c1_objects = resp.json()  # json.loads(resp.content)
 
