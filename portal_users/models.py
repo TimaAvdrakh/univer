@@ -8,6 +8,8 @@ from common.utils import password_generator
 from cron_app.models import CredentialsEmailTask
 from django.db.models import Max
 from validate_email import validate_email
+from portal.curr_settings import INACTIVE_STUDENT_STATUSES
+from schedules.models import LessonStudent
 
 
 class Gender(BaseCatalog):
@@ -261,6 +263,12 @@ class Profile(BaseModel):
                             password=user_credential.password,
                         )
                         self.login_sent = True
+
+            if self.status_id in INACTIVE_STUDENT_STATUSES:
+                """Если статус профиля в списке неактивных студентов,
+                то записи LessonStudent с участием данного студента декативируются"""
+                LessonStudent.objects.filter(is_active=True,
+                                             student=self).update(is_active=False)
 
         if self.user:
             self.user.email = self.email

@@ -3,7 +3,7 @@ from common.models import BaseCatalog, BaseModel
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from organizations.models import Group, LoadType2
-from portal.curr_settings import lesson_statuses, inactive_student_status
+from portal.curr_settings import lesson_statuses, INACTIVE_STUDENT_STATUSES
 
 
 class RoomType(BaseCatalog):
@@ -399,6 +399,10 @@ class LessonStudent(BaseModel):
 
     def save(self, *args, **kwargs):
         if self.exchange:
+            if self.student.status_id in INACTIVE_STUDENT_STATUSES:
+                """Если статус студента в списке неактивных студентов, запись не создается"""
+                return
+
             if self.is_subgroup:  # Если пришла подгруппа, создаю подгруппу
                 try:
                     group = Group.objects.get(
