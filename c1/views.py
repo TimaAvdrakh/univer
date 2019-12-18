@@ -309,6 +309,9 @@ class StudentPresenceView(generics.CreateAPIView):
 
 class DelAllView(generics.RetrieveAPIView):
     """Удалить все данные!"""
+    permission_classes = ()
+    authentication_classes = ()
+
     def get(self, request, *args, **kwargs):
         users = User.objects.all()
 
