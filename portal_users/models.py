@@ -226,8 +226,8 @@ class Profile(BaseModel):
                 user = User.objects.create(
                     username=username,
                     email=self.email,
-                    first_name=self.first_name,
-                    last_name=self.last_name,
+                    # first_name=self.first_name,
+                    # last_name=self.last_name,
                 )
                 user.set_password(password)
                 user.save()
@@ -240,7 +240,7 @@ class Profile(BaseModel):
 
                 if len(self.email) > 0 and validate_email(self.email):
                     CredentialsEmailTask.objects.create(
-                        to=user.email,
+                        to=self.email,
                         username=user.username,
                         password=password,
                     )
