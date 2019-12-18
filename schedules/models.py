@@ -264,7 +264,7 @@ class StudentPerformance(BaseModel):
         verbose_name='Оценка',
     )
     missed = models.BooleanField(
-        default=False,
+        default=True,
         verbose_name='Отсутствовал',
     )
     reason = models.CharField(

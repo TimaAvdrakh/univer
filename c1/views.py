@@ -282,3 +282,25 @@ class CopyRuleView(generics.RetrieveAPIView):
             },
             status=status.HTTP_200_OK,
         )
+
+
+class StudentPresenceView(generics.CreateAPIView):
+    """
+    auth_key - токен авторизации
+    user - ИИН студента
+    aud - Уид аудитории
+    time - timestamp
+    """
+    serializer_class = serializers.StudentPresenceSerializer
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.serializer_class(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(
+            {
+                'message': 'ok',
+            },
+            status=status.HTTP_200_OK
+        )
+

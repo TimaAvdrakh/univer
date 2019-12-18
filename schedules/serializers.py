@@ -243,7 +243,7 @@ class EvaluateSerializer(serializers.Serializer):
                     lesson=lesson,
                     student=student,
                     mark=mark,
-                    missed=False,
+                    # missed=False,
                 )
 
         lesson.status_id = lesson_statuses['executed']
