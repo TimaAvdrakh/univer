@@ -36,7 +36,7 @@ class LoginView(generics.CreateAPIView):
 
             data = {
                 'user': profile_data,
-                'firstLogin': user.last_login is None
+                'firstLogin': user.last_login is None or (not user.profile.password_changed)
             }
 
             login(request, user)

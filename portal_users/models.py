@@ -195,6 +195,10 @@ class Profile(BaseModel):
         default=False,
         verbose_name='Логин отправлен',
     )
+    password_changed = models.BooleanField(
+        default=False,
+        verbose_name='Сменил пароль',
+    )
 
     def save(self, *args, **kwargs):
         if self.exchange:
