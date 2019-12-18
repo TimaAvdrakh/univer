@@ -39,7 +39,7 @@ class BaseCatalog(BaseModel):
     #     default=''
     # )
     name = models.CharField(
-        max_length=200,
+        max_length=800,
         verbose_name='Название',
     )
 
