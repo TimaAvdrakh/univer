@@ -4,6 +4,7 @@ from common.exceptions import CustomException
 from datetime import datetime
 from schedules import models as sh_models
 from portal_users import models as user_models
+from portal.curr_settings import G1_SOFT_AUTH_KEY
 
 
 class C1ObjectSerializer(serializers.ModelSerializer):
@@ -50,7 +51,7 @@ class StudentPresenceSerializer(serializers.Serializer):
         aud_id = cd.get('aud')
         timestamp = cd.get('time')
 
-        if auth_key != '123':
+        if auth_key != G1_SOFT_AUTH_KEY:
             raise CustomException(detail='auth_key_invalid')
 
         try:

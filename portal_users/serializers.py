@@ -335,6 +335,9 @@ class PasswordChangeSerializer(serializers.ModelSerializer):
         user.set_password(validated_data['password'])
         user.save()
 
+        user.profile.password_changed = True
+        user.profile.save()
+
         return user
 
 

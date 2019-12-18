@@ -3,7 +3,7 @@ from common.models import BaseCatalog, BaseModel
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from organizations.models import Group, LoadType2
-from portal.curr_settings import lesson_statuses
+from portal.curr_settings import lesson_statuses, inactive_student_status
 
 
 class RoomType(BaseCatalog):
