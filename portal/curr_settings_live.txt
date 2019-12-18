@@ -53,7 +53,7 @@ lesson_statuses = {
 G1_SOFT_AUTH_KEY = "157308b9-8985-4252-a8ea-4ffaeebd7db2"
 
 
-inactive_student_status = [
+INACTIVE_STUDENT_STATUSES = [
     "7de14e2e-31e2-11e9-aa40-0cc47a2bc1bf",
     "7de14e2f-31e2-11e9-aa40-0cc47a2bc1bf",
     "7de14e30-31e2-11e9-aa40-0cc47a2bc1bf",

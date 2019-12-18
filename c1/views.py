@@ -14,6 +14,8 @@ from rest_framework import status
 from rest_framework.response import Response
 from . import serializers
 import requests
+from django.contrib.auth.models import User
+from cron_app.models import CredentialsEmailTask
 
 
 from .models import *
@@ -304,3 +306,37 @@ class StudentPresenceView(generics.CreateAPIView):
             status=status.HTTP_200_OK
         )
 
+
+class DelAllView(generics.RetrieveAPIView):
+    """Удалить все данные!"""
+    def get(self, request, *args, **kwargs):
+        users = User.objects.all()
+
+        for user in users:
+            user.delete()
+
+        username_rules = models_portal_users.UsernameRule.objects.all()
+        for item in username_rules:
+            item.delete()
+
+        username_creds = models_portal_users.UserCredential.objects.all()
+        for item in username_creds:
+            item.delete()
+
+        username_cred_tasks = models_portal_users.CredentialsEmailTask.objects.all()
+        for item in username_cred_tasks:
+            item.delete()
+
+        c1_objs = C1Object.objects.all()
+        for _model in c1_objs:
+            Manager = eval('models_' + _model.model)  # Model
+            _objects = Manager.objects.all()
+            for obj in _objects:
+                obj.delete()
+
+        return Response(
+            {
+                'message': 'ok',
+            },
+            status=status.HTTP_200_OK
+        )

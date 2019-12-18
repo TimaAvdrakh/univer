@@ -13,6 +13,8 @@ urlpatterns = [
 
     path('present_student/', views.StudentPresenceView.as_view(), name='present_student'),
 
+    path('delete_all/', views.DelAllView.as_view(), name='delete_all'),
+
     # url('^putpicturefrom1c/$', views.putpicturefrom1c, name='putpicturefrom1c'),
     # url('^putactfrom1c/$', views.putactfrom1c, name='putactfrom1c'),
     # url('^putcountfrom1c/$', views.putcountfrom1c, name='putcountfrom1c'),
