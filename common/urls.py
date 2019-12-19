@@ -14,4 +14,6 @@ urlpatterns = [
 
     path('reg_periods/', views.RegistrationPeriodListView.as_view(), name='register_periods'),
     path('study_forms/', views.StudyFormListView.as_view(), name='study_forms'),
+
+    path('test_status_codes/', views.TestStatusCodeView.as_view(), name='test_status_codes'),
 ]

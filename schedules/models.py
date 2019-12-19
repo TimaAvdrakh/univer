@@ -144,7 +144,7 @@ class Lesson(BaseModel):
         default='',
         verbose_name='УИД 1С Типа нагрузки',
     )
-    teachers = models.ManyToManyField(  # TODO delete
+    teachers = models.ManyToManyField(
         'portal_users.Profile',
         verbose_name='Преподаватели',
     )
@@ -192,6 +192,14 @@ class Lesson(BaseModel):
         on_delete=models.CASCADE,
         verbose_name='Аудитория',
     )
+    closed = models.BooleanField(
+        default=False,
+        verbose_name='Закрыт',
+    )
+    admin_allow = models.BooleanField(
+        default=False,
+        verbose_name='Разрешение админа',
+    )
 
     def save(self, *args, **kwargs):
         if self.exchange:
@@ -204,6 +212,8 @@ class Lesson(BaseModel):
                     self.load_type = load_type2
                 except LoadType2.DoesNotExist:
                     print('LoadType2 not found')
+
+        super(Lesson, self).save(*args, **kwargs)
 
     def __str__(self):
         return '{} {}'.format(self.discipline.name,
@@ -351,6 +361,7 @@ class LessonTeacher(BaseModel):
                         lesson.teachers.remove(self.teacher)
                     except:
                         pass
+        super(LessonTeacher, self).save(*args, **kwargs)
 
     def __str__(self):
         return '{} - {}'.format(self.flow_uid,

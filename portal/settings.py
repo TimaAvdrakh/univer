@@ -34,6 +34,7 @@ INSTALLED_APPS = [
     'reports',
     'schedules',
     'c1',
+    'univer_admin',
 ]
 
 MIDDLEWARE = [
@@ -146,6 +147,7 @@ CRON_CLASSES = [
     "cron_app.cron.AdvisorRejectBidJob",
     "cron_app.cron.StudPerformanceChangedJob",
     "cron_app.cron.ControlNotifyJob",
+    "cron_app.cron.CloseLessonsJob",
 ]
 
 # SESSION_COOKIE_AGE = 60

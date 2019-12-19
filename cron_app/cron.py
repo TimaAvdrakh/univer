@@ -8,6 +8,8 @@ from django.template.loader import render_to_string
 from portal.curr_settings import current_site
 from portal_users import models as user_models
 from organizations import models as org_models
+from schedules import models as sh_models
+from datetime import datetime, timedelta
 
 
 class EmailCronJob(CronJobBase):
@@ -240,3 +242,32 @@ class ControlNotifyJob(CronJobBase):
                 )
             task.is_success = True
             task.save()
+
+
+class CloseLessonsJob(CronJobBase):
+    """Закрыть доступ к оцениванию и редактированию Занятии
+    в конце недели"""
+    RUN_EVERY_MINS = 43200  # every day
+
+    schedule = Schedule(run_every_mins=RUN_EVERY_MINS)
+    code = 'crop_app.close_lessons_job'
+
+    def do(self):
+        lessons = sh_models.Lesson.objects.filter(is_active=True,
+                                                  closed=False)
+        for lesson in lessons:
+            lesson_date = lesson.date
+            start = lesson_date - timedelta(days=lesson_date.weekday())
+            end = start + timedelta(days=6)
+
+            end_of_week = datetime(year=end.year,
+                                   month=end.month,
+                                   day=end.day,
+                                   hour=23,
+                                   minute=59,
+                                   second=59)
+            now = datetime.now()
+            if now >= end_of_week:
+                lesson.closed = True
+                lesson.save()
+

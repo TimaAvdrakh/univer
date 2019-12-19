@@ -420,13 +420,6 @@ class Role(BaseModel):
         verbose_name='Организация',
         related_name='roles',
     )
-    # profile_old = models.ForeignKey(
-    #     'portal_users.Profile',
-    #     null=True,
-    #     on_delete=models.CASCADE,
-    #     related_name='roles',
-    #     verbose_name='Пользователь',
-    # )
     profile = models.OneToOneField(
         'portal_users.Profile',
         on_delete=models.CASCADE,

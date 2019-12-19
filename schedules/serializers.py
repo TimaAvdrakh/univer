@@ -195,6 +195,17 @@ class EvaluateSerializer(serializers.Serializer):
         allow_blank=True,
     )
 
+    def validate(self, data):
+        if datetime.date.today() < data['lesson'].date:
+            """Невозможно поставить оценку на будущее занятие"""
+            raise CustomException()
+
+        if data['lesson'].closed and not data['lesson'].admin_allow:
+            """Занятие закрыто для оценивания и редактирования"""
+            raise CustomException(detail="lesson_is_closed")
+
+        return data
+
     def save(self, **kwargs):
         request = self.context.get('request')
 
@@ -203,10 +214,6 @@ class EvaluateSerializer(serializers.Serializer):
         mark = self.validated_data.get('mark')
         missed = self.validated_data.get('missed')
         reason = self.validated_data.get('reason')
-
-        if datetime.date.today() < lesson.date:  # TODO проверка на этой неделе можно
-            """Невозможно поставить оценку на будущее занятие"""
-            raise CustomException()
 
         try:
             sp = models.StudentPerformance.objects.get(
@@ -281,8 +288,14 @@ class LessonUpdateSerializer(serializers.ModelSerializer):
             'grading_system',
         )
 
+    def validate(self, data):
+        if self.instance.closed and not self.instance.admin_allow:
+            """Занятие закрыто для оценивания и редактирования"""
+            raise CustomException(detail="lesson_is_closed")
+
+        return data
+
     def update(self, instance, validated_data):
-        # instance.subject = validated_data.get('subject')
         instance.subject_ru = validated_data.get('subject_ru')
         instance.subject_en = validated_data.get('subject_en')
         instance.subject_kk = validated_data.get('subject_kk')
