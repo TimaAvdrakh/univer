@@ -72,6 +72,7 @@ class LessonAdmin(admin.ModelAdmin):
     )
     list_display = (
         'discipline',
+        'load_type',
         'subject',
         'date',
         'time',

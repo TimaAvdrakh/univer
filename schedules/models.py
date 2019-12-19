@@ -250,6 +250,9 @@ class Mark(BaseCatalog):
         verbose_name='Оценка по традиционной системе',
     )
 
+    def __str__(self):
+        return '{}'.format(self.weight)
+
     class Meta:
         verbose_name = 'Оценка'
         verbose_name_plural = 'Оценки'

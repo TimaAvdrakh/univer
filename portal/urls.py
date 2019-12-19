@@ -31,6 +31,8 @@ urlpatterns = [
     path('api/v1/schedules/', include('schedules.urls', namespace='schedules')),
     path('api/v1/c1/', include('c1.urls', namespace='c1')),
     path('api/v1/admin/', include('univer_admin.urls', namespace='univer_admin')),
+
+    path('api/v1/stud_jour/', include('student_journal.urls', namespace='student_journal')),
 ]
 
 # urlpatterns += i18n_patterns(

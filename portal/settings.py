@@ -35,6 +35,7 @@ INSTALLED_APPS = [
     'schedules',
     'c1',
     'univer_admin',
+    'student_journal',
 ]
 
 MIDDLEWARE = [
