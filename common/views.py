@@ -123,22 +123,9 @@ class TestStatusCodeView(generics.RetrieveAPIView):
     def get(self, request, *args, **kwargs):
         code = request.query_params.get('status')
 
-        if code == '200':
-            status_code = status.HTTP_200_OK
-        elif code == '400':
-            status_code = status.HTTP_400_BAD_REQUEST
-        elif code == '404':
-            status_code = status.HTTP_404_NOT_FOUND
-        elif code == '500':
-            status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
-        elif code == '403':
-            status_code = status.HTTP_403_FORBIDDEN
-        else:
-            status_code = status.HTTP_400_BAD_REQUEST
-
         return Response(
             {
                 'message': 'ok',
             },
-            status=status_code
+            status=int(code)
         )
