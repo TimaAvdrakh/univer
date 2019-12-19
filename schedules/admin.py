@@ -63,6 +63,7 @@ class LessonAdmin(admin.ModelAdmin):
         'acad_period',
         'study_year',
         'time',
+        'teachers',
     )
     list_filter = (
         'date',
