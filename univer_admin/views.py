@@ -20,3 +20,14 @@ class AllowMarkLessonView(generics.UpdateAPIView):
 class JournalLessonListView(generics.ListAPIView):
     pass
 
+
+class HandleJournalView(generics.UpdateAPIView):
+    """Закрыть/Открыть Журнал"""
+    permission_classes = (
+        IsAuthenticated,
+        permissions.AdminPermission,
+    )
+    queryset = sh_models.ElectronicJournal.objects.filter(is_active=True)
+    serializer_class = serializers.HandleJournalSerializer
+
+

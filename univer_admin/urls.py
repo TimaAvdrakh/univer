@@ -7,4 +7,8 @@ urlpatterns = [
     path('lesson/<pk>/allow_mark/',
          views.AllowMarkLessonView.as_view(),
          name='allow_mark'),
+
+    path('journal/<pk>/handle/',
+         views.HandleJournalView.as_view(),
+         name='journal_handle'),
 ]

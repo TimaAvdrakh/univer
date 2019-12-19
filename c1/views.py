@@ -288,6 +288,7 @@ class CopyRuleView(generics.RetrieveAPIView):
 
 class StudentPresenceView(generics.CreateAPIView):
     """
+    for G1 Soft
     auth_key - токен авторизации
     user - ИИН студента
     aud - Уид аудитории
@@ -307,39 +308,42 @@ class StudentPresenceView(generics.CreateAPIView):
         )
 
 
-class DelAllView(generics.RetrieveAPIView):
-    """Удалить все данные!"""
-    permission_classes = ()
-    authentication_classes = ()
+# class DelAllView(generics.RetrieveAPIView):
+#     """Удалить все данные!"""
+#     permission_classes = ()
+#     authentication_classes = ()
+#
+#     def get(self, request, *args, **kwargs):
+#         users = User.objects.all()
+#
+#         for user in users:
+#             user.delete()
+#
+#         username_rules = models_portal_users.UsernameRule.objects.all()
+#         for item in username_rules:
+#             item.delete()
+#
+#         username_creds = models_portal_users.UserCredential.objects.all()
+#         for item in username_creds:
+#             item.delete()
+#
+#         username_cred_tasks = models_portal_users.CredentialsEmailTask.objects.all()
+#         for item in username_cred_tasks:
+#             item.delete()
+#
+#         c1_objs = C1Object.objects.all()
+#         for _model in c1_objs:
+#             Manager = eval('models_' + _model.model)  # Model
+#             _objects = Manager.objects.all()
+#             for obj in _objects:
+#                 obj.delete()
+#
+#         return Response(
+#             {
+#                 'message': 'ok',
+#             },
+#             status=status.HTTP_200_OK
+#         )
 
-    def get(self, request, *args, **kwargs):
-        users = User.objects.all()
 
-        for user in users:
-            user.delete()
-
-        username_rules = models_portal_users.UsernameRule.objects.all()
-        for item in username_rules:
-            item.delete()
-
-        username_creds = models_portal_users.UserCredential.objects.all()
-        for item in username_creds:
-            item.delete()
-
-        username_cred_tasks = models_portal_users.CredentialsEmailTask.objects.all()
-        for item in username_cred_tasks:
-            item.delete()
-
-        c1_objs = C1Object.objects.all()
-        for _model in c1_objs:
-            Manager = eval('models_' + _model.model)  # Model
-            _objects = Manager.objects.all()
-            for obj in _objects:
-                obj.delete()
-
-        return Response(
-            {
-                'message': 'ok',
-            },
-            status=status.HTTP_200_OK
-        )
+# class

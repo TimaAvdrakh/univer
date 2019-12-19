@@ -19,3 +19,20 @@ class AllowMarkLessonSerializer(serializers.ModelSerializer):
 
 
 # class LessonListView(serializers.ModelSerializer):
+
+
+class HandleJournalSerializer(serializers.ModelSerializer):
+    """Закрыть/Открыть Журнал"""
+    class Meta:
+        model = sh_models.ElectronicJournal
+        fields = (
+            'uid',
+            'closed',
+        )
+
+    def update(self, instance, validated_data):
+        instance.closed = not instance.closed
+        instance.save()
+
+        return instance
+
