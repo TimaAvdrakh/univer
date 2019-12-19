@@ -9,5 +9,5 @@ class C1CompareInline(admin.TabularInline):
 
 @admin.register(C1Object)
 class C1ObjectAdmin(admin.ModelAdmin):
-    list_display = ['name', 'model', 'is_related']
+    list_display = ['name', 'model', 'is_related', 'is_active']
     inlines = [C1CompareInline, ]
