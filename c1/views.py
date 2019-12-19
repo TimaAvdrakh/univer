@@ -35,7 +35,7 @@ def putfrom1c(request):
         rules = cache.get('rule1c')
         if rules is None:
             rules = []
-            qs = C1Object.objects.all()
+            qs = C1Object.objects.filter(is_active=True)
             for item in qs:
                 fields = []
 
