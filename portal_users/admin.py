@@ -201,6 +201,9 @@ class UsernameRuleAdmin(admin.ModelAdmin):
 
 @admin.register(models.UserCredential)
 class UserCredentialAdmin(admin.ModelAdmin):
+    autocomplete_fields = (
+        "user",
+    )
     list_display = [
         "user",
         "password",
