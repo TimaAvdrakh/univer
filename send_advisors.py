@@ -32,7 +32,7 @@ def send():
                 html_message=msg_html,
             )
 
-        except:
+        except UserCredential.DoesNotExist:
             pass
 
 
