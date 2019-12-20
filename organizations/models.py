@@ -301,6 +301,11 @@ class StudyPlan(BaseModel):
         null=True,
         verbose_name='Номер',
     )
+    uid_1c = models.CharField(
+        max_length=100,
+        null=True,
+        verbose_name='uid 1C',
+    )
     student = models.ForeignKey(
         'portal_users.Profile',
         null=True,
@@ -418,7 +423,7 @@ class StudyPlan(BaseModel):
         verbose_name_plural = 'Учебные планы'
         unique_together = (
             'student',
-            'number',
+            'uid_1c',
             # 'group',
             # 'education_program',
         )
@@ -721,10 +726,10 @@ class StudentDiscipline(BaseModel):
         on_delete=models.CASCADE,
         verbose_name='Учебный год',
     )
-    number = models.CharField(
+    study_plan_uid_1c = models.CharField(
         max_length=100,
         null=True,
-        verbose_name='Номер учебного плана',
+        verbose_name='uid 1c учебного плана',
     )
 
     def save(self, *args, **kwargs):
@@ -734,7 +739,7 @@ class StudentDiscipline(BaseModel):
 
             try:
                 study_plan = StudyPlan.objects.get(student=self.student,
-                                                   number=self.number)
+                                                   uid_1c=self.study_plan_uid_1c)
                 self.study_plan = study_plan
             except StudyPlan.DoesNotExist:
                 print('StudyPlan not found')
@@ -757,7 +762,7 @@ class StudentDiscipline(BaseModel):
         verbose_name_plural = 'Дисциплины студента'
         unique_together = (
             'student',
-            'study_plan',
+            'study_plan_uid_1c',
             'acad_period',
             'discipline_code',
             'discipline',
