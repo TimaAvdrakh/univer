@@ -603,25 +603,27 @@ class StudentDisciplineSerializer(serializers.ModelSerializer):
         return data
 
     def __get_allowed_teachers(self, instance):
-        lang = instance.study_plan.group.language
-        if str(lang.uid) == language_multilingual_id:
-            """Если группа мультиязычная, то отдаем преподы независимо от языка преподавания"""
-            teacher_disciplines = org_models.TeacherDiscipline.objects.filter(
-                discipline=instance.discipline,
-                load_type2=instance.load_type.load_type2
-            )
-            language_pks = org_models.TeacherDiscipline.objects.filter(
-                discipline=instance.discipline,
-                load_type2=instance.load_type.load_type2
-            ).values('language').distinct('language')
-            languages = org_models.Language.objects.filter(pk__in=language_pks)
-        else:
-            teacher_disciplines = org_models.TeacherDiscipline.objects.filter(
-                discipline=instance.discipline,
-                language=lang,
-                load_type2=instance.load_type.load_type2
-            )
-            languages = None
+        # lang = instance.study_plan.group.language
+        # if str(lang.uid) == language_multilingual_id:
+        """Если группа мультиязычная, то отдаем преподы независимо от языка преподавания"""
+
+        teacher_disciplines = org_models.TeacherDiscipline.objects.filter(
+            discipline=instance.discipline,
+            load_type2=instance.load_type.load_type2
+        )
+        language_pks = org_models.TeacherDiscipline.objects.filter(
+            discipline=instance.discipline,
+            load_type2=instance.load_type.load_type2
+        ).values('language').distinct('language')
+        languages = org_models.Language.objects.filter(pk__in=language_pks)
+
+        # else:
+        #     teacher_disciplines = org_models.TeacherDiscipline.objects.filter(
+        #         discipline=instance.discipline,
+        #         language=lang,
+        #         load_type2=instance.load_type.load_type2
+        #     )
+        #     languages = None
 
         return teacher_disciplines, languages
 
@@ -771,19 +773,21 @@ class ChooseTeacherSerializer(serializers.ModelSerializer):
         student_discipline_info.save()
 
     def __get_allowed_teachers(self, instance):
-        lang = instance.study_plan.group.language
-        if str(lang.uid) == language_multilingual_id:
-            """Если группа мультиязычная, то отдаем преподы независимо от языка преподавания"""
-            teacher_disciplines = org_models.TeacherDiscipline.objects.filter(
-                discipline=instance.discipline,
-                load_type2=instance.load_type.load_type2
-            )
-        else:
-            teacher_disciplines = org_models.TeacherDiscipline.objects.filter(
-                discipline=instance.discipline,
-                language=lang,
-                load_type2=instance.load_type.load_type2
-            )
+        # lang = instance.study_plan.group.language
+
+        # if str(lang.uid) == language_multilingual_id:
+        """Если группа мультиязычная, то отдаем преподы независимо от языка преподавания"""
+
+        teacher_disciplines = org_models.TeacherDiscipline.objects.filter(
+            discipline=instance.discipline,
+            load_type2=instance.load_type.load_type2,
+        )
+        # else:
+        #     teacher_disciplines = org_models.TeacherDiscipline.objects.filter(
+        #         discipline=instance.discipline,
+        #         language=lang,
+        #         load_type2=instance.load_type.load_type2
+        #     )
 
         return teacher_disciplines
 
