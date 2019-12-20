@@ -26,7 +26,7 @@ class LoginView(generics.CreateAPIView):
         serializer.is_valid(raise_exception=True)
         cd = serializer.validated_data
         user = authenticate(request,
-                            username=cd['username'].lower(),
+                            username=cd['username'],
                             password=cd['password'])
         if user is not None:
             profile_serializer = serializers.ProfileDetailSerializer(instance=user.profile)
