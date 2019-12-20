@@ -16,6 +16,7 @@ from . import serializers
 import requests
 from django.contrib.auth.models import User
 from cron_app.models import CredentialsEmailTask
+from portal.curr_settings import G1_SOFT_AUTH_KEY
 
 
 from .models import *
@@ -297,6 +298,16 @@ class StudentPresenceView(generics.CreateAPIView):
     serializer_class = serializers.StudentPresenceSerializer
 
     def create(self, request, *args, **kwargs):
+        token = request._request.headers['token']
+
+        if token != G1_SOFT_AUTH_KEY:
+            return Response(
+                {
+                    'message': 'auth_key_invalid'
+                },
+                status=status.HTTP_200_OK
+            )
+
         serializer = self.serializer_class(data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save()

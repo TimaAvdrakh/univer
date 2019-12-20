@@ -388,7 +388,6 @@ class StudyPlan(BaseModel):
             study_years = divide_to_study_years(self.study_period)
 
             for study_year_item in study_years:
-
                 study_year = StudyPeriod.objects.filter(start=study_year_item[0],
                                                         end=study_year_item[1]).first()
                 # if study_year is None:
@@ -419,8 +418,9 @@ class StudyPlan(BaseModel):
         verbose_name_plural = 'Учебные планы'
         unique_together = (
             'student',
-            'group',
-            'education_program',
+            'number',
+            # 'group',
+            # 'education_program',
         )
 
 
@@ -721,10 +721,23 @@ class StudentDiscipline(BaseModel):
         on_delete=models.CASCADE,
         verbose_name='Учебный год',
     )
+    number = models.CharField(
+        max_length=100,
+        null=True,
+        verbose_name='Номер учебного плана',
+    )
 
     def save(self, *args, **kwargs):
-        if self.exchange and self._state.adding:
-            self.status_id = curr_settings.student_discipline_status['not_chosen']
+        if self.exchange:
+            if self._state.adding:
+                self.status_id = curr_settings.student_discipline_status['not_chosen']
+
+            try:
+                study_plan = StudyPlan.objects.get(student=self.student,
+                                                   number=self.number)
+                self.study_plan = study_plan
+            except StudyPlan.DoesNotExist:
+                print('StudyPlan not found')
 
         super(StudentDiscipline, self).save(*args, **kwargs)
 

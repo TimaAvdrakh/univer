@@ -4,7 +4,6 @@ from common.exceptions import CustomException
 from datetime import datetime
 from schedules import models as sh_models
 from portal_users import models as user_models
-from portal.curr_settings import G1_SOFT_AUTH_KEY
 
 
 class C1ObjectSerializer(serializers.ModelSerializer):
@@ -32,34 +31,30 @@ class C1ObjectCompareSerializer(serializers.ModelSerializer):
         )
 
 
-class StudentPresenceSerializer(serializers.Serializer):
-    auth_key = serializers.CharField()
+class StudentPresenceSerializer(serializers.Serializer):  # TODO ListSerializer
     user = serializers.CharField(
         help_text='ИИН студента',
     )
     aud = serializers.UUIDField(
         help_text='Уид аудитории',
     )
-    time = serializers.IntegerField(
+    time = serializers.IntegerField(  # TODO Часовой пояс
         help_text='timestamp',
     )
 
     def save(self, **kwargs):
         cd = self.validated_data
-        auth_key = cd.get('auth_key')
         iin = cd.get('user')
         aud_id = cd.get('aud')
         timestamp = cd.get('time')
-
-        if auth_key != G1_SOFT_AUTH_KEY:
-            raise CustomException(detail='auth_key_invalid')
 
         try:
             student = user_models.Profile.objects.get(iin=iin,
                                                       is_active=True)
 
         except user_models.Profile.DoesNotExist:
-            raise CustomException(detail='student_not_found')
+            raise CustomException(detail='student_not_found',
+                                  status_code=404)
 
         dt_object = datetime.fromtimestamp(timestamp)
         date = dt_object.date()
@@ -74,7 +69,8 @@ class StudentPresenceSerializer(serializers.Serializer):
                 is_active=True,
             )
         except sh_models.Lesson.DoesNotExist:
-            raise CustomException(detail='lesson_not_found')
+            raise CustomException(detail='lesson_not_found',
+                                  status_code=404)
 
         try:
             sp = sh_models.StudentPerformance.objects.get(
