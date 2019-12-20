@@ -71,6 +71,9 @@ class InterestAdmin(admin.ModelAdmin):
 
 @admin.register(models.Role)
 class RoleAdmin(admin.ModelAdmin):
+    autocomplete_fields = (
+        'profile',
+    )
     search_fields = (
         'profile__first_name',
         'profile__last_name',
