@@ -22,7 +22,7 @@ data['profiles'] = profile_list
 with open('profile_data.txt', 'w') as f:
     json.dump(data, f)
 
-
+print('ok')
 
 
 
