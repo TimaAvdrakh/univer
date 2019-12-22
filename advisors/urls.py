@@ -6,7 +6,7 @@ app_name = 'advisors'
 urlpatterns = [
     # 1 стр
     path('study_plans/', views.StudyPlansListView.as_view(), name='registration_bid_list'),
-    path('student/disciplines/', views.StudentDisciplineListView.as_view(), name='discipline_short_list'),
+    path('student/disciplines/', views.StudentDisciplineListView.as_view(), name='discipline_short_list'),  # TODO TEST ORDER
     path('acad_periods/', views.AcadPeriodListView.as_view(), name='acad_periods_for_filter'),
     path('faculties/', views.FacultyListView.as_view(), name='faculty_list'),
     path('cathedras/', views.CathedraListView.as_view(), name='cathedra_list'),
@@ -20,17 +20,17 @@ urlpatterns = [
     path('student/study_plan/', views.GetStudyPlanView.as_view(), name='student_study_plan'),
     path('students/', views.FilteredStudentsListView.as_view(), name='students'),
     path('speciality/', views.SpecialityListView.as_view(), name='speciality_list'),
-    path('student/confirmed/disciplines/', views.ConfirmedStudentDisciplineListView.as_view(),
+    path('student/confirmed/disciplines/', views.ConfirmedStudentDisciplineListView.as_view(),  # TODO TEST order_by
          name='confirmed_disciplines'),
 
     # 3 стр
-    path('registration/results/', views.RegisterResultView.as_view(),
+    path('registration/results/', views.RegisterResultView.as_view(),  # TODO order_by
          name='registration_results'),
 
-    path('registration/statistics/', views.RegisterStatisticsView.as_view(),
+    path('registration/statistics/', views.RegisterStatisticsView.as_view(),  # TODO order_by
          name='registration_statistics'),
 
-    path('not_registered/students/', views.NotRegisteredStudentListView.as_view(),
+    path('not_registered/students/', views.NotRegisteredStudentListView.as_view(),  # TODO order_by
          name='not_registered_students'),
 
     # Excel views

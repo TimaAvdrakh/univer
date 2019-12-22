@@ -610,7 +610,8 @@ class StudentDisciplineSerializer(serializers.ModelSerializer):
         teacher_disciplines = org_models.TeacherDiscipline.objects.filter(
             discipline=instance.discipline,
             load_type2=instance.load_type.load_type2
-        )
+        ).order_by('teacher__last_name')
+
         language_pks = org_models.TeacherDiscipline.objects.filter(
             discipline=instance.discipline,
             load_type2=instance.load_type.load_type2

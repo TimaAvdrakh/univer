@@ -219,7 +219,7 @@ class StudentDisciplineForRegListView(generics.ListAPIView):
             study_plan_id=study_plan_id,
             acad_period_id=acad_period_id,
             is_active=True,
-        )
+        ).order_by('discipline')
         serializer = self.serializer_class(student_disciplines,
                                            many=True)
         return Response(
@@ -414,7 +414,7 @@ class StudentAllDisciplineListView(generics.ListAPIView):
                 study_plan_id=study_plan_id,
                 acad_period=acad_period,
                 is_active=True,
-            )
+            ).order_by('discipline')
             serializer = self.serializer_class(student_disciplines,
                                                many=True)
             item_key = acad_period.repr_name

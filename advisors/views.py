@@ -29,7 +29,7 @@ class StudyPlansListView(generics.ListAPIView):
     Получение учебных планов,
     study_year(!), study_form, faculty, cathedra, edu_prog_group, edu_prog, course, group, status
     """
-    queryset = org_models.StudyPlan.objects.filter(is_active=True)
+    queryset = org_models.StudyPlan.objects.filter(is_active=True).order_by('student__last_name')
     serializer_class = serializers.StudyPlanSerializer
 
     # pagination_class = CustomPagination
@@ -109,7 +109,7 @@ class StudentDisciplineListView(generics.ListAPIView):
         else:
             old_status = 0
 
-        queryset = self.queryset
+        queryset = self.queryset.all()
         if study_plan:
             queryset = queryset.filter(study_plan_id=study_plan)
         if status_id:
@@ -120,7 +120,7 @@ class StudentDisciplineListView(generics.ListAPIView):
         if acad_period:
             queryset = queryset.filter(acad_period_id=acad_period)
 
-        queryset = queryset.distinct('discipline')
+        queryset = queryset.distinct('discipline').order_by('discipline')  # TODO TEST
         total_credit = sum(i.credit for i in queryset)
 
         is_more = len(queryset) > 3
@@ -151,7 +151,7 @@ class AcadPeriodListView(generics.ListAPIView):
     study_year(!) reg_period(!), study_form, faculty, cathedra, edu_prog_group, edu_prog, course, group, status
     """
 
-    queryset = org_models.AcadPeriod.objects.filter(is_active=True)
+    queryset = org_models.AcadPeriod.objects.filter(is_active=True).order_by('number')
     serializer_class = AcadPeriodSerializer
 
     def get_queryset(self):
@@ -212,7 +212,7 @@ class AcadPeriodListView(generics.ListAPIView):
 class FacultyListView(generics.ListAPIView):
     """Получить список факультетов доступных для эдвайзеру,
     study_year(!), study_form"""
-    queryset = org_models.Faculty.objects.filter(is_active=True)
+    queryset = org_models.Faculty.objects.filter(is_active=True).order_by('name')
     serializer_class = serializers.FacultySerializer
 
     def get_queryset(self):
@@ -238,7 +238,7 @@ class CathedraListView(generics.ListAPIView):
     """Получить список кафедр доступных для эдвайзеру,
     study_year, study_form, faculty"""
 
-    queryset = org_models.Cathedra.objects.filter(is_active=True)
+    queryset = org_models.Cathedra.objects.filter(is_active=True).order_by('name')
     serializer_class = serializers.CathedraSerializer
 
     def get_queryset(self):
@@ -269,7 +269,7 @@ class EducationProgramGroupListView(generics.ListAPIView):
     """Получить список групп образовательных программ.
     study_year, study_form, faculty, cathedra, speciality(для 2 стр (Утвержденные дисциплины))"""
 
-    queryset = org_models.EducationProgramGroup.objects.filter(is_active=True)
+    queryset = org_models.EducationProgramGroup.objects.filter(is_active=True).order_by('name')
     serializer_class = EducationProgramGroupSerializer
 
     def get_queryset(self):
@@ -306,7 +306,7 @@ class EducationProgramListView(generics.ListAPIView):
     """Получить список образовательных программ,
     edu_prog_group, study_year, study_form, faculty, cathedra"""
 
-    queryset = org_models.EducationProgram.objects.filter(is_active=True)
+    queryset = org_models.EducationProgram.objects.filter(is_active=True).order_by('name')
     serializer_class = EducationProgramSerializer
 
     def get_queryset(self):
@@ -346,7 +346,7 @@ class GroupListView(generics.ListAPIView):
     """Получить список групп,
     study_year, study_form, faculty, cathedra, edu_prog_group, edu_prog, course"""
 
-    queryset = org_models.Group.objects.filter(is_active=True)
+    queryset = org_models.Group.objects.filter(is_active=True).order_by('name')
     serializer_class = serializers.GroupShortSerializer
 
     def get_queryset(self):
@@ -468,7 +468,7 @@ class FilteredStudentsListView(generics.ListAPIView):
             study_plans = study_plans.filter(group_id=group)
 
         student_pks = study_plans.values('student')
-        students = Profile.objects.filter(pk__in=student_pks)
+        students = Profile.objects.filter(pk__in=student_pks).order_by('last_name')
 
         return students
 
@@ -477,7 +477,7 @@ class SpecialityListView(generics.ListAPIView):
     """Получить список специальностей доступных эдвайзеру,
     study_year(!), faculty"""
 
-    queryset = org_models.Speciality.objects.filter(is_active=True)
+    queryset = org_models.Speciality.objects.filter(is_active=True).order_by('name')
     serializer_class = serializers.SpecialitySerializer
 
     def get_queryset(self):
@@ -597,7 +597,7 @@ class ConfirmedStudentDisciplineListView(generics.ListAPIView):
                     study_year_id=study_year,
                     study_plan_id=study_plan_id,
                     acad_period=acad_period,
-                ).distinct('discipline')
+                ).distinct('discipline').order_by('discipline')  # TODO TEST
 
                 serializer = self.serializer_class(student_disciplines,
                                                    many=True)

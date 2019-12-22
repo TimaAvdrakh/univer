@@ -529,6 +529,9 @@ class Discipline(BaseCatalog):
     class Meta:
         verbose_name = 'Дисциплина'
         verbose_name_plural = 'Дисциплины'
+        # ordering = (
+        #     'name',
+        # )
 
     # def save(self, *args, **kwargs):
     #     if self.exchange:
