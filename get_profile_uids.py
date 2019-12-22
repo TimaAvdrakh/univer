@@ -15,7 +15,7 @@ data = {}
 profile_list = []
 
 for profile in profiles:
-    profile_list.append(profile.uid)
+    profile_list.append(str(profile.uid))
 
 data['profiles'] = profile_list
 
