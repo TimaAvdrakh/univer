@@ -12,7 +12,7 @@ from rest_framework.permissions import IsAuthenticated
 from . import permissions
 from .utils import get_current_study_year
 from common.csrf_exempt_auth_class import CsrfExemptSessionAuthentication
-from portal.curr_settings import student_discipline_info_status, current_site
+from portal.curr_settings import student_discipline_info_status, current_site, not_choosing_load_types2
 
 
 class LoginView(generics.CreateAPIView):
@@ -219,7 +219,8 @@ class StudentDisciplineForRegListView(generics.ListAPIView):
             study_plan_id=study_plan_id,
             acad_period_id=acad_period_id,
             is_active=True,
-        ).order_by('discipline')
+        ).exclude(load_type__load_type2__in=not_choosing_load_types2).order_by('discipline')  # TODO TEST
+
         serializer = self.serializer_class(student_disciplines,
                                            many=True)
         return Response(
