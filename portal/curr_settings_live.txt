@@ -62,3 +62,10 @@ INACTIVE_STUDENT_STATUSES = [
     "7de14e36-31e2-11e9-aa40-0cc47a2bc1bf",
     "7de14e38-31e2-11e9-aa40-0cc47a2bc1bf",
 ]
+
+not_choosing_load_types2 = [                 # Типы нагрузок не участвующие на выборе преподов
+    "f7e93097-7822-4e50-b96e-a47d9a3907c5",
+    "80b5b961-aa9e-4e2f-b57f-ac574ef21093",
+    "7f93705a-744a-46c2-9bd9-b7bf886bef2d",
+    "303e48f0-7b1a-431a-aac0-53843479e58e",
+]
