@@ -1,7 +1,7 @@
 from django_cron import CronJobBase, Schedule
 from . import models
 import requests
-from portal.curr_settings import PASSWORD_RESET_ENDPOINT
+from portal.curr_settings import PASSWORD_RESET_ENDPOINT, student_discipline_status, component_by_choose_uid
 from django.utils import timezone
 from django.core.mail import send_mail
 from django.template.loader import render_to_string
@@ -270,4 +270,44 @@ class CloseLessonsJob(CronJobBase):
             if now >= end_of_week:
                 lesson.closed = True
                 lesson.save()
+
+
+class SendStudentDisciplinesTo1CJob(CronJobBase):
+    RUN_EVERY_MINS = 1  # every 1 min
+
+    schedule = Schedule(run_every_mins=RUN_EVERY_MINS)
+    code = 'crop_app.send_student_disciplines'
+
+    def do(self):
+        url = ''  # 1C endpoint TODO
+        status = student_discipline_status['confirmed']
+        sds = org_models.StudentDiscipline.objects.filter(status_id=status,
+                                                          sent=False)[:50]
+        disciplines = []
+        for sd in sds:
+            item = {
+                'plannumber': sd.study_plan.number,
+                'ages': str(sd.study_year.uid),
+                'idadvisor': str(sd.study_plan.advisor.uid),
+                'agenum': str(sd.acad_period.uid),
+                'teacherid': str(sd.teacher.uid),
+                'lang': str(sd.language.uid),
+                'disciplineid': str(sd.discipline.uid),
+                'isopt': str(sd.component.uid) == component_by_choose_uid,
+                'loadtype ': str(sd.load_type.load_type2.uid),
+                'study_plan_1c_uid': sd.study_plan.uid_1c,
+                'student_uid': str(sd.student.uid),
+            }
+            disciplines.append(item)
+
+            data = {
+                'stud_isciplines': disciplines
+            }
+            resp = requests.post(url,
+                                 data=data)
+            if resp.status_code == 200:
+                resp_data = resp.json()
+                # if code is 1 sent=True
+                # else sent = False
+                # TODO
 
