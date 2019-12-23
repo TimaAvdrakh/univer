@@ -39,15 +39,16 @@ def send():
 
 def send_to_profiles():
     profile_uids = [
-        'f48c4ce5-354e-11e9-aa40-0cc47a2bc1bf',
-        '8633dc89-338f-11e9-aa40-0cc47a2bc1bf',
-        'c86915aa-338f-11e9-aa40-0cc47a2bc1bf',
-        'a6d87557-338f-11e9-aa40-0cc47a2bc1bf',
-        'cc97d130-20b5-11ea-aa49-0cc47a2bc1bf',
-        '3fa7273c-0755-11ea-aa48-0cc47a2bc1bf',
-        '2a5974ef-20bc-11ea-aa49-0cc47a2bc1bf',
-        'a6df0799-3550-11e9-aa40-0cc47a2bc1bf',
-        '930481de-338f-11e9-aa40-0cc47a2bc1bf'
+        '5b9dd2e1-1199-11ea-aa49-0cc47a2bc1bf',
+        # 'f48c4ce5-354e-11e9-aa40-0cc47a2bc1bf',
+        # '8633dc89-338f-11e9-aa40-0cc47a2bc1bf',
+        # 'c86915aa-338f-11e9-aa40-0cc47a2bc1bf',
+        # 'a6d87557-338f-11e9-aa40-0cc47a2bc1bf',
+        # 'cc97d130-20b5-11ea-aa49-0cc47a2bc1bf',
+        # '3fa7273c-0755-11ea-aa48-0cc47a2bc1bf',
+        # '2a5974ef-20bc-11ea-aa49-0cc47a2bc1bf',
+        # 'a6df0799-3550-11e9-aa40-0cc47a2bc1bf',
+        # '930481de-338f-11e9-aa40-0cc47a2bc1bf'
     ]
 
     profile_pks = Role.objects.filter(is_supervisor=True).values('profile')
