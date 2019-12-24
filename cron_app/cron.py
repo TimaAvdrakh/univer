@@ -1,7 +1,8 @@
 from django_cron import CronJobBase, Schedule
 from . import models
 import requests
-from portal.curr_settings import PASSWORD_RESET_ENDPOINT, student_discipline_status, component_by_choose_uid, CONTENT_TYPES
+from portal.curr_settings import PASSWORD_RESET_ENDPOINT, student_discipline_status\
+    , component_by_choose_uid, CONTENT_TYPES, SEND_STUD_DISC_1C_URL
 from django.utils import timezone
 from django.core.mail import send_mail
 from django.template.loader import render_to_string
@@ -282,7 +283,7 @@ class SendStudentDisciplinesTo1CJob(CronJobBase):
     code = 'crop_app.send_student_disciplines'
 
     def do(self):
-        url = ''  # 1C endpoint TODO
+        url = SEND_STUD_DISC_1C_URL  # 1C endpoint TODO
         status = student_discipline_status['confirmed']
         sds = org_models.StudentDiscipline.objects.filter(status_id=status,
                                                           sent=False)[:50]
@@ -305,6 +306,7 @@ class SendStudentDisciplinesTo1CJob(CronJobBase):
 
         resp = requests.post(url,
                              data=disciplines,
+                             verify=False,
                              auth=HTTPBasicAuth('Администратор', 'qwe123rty'))
 
         if resp.status_code == 200:
