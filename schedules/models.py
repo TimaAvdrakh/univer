@@ -240,13 +240,19 @@ class Mark(BaseCatalog):
     )
     value_letter = models.CharField(
         max_length=200,
+        default='',
+        blank=True,
         verbose_name='Оценка по буквенной системе',
     )
     value_number = models.FloatField(
+        null=True,
+        blank=True,
         verbose_name='Цифровой эквивалент',
     )
     value_traditional = models.CharField(
         max_length=200,
+        default='',
+        blank=True,
         verbose_name='Оценка по традиционной системе',
     )
 
