@@ -603,14 +603,21 @@ class StudentDisciplineSerializer(serializers.ModelSerializer):
         return data
 
     def __get_allowed_teachers(self, instance):
+        study_year_id = self.context.get('study_year_id')
+
         # lang = instance.study_plan.group.language
         # if str(lang.uid) == language_multilingual_id:
         """Если группа мультиязычная, то отдаем преподы независимо от языка преподавания"""
 
         teacher_disciplines = org_models.TeacherDiscipline.objects.filter(
             discipline=instance.discipline,
-            load_type2=instance.load_type.load_type2
+            load_type2=instance.load_type.load_type2,
         ).order_by('teacher__last_name')
+
+        if study_year_id:
+            teacher_disciplines = teacher_disciplines.filter(
+                study_period_id=study_year_id,  # TODO test filter by study_year_id
+            )
 
         language_pks = org_models.TeacherDiscipline.objects.filter(
             discipline=instance.discipline,

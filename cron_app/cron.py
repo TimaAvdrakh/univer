@@ -11,6 +11,7 @@ from organizations import models as org_models
 from schedules import models as sh_models
 from datetime import datetime, timedelta
 from integration.models import DocumentChangeLog
+from requests.auth import HTTPBasicAuth
 
 
 class EmailCronJob(CronJobBase):
@@ -303,7 +304,9 @@ class SendStudentDisciplinesTo1CJob(CronJobBase):
             disciplines.append(item)
 
         resp = requests.post(url,
-                             data=disciplines)
+                             data=disciplines,
+                             auth=HTTPBasicAuth('Администратор', 'qwe123rty'))
+
         if resp.status_code == 200:
             resp_data = resp.json()
             for item in resp_data:
