@@ -300,7 +300,7 @@ class SendStudentDisciplinesTo1CJob(CronJobBase):
                 'language': str(sd.language.uid),
                 'discipline': str(sd.discipline.uid),
                 'loadtype': str(sd.load_type.load_type2.uid_1c),
-                'isopt': str(sd.component.uid) == component_by_choose_uid,
+                'isopt': str(sd.component.uid) == component_by_choose_uid if sd.component else False,
             }
             disciplines.append(item)
 
