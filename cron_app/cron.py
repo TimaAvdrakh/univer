@@ -296,7 +296,7 @@ class SendStudentDisciplinesTo1CJob(CronJobBase):
                 'study_period': str(sd.study_year.uid),
                 'advisor': str(sd.study_plan.advisor.uid),
                 'acad_period': str(sd.acad_period.uid),
-                'teacher': str(sd.teacher.uid),
+                'teacher': str(sd.teacher.uid) if sd.teacher else '',
                 'language': str(sd.language.uid),
                 'discipline': str(sd.discipline.uid),
                 'loadtype': str(sd.load_type.load_type2.uid_1c),
