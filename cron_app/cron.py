@@ -1,7 +1,7 @@
 from django_cron import CronJobBase, Schedule
 from . import models
 import requests
-from portal.curr_settings import PASSWORD_RESET_ENDPOINT, student_discipline_status, component_by_choose_uid
+from portal.curr_settings import PASSWORD_RESET_ENDPOINT, student_discipline_status, component_by_choose_uid, CONTENT_TYPES
 from django.utils import timezone
 from django.core.mail import send_mail
 from django.template.loader import render_to_string
@@ -10,6 +10,7 @@ from portal_users import models as user_models
 from organizations import models as org_models
 from schedules import models as sh_models
 from datetime import datetime, timedelta
+from integration.models import DocumentChangeLog
 
 
 class EmailCronJob(CronJobBase):
@@ -273,6 +274,7 @@ class CloseLessonsJob(CronJobBase):
 
 
 class SendStudentDisciplinesTo1CJob(CronJobBase):
+    """Отправляет утвержденные Дисциплины студентов в 1С"""
     RUN_EVERY_MINS = 1  # every 1 min
 
     schedule = Schedule(run_every_mins=RUN_EVERY_MINS)
@@ -286,28 +288,45 @@ class SendStudentDisciplinesTo1CJob(CronJobBase):
         disciplines = []
         for sd in sds:
             item = {
-                'plannumber': sd.study_plan.number,
-                'ages': str(sd.study_year.uid),
-                'idadvisor': str(sd.study_plan.advisor.uid),
-                'agenum': str(sd.acad_period.uid),
-                'teacherid': str(sd.teacher.uid),
-                'lang': str(sd.language.uid),
-                'disciplineid': str(sd.discipline.uid),
+                'uid_site': str(sd.uid),             # УИД дисицплины студента на сайте
+                'study_plan': sd.study_plan.uid_1c,
+                'student': str(sd.student.uid),
+                'study_period': str(sd.study_year.uid),
+                'advisor': str(sd.study_plan.advisor.uid),
+                'acad_period': str(sd.acad_period.uid),
+                'teacher': str(sd.teacher.uid),
+                'language': str(sd.language.uid),
+                'discipline': str(sd.discipline.uid),
+                'loadtype': str(sd.load_type.load_type2.uid_1c),
                 'isopt': str(sd.component.uid) == component_by_choose_uid,
-                'loadtype ': str(sd.load_type.load_type2.uid),
-                'study_plan_1c_uid': sd.study_plan.uid_1c,
-                'student_uid': str(sd.student.uid),
             }
             disciplines.append(item)
 
-            data = {
-                'stud_isciplines': disciplines
-            }
-            resp = requests.post(url,
-                                 data=data)
-            if resp.status_code == 200:
-                resp_data = resp.json()
-                # if code is 1 sent=True
-                # else sent = False
-                # TODO
+        resp = requests.post(url,
+                             data=disciplines)
+        if resp.status_code == 200:
+            resp_data = resp.json()
+            for item in resp_data:
+                log = DocumentChangeLog(
+                    content_type_id=CONTENT_TYPES['studentdiscipline'],
+                    object_id=item['uid_site'],
+                    status=item['code'],
+                )
+                error_text = ''
+                for error in item['errors']:
+                    error_text += '{}\n'.format(error)
+
+                log.errors = error_text
+                log.save()
+
+                if item['code'] == 0:
+                    try:
+                        sd = org_models.StudentDiscipline.objects.get(pk=item['uid_site'])
+                    except org_models.StudentDiscipline.DoesNotExist:
+                        continue
+
+                    sd.uid_1c = item['uid_1c']
+                    sd.sent = True
+                    sd.save()
+
 

@@ -198,7 +198,7 @@ class EvaluateSerializer(serializers.Serializer):
     def validate(self, data):
         if datetime.date.today() < data['lesson'].date:
             """Невозможно поставить оценку на будущее занятие"""
-            raise CustomException()
+            raise CustomException(detail='future_lesson')
 
         if data['lesson'].closed and not data['lesson'].admin_allow:
             """Занятие закрыто для оценивания и редактирования"""
