@@ -11,7 +11,7 @@ from portal_users.models import Profile
 from organizations.models import StudentDisciplineInfo
 from portal.curr_settings import student_discipline_info_status, student_discipline_status
 from django.db.models import Q, Count, Sum
-from common.paginators import CustomPagination
+from common.paginators import CustomPagination, AdvisorBidPagination
 from . import permissions as adv_permission
 from rest_framework.permissions import IsAuthenticated
 from . import models
@@ -1406,7 +1406,7 @@ class CopyStudyPlansListView(generics.ListAPIView):  # TODO FOR TEST
     """
     queryset = org_models.StudyPlan.objects.filter(is_active=True)
     serializer_class = serializers.StudyPlanSerializer
-    pagination_class = CustomPagination
+    pagination_class = AdvisorBidPagination # CustomPagination
 
     def get_queryset(self):
         study_year = self.request.query_params.get('study_year')  # Дисциплина студента
