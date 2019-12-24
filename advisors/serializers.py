@@ -109,18 +109,19 @@ class CheckStudentBidsSerializer(serializers.Serializer):
         elif status == 3:  # Отклонен
             info_status_id = student_discipline_info_status['rejected']
             status_id = student_discipline_status['rejected']
-            AdvisorRejectedBidTask.objects.create(  # Отправить письмо на емайл студента
-                study_plan=study_plan,
-                comment=comment,
-            )
         else:
             raise CustomException(detail='not_valid_status')
 
+        is_chosen = False
         for acad_period in acad_periods:
-            student_discipline_info = org_models.StudentDisciplineInfo.objects.get(
-                study_plan=study_plan,
-                acad_period=acad_period
-            )
+            try:
+                student_discipline_info = org_models.StudentDisciplineInfo.objects.get(
+                    study_plan=study_plan,
+                    acad_period=acad_period
+                )
+            except org_models.StudentDisciplineInfo.DoesNotExist:
+                continue
+
             student_discipline_info.status_id = info_status_id
             student_discipline_info.save()
 
@@ -134,6 +135,13 @@ class CheckStudentBidsSerializer(serializers.Serializer):
                 study_plan=study_plan,
                 status=status,
                 acad_period=acad_period,
+                comment=comment,
+            )
+            is_chosen = True
+
+        if is_chosen and status == 3:  # Отклонен
+            AdvisorRejectedBidTask.objects.create(  # Отправить письмо на емайл студента
+                study_plan=study_plan,
                 comment=comment,
             )
 
