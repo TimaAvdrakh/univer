@@ -9,7 +9,8 @@ from common.paginators import CustomPagination
 
 
 class MyPerformanceView(generics.RetrieveAPIView):
-    """Моя успеваемость"""
+    """Моя успеваемость
+    study_year, acad_period, discipline"""
     pagination_class = CustomPagination
 
     def get(self, request, *args, **kwargs):
