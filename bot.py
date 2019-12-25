@@ -36,3 +36,4 @@ if __name__ == '__main__':
 
 
 # bot.send_message(request.user.profile.chat_id, 'Тест')
+# 1
