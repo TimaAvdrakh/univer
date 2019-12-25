@@ -335,7 +335,8 @@ class SendStudentDisciplinesTo1CJob(CronJobBase):
                     sd.sent = True
                     sd.save()
         else:
-            message = resp.status_code + '\n' + resp.content.decode()
+            message = '{}\n{}'.format(resp.status_code,
+                                      resp.content.decode())
             for chat_id in BOT_DEV_CHAT_IDS:
                 bot.send_message(chat_id,
                                  message)
