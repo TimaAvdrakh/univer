@@ -2,7 +2,7 @@ from django_cron import CronJobBase, Schedule
 from . import models
 import requests
 from portal.curr_settings import PASSWORD_RESET_ENDPOINT, student_discipline_status\
-    , component_by_choose_uid, CONTENT_TYPES, SEND_STUD_DISC_1C_URL
+    , component_by_choose_uid, CONTENT_TYPES, SEND_STUD_DISC_1C_URL, BOT_DEV_CHAT_IDS
 from django.utils import timezone
 from django.core.mail import send_mail
 from django.template.loader import render_to_string
@@ -13,6 +13,7 @@ from schedules import models as sh_models
 from datetime import datetime, timedelta
 from integration.models import DocumentChangeLog
 from requests.auth import HTTPBasicAuth
+from bot import bot
 
 
 class EmailCronJob(CronJobBase):
@@ -333,5 +334,9 @@ class SendStudentDisciplinesTo1CJob(CronJobBase):
                     sd.uid_1c = item['uid_1c']
                     sd.sent = True
                     sd.save()
-
+        else:
+            message = resp.status_code + '\n' + resp.content.decode()
+            for chat_id in BOT_DEV_CHAT_IDS:
+                bot.send_message(chat_id,
+                                 message)
 
