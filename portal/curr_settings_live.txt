@@ -69,3 +69,10 @@ not_choosing_load_types2 = [                 # Типы нагрузок не у
     "7f93705a-744a-46c2-9bd9-b7bf886bef2d",
     "303e48f0-7b1a-431a-aac0-53843479e58e",
 ]
+
+component_by_choose_uid = '85b29d9f-31e2-11e9-aa40-0cc47a2bc1bf'
+
+CONTENT_TYPES = {
+    'studentdiscipline': 52,
+}
+

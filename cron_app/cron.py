@@ -1,7 +1,8 @@
 from django_cron import CronJobBase, Schedule
 from . import models
 import requests
-from portal.curr_settings import PASSWORD_RESET_ENDPOINT
+from portal.curr_settings import PASSWORD_RESET_ENDPOINT, student_discipline_status\
+    , component_by_choose_uid, CONTENT_TYPES, SEND_STUD_DISC_1C_URL
 from django.utils import timezone
 from django.core.mail import send_mail
 from django.template.loader import render_to_string
@@ -10,6 +11,8 @@ from portal_users import models as user_models
 from organizations import models as org_models
 from schedules import models as sh_models
 from datetime import datetime, timedelta
+from integration.models import DocumentChangeLog
+from requests.auth import HTTPBasicAuth
 
 
 class EmailCronJob(CronJobBase):
@@ -270,4 +273,65 @@ class CloseLessonsJob(CronJobBase):
             if now >= end_of_week:
                 lesson.closed = True
                 lesson.save()
+
+
+class SendStudentDisciplinesTo1CJob(CronJobBase):
+    """Отправляет утвержденные Дисциплины студентов в 1С"""
+    RUN_EVERY_MINS = 1  # every 1 min
+
+    schedule = Schedule(run_every_mins=RUN_EVERY_MINS)
+    code = 'crop_app.send_student_disciplines'
+
+    def do(self):
+        url = SEND_STUD_DISC_1C_URL  # 1C endpoint TODO
+        status = student_discipline_status['confirmed']
+        sds = org_models.StudentDiscipline.objects.filter(status_id=status,
+                                                          sent=False)[:50]
+        disciplines = []
+        for sd in sds:
+            item = {
+                'uid_site': str(sd.uid),             # УИД дисицплины студента на сайте
+                'study_plan': sd.study_plan.uid_1c,
+                'student': str(sd.student.uid),
+                'study_period': str(sd.study_year.uid),
+                'advisor': str(sd.study_plan.advisor.uid),
+                'acad_period': str(sd.acad_period.uid),
+                'teacher': str(sd.teacher.uid) if sd.teacher else '',
+                'language': str(sd.language.uid),
+                'discipline': str(sd.discipline.uid),
+                'loadtype': str(sd.load_type.load_type2.uid_1c),
+                'isopt': str(sd.component.uid) == component_by_choose_uid if sd.component else False,
+            }
+            disciplines.append(item)
+
+        resp = requests.post(url,
+                             json=disciplines,
+                             verify=False,
+                             auth=HTTPBasicAuth('Администратор'.encode(), 'qwe123rty'))
+
+        if resp.status_code == 200:
+            resp_data = resp.json()
+            for item in resp_data:
+                log = DocumentChangeLog(
+                    content_type_id=CONTENT_TYPES['studentdiscipline'],
+                    object_id=item['uid_site'],
+                    status=item['code'],
+                )
+                error_text = ''
+                for error in item['errors']:
+                    error_text += '{}\n'.format(error)
+
+                log.errors = error_text
+                log.save()
+
+                if item['code'] == 0:
+                    try:
+                        sd = org_models.StudentDiscipline.objects.get(pk=item['uid_site'])
+                    except org_models.StudentDiscipline.DoesNotExist:
+                        continue
+
+                    sd.uid_1c = item['uid_1c']
+                    sd.sent = True
+                    sd.save()
+
 

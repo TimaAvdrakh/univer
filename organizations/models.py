@@ -734,6 +734,17 @@ class StudentDiscipline(BaseModel):
         null=True,
         verbose_name='uid 1c учебного плана',
     )
+    sent = models.BooleanField(
+        default=False,
+        verbose_name='Отправлен в 1С',
+    )
+    uid_1c = models.CharField(
+        max_length=100,
+        default='',
+        blank=True,
+        verbose_name='УИД документа-аналога в 1С',
+        help_text='придет, после выгрузки в 1С',
+    )
 
     def save(self, *args, **kwargs):
         if self.exchange:
