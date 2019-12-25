@@ -192,6 +192,7 @@ class StudentDisciplineAdmin(admin.ModelAdmin):
     )
     list_filter = [
         'status',
+        'sent',
     ]
     list_display = [
         'student',
