@@ -283,7 +283,7 @@ class SendStudentDisciplinesTo1CJob(CronJobBase):
     code = 'crop_app.send_student_disciplines'
 
     def do(self):
-        url = SEND_STUD_DISC_1C_URL  # 1C endpoint TODO
+        url = SEND_STUD_DISC_1C_URL
         status = student_discipline_status['confirmed']
         sds = org_models.StudentDiscipline.objects.filter(status_id=status,
                                                           sent=False)[:50]
@@ -294,7 +294,7 @@ class SendStudentDisciplinesTo1CJob(CronJobBase):
                 'study_plan': sd.study_plan.uid_1c,
                 'student': str(sd.student.uid),
                 'study_period': str(sd.study_year.uid),
-                'advisor': str(sd.study_plan.advisor.uid),
+                'advisor': str(sd.study_plan.advisor.uid) if sd.study_plan.advisor else '',
                 'acad_period': str(sd.acad_period.uid),
                 'teacher': str(sd.teacher.uid) if sd.teacher else '',
                 'language': str(sd.language.uid),
