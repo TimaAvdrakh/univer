@@ -6,6 +6,7 @@ from schedules import models as sh_models
 from organizations import models as org_models
 from django.db.models import Avg
 from common.paginators import CustomPagination
+from organizations.serializers import DisciplineSerializer
 
 
 class MyPerformanceView(generics.RetrieveAPIView):
@@ -91,3 +92,31 @@ class DisciplinePerformanceDetailView(generics.RetrieveAPIView):
             lessons,
             status=status.HTTP_200_OK
         )
+
+
+class DisciplineListView(generics.ListAPIView):
+    """Получить мои дисциплины для ЭЖ"""
+    queryset = org_models.Discipline.objects.filter(is_active=True)
+    serializer_class = DisciplineSerializer
+
+    def get_queryset(self):
+        profile = self.request.user.profile
+        study_year = self.request.query_params.get('study_year')
+        acad_period = self.request.query_params.get('acad_period')
+
+        filter_d = {
+            'student': profile,
+            'is_active': True
+        }
+
+        if study_year:
+            filter_d['study_year_id'] = study_year
+        if acad_period:
+            filter_d['acad_period_id'] = acad_period
+
+        discipline_pks = org_models.StudentDiscipline.objects.filter(**filter_d).values('discipline')
+
+        queryset = self.queryset.filter(pk__in=discipline_pks)
+
+        return queryset
+
