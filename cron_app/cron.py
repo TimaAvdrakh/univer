@@ -1,7 +1,7 @@
 from django_cron import CronJobBase, Schedule
 from . import models
 import requests
-from portal.curr_settings import PASSWORD_RESET_ENDPOINT, student_discipline_status\
+from portal.curr_settings import PASSWORD_RESET_ENDPOINT, student_discipline_status \
     , component_by_choose_uid, CONTENT_TYPES, SEND_STUD_DISC_1C_URL, BOT_DEV_CHAT_IDS
 from django.utils import timezone
 from django.core.mail import send_mail
@@ -286,18 +286,22 @@ class SendStudentDisciplinesTo1CJob(CronJobBase):
     def do(self):
         url = SEND_STUD_DISC_1C_URL
         status = student_discipline_status['confirmed']
-        sds = org_models.StudentDiscipline.objects.filter(status_id=status,
-                                                          sent=False)[:5]
+        sds = org_models.StudentDiscipline.objects.filter(
+            status_id=status,
+            teacher__isnull=False,
+            sent=False,
+        )[:5]
+
         disciplines = []
         for sd in sds:
             item = {
-                'uid_site': str(sd.uid),             # УИД дисицплины студента на сайте
+                'uid_site': str(sd.uid),  # УИД дисицплины студента на сайте
                 'study_plan': sd.study_plan.uid_1c,
                 'student': str(sd.student.uid),
                 'study_period': str(sd.study_year.uid),
                 'advisor': str(sd.study_plan.advisor.uid) if sd.study_plan.advisor else '',
                 'acad_period': str(sd.acad_period.uid),
-                'teacher': str(sd.teacher.uid) if sd.teacher else '',
+                'teacher': str(sd.teacher.uid),
                 'language': str(sd.language.uid),
                 'discipline': str(sd.discipline.uid),
                 'loadtype': str(sd.load_type.load_type2.uid_1c),
@@ -340,4 +344,3 @@ class SendStudentDisciplinesTo1CJob(CronJobBase):
             for chat_id in BOT_DEV_CHAT_IDS:
                 bot.send_message(chat_id,
                                  message)
-
