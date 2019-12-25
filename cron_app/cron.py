@@ -286,7 +286,7 @@ class SendStudentDisciplinesTo1CJob(CronJobBase):
         url = SEND_STUD_DISC_1C_URL
         status = student_discipline_status['confirmed']
         sds = org_models.StudentDiscipline.objects.filter(status_id=status,
-                                                          sent=False)[:50]
+                                                          sent=False)[:5]
         disciplines = []
         for sd in sds:
             item = {
