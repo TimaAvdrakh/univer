@@ -4,9 +4,9 @@ from . import views
 app_name = 'univer_admin'
 
 urlpatterns = [
-    path('lesson/<pk>/allow_mark/',
-         views.AllowMarkLessonView.as_view(),
-         name='allow_mark'),
+    path('lesson/<pk>/handle/',
+         views.HandleLessonView.as_view(),
+         name='lesson_handle'),
 
     path('journal/<pk>/handle/',
          views.HandleJournalView.as_view(),
