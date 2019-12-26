@@ -185,6 +185,7 @@ class StudentDisciplineForRegListView(generics.ListAPIView):
     def list(self, request, *args, **kwargs):
         study_plan_id = request.query_params.get('study_plan')
         acad_period_id = request.query_params.get('acad_period')
+        study_year_id = request.query_params.get('study_year')
 
         try:
             study_plan = org_models.StudyPlan.objects.get(
@@ -222,6 +223,7 @@ class StudentDisciplineForRegListView(generics.ListAPIView):
         ).exclude(load_type__load_type2__in=not_choosing_load_types2).order_by('discipline')  # TODO TEST
 
         serializer = self.serializer_class(student_disciplines,
+                                           context={'study_year_id': study_year_id},
                                            many=True)
         return Response(
             serializer.data,
