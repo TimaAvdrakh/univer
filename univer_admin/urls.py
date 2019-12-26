@@ -11,4 +11,8 @@ urlpatterns = [
     path('journal/<pk>/handle/',
          views.HandleJournalView.as_view(),
          name='journal_handle'),
+
+    path('lessons/',
+         views.JournalLessonListView.as_view(),
+         name='journal_lessons'),
 ]

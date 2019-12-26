@@ -19,8 +19,9 @@ class HandleLessonView(generics.UpdateAPIView):
     serializer_class = serializers.HandleLessonSerializer
 
 
-class JournalLessonListView(generics.ListAPIView):  # TODO continue
-    """Список занятии выбранного Журнала"""
+class JournalLessonListView(generics.ListAPIView):
+    """Список занятии выбранного Журнала
+    journal, date"""
     permission_classes = (
         IsAuthenticated,
         permissions.AdminPermission,
@@ -31,6 +32,7 @@ class JournalLessonListView(generics.ListAPIView):  # TODO continue
     def get_queryset(self):
         journal_id = self.request.query_params.get('journal')
         date = self.request.query_params.get('date')
+
         queryset = self.queryset.filter(el_journal_id=journal_id)
         if date:
             chosen_date = datetime.strptime(date,

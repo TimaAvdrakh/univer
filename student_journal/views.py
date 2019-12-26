@@ -55,8 +55,8 @@ class MyPerformanceView(generics.RetrieveAPIView):
             item['disc_uid'] = disc.uid
             item['discipline'] = disc.name
             item['missed_count'] = missed_count
-            item['av_curr_mark'] = av_curr_mark
-            item['itog_curr_mark'] = av_curr_mark * 0.6
+            item['av_curr_mark'] = av_curr_mark or ''
+            item['itog_curr_mark'] = av_curr_mark * 0.6 if av_curr_mark is not None else ''
             resp.append(item)
 
         page = self.paginate_queryset(resp)
