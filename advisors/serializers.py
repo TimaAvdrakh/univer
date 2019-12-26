@@ -129,6 +129,7 @@ class CheckStudentBidsSerializer(serializers.Serializer):
                 study_plan=study_plan,
                 acad_period=acad_period,
                 is_active=True,
+                teacher__isnull=False,  # TODO TEST
             ).update(status_id=status_id)
 
             models.AdvisorCheck.objects.create(

@@ -310,10 +310,13 @@ class SendStudentDisciplinesTo1CJob(CronJobBase):
             }
             disciplines.append(item)
 
-        resp = requests.post(url,
-                             json=disciplines,
-                             verify=False,
-                             auth=HTTPBasicAuth('Администратор'.encode(), 'qwe123rty'))
+        resp = requests.post(
+            url,
+            json=disciplines,
+            verify=False,
+            auth=HTTPBasicAuth('Администратор'.encode(), 'qwe123rty'),
+            timeout=30,
+        )
 
         if resp.status_code == 200:
             resp_data = resp.json()
