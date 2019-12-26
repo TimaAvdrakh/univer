@@ -11,8 +11,6 @@ urlpatterns = [
     path('c1_object_compares/', views.C1ObjectCompareView.as_view(), name='c1_object_compares'),
     path('copy_rules/', views.CopyRuleView.as_view(), name='copy_rules'),
 
-    path('present_student/', views.StudentPresenceView.as_view(), name='present_student'),
-
     # path('delete_all/', views.DelAllView.as_view(), name='delete_all'),
 
     # url('^putpicturefrom1c/$', views.putpicturefrom1c, name='putpicturefrom1c'),
@@ -26,5 +24,3 @@ urlpatterns = [
     # url('^clear_123_cache/$', views.clear_cache, name='clear_123_cache'),
     # url('^login1c/$', views.logon1c, name="logon1c")
 ]
-
-# 1

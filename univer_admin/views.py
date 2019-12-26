@@ -52,7 +52,7 @@ class HandleJournalView(generics.UpdateAPIView):
     serializer_class = serializers.HandleJournalSerializer
 
 
-# class PlanJournalCloseView(generics.UpdateAPIView):
+# class PlanJournalCloseView(generics.UpdateAPIView):  # TODO continue
 #     """Планировать закрытие Журнал"""
 #     permission_classes = (
 #         IsAuthenticated,
@@ -62,7 +62,7 @@ class HandleJournalView(generics.UpdateAPIView):
 #     serializer_class = serializers.HandleJournalSerializer
 
 
-class EJournalsView(generics.ListAPIView):
+class EJournalsView(generics.ListAPIView):  # TODO continue
     """ Поиск по преподавателям, по дисциплинам,
     по кафедрам, по образовательным программам, по уровню образования,
     по форме образования и по учебным годам."""
