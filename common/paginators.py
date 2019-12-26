@@ -1,6 +1,6 @@
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
-from portal.curr_settings import CURR_FULL_SITE
+# from portal.curr_settings import CURR_FULL_SITE
 
 
 class CustomPagination(PageNumberPagination):
