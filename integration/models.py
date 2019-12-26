@@ -30,6 +30,11 @@ class DocumentChangeLog(BaseModel):
         blank=True,
         verbose_name='Ошибки',
     )
+    sent_data = models.TextField(
+        default='',
+        blank=True,
+        verbose_name='Отправленные данные ',
+    )
 
     def __str__(self):
         return '{}'.format(self.document)
