@@ -207,6 +207,7 @@ def create_electronic_journals():
             flow_uid=flow['flow_uid'],
             discipline=first_lesson.discipline,
             load_type=first_lesson.load_type,
+            study_year=first_lesson.study_year,
         )
         # ej.teachers.set(first_lesson.teachers.filter(is_active=True))
 

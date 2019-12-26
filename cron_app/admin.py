@@ -50,3 +50,11 @@ class AdvisorRejectedBidTaskTaskAdmin(admin.ModelAdmin):
         'study_plan',
         'is_success',
     ]
+
+
+@admin.register(models.PlanCloseJournalTask)
+class PlanCloseJournalTaskAdmin(admin.ModelAdmin):
+    list_display = [
+        'date_time',
+        'is_success',
+    ]

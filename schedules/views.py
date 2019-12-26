@@ -6,7 +6,7 @@ import calendar
 import datetime
 from rest_framework.response import Response
 from .utils import get_weeks_of_year
-from portal_users.models import Role, Profile
+from portal_users.models import Role, Profile, TeacherPosition
 from organizations import models as org_models
 from portal.local_settings import CURRENT_API
 from django.utils.translation import gettext as _
@@ -37,20 +37,61 @@ class LoadType2ListView(generics.ListAPIView):
 
 
 class DisciplineListView(generics.ListAPIView):
-    """Получить все дисциплины"""
+    """Получить все дисциплины
+    study_year, teacher"""
     queryset = org_models.Discipline.objects.filter(is_active=True)
     serializer_class = DisciplineSerializer
 
+    def get_queryset(self):
+        study_year = self.request.query_params.get('study_year')
+        teacher = self.request.query_params.get('teacher')
+
+        queryset = self.queryset.all()
+
+        filter_d = {
+            'is_active': True,
+        }
+
+        if study_year:
+            filter_d['study_period_id'] = study_year
+        if teacher:
+            filter_d['teacher_id'] = teacher
+
+        if study_year or teacher:
+            disc_pks = org_models.TeacherDiscipline.objects.filter(**filter_d).values('discipline')
+            queryset = queryset.filter(pk__in=disc_pks)
+
+        return queryset
+
 
 class TeacherListView(generics.ListAPIView):
-    """Получить всех преподов"""
+    """Получить всех преподов.
+    cathedra, study_year"""
     queryset = Profile.objects.filter(is_active=True)
     serializer_class = ProfileShortSerializer
 
     def get_queryset(self):
+        study_year = self.request.query_params.get('study_year')
+        cathedra = self.request.query_params.get('cathedra')
+
         teacher_pks = Role.objects.filter(is_teacher=True,
                                           is_active=True).values('profile')
         queryset = self.queryset.filter(pk__in=teacher_pks)
+
+        filter_d = {
+            'is_active': True
+        }
+        if study_year:
+            filter_d['study_year_id'] = study_year
+
+        if cathedra:
+            filter_d['cathedra_id'] = cathedra
+
+        if study_year or cathedra:
+            cathedra_teacher_pks = TeacherPosition.objects.filter(**filter_d).values('profile')
+
+            queryset = queryset.filter(pk__in=cathedra_teacher_pks)
+
         return queryset
 
 
@@ -305,7 +346,7 @@ class ScheduleListView(generics.ListAPIView):
 
 class ElJournalListView(generics.ListAPIView):
     """
-    Получить список ЭЖ
+    Получить список ЭЖ для Преподавателя
     discipline, load_type, group, study_year
     """
     serializer_class = serializers.ElectronicJournalSerializer
@@ -341,7 +382,7 @@ class ElJournalListView(generics.ListAPIView):
 
 class JournalInfoView(generics.RetrieveAPIView):  # TODO
     """
-    Получить инфо о журнале
+    Получить инфо о журнале для Препода
     id
     """
     permission_classes = (
@@ -373,7 +414,7 @@ class JournalInfoView(generics.RetrieveAPIView):  # TODO
 
 class JournalDetailView(generics.RetrieveAPIView):
     """
-    Получить журнал
+    Получить журнал с оценками для Препода
     id, next_month, prev_month, date
     """
     permission_classes = (
