@@ -1,8 +1,8 @@
 from django_cron import CronJobBase, Schedule
 from . import models
 import requests
-from portal.curr_settings import PASSWORD_RESET_ENDPOINT, student_discipline_status\
-    , component_by_choose_uid, CONTENT_TYPES, SEND_STUD_DISC_1C_URL
+from portal.curr_settings import PASSWORD_RESET_ENDPOINT, student_discipline_status \
+    , component_by_choose_uid, CONTENT_TYPES, SEND_STUD_DISC_1C_URL, BOT_DEV_CHAT_IDS
 from django.utils import timezone
 from django.core.mail import send_mail
 from django.template.loader import render_to_string
@@ -13,6 +13,7 @@ from schedules import models as sh_models
 from datetime import datetime, timedelta
 from integration.models import DocumentChangeLog
 from requests.auth import HTTPBasicAuth
+from bot import bot
 
 
 class EmailCronJob(CronJobBase):
@@ -283,20 +284,24 @@ class SendStudentDisciplinesTo1CJob(CronJobBase):
     code = 'crop_app.send_student_disciplines'
 
     def do(self):
-        url = SEND_STUD_DISC_1C_URL  # 1C endpoint TODO
+        url = SEND_STUD_DISC_1C_URL
         status = student_discipline_status['confirmed']
-        sds = org_models.StudentDiscipline.objects.filter(status_id=status,
-                                                          sent=False)[:50]
+        sds = org_models.StudentDiscipline.objects.filter(
+            status_id=status,
+            teacher__isnull=False,
+            sent=False,
+        )[:5]
+
         disciplines = []
         for sd in sds:
             item = {
-                'uid_site': str(sd.uid),             # УИД дисицплины студента на сайте
+                'uid_site': str(sd.uid),  # УИД дисицплины студента на сайте
                 'study_plan': sd.study_plan.uid_1c,
                 'student': str(sd.student.uid),
                 'study_period': str(sd.study_year.uid),
-                'advisor': str(sd.study_plan.advisor.uid),
+                'advisor': str(sd.study_plan.advisor.uid) if sd.study_plan.advisor else '',
                 'acad_period': str(sd.acad_period.uid),
-                'teacher': str(sd.teacher.uid) if sd.teacher else '',
+                'teacher': str(sd.teacher.uid),
                 'language': str(sd.language.uid),
                 'discipline': str(sd.discipline.uid),
                 'loadtype': str(sd.load_type.load_type2.uid_1c),
@@ -333,5 +338,9 @@ class SendStudentDisciplinesTo1CJob(CronJobBase):
                     sd.uid_1c = item['uid_1c']
                     sd.sent = True
                     sd.save()
-
-
+        else:
+            message = '{}\n{}'.format(resp.status_code,
+                                      resp.content.decode())
+            for chat_id in BOT_DEV_CHAT_IDS:
+                bot.send_message(chat_id,
+                                 message)

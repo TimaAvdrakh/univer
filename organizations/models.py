@@ -765,7 +765,8 @@ class StudentDiscipline(BaseModel):
         """Возвращает кредит дисциплины"""
         return calculate_credit(self.discipline,
                                 self.student,
-                                self.acad_period)
+                                self.acad_period,
+                                self.cycle)
 
     def __str__(self):
         return '{} {}'.format(self.acad_period,

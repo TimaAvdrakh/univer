@@ -11,4 +11,8 @@ urlpatterns = [
     path('my_performance/disc/',
          views.DisciplinePerformanceDetailView.as_view(),
          name='my_performance_disc'),
+
+    path('my_disciplines/',
+         views.DisciplineListView.as_view(),
+         name='my_disciplines'),
 ]

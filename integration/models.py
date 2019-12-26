@@ -24,8 +24,8 @@ class DocumentChangeLog(BaseModel):
         choices=STATUS_CHOICES,
         verbose_name='Статус обмена',
     )
-    errors = models.CharField(
-        max_length=1000,
+    errors = models.TextField(
+        # max_length=1000,
         default='',
         blank=True,
         verbose_name='Ошибки',
