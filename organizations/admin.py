@@ -180,6 +180,11 @@ class AcadPeriodAdmin(admin.ModelAdmin):
 
 @admin.register(models.StudentDiscipline)
 class StudentDisciplineAdmin(admin.ModelAdmin):
+    search_fields = (
+        'uid',
+        'student__first_name',
+        'student__last_name',
+    )
     autocomplete_fields = (
         'student',
         'teacher',

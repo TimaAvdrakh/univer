@@ -16,7 +16,6 @@ from . import serializers
 import requests
 from django.contrib.auth.models import User
 from cron_app.models import CredentialsEmailTask
-from portal.curr_settings import G1_SOFT_AUTH_KEY
 
 
 from .models import *
@@ -284,38 +283,6 @@ class CopyRuleView(generics.RetrieveAPIView):
                 'message': 'ok'
             },
             status=status.HTTP_200_OK,
-        )
-
-
-class StudentPresenceView(generics.CreateAPIView):
-    """
-    for G1 Soft
-    auth_key - токен авторизации
-    user - ИИН студента
-    aud - Уид аудитории
-    time - timestamp
-    """
-    serializer_class = serializers.StudentPresenceSerializer
-
-    def create(self, request, *args, **kwargs):
-        token = request._request.headers['token']
-
-        if token != G1_SOFT_AUTH_KEY:
-            return Response(
-                {
-                    'message': 'auth_key_invalid'
-                },
-                status=status.HTTP_200_OK
-            )
-
-        serializer = self.serializer_class(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        return Response(
-            {
-                'message': 'ok',
-            },
-            status=status.HTTP_200_OK
         )
 
 

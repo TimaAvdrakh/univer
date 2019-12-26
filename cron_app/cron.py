@@ -14,6 +14,7 @@ from datetime import datetime, timedelta
 from integration.models import DocumentChangeLog
 from requests.auth import HTTPBasicAuth
 from bot import bot
+import json
 
 
 class EmailCronJob(CronJobBase):
@@ -317,10 +318,17 @@ class SendStudentDisciplinesTo1CJob(CronJobBase):
         if resp.status_code == 200:
             resp_data = resp.json()
             for item in resp_data:
+                try:
+                    sent_data = list(filter(lambda disc: disc['uid_site'] == item['uid_site'], disciplines))[0]
+                    sent_data_json = json.dumps(sent_data)
+                except IndexError:
+                    sent_data_json = ''
+
                 log = DocumentChangeLog(
                     content_type_id=CONTENT_TYPES['studentdiscipline'],
                     object_id=item['uid_site'],
                     status=item['code'],
+                    sent_data=sent_data_json,
                 )
                 error_text = ''
                 for error in item['errors']:
