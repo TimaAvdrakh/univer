@@ -29,4 +29,3 @@ class C1ObjectCompareSerializer(serializers.ModelSerializer):
             'main_field',
             'is_binary_data',
         )
-

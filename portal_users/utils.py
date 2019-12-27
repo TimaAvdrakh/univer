@@ -82,7 +82,3 @@ def divide_to_study_years(study_period):
         study_years.append(study_year)
 
     return study_years
-
-
-
-

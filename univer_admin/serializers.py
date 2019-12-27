@@ -1,56 +1,63 @@
 from rest_framework import serializers
 from schedules import models as sh_models
 from datetime import datetime, timedelta, date
+from cron_app.models import PlanCloseJournalTask
 
 
-class HandleLessonSerializer(serializers.ModelSerializer):
-    """Открыть/закрыть выбранное занятие,"""
-
-    class Meta:
-        model = sh_models.Lesson
-        fields = (
-            'uid',
-            'admin_allow',
+class HandleLessonSerializer(serializers.Serializer):
+    """Открыть/закрыть выбранные занятия,"""
+    lessons = serializers.ListField(
+        child=serializers.PrimaryKeyRelatedField(
+            queryset=sh_models.Lesson.objects.filter(is_active=True),
         )
+    )
 
-    def update(self, instance, validated_data):
-        instance.admin_allow = not instance.admin_allow
-        instance.save()
+    def save(self, **kwargs):
+        lessons = self.validated_data.get('lessons')
+        for lesson in lessons:
+            lesson.admin_allow = not lesson.admin_allow
+            lesson.save()
 
-        return instance
+        return lessons
 
 
-# class LessonListView(serializers.ModelSerializer):
-
-
-class HandleJournalSerializer(serializers.ModelSerializer):
-    """Закрыть/Открыть Журнал"""
-
-    class Meta:
-        model = sh_models.ElectronicJournal
-        fields = (
-            'uid',
-            'closed',
+class HandleJournalSerializer(serializers.Serializer):
+    """Закрыть/Открыть Журналы"""
+    journals = serializers.ListField(
+        child=serializers.PrimaryKeyRelatedField(
+            queryset=sh_models.ElectronicJournal.objects.filter(is_active=True),
         )
+    )
+    date_time = serializers.DateTimeField(required=False,
+                                          allow_null=True)
 
-    def update(self, instance, validated_data):
-        instance.closed = not instance.closed
-        if instance.closed:
-            """Журнал закрыли"""
-            instance.lessons.filter(is_active=True).update(closed=True,
-                                                           admin_allow=False)
+    def save(self, **kwargs):
+        journals = self.validated_data.get('journals')
+        date_time = self.validated_data.get('date_time')
+
+        if date_time:
+            task = PlanCloseJournalTask.objects.create(
+                date_time=date_time,
+            )
+            task.journals.set(journals)
         else:
-            """Журнал открыли, разблокируем его занятия на текущей неделе"""
-            today = date.today()
-            start_week = today - timedelta(days=today.weekday())
-            end_week = start_week + timedelta(days=6)
+            for journal in journals:
+                journal.closed = not journal.closed
+                if journal.closed:
+                    """Журнал закрыли"""
+                    journal.close_lessons()
+                else:
+                    """Журнал открыли, разблокируем его занятия на текущей неделе"""
+                    today = date.today()
+                    start_week = today - timedelta(days=today.weekday())
+                    end_week = start_week + timedelta(days=6)
 
-            instance.lessons.filter(
-                is_active=True,
-                date__gte=start_week,
-                date__lte=end_week,
-            ).update(admin_allow=True)
+                    journal.lessons.filter(
+                        is_active=True,
+                        date__gte=start_week,
+                        date__lte=end_week,
+                    ).update(admin_allow=True)
 
-        instance.save()
+                journal.save()
 
-        return instance
+        return journals
