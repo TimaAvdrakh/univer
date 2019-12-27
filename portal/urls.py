@@ -33,6 +33,7 @@ urlpatterns = [
     path('api/v1/admin/', include('univer_admin.urls', namespace='univer_admin')),
 
     path('api/v1/stud_jour/', include('student_journal.urls', namespace='student_journal')),
+    path('api/v1/integration/', include('integration.urls', namespace='integration')),
 ]
 
 # urlpatterns += i18n_patterns(

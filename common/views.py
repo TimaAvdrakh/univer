@@ -69,6 +69,20 @@ class StudyYearListView(generics.ListAPIView):
     queryset = org_models.StudyPeriod.objects.filter(is_study_year=True).order_by('start')
     serializer_class = serializers.StudyPeriodSerializer
 
+    def get_queryset(self):
+        profile = self.request.user.profile
+        my = self.request.query_params.get('my')
+
+        queryset = self.queryset.all()
+
+        if my == '1':
+            study_plans = org_models.StudyPlan.objects.filter(student=profile,
+                                                              is_active=True)
+            study_year_pks = org_models.StudyYearCourse.objects.filter(study_plan__in=study_plans).values('study_year')
+            queryset = queryset.filter(pk__in=study_year_pks).order_by('start')
+
+        return queryset
+
 
 class RegistrationPeriodListView(generics.ListAPIView):
     """Справочник периодов регистрации

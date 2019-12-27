@@ -500,12 +500,15 @@ class JournalDetailView(generics.RetrieveAPIView):
                     lesson_d = {}
                     time_d = {}
 
+                    edit_subject = True
                     allow_mark = True
-                    if today < lesson.date:
+                    if lesson.closed and not lesson.admin_allow:
+                        """Занятие закрыто для оценивания и редактирования"""
+                        edit_subject = False
                         allow_mark = False
 
-                    # TODO проверка недели
-                    # lesson_week = calendar.week
+                    if today < lesson.date:
+                        allow_mark = False
 
                     reason = ''
                     try:
@@ -546,7 +549,7 @@ class JournalDetailView(generics.RetrieveAPIView):
                     # time_d['date'] = day['date'].day
                     time_d['lesson_id'] = lesson.uid
                     time_d['start'] = lesson.time.from_time
-                    time_d['edit_subject'] = True  # TODO
+                    time_d['edit_subject'] = edit_subject  # TODO
                     time_d['grading_system'] = grading_system
                     time_d['subject_ru'] = lesson.subject_ru
                     time_d['subject_kk'] = lesson.subject_kk
