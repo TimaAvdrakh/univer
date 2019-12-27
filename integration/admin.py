@@ -10,4 +10,5 @@ class DocumentChangeLogAdmin(admin.ModelAdmin):
         'object_id',
         'status',
         'errors',
+        'created',
     )

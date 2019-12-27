@@ -106,3 +106,17 @@ class ContentTypeAdmin(admin.ModelAdmin):
         'id',
         'model',
     )
+
+
+@admin.register(models.Log)
+class LogAdmin(admin.ModelAdmin):
+    search_fields = (
+        'object_id',
+        'model_name',
+    )
+    list_display = (
+        'model_name',
+        'obj_uid',
+        'profile',
+        'date',
+    )

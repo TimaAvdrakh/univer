@@ -76,3 +76,14 @@ CONTENT_TYPES = {
     'studentdiscipline': 52,
 }
 
+SEND_STUD_DISC_1C_URL = 'https://univerpro.kazatu.kz/katu/hs/data/user-registration/'
+
+
+BOT_TOKEN = '945315027:AAGVoakvg15qUg2plgnLz4e31R_WM4V9CQo'
+BOT_USERNAME = 'kazatubot'
+BOT_DEV_CHAT_IDS = [568112408, 599748213, 293450762]
+
+
+CYCLE_DISCIPLINE = {
+    'itog_attest': '85b29da3-31e2-11e9-aa40-0cc47a2bc1bf',
+}

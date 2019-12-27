@@ -46,7 +46,7 @@ class DisciplineListView(generics.ListAPIView):
         study_year = self.request.query_params.get('study_year')
         teacher = self.request.query_params.get('teacher')
 
-        queryset = self.queryset.all()
+        queryset = self.queryset.all().order_by('name')
 
         filter_d = {
             'is_active': True,
@@ -76,7 +76,9 @@ class TeacherListView(generics.ListAPIView):
 
         teacher_pks = Role.objects.filter(is_teacher=True,
                                           is_active=True).values('profile')
-        queryset = self.queryset.filter(pk__in=teacher_pks)
+        queryset = self.queryset.filter(pk__in=teacher_pks).order_by('last_name',
+                                                                     'first_name',
+                                                                     'middle_name')
 
         filter_d = {
             'is_active': True
