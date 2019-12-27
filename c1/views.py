@@ -166,12 +166,11 @@ def putfrom1c(request):
                         # filedata = base64_string[data_index:len(base64_string)]
                         image = b64decode(base64_string)
 
-                        # setattr(
-                        #     finding_object,
-                        #     rule_field['django'],
-                        #     ContentFile(image, each_elem['uid'] + '.jpg')
-                        # )
-                        finding_object.rule_field['django'].save(each_elem['uid'] + '.jpg', ContentFile(image))  # TODO TEST
+                        setattr(
+                            finding_object,
+                            rule_field['django'],
+                            ContentFile(image, each_elem['uid'] + '.jpg')
+                        )
 
                     if not is_related and not rule_field['is_binary_data']:
                         try:
