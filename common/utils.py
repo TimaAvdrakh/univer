@@ -1,6 +1,9 @@
 from django.contrib.auth.models import User
 import string
 import random
+from django.core import serializers
+import json
+from common.models import Log
 
 
 def get_sentinel_user():
@@ -20,3 +23,15 @@ def password_generator(size=8, chars=string.ascii_letters + string.digits):
     """
     return ''.join(random.choice(chars) for i in range(size))
 
+
+def make_log(profile, obj):
+    """Создать лог"""
+    json_data = serializers.serialize("json", [obj])
+    model_name = obj.__class__.__name__
+
+    log = Log.objects.create(
+        obj_uid=obj.uid,
+        model_name=model_name,
+        content=json_data,
+        profile=profile,
+    )
