@@ -166,11 +166,12 @@ def putfrom1c(request):
                         # filedata = base64_string[data_index:len(base64_string)]
                         image = b64decode(base64_string)
 
-                        setattr(
-                            finding_object,
-                            rule_field['django'],
-                            ContentFile(image, each_elem['uid'] + '.jpg')
-                        )
+                        # setattr(
+                        #     finding_object,
+                        #     rule_field['django'],
+                        #     ContentFile(image, each_elem['uid'] + '.jpg')
+                        # )
+                        finding_object.rule_field['django'].save(each_elem['uid'] + '.jpg', ContentFile(image))  # TODO TEST
 
                     if not is_related and not rule_field['is_binary_data']:
                         try:
@@ -326,37 +327,37 @@ class CopyRuleView(generics.RetrieveAPIView):
 #         )
 
 
-class LoadAvatarView(generics.CreateAPIView):
-    def create(self, request, *args, **kwargs):
-        if request.data['token'] != 'lsdfgflg45454adsa5d645':
-            return Response(
-                {
-                    'message': 'forbidden'
-                },
-                status=status.HTTP_401_UNAUTHORIZED
-            )
-
-        resp = []
-        data = request.data['data']
-        for item in data:
-            d = {
-                'uid': item['uid'],
-                'code': 0,
-            }
-            try:
-                profile = models_portal_users.Profile.objects.get(uid=item['uid'])
-            except models_portal_users.Profile.DoesNotExist:
-                d['code'] = 1
-                resp.append(d)
-                continue
-
-            image = b64decode(item['avatar'])
-            content_f = ContentFile(image)
-            image_name = '{}.jpg'.format(uuid4())
-            profile.avatar.save(image_name, content_f)
-            resp.append(d)
-
-        return Response(
-            resp,
-            status=status.HTTP_200_OK
-        )
+# class LoadAvatarView(generics.CreateAPIView):
+#     def create(self, request, *args, **kwargs):
+#         if request.data['token'] != 'lsdfgflg45454adsa5d645':
+#             return Response(
+#                 {
+#                     'message': 'forbidden'
+#                 },
+#                 status=status.HTTP_401_UNAUTHORIZED
+#             )
+#
+#         resp = []
+#         data = request.data['data']
+#         for item in data:
+#             d = {
+#                 'uid': item['uid'],
+#                 'code': 0,
+#             }
+#             try:
+#                 profile = models_portal_users.Profile.objects.get(uid=item['uid'])
+#             except models_portal_users.Profile.DoesNotExist:
+#                 d['code'] = 1
+#                 resp.append(d)
+#                 continue
+#
+#             image = b64decode(item['avatar'])
+#             content_f = ContentFile(image)
+#             image_name = '{}.jpg'.format(uuid4())
+#             profile.avatar.save(image_name, content_f)
+#             resp.append(d)
+#
+#         return Response(
+#             resp,
+#             status=status.HTTP_200_OK
+#         )
