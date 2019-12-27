@@ -10,9 +10,9 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        # migrations.AddField(
-        #     model_name='documentchangelog',
-        #     name='sent_data',
-        #     field=models.TextField(blank=True, default='', verbose_name='Отправленные данные '),
-        # ),
+        migrations.AddField(
+            model_name='documentchangelog',
+            name='sent_data',
+            field=models.TextField(blank=True, default='', verbose_name='Отправленные данные '),
+        ),
     ]

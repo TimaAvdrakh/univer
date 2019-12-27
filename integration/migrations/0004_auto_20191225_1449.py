@@ -10,9 +10,9 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        # migrations.AlterField(
-        #     model_name='documentchangelog',
-        #     name='errors',
-        #     field=models.TextField(blank=True, default='', verbose_name='Ошибки'),
-        # ),
+        migrations.AlterField(
+            model_name='documentchangelog',
+            name='errors',
+            field=models.TextField(blank=True, default='', verbose_name='Ошибки'),
+        ),
     ]
