@@ -76,6 +76,9 @@ class LessonSerializer(serializers.ModelSerializer):
 class ElectronicJournalSerializer(serializers.ModelSerializer):
     load_type = serializers.CharField()
     discipline = serializers.CharField()
+    edited = serializers.BooleanField(
+        default=False,
+    )
 
     class Meta:
         model = models.ElectronicJournal
@@ -84,6 +87,7 @@ class ElectronicJournalSerializer(serializers.ModelSerializer):
             'discipline',
             'load_type',
             'closed',
+            'edited',
         )
 
     def to_representation(self, instance):
