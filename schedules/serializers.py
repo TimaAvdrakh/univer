@@ -80,10 +80,10 @@ class ElectronicJournalSerializer(serializers.ModelSerializer):
         default=False,
     )
     block_date = serializers.DateTimeField(
-        format="%m/%d/%Y, %H:%M",
+        format="%d.%m.%Y %H:%M",
     )
     plan_block_date = serializers.DateTimeField(
-        format="%m/%d/%Y, %H:%M",
+        format="%d.%m.%Y %H:%M",
     )
 
     class Meta:
