@@ -79,6 +79,12 @@ class ElectronicJournalSerializer(serializers.ModelSerializer):
     edited = serializers.BooleanField(
         default=False,
     )
+    block_date = serializers.DateTimeField(
+        format="%m/%d/%Y, %H:%M",
+    )
+    plan_block_date = serializers.DateTimeField(
+        format="%m/%d/%Y, %H:%M",
+    )
 
     class Meta:
         model = models.ElectronicJournal
@@ -126,6 +132,7 @@ class ElectronicJournalSerializer(serializers.ModelSerializer):
                                                   many=True).data
         if data['block_date'] is None:
             data['block_date'] = ''
+
         if data['plan_block_date'] is None:
             data['plan_block_date'] = ''
 
