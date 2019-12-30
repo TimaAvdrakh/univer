@@ -124,6 +124,10 @@ class ElectronicJournalSerializer(serializers.ModelSerializer):
                                           is_active=True)
         data['teachers'] = TeacherShortSerializer(teachers,
                                                   many=True).data
+        if data['block_date'] is None:
+            data['block_date'] = ''
+        if data['plan_block_date'] is None:
+            data['plan_block_date'] = ''
 
         return data
 
