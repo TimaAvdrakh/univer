@@ -326,37 +326,37 @@ class CopyRuleView(generics.RetrieveAPIView):
 #         )
 
 
-class LoadAvatarView(generics.CreateAPIView):
-    def create(self, request, *args, **kwargs):
-        if request.data['token'] != 'lsdfgflg45454adsa5d645':
-            return Response(
-                {
-                    'message': 'forbidden'
-                },
-                status=status.HTTP_401_UNAUTHORIZED
-            )
-
-        resp = []
-        data = request.data['data']
-        for item in data:
-            d = {
-                'uid': item['uid'],
-                'code': 0,
-            }
-            try:
-                profile = models_portal_users.Profile.objects.get(uid=item['uid'])
-            except models_portal_users.Profile.DoesNotExist:
-                d['code'] = 1
-                resp.append(d)
-                continue
-
-            image = b64decode(item['avatar'])
-            content_f = ContentFile(image)
-            image_name = '{}.jpg'.format(uuid4())
-            profile.avatar.save(image_name, content_f)
-            resp.append(d)
-
-        return Response(
-            resp,
-            status=status.HTTP_200_OK
-        )
+# class LoadAvatarView(generics.CreateAPIView):
+#     def create(self, request, *args, **kwargs):
+#         if request.data['token'] != 'lsdfgflg45454adsa5d645':
+#             return Response(
+#                 {
+#                     'message': 'forbidden'
+#                 },
+#                 status=status.HTTP_401_UNAUTHORIZED
+#             )
+#
+#         resp = []
+#         data = request.data['data']
+#         for item in data:
+#             d = {
+#                 'uid': item['uid'],
+#                 'code': 0,
+#             }
+#             try:
+#                 profile = models_portal_users.Profile.objects.get(uid=item['uid'])
+#             except models_portal_users.Profile.DoesNotExist:
+#                 d['code'] = 1
+#                 resp.append(d)
+#                 continue
+#
+#             image = b64decode(item['avatar'])
+#             content_f = ContentFile(image)
+#             image_name = '{}.jpg'.format(uuid4())
+#             profile.avatar.save(image_name, content_f)
+#             resp.append(d)
+#
+#         return Response(
+#             resp,
+#             status=status.HTTP_200_OK
+#         )
