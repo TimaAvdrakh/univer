@@ -102,6 +102,16 @@ class ElectronicJournal(BaseModel):
         on_delete=models.CASCADE,
         verbose_name='Учебный год',
     )
+    plan_block_date = models.DateTimeField(
+        null=True,
+        blank=True,
+        verbose_name='Дата запланированной блокировки',
+    )
+    block_date = models.DateTimeField(
+        null=True,
+        blank=True,
+        verbose_name='Дата блокировки',
+    )
 
     # stud_disciplines = models.ManyToManyField(
     #     'organizations.StudentDiscipline',

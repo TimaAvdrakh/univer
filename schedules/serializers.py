@@ -88,6 +88,8 @@ class ElectronicJournalSerializer(serializers.ModelSerializer):
             'load_type',
             'closed',
             'edited',
+            'block_date',
+            'plan_block_date',
         )
 
     def to_representation(self, instance):
@@ -115,6 +117,13 @@ class ElectronicJournalSerializer(serializers.ModelSerializer):
             data['groups'] = []
             data['study_year'] = ''
             data['acad_periods'] = []
+
+        teacher_pks = models.LessonTeacher.objects.filter(flow_uid=instance.flow_uid,
+                                                          is_active=True).values('teacher')
+        teachers = Profile.objects.filter(pk__in=teacher_pks,
+                                          is_active=True)
+        data['teachers'] = TeacherShortSerializer(teachers,
+                                                  many=True).data
 
         return data
 
