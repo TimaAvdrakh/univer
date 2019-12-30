@@ -370,6 +370,7 @@ class ClosePlannedJournalJob(CronJobBase):
             if now >= task.date_time:
                 for journal in task.journals.filter(is_active=True):
                     journal.closed = True
+                    journal.block_date = datetime.now()
                     journal.save()
                     journal.close_lessons()
                 task.is_success = True
