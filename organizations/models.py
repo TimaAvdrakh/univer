@@ -427,6 +427,15 @@ class StudyPlan(BaseModel):
             # 'group',
             # 'education_program',
         )
+        index_together = (
+            'faculty',
+            'cathedra',
+            'education_program',
+            'speciality',
+            'group',
+            'advisor',
+            'student',
+        )
 
 
 class Prerequisite(BaseModel):
@@ -678,6 +687,7 @@ class StudentDiscipline(BaseModel):
         default='',
         max_length=100,
         verbose_name='Код дисциплины',
+        # db_index=True,
     )
     load_type = models.ForeignKey(
         LoadType,
@@ -786,6 +796,12 @@ class StudentDiscipline(BaseModel):
             'language',
             'cycle',
             'study_year',
+        )
+        index_together = (
+            'discipline',
+            'study_plan',
+            'study_year',
+            'acad_period',
         )
 
 
