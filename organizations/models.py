@@ -744,7 +744,7 @@ class StudentDiscipline(BaseModel):
         null=True,
         verbose_name='uid 1c учебного плана',
     )
-    sent = models.BooleanField(
+    sent = models.NullBooleanField(
         default=False,
         verbose_name='Отправлен в 1С',
     )
