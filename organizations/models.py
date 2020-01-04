@@ -750,6 +750,7 @@ class StudentDiscipline(BaseModel):
     )
     uid_1c = models.CharField(
         max_length=100,
+        null=True,
         default='',
         blank=True,
         verbose_name='УИД документа-аналога в 1С',
@@ -759,7 +760,9 @@ class StudentDiscipline(BaseModel):
     def save(self, *args, **kwargs):
         if self.exchange:
             if self._state.adding:
+                """При создании новой записи"""
                 self.status_id = curr_settings.student_discipline_status['not_chosen']
+                self.sent = False
 
             try:
                 study_plan = StudyPlan.objects.get(student=self.student,
