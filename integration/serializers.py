@@ -3,6 +3,7 @@ from portal_users import models as user_models
 from common.exceptions import CustomException
 from datetime import datetime
 from schedules import models as sh_models
+from .utils import timestamp_to_local_datetime
 
 
 class StudentPresentListSerializer(serializers.ListSerializer):
@@ -32,7 +33,8 @@ class StudentPresentListSerializer(serializers.ListSerializer):
                 # raise CustomException(detail='student_not_found',
                 #                       status_code=404)
 
-            dt_object = datetime.fromtimestamp(timestamp)
+            # dt_object = datetime.fromtimestamp(timestamp)
+            dt_object = timestamp_to_local_datetime(timestamp)
             date = dt_object.date()
             time = dt_object.time()
 

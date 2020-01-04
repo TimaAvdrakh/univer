@@ -355,3 +355,24 @@ class SendStudentDisciplinesTo1CJob(CronJobBase):
             for chat_id in BOT_DEV_CHAT_IDS:
                 bot.send_message(chat_id,
                                  message)
+
+
+class ClosePlannedJournalJob(CronJobBase):
+    RUN_EVERY_MINS = 1  # every 1 min
+
+    schedule = Schedule(run_every_mins=RUN_EVERY_MINS)
+    code = 'crop_app.close_planned_journal'  # a unique code
+
+    def do(self):
+        tasks = models.PlanCloseJournalTask.objects.filter(is_success=False)[:10]
+        for task in tasks:
+            now = datetime.now()
+            if now >= task.date_time:
+                for journal in task.journals.filter(is_active=True):
+                    journal.closed = True
+                    journal.block_date = datetime.now()
+                    journal.save()
+                    journal.close_lessons()
+                task.is_success = True
+                task.save()
+

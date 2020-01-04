@@ -76,6 +76,15 @@ class LessonSerializer(serializers.ModelSerializer):
 class ElectronicJournalSerializer(serializers.ModelSerializer):
     load_type = serializers.CharField()
     discipline = serializers.CharField()
+    edited = serializers.BooleanField(
+        default=False,
+    )
+    block_date = serializers.DateTimeField(
+        format="%d.%m.%Y %H:%M",
+    )
+    plan_block_date = serializers.DateTimeField(
+        format="%d.%m.%Y %H:%M",
+    )
 
     class Meta:
         model = models.ElectronicJournal
@@ -84,6 +93,9 @@ class ElectronicJournalSerializer(serializers.ModelSerializer):
             'discipline',
             'load_type',
             'closed',
+            'edited',
+            'block_date',
+            'plan_block_date',
         )
 
     def to_representation(self, instance):
@@ -111,6 +123,18 @@ class ElectronicJournalSerializer(serializers.ModelSerializer):
             data['groups'] = []
             data['study_year'] = ''
             data['acad_periods'] = []
+
+        teacher_pks = models.LessonTeacher.objects.filter(flow_uid=instance.flow_uid,
+                                                          is_active=True).values('teacher')
+        teachers = Profile.objects.filter(pk__in=teacher_pks,
+                                          is_active=True)
+        data['teachers'] = TeacherShortSerializer(teachers,
+                                                  many=True).data
+        if data['block_date'] is None:
+            data['block_date'] = ''
+
+        if data['plan_block_date'] is None:
+            data['plan_block_date'] = ''
 
         return data
 

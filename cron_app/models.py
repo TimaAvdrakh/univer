@@ -113,3 +113,14 @@ class ControlNotifyTask(BaseTask):
         on_delete=models.CASCADE,
         verbose_name='Занятие',
     )
+
+
+class PlanCloseJournalTask(BaseTask):
+    """Задача для блокировки Журналов в запланированное время"""
+    date_time = models.DateTimeField(
+        verbose_name='Дата время блокировки',
+    )
+    journals = models.ManyToManyField(
+        'schedules.ElectronicJournal',
+        verbose_name='Журналы',
+    )

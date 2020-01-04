@@ -11,6 +11,7 @@ urlpatterns = [
     path('c1_object_compares/', views.C1ObjectCompareView.as_view(), name='c1_object_compares'),
     path('copy_rules/', views.CopyRuleView.as_view(), name='copy_rules'),
 
+    # path('load/avatars/', views.LoadAvatarView.as_view(), name='load_avatars'),
     # path('delete_all/', views.DelAllView.as_view(), name='delete_all'),
 
     # url('^putpicturefrom1c/$', views.putpicturefrom1c, name='putpicturefrom1c'),

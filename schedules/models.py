@@ -95,6 +95,24 @@ class ElectronicJournal(BaseModel):
         default=False,
         verbose_name='Закрыт',
     )
+    study_year = models.ForeignKey(
+        'organizations.StudyPeriod',
+        null=True,
+        blank=True,
+        on_delete=models.CASCADE,
+        verbose_name='Учебный год',
+    )
+    plan_block_date = models.DateTimeField(
+        null=True,
+        blank=True,
+        verbose_name='Дата запланированной блокировки',
+    )
+    block_date = models.DateTimeField(
+        null=True,
+        blank=True,
+        verbose_name='Дата блокировки',
+    )
+
     # stud_disciplines = models.ManyToManyField(
     #     'organizations.StudentDiscipline',
     #     verbose_name='Дисциплины студентов',
@@ -103,6 +121,11 @@ class ElectronicJournal(BaseModel):
     def __str__(self):
         return '{} {}'.format(self.discipline,
                               self.load_type)
+
+    def close_lessons(self):
+        """Закрываем всех занятии ЭЖ"""
+        self.lessons.filter(is_active=True).update(closed=True,
+                                                   admin_allow=False)
 
     class Meta:
         verbose_name = 'Электронный журнал'
@@ -457,4 +480,3 @@ class LessonStudent(BaseModel):
             'group_identificator',
             'student',
         )
-

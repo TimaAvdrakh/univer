@@ -14,9 +14,11 @@ class StudentPresenceView(generics.CreateAPIView):
     time - timestamp
     """
     serializer_class = serializers.StudentPresenceSerializer
+    permission_classes = ()
+    authentication_classes = ()
 
     def create(self, request, *args, **kwargs):
-        token = request._request.headers['token']
+        token = request._request.headers['Token']
 
         if token != G1_SOFT_AUTH_KEY:
             return Response(
