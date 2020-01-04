@@ -2,6 +2,7 @@ from rest_framework import serializers
 from schedules import models as sh_models
 from datetime import datetime, timedelta, date
 from cron_app.models import PlanCloseJournalTask
+from django.utils import timezone
 
 
 class HandleLessonSerializer(serializers.Serializer):
@@ -36,15 +37,21 @@ class HandleJournalSerializer(serializers.Serializer):
         date_time = self.validated_data.get('date_time')
 
         if date_time:
+            '''Закроем журналы в указанное время'''
             task = PlanCloseJournalTask.objects.create(
                 date_time=date_time,
             )
             task.journals.set(journals)
+            for journal in journals:
+                journal.plan_block_date = date_time
+                journal.save()
         else:
+            '''Закроем журналы сейчас'''
             for journal in journals:
                 journal.closed = not journal.closed
                 if journal.closed:
                     """Журнал закрыли"""
+                    journal.block_date = datetime.now()
                     journal.close_lessons()
                 else:
                     """Журнал открыли, разблокируем его занятия на текущей неделе"""

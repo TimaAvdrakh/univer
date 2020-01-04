@@ -211,6 +211,7 @@ class StudentDisciplineAdmin(admin.ModelAdmin):
         'author',
         'discipline_code',
         'status',
+        'study_year',
         'sent',
     ]
 

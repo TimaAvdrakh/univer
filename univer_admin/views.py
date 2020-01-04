@@ -84,7 +84,7 @@ class JournalListView(generics.ListAPIView):  # TODO continue
         teacher = self.request.query_params.get('teacher')
         discipline = self.request.query_params.get('discipline')
 
-        queryset = self.queryset.all()
+        queryset = self.queryset.all().order_by('discipline__name')
         if discipline:
             queryset = queryset.filter(discipline_id=discipline)
 
