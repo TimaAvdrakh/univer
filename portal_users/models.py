@@ -197,7 +197,7 @@ class Profile(BaseModel):
         default=False,
         verbose_name='Логин отправлен',
     )
-    password_changed = models.BooleanField(
+    password_changed = models.NullBooleanField(
         default=False,
         verbose_name='Сменил пароль',
     )
