@@ -853,8 +853,9 @@ class GroupDetailSerializer(serializers.ModelSerializer):
 
             data['supervisors'].append(item)
 
-        student_pks = org_models.StudyPlan.objects.filter(group=instance).exclude(
-            student_id=data['headman']['profileId']).values('student')
+        student_pks = org_models.StudyPlan.objects.filter(group=instance).values('student')
+        if data['headman'] is not None:
+            student_pks = student_pks.exclude(student=data['headman']['profileId'])
 
         students = models.Profile.objects.filter(pk__in=student_pks,
                                                  is_active=True)
