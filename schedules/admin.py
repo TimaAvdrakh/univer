@@ -15,7 +15,7 @@ class RoomAdmin(admin.ModelAdmin):
     list_display = (
         'name',
         'uid',
-        # 'department',
+        'department',
         'type',
         'capacity',
     )
