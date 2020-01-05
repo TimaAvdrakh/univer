@@ -71,6 +71,13 @@ class InterestAdmin(admin.ModelAdmin):
 
 @admin.register(models.Role)
 class RoleAdmin(admin.ModelAdmin):
+    list_filter = (
+        "is_student",
+        "is_teacher",
+        "is_org_admin",
+        "is_supervisor",
+        "is_active",
+    )
     autocomplete_fields = (
         'organization',
         'profile',
