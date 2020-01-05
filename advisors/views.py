@@ -911,7 +911,8 @@ class NotRegisteredStudentListView(generics.ListAPIView):
         #     status_id=student_discipline_status['not_chosen'],
         #     study_plan__advisor=profile,
         # ).distinct('student')
-        params = [str(profile.uid)]
+
+        params = [str(profile.uid), acad_period, faculty, speciality, edu_prog, group, study_year]
         if acad_period:
             pass
             # queryset = queryset.filter(acad_period_id=acad_period)

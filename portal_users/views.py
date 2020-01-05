@@ -474,11 +474,23 @@ class AvatarUploadView(generics.CreateAPIView):
     queryset = models.Profile.objects.filter(is_active=True)
 
 
-class RoleGetView(generics.RetrieveAPIView):
+class RoleGetView(APIView):
     """Получить своих ролей"""
     serializer_class = serializers.ProfileDetailSerializer
+    permission_classes = ()
 
-    def get_object(self):
-        return self.request.user.profile
+    def get(self, request):
+        if not request.user.is_authenticated:
+            return Response(
+                {
+                    'message': 'not_authenticated'
+                },
+                status=status.HTTP_200_OK
+            )
 
+        serializer = self.serializer_class(instance=request.user.profile)
+        return Response(
+            serializer.data,
+            status=status.HTTP_200_OK
+        )
 
