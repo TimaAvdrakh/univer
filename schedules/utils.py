@@ -55,3 +55,20 @@ def get_weeks_of_year(year):
                 weeks.append(week)
     return weeks
 
+
+def lesson_change_access(lesson):
+    """Получить разрешение на редактирование и оценивания"""
+    today = datetime.date.today()
+
+    edit_subject = True
+    allow_mark = True
+
+    if lesson.closed and not lesson.admin_allow:
+        """Занятие закрыто для оценивания и редактирования"""
+        edit_subject = False
+        allow_mark = False
+
+    if today < lesson.date:
+        allow_mark = False
+
+    return edit_subject, allow_mark

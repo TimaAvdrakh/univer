@@ -3,6 +3,7 @@ from schedules import models as sh_models
 from datetime import datetime, timedelta, date
 from cron_app.models import PlanCloseJournalTask
 from django.utils import timezone
+from common.exceptions import CustomException
 
 
 class HandleLessonSerializer(serializers.Serializer):
@@ -38,6 +39,12 @@ class HandleJournalSerializer(serializers.Serializer):
 
         if date_time:
             '''Закроем журналы в указанное время'''
+
+            now = datetime.now()
+            if date_time <= now:
+                """Запретим прошедшее время"""
+                raise CustomException(detail='past_date_time')
+
             task = PlanCloseJournalTask.objects.create(
                 date_time=date_time,
             )
