@@ -3,6 +3,8 @@ from schedules import models as sh_models
 from datetime import datetime, timedelta, date
 from cron_app.models import PlanCloseJournalTask
 from django.utils import timezone
+from common.exceptions import CustomException
+from .utils import get_local_in_utc
 
 
 class HandleLessonSerializer(serializers.Serializer):
@@ -36,8 +38,16 @@ class HandleJournalSerializer(serializers.Serializer):
         journals = self.validated_data.get('journals')
         date_time = self.validated_data.get('date_time')
 
-        if date_time:
+        if date_time:  # local time in UTC
             '''Закроем журналы в указанное время'''
+
+            # now_utc = datetime.now(tz=pytz.utc)
+            # local_in_utc = now_utc + timedelta(hours=6)
+            local_in_utc = get_local_in_utc()
+            if date_time <= local_in_utc:
+                """Запретим прошедшее время"""
+                raise CustomException(detail='past_date_time')
+
             task = PlanCloseJournalTask.objects.create(
                 date_time=date_time,
             )

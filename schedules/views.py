@@ -5,7 +5,7 @@ from . import models
 import calendar
 import datetime
 from rest_framework.response import Response
-from .utils import get_weeks_of_year
+from .utils import get_weeks_of_year, lesson_change_access
 from portal_users.models import Role, Profile, TeacherPosition
 from organizations import models as org_models
 from portal.local_settings import CURRENT_API
@@ -543,15 +543,17 @@ class JournalDetailView(generics.RetrieveAPIView):
                     lesson_d = {}
                     time_d = {}
 
-                    edit_subject = True
-                    allow_mark = True
-                    if lesson.closed and not lesson.admin_allow:
-                        """Занятие закрыто для оценивания и редактирования"""
-                        edit_subject = False
-                        allow_mark = False
+                    # edit_subject = True
+                    # allow_mark = True
+                    # if lesson.closed and not lesson.admin_allow:
+                    #     """Занятие закрыто для оценивания и редактирования"""
+                    #     edit_subject = False
+                    #     allow_mark = False
+                    #
+                    # if today < lesson.date:
+                    #     allow_mark = False
 
-                    if today < lesson.date:
-                        allow_mark = False
+                    edit_subject, allow_mark = lesson_change_access(lesson)
 
                     reason = ''
                     try:
@@ -592,7 +594,7 @@ class JournalDetailView(generics.RetrieveAPIView):
                     # time_d['date'] = day['date'].day
                     time_d['lesson_id'] = lesson.uid
                     time_d['start'] = lesson.time.from_time
-                    time_d['edit_subject'] = edit_subject  # TODO
+                    time_d['edit_subject'] = edit_subject
                     time_d['grading_system'] = grading_system
                     time_d['subject_ru'] = lesson.subject_ru
                     time_d['subject_kk'] = lesson.subject_kk
