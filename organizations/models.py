@@ -796,7 +796,7 @@ class StudentDiscipline(BaseModel):
             'discipline',
             'load_type',
             'hours',
-            'language',
+            'language',  # TODO уточнить! язык меняется
             'cycle',
             'study_year',
         )
