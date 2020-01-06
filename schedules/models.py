@@ -227,7 +227,11 @@ class Lesson(BaseModel):
     def save(self, *args, **kwargs):
         if self.exchange:
             if self._state.adding:
+                """Создается новая запись"""
                 self.status_id = lesson_statuses['planned']
+                self.closed = False
+                self.admin_allow = False
+                self.intermediate_control = False
 
             if self.load_type2_uid_1c:
                 try:

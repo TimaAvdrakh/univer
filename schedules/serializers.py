@@ -14,6 +14,7 @@ from django.db.models import Max, Min
 from portal.curr_settings import lesson_statuses
 from django.utils.translation import gettext_lazy as _
 from cron_app.models import StudPerformanceChangedTask, ControlNotifyTask
+from . utils import lesson_change_access
 
 
 class LoadType2Serializer(serializers.ModelSerializer):
@@ -401,5 +402,9 @@ class LessonShortSerializer(serializers.ModelSerializer):
         serializer = GroupShortSerializer(instance=groups,
                                           many=True)
         data['groups'] = serializer.data
+
+        edit_subject, allow_mark = lesson_change_access(instance)
+        data['edit_subject'] = edit_subject
+        data['allow_mark'] = allow_mark
 
         return data
