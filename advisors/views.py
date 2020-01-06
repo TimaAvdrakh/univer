@@ -23,6 +23,7 @@ from uuid import uuid4
 from portal_users.utils import get_current_study_year
 from openpyxl.styles import Border, Side, Font, Alignment
 from django.db import connection
+from portal.curr_settings import current_site
 
 
 class StudyPlansListView(generics.ListAPIView):
@@ -889,57 +890,93 @@ class NotRegisteredStudentListView(generics.ListAPIView):
         group = request.query_params.get('group')
         page = request.query_params.get('page')
 
+        count = 0
+        link_tmp = '{domain}/{path}/?page={page}&study_year={study_year}&reg_period={reg_period}' \
+                   '&acad_period={acad_period}&faculty={faculty}&speciality={speciality}' \
+                   '&edu_prog={edu_prog}&course={course}&group={group}&'
+
+        next_link = link_tmp.format(domain=current_site,
+                                    path='api/v1/advisors/not_registered/students',
+                                    page=int(page) + 1,
+                                    study_year=study_year,
+                                    reg_period=reg_period,
+                                    acad_period=acad_period,
+                                    faculty=faculty,
+                                    speciality=speciality,
+                                    edu_prog=edu_prog,
+                                    course=course,
+                                    group=group,)
+
+        prev_link = link_tmp.format(domain=current_site,
+                                    path='api/v1/advisors/not_registered/students',
+                                    page=int(page) - 1,
+                                    study_year=study_year,
+                                    reg_period=reg_period,
+                                    acad_period=acad_period,
+                                    faculty=faculty,
+                                    speciality=speciality,
+                                    edu_prog=edu_prog,
+                                    course=course,
+                                    group=group,)
+
+        limit = 10
+        offset = 0
+        if page:
+            try:
+                page_int = int(page)
+            except ValueError:
+                return Response(
+                    {
+                        'message': 'not_valid_page',
+                    },
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            if page_int > 1:
+                offset = (page_int - 1) * limit
+
+        is_course = None
+        if course and study_year:
+            is_course = 1
+
+        params = {
+            'advisor_id': str(profile.uid),
+            'status_id': student_discipline_status['not_chosen'],
+            'acad_per': acad_period,
+            'faculty': faculty,
+            'speciality': speciality,
+            'edu_prog': edu_prog,
+            'group1': group,
+            'study_year': study_year,
+            'is_course': is_course,
+            'course': course,
+            'reg_period': reg_period,
+            'offset': offset,
+            'limit': limit,
+        }
+
         query = '''
                 SELECT sp.faculty_id, sp.cathedra_id, sp.speciality_id, sp.group_id, sd.discipline_id, string_agg(CONCAT(p.last_name, ' ', p.first_name, ' ', p.middle_name), ',')
                 FROM organizations_studentdiscipline sd
                 INNER JOIN organizations_studyplan sp on sd.study_plan_id = sp.uid
                 INNER JOIN portal_users_profile p on sp.student_id = p.uid
                 INNER JOIN organizations_discipline d on sd.discipline_id = d.uid
-                WHERE sp.advisor_id=%s AND sd.status_id='5237bbea-f230-4cef-9b37-8fb6ad42f26b' 
-                AND (%{acad_per}s is null or sd.acad_period_id=%{acad_per}s)
-                AND (%{faculty}s is null or sp.faculty_id=%{faculty}s)
-                AND (%{speciality}s is null or sp.speciality_id=%{speciality}s)
-                AND (%{edu_prog}s is null or sp.education_program_id=%{edu_prog}s)
-                AND (%{group1}s is null or sp.group_id=%{group1}s)
-                AND (%{study_year}s is null or sd.study_year_id=%{study_year}s)
+                WHERE sp.advisor_id=%(advisor_id)s AND sd.status_id=%(status_id)s
+                AND (%(reg_period)s is null or sd.acad_period_id IN (SELECT coursperm.acad_period_id
+                                                                     FROM common_courseacadperiodpermission coursperm
+                                                                     WHERE coursperm.registration_period_id=%(reg_period)s))
+                AND (%(acad_per)s is null or sd.acad_period_id=%(acad_per)s)
+                AND (%(faculty)s is null or sp.faculty_id=%(faculty)s)
+                AND (%(speciality)s is null or sp.speciality_id=%(speciality)s)
+                AND (%(edu_prog)s is null or sp.education_program_id=%(edu_prog)s)
+                AND (%(group1)s is null or sp.group_id=%(group1)s)
+                AND (%(study_year)s is null or sd.study_year_id=%(study_year)s)
+                AND (%(is_course)s is null or sp.uid IN (SELECT syc.study_plan_id
+                                                         FROM organizations_studyyearcourse syc
+                                                         WHERE syc.study_year_id = %(study_year)s
+                                                         AND syc.course = %(course)s))
                 GROUP BY sp.faculty_id, sp.cathedra_id, sp.speciality_id, sp.group_id, sd.discipline_id
-                LIMIT 10 OFFSET 10;
+                LIMIT %(limit)s OFFSET %(offset)s;
             '''
-
-        # queryset = self.queryset.all()
-        # queryset = queryset.filter(
-        #     status_id=student_discipline_status['not_chosen'],
-        #     study_plan__advisor=profile,
-        # ).distinct('student')
-
-        params = [str(profile.uid), acad_period, faculty, speciality, edu_prog, group, study_year]
-        if acad_period:
-            pass
-            # queryset = queryset.filter(acad_period_id=acad_period)
-        elif reg_period:  # TODO in SQL
-            acad_period_pks = common_models.CourseAcadPeriodPermission.objects.filter(
-                registration_period_id=reg_period,
-                # course=course
-            ).values('acad_period')
-            # queryset = queryset.filter(acad_period__in=acad_period_pks)
-
-        # if faculty:
-        #     queryset = queryset.filter(study_plan__faculty_id=faculty)
-        # if speciality:
-        #     queryset = queryset.filter(study_plan__speciality_id=speciality)
-        # if edu_prog:
-        #     queryset = queryset.filter(study_plan__education_program_id=edu_prog)
-        # if group:
-        #     queryset = queryset.filter(study_plan__group_id=group)
-        # if study_year:
-        #     queryset = queryset.filter(study_year_id=study_year)
-        #
-        # if course and study_year:  # TODO in SQL
-        #     study_plan_pks = org_models.StudyYearCourse.objects.filter(
-        #         study_year_id=study_year,
-        #         course=course
-        #     ).values('study_plan')
-        #     queryset = queryset.filter(study_plan__in=study_plan_pks)
 
         with connection.cursor() as cursor:
             cursor.execute(query,
@@ -947,14 +984,6 @@ class NotRegisteredStudentListView(generics.ListAPIView):
 
             rows = cursor.fetchall()
         print(rows)
-
-        # distincted_queryset = queryset.distinct(
-        #     'study_plan__faculty',
-        #     'study_plan__cathedra',
-        #     'study_plan__speciality',
-        #     'study_plan__group',
-        #     'discipline',
-        # )
 
         student_discipline_list = []
         for row in rows:
@@ -969,9 +998,9 @@ class NotRegisteredStudentListView(generics.ListAPIView):
             student_discipline_list.append(d)
 
         resp = {
-            "count": 10,
-            "next": None,
-            "previous": None,
+            "count": count,
+            "next": next_link,
+            "previous": prev_link,
             "results": student_discipline_list
         }
         return Response(
