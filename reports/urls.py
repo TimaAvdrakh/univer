@@ -12,4 +12,7 @@ urlpatterns = [
 
     path('excel/not_registered/', views.NotRegisteredStudentListExcelView.as_view(),
          name='not_registered_excel'),
+
+    path('get_file/', views.GetFileView.as_view(),
+         name='get_file'),
 ]

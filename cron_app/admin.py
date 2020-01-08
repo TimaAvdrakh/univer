@@ -58,3 +58,15 @@ class PlanCloseJournalTaskAdmin(admin.ModelAdmin):
         'date_time',
         'is_success',
     ]
+
+
+@admin.register(models.ExcelTask)
+class ExcelTaskAdmin(admin.ModelAdmin):
+    autocomplete_fields = (
+        'profile',
+    )
+    list_display = [
+        'doc_type',
+        'profile',
+        'is_success',
+    ]

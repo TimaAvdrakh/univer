@@ -1157,7 +1157,7 @@ class NotRegisteredStudentListView(generics.ListAPIView):
                            params)
 
             rows = cursor.fetchall()
-        print(rows)
+        # print(rows)
 
         student_discipline_list = []
         for row in rows:
@@ -1179,7 +1179,7 @@ class NotRegisteredStudentListView(generics.ListAPIView):
         }
         return Response(
             resp,
-            status=status.HTTP_200_OK
+            status=status.HTTP_200_OK,
         )
 
 

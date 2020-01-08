@@ -124,3 +124,36 @@ class PlanCloseJournalTask(BaseTask):
         'schedules.ElectronicJournal',
         verbose_name='Журналы',
     )
+
+
+class ExcelTask(BaseTask):
+    DOC_TYPE_CHOICES = (
+        (1, 'Результат регистрации'),
+        (2, 'Статистика регистрации '),
+        (3, 'Список незарегистрированных'),
+    )
+    doc_type = models.IntegerField(
+        choices=DOC_TYPE_CHOICES,
+        verbose_name='Тип документа',
+    )
+    token = models.UUIDField(
+        verbose_name='Токен',
+    )
+    fields = models.TextField(
+        verbose_name='Поля',
+    )
+    profile = models.ForeignKey(
+        'portal_users.Profile',
+        on_delete=models.CASCADE,
+        verbose_name='Профиль',
+    )
+    file_path = models.CharField(
+        default='',
+        max_length=1000,
+    )
+
+    class Meta:
+        verbose_name = 'Ексель файлы'
+        verbose_name_plural = 'Ексель файлов'
+
+
