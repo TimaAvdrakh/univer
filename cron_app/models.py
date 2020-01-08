@@ -131,6 +131,8 @@ class ExcelTask(BaseTask):
         (1, 'Результат регистрации'),
         (2, 'Статистика регистрации '),
         (3, 'Список незарегистрированных'),
+        (4, 'Заявки на ИУПЫ обуч'),
+        (5, 'ИУПЫ обуч'),
     )
     doc_type = models.IntegerField(
         choices=DOC_TYPE_CHOICES,

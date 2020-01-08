@@ -16,6 +16,7 @@ from requests.auth import HTTPBasicAuth
 from bot import bot
 import json
 from reports import views as report_views
+from advisors import views as advisor_views
 
 
 class EmailCronJob(CronJobBase):
@@ -393,12 +394,16 @@ class GenerateExcelJob(CronJobBase):
             #     (1, 'Результат регистрации'),
             #     (2, 'Статистика регистрации '),
             #     (3, 'Список незарегистрированных'),
+            #     (4, 'Заявки на ИУПЫ обуч'),
+            #     (5, 'ИУПЫ обуч'),
             # )
 
             handler = {
                 1: report_views.make_register_result_rxcel,
                 2: report_views.make_register_statistics_excel,
                 3: report_views.make_not_registered_student_excel,
+                4: advisor_views.make_iup_bid_excel,
+                5: advisor_views.make_iup_excel,
             }
             handler[doc_type](task)
             task.is_success = True

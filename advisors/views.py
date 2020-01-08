@@ -24,6 +24,8 @@ from portal_users.utils import get_current_study_year
 from openpyxl.styles import Border, Side, Font, Alignment
 from django.db import connection
 from portal.curr_settings import current_site
+from cron_app.models import ExcelTask
+import json
 
 
 class StudyPlansListView(generics.ListAPIView):
@@ -1184,12 +1186,14 @@ class NotRegisteredStudentListView(generics.ListAPIView):
 
 
 class GenerateIupBidExcelView(generics.RetrieveAPIView):
-    """Генерировать Excel для Заявки на ИУПы
+    """Создать запрос на Excel для Заявки на ИУПы
         study_year(!), study_form, faculty, cathedra, edu_prog_group, edu_prog,
         course, group, acad_periods, status, reg_period
     """
 
     def get(self, request, *args, **kwargs):
+        profile = request.user.profile
+
         study_year = request.query_params.get('study_year')  # Дисциплина студента
         study_form = request.query_params.get('study_form')
         faculty = request.query_params.get('faculty')
@@ -1202,295 +1206,343 @@ class GenerateIupBidExcelView(generics.RetrieveAPIView):
         status_id = self.request.query_params.get('status')  # В Дисциплине студента
         acad_periods = self.request.query_params.get('acad_periods')
 
-        wb = load_workbook('advisors/excel/template.xlsx')
-        ws = wb.active
-        border = Border(left=Side(border_style='thin', color='000000'),
-                        right=Side(border_style='thin', color='000000'),
-                        top=Side(border_style='thin', color='000000'),
-                        bottom=Side(border_style='thin', color='000000'))
-        font = Font(
-            name='Times New Roman',
-            size=11
+        fields = {
+            'study_year': study_year,
+            'study_form': study_form,
+            'faculty': faculty,
+            'cathedra': cathedra,
+            'edu_prog_group': edu_prog_group,
+            'edu_prog': edu_prog,
+            'course': course,
+            'group': group,
+            'reg_period': reg_period,
+            'status_id': status_id,
+            'acad_periods': acad_periods,
+        }
+        token = uuid4()
+        fields_json = json.dumps(fields)
+        ExcelTask.objects.create(
+            doc_type=4,
+            profile=profile,
+            token=token,
+            fields=fields_json,
         )
-        font_bold = Font(
-            name='Times New Roman',
-            size=11,
-            bold=True,
-        )
-        alignment = Alignment(
-            vertical="center",
-            horizontal="center"
-        )
-        wrap_alignment = Alignment(
-            wrapText=True,
-            vertical="center",
-            horizontal="center",
-        )
-        wrap_left_alignment = Alignment(
-            wrapText=True,
-            vertical="center",
-            horizontal="left",
+        return Response(
+            {
+                'token': str(token)
+            },
+            status=status.HTTP_200_OK
         )
 
-        queryset = org_models.StudyPlan.objects.filter(
-            is_active=True,
-            advisor=request.user.profile,
-        )
 
-        if reg_period:
-            reg_period_obj = common_models.RegistrationPeriod.objects.get(pk=reg_period)
-            ws['B4'] = reg_period_obj.name
-            ws['B4'].font = font
-            ws['B4'].alignment = wrap_left_alignment
+def make_iup_bid_excel(task):
+    """Генерировать Excel для Заявки на ИУПы
+        study_year(!), study_form, faculty, cathedra, edu_prog_group, edu_prog,
+        course, group, acad_periods, status, reg_period
+    """
 
-        if course:
-            ws['B5'] = course
-        else:
-            ws['B5'] = 'Все'
-        ws['B5'].font = font
+    profile = task.profile
+    fields_json = task.fields
+    fields = json.loads(fields_json)
 
-        if status_id:
-            status_obj = org_models.StudentDisciplineStatus.objects.get(number=status_id)
-            study_plan_pks_from_sd = org_models.StudentDiscipline.objects.filter(
-                study_year_id=study_year,
-                status=status_obj,
-            ).values('study_plan')
-            queryset = queryset.filter(pk__in=study_plan_pks_from_sd)
+    study_year = fields.get('study_year')  # Дисциплина студента
+    study_form = fields.get('study_form')
+    faculty = fields.get('faculty')
+    cathedra = fields.get('cathedra')
+    edu_prog_group = fields.get('edu_prog_group')
+    edu_prog = fields.get('edu_prog')
+    course = fields.get('course')  # Дисциплина студента
+    group = fields.get('group')
+    reg_period = fields.get('reg_period')
+    status_id = fields.get('status_id')  # В Дисциплине студента
+    acad_periods = fields.get('acad_periods')
 
-            ws['B6'] = status_obj.name
-        else:
-            ws['B6'] = 'Все'
-        ws['B6'].font = font
+    wb = load_workbook('advisors/excel/template.xlsx')
+    ws = wb.active
+    border = Border(left=Side(border_style='thin', color='000000'),
+                    right=Side(border_style='thin', color='000000'),
+                    top=Side(border_style='thin', color='000000'),
+                    bottom=Side(border_style='thin', color='000000'))
+    font = Font(
+        name='Times New Roman',
+        size=11
+    )
+    font_bold = Font(
+        name='Times New Roman',
+        size=11,
+        bold=True,
+    )
+    alignment = Alignment(
+        vertical="center",
+        horizontal="center"
+    )
+    wrap_alignment = Alignment(
+        wrapText=True,
+        vertical="center",
+        horizontal="center",
+    )
+    wrap_left_alignment = Alignment(
+        wrapText=True,
+        vertical="center",
+        horizontal="left",
+    )
 
-        if study_form:
-            study_form_obj = org_models.StudyForm.objects.get(pk=study_form)
-            ws['B7'] = study_form_obj.name
-            ws['B7'].alignment = wrap_left_alignment
-            queryset = queryset.filter(study_form_id=study_form)
-        else:
-            ws['B7'] = 'Все'
-        ws['B7'].font = font
+    queryset = org_models.StudyPlan.objects.filter(
+        is_active=True,
+        advisor=profile,
+    )
 
-        if faculty:
-            faculty_obj = org_models.Faculty.objects.get(pk=faculty)
-            queryset = queryset.filter(faculty_id=faculty)
-            ws['B8'] = faculty_obj.name
-            ws['B8'].alignment = wrap_left_alignment
-        else:
-            ws['B8'] = 'Все'
-        ws['B8'].font = font
+    if reg_period:
+        reg_period_obj = common_models.RegistrationPeriod.objects.get(pk=reg_period)
+        ws['B4'] = reg_period_obj.name
+        ws['B4'].font = font
+        ws['B4'].alignment = wrap_left_alignment
 
-        if cathedra:
-            cathedra_obj = org_models.Cathedra.objects.get(pk=cathedra)
-            queryset = queryset.filter(cathedra_id=cathedra)
-            ws['B9'] = cathedra_obj.name
-            ws['B9'].alignment = wrap_left_alignment
-        else:
-            ws['B9'] = 'Все'
-        ws['B9'].font = font
+    if course:
+        ws['B5'] = course
+    else:
+        ws['B5'] = 'Все'
+    ws['B5'].font = font
 
-        if edu_prog_group:
-            queryset = queryset.filter(education_program__group_id=edu_prog_group)
-            edu_prog_group_obj = org_models.EducationProgramGroup.objects.get(pk=edu_prog_group)
-            ws['B10'] = edu_prog_group_obj.name
-            ws['B10'].alignment = wrap_left_alignment
-        else:
-            ws['B10'] = 'Все'
-        ws['B10'].font = font
+    if status_id:
+        status_obj = org_models.StudentDisciplineStatus.objects.get(number=status_id)
+        study_plan_pks_from_sd = org_models.StudentDiscipline.objects.filter(
+            study_year_id=study_year,
+            status=status_obj,
+        ).values('study_plan')
+        queryset = queryset.filter(pk__in=study_plan_pks_from_sd)
 
-        if edu_prog:
-            queryset = queryset.filter(education_program_id=edu_prog)
-            edu_prog_obj = org_models.EducationProgram.objects.get(pk=edu_prog)
-            ws['B11'] = edu_prog_obj.name
-            ws['B11'].alignment = wrap_left_alignment
-        else:
-            ws['B11'] = 'Все'
-        ws['B11'].font = font
+        ws['B6'] = status_obj.name
+    else:
+        ws['B6'] = 'Все'
+    ws['B6'].font = font
 
-        if group:
-            queryset = queryset.filter(group_id=group)
-            group_obj = org_models.Group.objects.get(pk=group)
-            ws['B12'] = group_obj.name
-            ws['B12'].alignment = wrap_left_alignment
-        else:
-            ws['B12'] = 'Все'
-        ws['B12'].font = font
+    if study_form:
+        study_form_obj = org_models.StudyForm.objects.get(pk=study_form)
+        ws['B7'] = study_form_obj.name
+        ws['B7'].alignment = wrap_left_alignment
+        queryset = queryset.filter(study_form_id=study_form)
+    else:
+        ws['B7'] = 'Все'
+    ws['B7'].font = font
 
-        if study_year:
-            study_year_obj = org_models.StudyPeriod.objects.get(pk=study_year)
-            queryset = queryset.filter(study_period__end__gt=study_year_obj.start)
-            ws['B3'] = '{} - {}'.format(study_year_obj.start,
-                                        study_year_obj.end)
-            ws['B3'].font = font
+    if faculty:
+        faculty_obj = org_models.Faculty.objects.get(pk=faculty)
+        queryset = queryset.filter(faculty_id=faculty)
+        ws['B8'] = faculty_obj.name
+        ws['B8'].alignment = wrap_left_alignment
+    else:
+        ws['B8'] = 'Все'
+    ws['B8'].font = font
 
-        if course and study_year:
-            study_plan_pks = org_models.StudyYearCourse.objects.filter(
-                study_year_id=study_year,
-                course=course
-            ).values('study_plan')
-            queryset = queryset.filter(pk__in=study_plan_pks)
+    if cathedra:
+        cathedra_obj = org_models.Cathedra.objects.get(pk=cathedra)
+        queryset = queryset.filter(cathedra_id=cathedra)
+        ws['B9'] = cathedra_obj.name
+        ws['B9'].alignment = wrap_left_alignment
+    else:
+        ws['B9'] = 'Все'
+    ws['B9'].font = font
 
-        now = datetime.now()
-        ws['B13'] = now.strftime("%d:%m:%Y, %H:%M:%S")
-        ws['B13'].font = font
+    if edu_prog_group:
+        queryset = queryset.filter(education_program__group_id=edu_prog_group)
+        edu_prog_group_obj = org_models.EducationProgramGroup.objects.get(pk=edu_prog_group)
+        ws['B10'] = edu_prog_group_obj.name
+        ws['B10'].alignment = wrap_left_alignment
+    else:
+        ws['B10'] = 'Все'
+    ws['B10'].font = font
 
-        for i, study_plan in enumerate(queryset):
-            row_num = str(15 + i)
+    if edu_prog:
+        queryset = queryset.filter(education_program_id=edu_prog)
+        edu_prog_obj = org_models.EducationProgram.objects.get(pk=edu_prog)
+        ws['B11'] = edu_prog_obj.name
+        ws['B11'].alignment = wrap_left_alignment
+    else:
+        ws['B11'] = 'Все'
+    ws['B11'].font = font
 
-            a = 'A' + row_num
-            ws[a] = i + 1
-            ws[a].font = font
-            ws[a].alignment = alignment
-            ws[a].border = border
+    if group:
+        queryset = queryset.filter(group_id=group)
+        group_obj = org_models.Group.objects.get(pk=group)
+        ws['B12'] = group_obj.name
+        ws['B12'].alignment = wrap_left_alignment
+    else:
+        ws['B12'] = 'Все'
+    ws['B12'].font = font
 
-            b = 'B' + row_num
-            ws[b] = study_plan.education_program.group.code
-            ws[b].font = font
-            ws[b].alignment = wrap_alignment
-            ws[b].border = border
+    if study_year:
+        study_year_obj = org_models.StudyPeriod.objects.get(pk=study_year)
+        queryset = queryset.filter(study_period__end__gt=study_year_obj.start)
+        ws['B3'] = '{} - {}'.format(study_year_obj.start,
+                                    study_year_obj.end)
+        ws['B3'].font = font
 
-            c = 'C' + row_num
-            ws[c] = study_plan.education_program.name
-            ws[c].font = font
-            ws[c].alignment = wrap_alignment
-            ws[c].border = border
+    if course and study_year:
+        study_plan_pks = org_models.StudyYearCourse.objects.filter(
+            study_year_id=study_year,
+            course=course
+        ).values('study_plan')
+        queryset = queryset.filter(pk__in=study_plan_pks)
 
-            d = 'D' + row_num
-            ws[d] = study_plan.group.name
-            ws[d].font = font
-            ws[d].alignment = wrap_alignment
-            ws[d].border = border
+    now = datetime.now()
+    ws['B13'] = now.strftime("%d:%m:%Y, %H:%M:%S")
+    ws['B13'].font = font
 
-            e = 'E' + row_num
-            ws[e] = study_plan.student.full_name
-            ws[e].font = font
-            ws[e].alignment = wrap_alignment
-            ws[e].border = border
+    for i, study_plan in enumerate(queryset):
+        row_num = str(15 + i)
 
-            columns = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J',
-                       'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T']
+        a = 'A' + row_num
+        ws[a] = i + 1
+        ws[a].font = font
+        ws[a].alignment = alignment
+        ws[a].border = border
 
-            current_col_num = 5
-            sum_credit = 0
-            old_status = 0
-            mark_text = ''
+        b = 'B' + row_num
+        ws[b] = study_plan.education_program.group.code
+        ws[b].font = font
+        ws[b].alignment = wrap_alignment
+        ws[b].border = border
 
-            if acad_periods and len(acad_periods) > 0:
-                acad_period_list = acad_periods.split(',')
+        c = 'C' + row_num
+        ws[c] = study_plan.education_program.name
+        ws[c].font = font
+        ws[c].alignment = wrap_alignment
+        ws[c].border = border
 
-                for i, acad_period in enumerate(acad_period_list):
-                    acad_period_obj = org_models.AcadPeriod.objects.get(pk=acad_period)
-                    head = '{} триместр Перечень дисциплин, ' \
-                           'на которые проведена  регистрация ' \
-                           'с указанием кредитов'.format(acad_period_obj.number)
+        d = 'D' + row_num
+        ws[d] = study_plan.group.name
+        ws[d].font = font
+        ws[d].alignment = wrap_alignment
+        ws[d].border = border
 
-                    student_disciplines = org_models.StudentDiscipline.objects.filter(
-                        is_active=True,
-                        study_plan=study_plan,
-                        study_year_id=study_year,
-                        acad_period_id=acad_period,
-                    ).distinct('discipline')
+        e = 'E' + row_num
+        ws[e] = study_plan.student.full_name
+        ws[e].font = font
+        ws[e].alignment = wrap_alignment
+        ws[e].border = border
 
-                    student_discipline_list = list(student_disciplines)
-                    credit_list = [i.credit for i in student_discipline_list]
-                    total_credit = sum(credit_list)
-                    sum_credit += total_credit
+        columns = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J',
+                   'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T']
 
-                    text = 'Кредиты: {}\n'.format(total_credit)
+        current_col_num = 5
+        sum_credit = 0
+        old_status = 0
+        mark_text = ''
 
-                    for stud_discipline in student_disciplines:
-                        text += '{} ({}), '.format(stud_discipline.discipline.name,
-                                                   stud_discipline.credit)
+        if acad_periods and len(acad_periods) > 0:
+            acad_period_list = acad_periods.split(',')
 
-                    head_cell = columns[current_col_num] + '14'
-                    ws[head_cell] = head
-                    ws[head_cell].font = font_bold
-                    ws[head_cell].border = border
-                    # ws[head_cell].alignment = alignment
+            for i, acad_period in enumerate(acad_period_list):
+                acad_period_obj = org_models.AcadPeriod.objects.get(pk=acad_period)
+                head = '{} триместр Перечень дисциплин, ' \
+                       'на которые проведена  регистрация ' \
+                       'с указанием кредитов'.format(acad_period_obj.number)
 
-                    text_cell = columns[current_col_num] + row_num
-                    ws[text_cell] = text
-                    ws[text_cell].font = font
-                    ws[text_cell].border = border
-                    ws[text_cell].alignment = wrap_alignment
+                student_disciplines = org_models.StudentDiscipline.objects.filter(
+                    is_active=True,
+                    study_plan=study_plan,
+                    study_year_id=study_year,
+                    acad_period_id=acad_period,
+                ).distinct('discipline')
 
-                    ws.row_dimensions[int(row_num)].height = 70
+                student_discipline_list = list(student_disciplines)
+                credit_list = [i.credit for i in student_discipline_list]
+                total_credit = sum(credit_list)
+                sum_credit += total_credit
 
-                    # if len(text) > 200:
-                    #     ws.row_dimensions[row_num].height = 50  # Test
+                text = 'Кредиты: {}\n'.format(total_credit)
 
-                    current_col_num += 1
+                for stud_discipline in student_disciplines:
+                    text += '{} ({}), '.format(stud_discipline.discipline.name,
+                                               stud_discipline.credit)
 
-                    checks = models.AdvisorCheck.objects.filter(
-                        study_plan=study_plan,
-                        acad_period_id=acad_period,
-                    )
-                    if checks.exists():
-                        old_status = checks.latest('id').status
-                    else:
-                        old_status = 0
+                head_cell = columns[current_col_num] + '14'
+                ws[head_cell] = head
+                ws[head_cell].font = font_bold
+                ws[head_cell].border = border
+                # ws[head_cell].alignment = alignment
 
-                    if old_status == 3:
-                        mark = '{} - Отклонено\n'.format(acad_period_obj.repr_name)
-                    elif old_status == 4:
-                        mark = '{} - Утверждено\n'.format(acad_period_obj.repr_name)
-                    elif old_status == 5:
-                        mark = '{} - Изменено\n'.format(acad_period_obj.repr_name)
-                    else:
-                        mark = '{} - Не определено\n'.format(acad_period_obj.repr_name)
+                text_cell = columns[current_col_num] + row_num
+                ws[text_cell] = text
+                ws[text_cell].font = font
+                ws[text_cell].border = border
+                ws[text_cell].alignment = wrap_alignment
 
-                    mark_text += mark
+                ws.row_dimensions[int(row_num)].height = 70
 
-            gos_attestation_label = columns[current_col_num] + '14'
-            ws[gos_attestation_label] = 'Государственная аттестация'
-            ws[gos_attestation_label].font = font_bold
-            ws[gos_attestation_label].alignment = alignment
-            ws[gos_attestation_label].border = border
+                # if len(text) > 200:
+                #     ws.row_dimensions[row_num].height = 50  # Test
 
-            gos_attestation = columns[current_col_num] + row_num
-            ws[gos_attestation] = 'не выбрана'
-            ws[gos_attestation].font = font
-            ws[gos_attestation].alignment = alignment
-            ws[gos_attestation].border = border
+                current_col_num += 1
 
-            current_col_num += 1
-            sum_credit_label = columns[current_col_num] + '14'
-            ws[sum_credit_label] = 'Общее количество кредитов'
-            ws[sum_credit_label].font = font_bold
-            ws[sum_credit_label].alignment = alignment
-            ws[sum_credit_label].border = border
+                checks = models.AdvisorCheck.objects.filter(
+                    study_plan=study_plan,
+                    acad_period_id=acad_period,
+                )
+                if checks.exists():
+                    old_status = checks.latest('id').status
+                else:
+                    old_status = 0
 
-            sum_credit_cell = columns[current_col_num] + row_num
-            ws[sum_credit_cell] = sum_credit
-            ws[sum_credit_cell].font = font
-            ws[sum_credit_cell].alignment = alignment
-            ws[sum_credit_cell].border = border
+                if old_status == 3:
+                    mark = '{} - Отклонено\n'.format(acad_period_obj.repr_name)
+                elif old_status == 4:
+                    mark = '{} - Утверждено\n'.format(acad_period_obj.repr_name)
+                elif old_status == 5:
+                    mark = '{} - Изменено\n'.format(acad_period_obj.repr_name)
+                else:
+                    mark = '{} - Не определено\n'.format(acad_period_obj.repr_name)
 
-            current_col_num += 1
-            advisor_mark_label = columns[current_col_num] + '14'
-            ws[advisor_mark_label] = 'Отметка эдвайзера'
-            ws[advisor_mark_label].font = font_bold
-            ws[advisor_mark_label].alignment = alignment
-            ws[advisor_mark_label].border = border
+                mark_text += mark
 
-            mark_cell = columns[current_col_num] + row_num
-            ws[mark_cell] = mark_text
-            ws[mark_cell].font = font
-            ws[mark_cell].border = border
-            ws[mark_cell].alignment = wrap_alignment
+        gos_attestation_label = columns[current_col_num] + '14'
+        ws[gos_attestation_label] = 'Государственная аттестация'
+        ws[gos_attestation_label].font = font_bold
+        ws[gos_attestation_label].alignment = alignment
+        ws[gos_attestation_label].border = border
 
-        file_name = 'temp_files/zayavki{}.xlsx'.format(str(uuid4()))
-        wb.save(file_name)
+        gos_attestation = columns[current_col_num] + row_num
+        ws[gos_attestation] = 'не выбрана'
+        ws[gos_attestation].font = font
+        ws[gos_attestation].alignment = alignment
+        ws[gos_attestation].border = border
 
-        with open(file_name, 'rb') as f:
-            response = HttpResponse(f, content_type='application/ms-excel')
-            response['Content-Disposition'] = 'attachment; filename="zayavki' + str(uuid4()) + '.xls"'
-            return response
+        current_col_num += 1
+        sum_credit_label = columns[current_col_num] + '14'
+        ws[sum_credit_label] = 'Общее количество кредитов'
+        ws[sum_credit_label].font = font_bold
+        ws[sum_credit_label].alignment = alignment
+        ws[sum_credit_label].border = border
+
+        sum_credit_cell = columns[current_col_num] + row_num
+        ws[sum_credit_cell] = sum_credit
+        ws[sum_credit_cell].font = font
+        ws[sum_credit_cell].alignment = alignment
+        ws[sum_credit_cell].border = border
+
+        current_col_num += 1
+        advisor_mark_label = columns[current_col_num] + '14'
+        ws[advisor_mark_label] = 'Отметка эдвайзера'
+        ws[advisor_mark_label].font = font_bold
+        ws[advisor_mark_label].alignment = alignment
+        ws[advisor_mark_label].border = border
+
+        mark_cell = columns[current_col_num] + row_num
+        ws[mark_cell] = mark_text
+        ws[mark_cell].font = font
+        ws[mark_cell].border = border
+        ws[mark_cell].alignment = wrap_alignment
+
+    file_name = 'temp_files/zayavki{}.xlsx'.format(str(uuid4()))
+    wb.save(file_name)
+    task.file_path = file_name
+    task.save()
 
 
 class GenerateIupExcelView(generics.RetrieveAPIView):
     """
-    Excel ИУПы обучающихся (2 стр, Утвержденные)
+    Создать запрос на Excel ИУПы обучающихся (2 стр, Утвержденные)
     study_year(!), edu_prog(!), student(!), reg_period(!) faculty, speciality, group,
     """
 
@@ -1506,212 +1558,253 @@ class GenerateIupExcelView(generics.RetrieveAPIView):
         speciality = request.query_params.get('speciality')
         group = request.query_params.get('group')
 
-        wb = load_workbook('advisors/excel/template2.xlsx')
-        ws = wb.active
-
-        border = Border(left=Side(border_style='thin', color='000000'),
-                        right=Side(border_style='thin', color='000000'),
-                        top=Side(border_style='thin', color='000000'),
-                        bottom=Side(border_style='thin', color='000000'))
-        bottom_border = Border(bottom=Side(border_style='thin', color='000000'))
-        font = Font(
-            name='Times New Roman',
-            size=11
+        fields = {
+            'study_year': study_year,
+            'faculty': faculty,
+            'edu_prog': edu_prog,
+            'group': group,
+            'reg_period': reg_period,
+            'speciality': speciality,
+            'student': student,
+        }
+        token = uuid4()
+        fields_json = json.dumps(fields)
+        ExcelTask.objects.create(
+            doc_type=5,
+            profile=profile,
+            token=token,
+            fields=fields_json,
         )
-        font_bold = Font(
-            name='Times New Roman',
-            bold=True,
-            size=11
-        )
-        font_large = Font(
-            name='Times New Roman',
-            bold=True,
-            size=12
-        )
-        left_alignment = Alignment(
-            horizontal="left"
-        )
-        filters = {}
-
-        if faculty:
-            filters['faculty_id'] = faculty
-
-        if speciality:
-            filters['speciality_id'] = speciality
-
-        if group:
-            filters['group_id'] = group
-
-        try:
-            study_year_obj = org_models.StudyPeriod.objects.get(pk=study_year)
-            study_plan = org_models.StudyPlan.objects.get(
-                advisor=profile,
-                study_period__end__gt=study_year_obj.start,
-                education_program_id=edu_prog,
-                student_id=student,
-                is_active=True,
-                **filters,
-            )
-        except org_models.StudyPlan.DoesNotExist:
-            return Response(
-                {
-                    'message': 0  # Учебный план не найден
-                },
-                status=status.HTTP_404_NOT_FOUND
-            )
-
-        student_name_cell = 'C17'
-        ws[student_name_cell] = study_plan.student.full_name
-        ws[student_name_cell].font = font
-
-        acad_degree_cell = 'C18'
-        ws[acad_degree_cell] = study_plan.preparation_level.name
-
-        speciality_cell = 'C19'
-        ws[speciality_cell] = '{} ({})'.format(study_plan.speciality.name,
-                                               study_plan.speciality.code)
-
-        study_form_cell = 'C20'
-        max_course = \
-            org_models.StudyYearCourse.objects.filter(study_plan=study_plan).aggregate(max_course=Max('course'))[
-                'max_course']
-        ws[study_form_cell] = '{}, {} года'.format(study_plan.study_form.name, max_course)
-
-        current_course_cell = 'C21'
-        ws[current_course_cell] = study_plan.current_course
-        ws[current_course_cell].alignment = left_alignment
-
-        lang_cell = 'C22'
-        ws[lang_cell] = study_plan.group.language.name
-
-        current_study_year_cell = 'C23'
-        study_year_dict = get_current_study_year()
-        ws[current_study_year_cell] = '{}-{}'.format(study_year_dict['start'],
-                                                     study_year_dict['end'])
-
-        course = study_plan.get_course(study_year_obj)
-        ws['D27'] = '{} Курс обучения  {} учебный год'.format(course,
-                                                              str(study_year_obj))
-        ws['D27'].font = font_large
-
-        acad_period_pks_from_sd = org_models.StudentDiscipline.objects.filter(
-            study_year_id=study_year,
-            study_plan=study_plan,
-        ).distinct('acad_period').values('acad_period')
-
-        acad_periods = org_models.AcadPeriod.objects.filter(
-            pk__in=acad_period_pks_from_sd,
+        return Response(
+            {
+                'token': str(token)
+            },
+            status=status.HTTP_200_OK
         )
 
-        acad_period_pks_from_rule = common_models.CourseAcadPeriodPermission.objects.filter(
-            registration_period_id=reg_period,
-            course=course,
-        ).values('acad_period')
-        acad_periods = acad_periods.filter(pk__in=acad_period_pks_from_rule)
 
-        row_num = 28
-        sd_num = 1
-        total_credit_in_course = 0
+def make_iup_excel(task):
+    """
+    Excel ИУПы обучающихся (2 стр, Утвержденные)
+    study_year(!), edu_prog(!), student(!), reg_period(!) faculty, speciality, group,
+    """
 
-        for acad_period in acad_periods:
-            if StudentDisciplineInfo.objects.filter(
-                    study_plan=study_plan,
-                    acad_period=acad_period,
-                    status_id=student_discipline_info_status['confirmed'],
-            ).exists():
-                student_disciplines = org_models.StudentDiscipline.objects.filter(
-                    study_year_id=study_year,
-                    study_plan=study_plan,
-                    acad_period=acad_period,
-                ).distinct('discipline')
+    profile = task.profile
+    fields_json = task.fields
+    fields = json.loads(fields_json)
 
-                ws['D' + str(row_num)] = acad_period.repr_name
-                ws['D' + str(row_num)].font = font_bold
+    study_year = fields.get('study_year')
+    edu_prog = fields.get('edu_prog')
+    student = fields.get('student')
+    reg_period = fields.get('reg_period')
+
+    faculty = fields.get('faculty')
+    speciality = fields.get('speciality')
+    group = fields.get('group')
+
+    wb = load_workbook('advisors/excel/template2.xlsx')
+    ws = wb.active
+
+    border = Border(left=Side(border_style='thin', color='000000'),
+                    right=Side(border_style='thin', color='000000'),
+                    top=Side(border_style='thin', color='000000'),
+                    bottom=Side(border_style='thin', color='000000'))
+    bottom_border = Border(bottom=Side(border_style='thin', color='000000'))
+    font = Font(
+        name='Times New Roman',
+        size=11
+    )
+    font_bold = Font(
+        name='Times New Roman',
+        bold=True,
+        size=11
+    )
+    font_large = Font(
+        name='Times New Roman',
+        bold=True,
+        size=12
+    )
+    left_alignment = Alignment(
+        horizontal="left"
+    )
+    filters = {}
+
+    if faculty:
+        filters['faculty_id'] = faculty
+
+    if speciality:
+        filters['speciality_id'] = speciality
+
+    if group:
+        filters['group_id'] = group
+
+    try:
+        study_year_obj = org_models.StudyPeriod.objects.get(pk=study_year)
+        study_plan = org_models.StudyPlan.objects.get(
+            advisor=profile,
+            study_period__end__gt=study_year_obj.start,
+            education_program_id=edu_prog,
+            student_id=student,
+            is_active=True,
+            **filters,
+        )
+    except org_models.StudyPlan.DoesNotExist:
+        return Response(
+            {
+                'message': 0  # Учебный план не найден
+            },
+            status=status.HTTP_404_NOT_FOUND
+        )
+
+    student_name_cell = 'C17'
+    ws[student_name_cell] = study_plan.student.full_name
+    ws[student_name_cell].font = font
+
+    acad_degree_cell = 'C18'
+    ws[acad_degree_cell] = study_plan.preparation_level.name
+
+    speciality_cell = 'C19'
+    ws[speciality_cell] = '{} ({})'.format(study_plan.speciality.name,
+                                           study_plan.speciality.code)
+
+    study_form_cell = 'C20'
+    max_course = \
+        org_models.StudyYearCourse.objects.filter(study_plan=study_plan).aggregate(max_course=Max('course'))[
+            'max_course']
+    ws[study_form_cell] = '{}, {} года'.format(study_plan.study_form.name, max_course)
+
+    current_course_cell = 'C21'
+    ws[current_course_cell] = study_plan.current_course
+    ws[current_course_cell].alignment = left_alignment
+
+    lang_cell = 'C22'
+    ws[lang_cell] = study_plan.group.language.name
+
+    current_study_year_cell = 'C23'
+    study_year_dict = get_current_study_year()
+    ws[current_study_year_cell] = '{}-{}'.format(study_year_dict['start'],
+                                                 study_year_dict['end'])
+
+    course = study_plan.get_course(study_year_obj)
+    ws['D27'] = '{} Курс обучения  {} учебный год'.format(course,
+                                                          str(study_year_obj))
+    ws['D27'].font = font_large
+
+    acad_period_pks_from_sd = org_models.StudentDiscipline.objects.filter(
+        study_year_id=study_year,
+        study_plan=study_plan,
+    ).distinct('acad_period').values('acad_period')
+
+    acad_periods = org_models.AcadPeriod.objects.filter(
+        pk__in=acad_period_pks_from_sd,
+    )
+
+    acad_period_pks_from_rule = common_models.CourseAcadPeriodPermission.objects.filter(
+        registration_period_id=reg_period,
+        course=course,
+    ).values('acad_period')
+    acad_periods = acad_periods.filter(pk__in=acad_period_pks_from_rule)
+
+    row_num = 28
+    sd_num = 1
+    total_credit_in_course = 0
+
+    for acad_period in acad_periods:
+        if StudentDisciplineInfo.objects.filter(
+                study_plan=study_plan,
+                acad_period=acad_period,
+                status_id=student_discipline_info_status['confirmed'],
+        ).exists():
+            student_disciplines = org_models.StudentDiscipline.objects.filter(
+                study_year_id=study_year,
+                study_plan=study_plan,
+                acad_period=acad_period,
+            ).distinct('discipline')
+
+            ws['D' + str(row_num)] = acad_period.repr_name
+            ws['D' + str(row_num)].font = font_bold
+            row_num += 1
+
+            total_credit_in_acad_period = 0
+
+            for sd in student_disciplines:
+                num_cell = 'A' + str(row_num)
+                ws[num_cell] = sd_num
+                ws[num_cell].border = border
+                ws[num_cell].font = font
+
+                component_cell = 'B' + str(row_num)
+                if sd.component:
+                    ws[component_cell] = sd.component.short_name
+                elif sd.cycle:
+                    ws[component_cell] = sd.cycle.short_name
+                else:
+                    ws[component_cell] = ''
+
+                ws[component_cell].border = border
+                ws[component_cell].font = font
+
+                discipline_code_cell = 'C' + str(row_num)
+                ws[discipline_code_cell] = sd.discipline_code
+                ws[discipline_code_cell].border = border
+                ws[discipline_code_cell].font = font
+
+                discipline_name_cell = 'D' + str(row_num)
+                ws[discipline_name_cell] = sd.discipline.name
+                ws[discipline_name_cell].border = border
+                ws[discipline_name_cell].font = font
+
+                credit_cell = 'E' + str(row_num)
+                ws[credit_cell] = sd.credit
+                ws[credit_cell].border = border
+                ws[credit_cell].font = font
+
+                total_credit_in_acad_period += sd.credit
+
                 row_num += 1
+                sd_num += 1
 
-                total_credit_in_acad_period = 0
+            total_credit_in_course += total_credit_in_acad_period
+            ws['B' + str(row_num)] = 'Общее количество кредитов'
+            ws['B' + str(row_num)].font = font
+            ws['E' + str(row_num)] = total_credit_in_acad_period
+            ws['E' + str(row_num)].font = font
 
-                for sd in student_disciplines:
-                    num_cell = 'A' + str(row_num)
-                    ws[num_cell] = sd_num
-                    ws[num_cell].border = border
-                    ws[num_cell].font = font
+            ws['B' + str(row_num)].border = border
+            ws['A' + str(row_num)].border = border
+            ws['C' + str(row_num)].border = bottom_border
+            ws['D' + str(row_num)].border = bottom_border
+            ws['E' + str(row_num)].border = border
 
-                    component_cell = 'B' + str(row_num)
-                    if sd.component:
-                        ws[component_cell] = sd.component.short_name
-                    elif sd.cycle:
-                        ws[component_cell] = sd.cycle.short_name
-                    else:
-                        ws[component_cell] = ''
+            row_num += 1
 
-                    ws[component_cell].border = border
-                    ws[component_cell].font = font
+    ws['B' + str(row_num)] = 'Общее количество кредитов за курс'
+    ws['B' + str(row_num)].font = font
+    ws['E' + str(row_num)] = total_credit_in_course
+    ws['E' + str(row_num)].font = font
 
-                    discipline_code_cell = 'C' + str(row_num)
-                    ws[discipline_code_cell] = sd.discipline_code
-                    ws[discipline_code_cell].border = border
-                    ws[discipline_code_cell].font = font
+    ws['B' + str(row_num)].border = border
+    ws['A' + str(row_num)].border = border
+    ws['C' + str(row_num)].border = bottom_border
+    ws['D' + str(row_num)].border = bottom_border
+    ws['E' + str(row_num)].border = border
 
-                    discipline_name_cell = 'D' + str(row_num)
-                    ws[discipline_name_cell] = sd.discipline.name
-                    ws[discipline_name_cell].border = border
-                    ws[discipline_name_cell].font = font
+    row_num += 2
+    ws['A' + str(row_num)] = 'Регистратор'
+    ws['A' + str(row_num)].font = font
 
-                    credit_cell = 'E' + str(row_num)
-                    ws[credit_cell] = sd.credit
-                    ws[credit_cell].border = border
-                    ws[credit_cell].font = font
+    row_num += 2
+    ws['A' + str(row_num)] = 'Эдвайзер'
+    ws['A' + str(row_num)].font = font
 
-                    total_credit_in_acad_period += sd.credit
+    row_num += 2
+    ws['A' + str(row_num)] = 'Обучающийся'
+    ws['A' + str(row_num)].font = font
 
-                    row_num += 1
-                    sd_num += 1
-
-                total_credit_in_course += total_credit_in_acad_period
-                ws['B' + str(row_num)] = 'Общее количество кредитов'
-                ws['B' + str(row_num)].font = font
-                ws['E' + str(row_num)] = total_credit_in_acad_period
-                ws['E' + str(row_num)].font = font
-
-                ws['B' + str(row_num)].border = border
-                ws['A' + str(row_num)].border = border
-                ws['C' + str(row_num)].border = bottom_border
-                ws['D' + str(row_num)].border = bottom_border
-                ws['E' + str(row_num)].border = border
-
-                row_num += 1
-
-        ws['B' + str(row_num)] = 'Общее количество кредитов за курс'
-        ws['B' + str(row_num)].font = font
-        ws['E' + str(row_num)] = total_credit_in_course
-        ws['E' + str(row_num)].font = font
-
-        ws['B' + str(row_num)].border = border
-        ws['A' + str(row_num)].border = border
-        ws['C' + str(row_num)].border = bottom_border
-        ws['D' + str(row_num)].border = bottom_border
-        ws['E' + str(row_num)].border = border
-
-        row_num += 2
-        ws['A' + str(row_num)] = 'Регистратор'
-        ws['A' + str(row_num)].font = font
-
-        row_num += 2
-        ws['A' + str(row_num)] = 'Эдвайзер'
-        ws['A' + str(row_num)].font = font
-
-        row_num += 2
-        ws['A' + str(row_num)] = 'Обучающийся'
-        ws['A' + str(row_num)].font = font
-
-        file_name = 'temp_files/iupi{}.xlsx'.format(str(uuid4()))
-        wb.save(file_name)
-
-        with open(file_name, 'rb') as f:
-            response = HttpResponse(f, content_type='application/ms-excel')
-            response['Content-Disposition'] = 'attachment; filename="zayavki' + str(uuid4()) + '.xls"'
-            return response
+    file_name = 'temp_files/iupi{}.xlsx'.format(str(uuid4()))
+    wb.save(file_name)
+    task.file_path = file_name
+    task.save()
 
 
 class CopyStudyPlansListView(generics.ListAPIView):  # TODO FOR TEST
