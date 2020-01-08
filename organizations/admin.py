@@ -229,6 +229,11 @@ class LanguageAdmin(admin.ModelAdmin):
 
 @admin.register(models.TeacherDiscipline)
 class TeacherDisciplineAdmin(admin.ModelAdmin):
+    search_fields = (
+        'teacher__first_name',
+        'teacher__last_name',
+        'teacher__middle_name',
+    )
     autocomplete_fields = (
         'teacher',
         'discipline',
