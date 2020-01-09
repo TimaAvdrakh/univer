@@ -150,7 +150,7 @@ CRON_CLASSES = [
     "cron_app.cron.StudPerformanceChangedJob",
     "cron_app.cron.ControlNotifyJob",
     "cron_app.cron.CloseLessonsJob",
-    "cron_app.cron.SendStudentDisciplinesTo1CJob",
+    # "cron_app.cron.SendStudentDisciplinesTo1CJob",
     "cron_app.cron.ClosePlannedJournalJob",
 ]
 
