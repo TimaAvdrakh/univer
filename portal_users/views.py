@@ -31,8 +31,6 @@ class LoginView(generics.CreateAPIView):
         if user is not None:
             profile_serializer = serializers.ProfileDetailSerializer(instance=user.profile)
             profile_data = profile_serializer.data
-            if profile_data['avatar'] is not None:
-                profile_data['avatar'] = current_site + profile_data['avatar']
 
             data = {
                 'user': profile_data,
