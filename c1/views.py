@@ -422,9 +422,9 @@ def putfrom1c_copy(request):
                 if current_rule['is_related']:
                     """Связанная модель"""
 
-                    for each in current_rule['fields']:
-                        if Manager._meta.get_field(each['django']).unique:  # TODO ???
-                            q[each['django']] = each_elem[each['c1']]
+                    for each_field in current_rule['fields']:
+                        if Manager._meta.get_field(each_field['django']).unique:  # TODO ???
+                            q[each_field['django']] = each_elem[each_field['c1']]
 
                     if len(q):
                         try:

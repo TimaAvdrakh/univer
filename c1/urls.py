@@ -5,7 +5,8 @@ from . import views
 app_name = 'c1'
 
 urlpatterns = [
-    path('putfrom1c/', views.putfrom1c, name='putfrom1c'),
+    path('putfrom1c/', views.putfrom1c_copy, name='putfrom1c'),
+    # path('putfrom1c/', views.putfrom1c, name='putfrom1c'),
 
     path('c1_objects/', views.C1ObjectView.as_view(), name='C1Objects'),
     path('c1_object_compares/', views.C1ObjectCompareView.as_view(), name='c1_object_compares'),
