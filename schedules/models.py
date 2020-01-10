@@ -240,6 +240,19 @@ class Lesson(BaseModel):
                 except LoadType2.DoesNotExist:
                     print('LoadType2 not found')
 
+            try:
+                journal = ElectronicJournal.objects.get(flow_uid=self.flow_uid,
+                                                        is_active=True)
+            except ElectronicJournal.DoesNotExist:
+                journal = ElectronicJournal.objects.create(
+                    flow_uid=self.flow_uid,
+                    discipline=self.discipline,
+                    load_type=self.load_type,
+                    study_year=self.study_year,
+                )
+
+            self.el_journal = journal
+
         super(Lesson, self).save(*args, **kwargs)
 
     def __str__(self):

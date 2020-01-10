@@ -197,24 +197,24 @@ def putfrom1c(request):
             return HttpResponse('ok')
 
 
-def create_electronic_journals():
-    """Создаем электронные журналы после загрузки Занятии"""
-    flow_uids = models_schedules.Lesson.objects.filter(is_active=True).distinct('flow_uid').values('flow_uid')
-
-    for flow in flow_uids:
-        lessons = models_schedules.Lesson.objects.filter(flow_uid=flow['flow_uid'])
-        first_lesson = lessons.first()
-        ej = models_schedules.ElectronicJournal.objects.create(
-            flow_uid=flow['flow_uid'],
-            discipline=first_lesson.discipline,
-            load_type=first_lesson.load_type,
-            study_year=first_lesson.study_year,
-        )
-        # ej.teachers.set(first_lesson.teachers.filter(is_active=True))
-
-        for lesson in lessons:
-            lesson.el_journal = ej
-            lesson.save()
+# def create_electronic_journals():
+#     """Создаем электронные журналы после загрузки Занятии"""
+#     flow_uids = models_schedules.Lesson.objects.filter(is_active=True).distinct('flow_uid').values('flow_uid')
+#
+#     for flow in flow_uids:
+#         lessons = models_schedules.Lesson.objects.filter(flow_uid=flow['flow_uid'])
+#         first_lesson = lessons.first()
+#         ej = models_schedules.ElectronicJournal.objects.create(
+#             flow_uid=flow['flow_uid'],
+#             discipline=first_lesson.discipline,
+#             load_type=first_lesson.load_type,
+#             study_year=first_lesson.study_year,
+#         )
+#         # ej.teachers.set(first_lesson.teachers.filter(is_active=True))
+#
+#         for lesson in lessons:
+#             lesson.el_journal = ej
+#             lesson.save()
 
 
 class C1ObjectView(generics.ListAPIView):
