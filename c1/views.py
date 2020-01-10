@@ -1,4 +1,5 @@
 from django.shortcuts import HttpResponse
+from django.http import JsonResponse
 from django.core.files.base import ContentFile
 from django.core.cache import cache
 from django.core.exceptions import MultipleObjectsReturned
@@ -17,10 +18,9 @@ import requests
 from django.contrib.auth.models import User
 from cron_app.models import CredentialsEmailTask
 from uuid import uuid4
-
+from rest_framework.views import APIView
 
 from .models import *
-# import cmartsite.models as models
 from django.views.decorators.csrf import csrf_exempt
 
 
@@ -146,11 +146,13 @@ def putfrom1c(request):
                     if type(finding_field) == str and value is None:
                         value = ''
 
-                    if (type(finding_field) == int or type(finding_field) == float) and value is None:  # or type(finding_field) == long
+                    if (type(finding_field) == int or type(
+                            finding_field) == float) and value is None:  # or type(finding_field) == long
                         value = 0
 
                     is_related = False
-                    if str(type(finding_field)) == "<class 'django.db.models.fields.related_descriptors.ManyRelatedManager'>":
+                    if str(type(
+                            finding_field)) == "<class 'django.db.models.fields.related_descriptors.ManyRelatedManager'>":
                         finding_field.clear()
                         is_related = True
                         for each_inserted in value:
@@ -288,44 +290,6 @@ class CopyRuleView(generics.RetrieveAPIView):
         )
 
 
-# class DelAllView(generics.RetrieveAPIView):
-#     """Удалить все данные!"""
-#     permission_classes = ()
-#     authentication_classes = ()
-#
-#     def get(self, request, *args, **kwargs):
-#         users = User.objects.all()
-#
-#         for user in users:
-#             user.delete()
-#
-#         username_rules = models_portal_users.UsernameRule.objects.all()
-#         for item in username_rules:
-#             item.delete()
-#
-#         username_creds = models_portal_users.UserCredential.objects.all()
-#         for item in username_creds:
-#             item.delete()
-#
-#         username_cred_tasks = models_portal_users.CredentialsEmailTask.objects.all()
-#         for item in username_cred_tasks:
-#             item.delete()
-#
-#         c1_objs = C1Object.objects.all()
-#         for _model in c1_objs:
-#             Manager = eval('models_' + _model.model)  # Model
-#             _objects = Manager.objects.all()
-#             for obj in _objects:
-#                 obj.delete()
-#
-#         return Response(
-#             {
-#                 'message': 'ok',
-#             },
-#             status=status.HTTP_200_OK
-#         )
-
-
 # class LoadAvatarView(generics.CreateAPIView):
 #     def create(self, request, *args, **kwargs):
 #         if request.data['token'] != 'lsdfgflg45454adsa5d645':
@@ -360,3 +324,228 @@ class CopyRuleView(generics.RetrieveAPIView):
 #             resp,
 #             status=status.HTTP_200_OK
 #         )
+
+
+def deactivate_obj(request):  # TODO уточнить
+    """Удалить объект"""
+    if request.method == 'POST':
+        if request.POST['token'] != 'lsdfgflg45454adsa5d645':
+            return HttpResponse('Forbidden')
+
+        stri = request.POST['structure']
+        stri = stri.replace('muachuille', ';')
+        stri = stri.replace('huyachuille', '&')
+        d = json.loads(stri)  # Словарь
+
+        for model_name, val_list in d.items():
+            try:
+                c1_obj = C1Object.objects.get(name=model_name,
+                                              is_active=True)
+            except C1Object.DoesNotExist:
+                return JsonResponse(
+                    {
+                        'message': 'model_not_found'
+                    },
+                    status=404
+                )
+
+            Manager = eval('models_' + c1_obj.model)  # Model
+            for val in val_list:
+                pass
+
+
+@csrf_exempt
+def putfrom1c_copy(request):
+    """Измененый вариант, отправляет в ответе успешные сохраненные записи"""
+
+    if request.POST['token'] != 'lsdfgflg45454adsa5d645':
+        return HttpResponse('Forbidden')
+
+    if request.method == 'POST':
+        rules = cache.get('rule1c')
+        if rules is None:
+            rules = []
+            qs = C1Object.objects.filter(is_active=True)
+            for item in qs:
+                fields = []
+
+                for field in item.c1objectcompare_set.all():
+                    fields.append(
+                        {
+                            'c1': field.c1,  # Поле 1С
+                            'django': field.django,  # Поле Django
+                            'main_field': field.main_field,  # Ведущее поле
+                            'is_binary_data': field.is_binary_data
+                        })
+
+                rules.append(
+                    {
+                        'object': item.name,  # Ключ словаря
+                        'model': item.model,  # Имя модели
+                        'is_related': item.is_related,
+                        'fields': fields  # Поля модели
+                    })
+                # cache.set('rule1c', rules)
+
+        stri = request.POST['structure']
+        stri = stri.replace('muachuille', ';')
+        stri = stri.replace('huyachuille', '&')
+        d = json.loads(stri)  # Словарь
+        has_not_saved = False
+
+        resp = []  # [{'profiles': ['uid1', 'uid2']}]
+
+        to_resp = {}
+
+        for each in d:
+            current_rule = None
+            for rule in rules:
+                if rule['object'] == each:
+                    current_rule = rule
+                    break
+
+            if current_rule is None:
+                continue
+
+            current_list = d[each]
+            cnt = 0
+            Manager = eval('models_' + current_rule['model'])  # Model
+
+            # if current_rule['is_related']:
+            # for p in Manager.objects.all():
+            #     p.delete()
+
+            resp_elems = []
+
+            for each_elem in current_list:
+                q = {}
+                if current_rule['is_related']:
+                    """Связанная модель"""
+
+                    for each in current_rule['fields']:
+                        if Manager._meta.get_field(each['django']).unique:  # TODO ???
+                            q[each['django']] = each_elem[each['c1']]
+
+                    if len(q):
+                        try:
+                            finding_object = Manager.objects.get(**q)
+                            finding_object.exchange = True  # TODO реализовать в Дисциплине
+                        except Manager.DoesNotExist:
+                            finding_object = Manager()
+                            finding_object.exchange = True
+                        except MultipleObjectsReturned:
+                            print(q, 'MultipleObjectsReturned: ' + str(cnt + 1) + current_rule['model'])
+                            continue
+                    else:
+                        try:
+                            ut = Manager._meta.unique_together
+                            for i in ut[0]:
+                                for rule_field in current_rule['fields']:
+                                    if str(i) + '_id' == rule_field['django']:
+                                        if each_elem[rule_field['c1']] == '00000000-0000-0000-0000-000000000000':
+                                            q[str(i) + '_id'] = None
+                                        else:
+                                            q[str(i) + '_id'] = each_elem[rule_field['c1']]
+                                    elif str(i) == rule_field['django']:
+                                        q[str(i)] = each_elem[rule_field['c1']]
+
+                            finding_object = Manager.objects.get(**q)
+                            finding_object.exchange = True
+                        except Manager.DoesNotExist:
+                            finding_object = Manager()
+                            finding_object.exchange = True
+                        except MultipleObjectsReturned:
+                            print(q, 'MultipleObjectsReturned: ' + str(cnt + 1) + current_rule['model'])
+                            continue
+                else:
+                    """Не связанная модель"""
+                    try:
+                        finding_object = Manager.objects.get(uid=each_elem[u'uid'])
+                        finding_object.exchange = True
+                    except:
+                        finding_object = Manager()
+                        finding_object.exchange = True
+                        # if not current_rule['is_related']:
+                        finding_object.uid = each_elem[u'uid']
+
+                for rule_field in current_rule['fields']:
+                    value = each_elem[rule_field['c1']]
+                    if value == '00000000-0000-0000-0000-000000000000':
+                        value = None
+
+                    finding_field = getattr(finding_object,
+                                            rule_field['django'])
+
+                    if type(finding_field) == bool and value is None:
+                        value = False
+
+                    if type(finding_field) == str and value is None:
+                        value = ''
+
+                    if (type(finding_field) == int or type(
+                            finding_field) == float) and value is None:  # or type(finding_field) == long
+                        value = 0
+
+                    is_related = False
+                    if str(type(
+                            finding_field)) == "<class 'django.db.models.fields.related_descriptors.ManyRelatedManager'>":
+                        finding_field.clear()
+                        is_related = True
+                        for each_inserted in value:
+                            try:
+                                finding_field.add(each_inserted[rule_field['many_to_many_field']])
+                            except:
+                                finding_object.save()
+                                finding_field.add(each_inserted[rule_field['many_to_many_field']])
+
+                    if rule_field['is_binary_data']:
+                        base64_string = value  # .encode('utf-8')
+                        # data_index = base64_string.index('base64') + 7
+                        # filedata = base64_string[data_index:len(base64_string)]
+                        image = b64decode(base64_string)
+
+                        setattr(
+                            finding_object,
+                            rule_field['django'],
+                            ContentFile(image, each_elem['uid'] + '.jpg')
+                        )
+
+                    if not is_related and not rule_field['is_binary_data']:
+                        try:
+                            setattr(
+                                finding_object,
+                                rule_field['django'],
+                                value
+                            )
+                        except Exception as ex:
+                            print(ex)
+                try:
+                    finding_object.save()
+                    resp_elems.append(each_elem)  # TODO проверять!
+                except Exception as ex:
+                    print(str(cnt + 1) + " " + current_rule['model'] + " wasn't save.")
+                    print(ex)
+                cnt = cnt + 1
+            print(str(cnt) + ' ' + current_rule['model'])
+
+            resp_model = {
+                each: resp_elems,
+            }
+            resp.append(resp_model)
+            try:
+                to_resp = resp.pop()
+            except IndexError:
+                to_resp = {
+                    'message': 'error',
+                }
+
+        if has_not_saved:
+            return HttpResponse('not_saved')
+        else:
+            cache.set('main_tree', None)
+            # models.GoodGroup.objects.rebuild()
+            # return HttpResponse('ok')
+            return JsonResponse(
+                to_resp,
+                status=200
+            )

@@ -756,6 +756,11 @@ class StudentDiscipline(BaseModel):
         verbose_name='УИД документа-аналога в 1С',
         help_text='придет, после выгрузки в 1С',
     )
+    uuid1c = models.CharField(  # TODO выгрузить с 1С, дальше unique_together = (student, uuid1c)
+        max_length=100,
+        default='',
+        verbose_name='Уид 1С',
+    )
 
     def save(self, *args, **kwargs):
         if self.exchange:
@@ -892,6 +897,15 @@ class TeacherDiscipline(BaseModel):
         on_delete=models.CASCADE,
         verbose_name='Язык преподавания',
     )
+    uid_1c = models.CharField(  # TODO
+        max_length=100,
+        default='',
+        verbose_name='Уид 1С',
+    )
+
+    # @property  # TODO think of it!
+    # def uid(self):
+    #     return self.uid_1c
 
     def save(self, *args, **kwargs):
         if self.exchange:
