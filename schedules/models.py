@@ -479,7 +479,11 @@ class LessonStudent(BaseModel):
                     )
 
             else:  # Если пришла группа, найду группу по uid и привяжу
-                group = Group.objects.get(pk=self.group_identificator)
+                try:
+                    group = Group.objects.get(pk=self.group_identificator)
+                except Group.DoesNotExist:
+                    print('Group does not exist')  # TODO TEST
+                    return
 
             self.group = group
 
