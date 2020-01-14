@@ -486,13 +486,18 @@ class RoleGetView(APIView):
                 status=status.HTTP_200_OK
             )
 
+        if request.user.last_login is None or (not request.user.profile.password_changed):
+            return Response(
+                {
+                    'message': 'not_authenticated'
+                },
+                status=status.HTTP_200_OK
+            )
+
         serializer = self.serializer_class(instance=request.user.profile)
-        resp = {
-            'data': serializer.data,
-            'firstLogin': request.user.last_login is None or (not request.user.profile.password_changed),
-        }
+
         return Response(
-            resp,
+            serializer.data,
             status=status.HTTP_200_OK
         )
 
