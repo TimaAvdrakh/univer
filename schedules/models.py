@@ -491,21 +491,16 @@ class LessonStudent(BaseModel):
         super(LessonStudent, self).save(*args, **kwargs)
 
         if self.exchange:
-            try:
-                lesson = Lesson.objects.get(flow_uid=self.flow_uid,
+            lessons = Lesson.objects.filter(flow_uid=self.flow_uid,
                                             is_active=True)
-            except Lesson.DoesNotExist:
-                print('Lesson not found')
-                return
-
-            try:
-                StudentPerformance.objects.get(lesson=lesson,
-                                               student=self.student,
-                                               is_active=True)
-            except StudentPerformance.DoesNotExist:
-                StudentPerformance.objects.create(lesson=lesson,
-                                                  student=self.student,
-                                                  is_active=True)
+            for lesson in lessons:
+                try:
+                    StudentPerformance.objects.get(lesson=lesson,
+                                                   student=self.student,
+                                                   is_active=True)
+                except StudentPerformance.DoesNotExist:
+                    StudentPerformance.objects.create(lesson=lesson,
+                                                      student=self.student)
 
     def __str__(self):
         return '{}-{}'.format(self.flow_uid,
