@@ -232,6 +232,7 @@ class Lesson(BaseModel):
                 self.closed = False
                 self.admin_allow = False
                 self.intermediate_control = False
+                self.subject = ''
 
             if self.load_type2_uid_1c:
                 try:
