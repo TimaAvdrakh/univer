@@ -234,7 +234,6 @@ class TeacherDisciplineAdmin(admin.ModelAdmin):
         'discipline',
         'language',
         'study_period',
-        'uuid1c',
     )
     # list_filter = [
     #     'teacher',
@@ -249,6 +248,7 @@ class TeacherDisciplineAdmin(admin.ModelAdmin):
         'load_type2',
         'load_type2_uid_1c',
         'language',
+        'uuid1c',
     ]
 
 
