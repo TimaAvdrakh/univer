@@ -13,6 +13,7 @@ from common import serializers as common_serializers
 from uuid import uuid4
 from portal.curr_settings import current_site
 from advisors.models import AdvisorCheck
+from validate_email import validate_email
 
 
 class LoginSerializer(serializers.Serializer):
@@ -389,11 +390,11 @@ class ForgetPasswordSerializer(serializers.ModelSerializer):
         model = models.ResetPassword
         fields = (
             'uid',
-            'email',
+            'username',
         )
 
     def validate(self, data):
-        if not User.objects.filter(email=data['email'],
+        if not User.objects.filter(username=data['username'],
                                    is_active=True).exists():
             raise CustomException(detail=2)  # not_found
 
@@ -401,13 +402,18 @@ class ForgetPasswordSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         request = self.context.get('request')
-        email = validated_data.get('email')
+        username = validated_data.get('username')
 
-        user = User.objects.get(email=email,
+        user = User.objects.get(username=username,
                                 is_active=True)
+        email = user.profile.email
+        if len(email) == 0 or not validate_email(email):
+            raise CustomException(detail=3)  # has_not_email_or_invalid_email
+
         reset = models.ResetPassword.objects.create(
+            username=username,
+            user=user,
             email=email,
-            user=user
         )
 
         # Создаем задачу для крон
@@ -439,7 +445,7 @@ class ResetPasswordSerializer(serializers.Serializer):
             raise CustomException(detail=4)  # expired
 
         try:
-            user = User.objects.get(email=reset.email)
+            user = User.objects.get(username=reset.username)
         except User.DoesNotExist:
             raise CustomException(detail=3)  # not_found
 
