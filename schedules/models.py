@@ -263,11 +263,11 @@ class Lesson(BaseModel):
     class Meta:
         verbose_name = 'Занятие'
         verbose_name_plural = 'Занятия'
-        unique_together = (
-            'flow_uid',
-            'date',
-            'time',
-        )
+        # unique_together = (
+        #     'flow_uid',
+        #     'date',
+        #     'time',
+        # )
 
 
 class Mark(BaseCatalog):
