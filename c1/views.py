@@ -22,6 +22,7 @@ from rest_framework.views import APIView
 
 from .models import *
 from django.views.decorators.csrf import csrf_exempt
+from portal.local_settings import DELETE_RECORDS_API_TOKEN
 
 
 @csrf_exempt
@@ -326,16 +327,19 @@ class CopyRuleView(generics.RetrieveAPIView):
 #         )
 
 
-def deactivate_obj(request):  # TODO уточнить
+@csrf_exempt
+def deactivate_obj(request):
     """Удалить объект"""
     if request.method == 'POST':
-        if request.POST['token'] != 'lsdfgflg45454adsa5d645':
+        if request.POST['token'] != DELETE_RECORDS_API_TOKEN:
             return HttpResponse('Forbidden')
 
         stri = request.POST['structure']
         stri = stri.replace('muachuille', ';')
         stri = stri.replace('huyachuille', '&')
         d = json.loads(stri)  # Словарь
+
+        resp = []  # [{'profiles': ['uid1', 'uid2']}]
 
         for model_name, val_list in d.items():
             try:
@@ -350,8 +354,33 @@ def deactivate_obj(request):  # TODO уточнить
                 )
 
             Manager = eval('models_' + c1_obj.model)  # Model
+            resp_elems = []
+
             for val in val_list:
-                pass
+                try:
+                    obj = Manager.objects.get(uuid1c=val['uuid1c'])
+                    obj.is_active = val['is_active']
+                    obj.save()
+                    resp_elems.append(val)
+                except Manager.DoesNotExist:
+                    pass
+
+            resp_model = {
+                model_name: resp_elems,
+            }
+            resp.append(resp_model)
+
+        # try:
+        #     to_resp = resp.pop()
+        # except IndexError:
+        #     to_resp = {
+        #         'message': 'error',
+        #     }
+        return JsonResponse(
+            resp,
+            safe=False,
+            status=200,
+        )
 
 
 @csrf_exempt

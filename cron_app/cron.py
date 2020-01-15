@@ -42,9 +42,11 @@ class PasswordResetUrlSendJob(CronJobBase):
             reset_password = task.reset_password
 
             msg_plain = render_to_string('emails/reset_password/reset_password.txt', {'uid': reset_password.uuid,
-                                                                                      'lang': task.lang_code})
+                                                                                      'lang': task.lang_code,
+                                                                                      'site': current_site})
             msg_html = render_to_string('emails/reset_password/reset_password.html', {'uid': reset_password.uuid,
-                                                                                      'lang': task.lang_code})
+                                                                                      'lang': task.lang_code,
+                                                                                      'site': current_site})
 
             send_mail(
                 'Восстановление пароля',
