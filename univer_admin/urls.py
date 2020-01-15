@@ -23,5 +23,9 @@ urlpatterns = [
     path('cathedras/',
          views.CathedraListView.as_view(),
          name='cathedras'),
+
+    path('journal/cancel/plan_block/',
+         views.CancelPlanBlockView.as_view(),
+         name='cancel_plan_block'),
 ]
 

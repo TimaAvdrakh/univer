@@ -59,12 +59,14 @@ class HandleJournalSerializer(serializers.Serializer):
             '''Закроем журналы сейчас'''
             for journal in journals:
                 journal.closed = not journal.closed
+
                 if journal.closed:
                     """Журнал закрыли"""
                     journal.block_date = datetime.now()
                     journal.close_lessons()
                 else:
                     """Журнал открыли, разблокируем его занятия на текущей неделе"""
+                    journal.block_date = None
                     today = date.today()
                     start_week = today - timedelta(days=today.weekday())
                     end_week = start_week + timedelta(days=6)
@@ -78,3 +80,30 @@ class HandleJournalSerializer(serializers.Serializer):
                 journal.save()
 
         return journals
+
+
+class CancelPlanBlockSerializer(serializers.Serializer):  # TODO
+    """Отменить запланированную блокировку"""
+    journals = serializers.ListField(
+        child=serializers.PrimaryKeyRelatedField(
+            queryset=sh_models.ElectronicJournal.objects.filter(is_active=True),
+        )
+    )
+
+    def save(self, **kwargs):
+        journals = self.validated_data.get('journals')
+        for journal in journals:
+            journal.plan_block_date = None
+            journal.block_date = None
+            journal.save()
+
+            tasks = PlanCloseJournalTask.objects.filter(
+                journals__in=[journal],
+                is_active=True,
+                is_success=False
+            )
+            for task in tasks:
+                task.journals.remove(journal)
+
+        return journals
+

@@ -114,4 +114,23 @@ class CathedraListView(generics.ListAPIView):
     serializer_class = CathedraSerializer
 
 
+class CancelPlanBlockView(generics.CreateAPIView):  # TODO
+    """Отменить запланированную блокировку"""
+    permission_classes = (
+        IsAuthenticated,
+        permissions.AdminPermission,
+    )
+    serializer_class = serializers.CancelPlanBlockSerializer
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.serializer_class(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(
+            {
+                'message': 'ok'
+            },
+            status=status.HTTP_200_OK
+        )
+
 
