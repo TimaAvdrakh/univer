@@ -578,3 +578,39 @@ def putfrom1c_copy(request):
                 to_resp,
                 status=200
             )
+
+
+class ClearRecordWithoutUidView(generics.RetrieveAPIView):
+    def get(self, request, *args, **kwargs):
+        # if not request.user.is_superuser:
+        #     return Response(
+        #         {
+        #             'message': 'forbidden'
+        #         },
+        #         status=status.HTTP_400_BAD_REQUEST
+        #     )
+
+        tds = models_organizations.TeacherDiscipline.objects.filter(uuid1c='')
+        for td in tds:
+            td.delete()
+
+        # sds = models_organizations.StudentDiscipline.objects.filter(uuid1c='')
+        # for sd in sds:
+        #     sd.delete()
+
+        # pres = models_organizations.Prerequisite.objects.filter(uuid1c='')
+        # for pre in pres:
+        #     pre.delete()
+
+        # posts = models_organizations.Postrequisite.objects.filter(uuid1c='')
+        # for post in posts:
+        #     post.delete()
+
+        return Response(
+            {
+                'message': 'ok'
+            },
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+

@@ -13,6 +13,9 @@ urlpatterns = [
     path('copy_rules/', views.CopyRuleView.as_view(), name='copy_rules'),
     path('delete/', views.deactivate_obj, name='delete_records'),
 
+
+    path('delete_duplicates/', views.ClearRecordWithoutUidView.as_view(), name='clear_records'),
+
     # path('load/avatars/', views.LoadAvatarView.as_view(), name='load_avatars'),
     # path('delete_all/', views.DelAllView.as_view(), name='delete_all'),
 
