@@ -198,6 +198,7 @@ class StudentDisciplineAdmin(admin.ModelAdmin):
     list_filter = [
         'status',
         'sent',
+        'acad_period',
     ]
     list_display = [
         'student',
@@ -372,13 +373,17 @@ class StatusAdmin(admin.ModelAdmin):
 
 @admin.register(models.StudentDisciplineInfo)
 class StudentDisciplineInfoAdmin(admin.ModelAdmin):
+    search_fields = (
+        'uid',
+        'student__first_name',
+        'student__last_name',
+    )
     autocomplete_fields = (
         'acad_period',
         'study_plan',
         'student',
     )
     list_filter = (
-        'study_plan',
         'status',
     )
     list_display = [
