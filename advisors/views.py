@@ -1807,12 +1807,12 @@ def make_iup_excel(task):
     task.save()
 
 
-class CopyStudyPlansListView(generics.ListAPIView):  # TODO FOR TEST
+class CopyStudyPlansListView(generics.ListAPIView):
     """
     Получение учебных планов,
     study_year(!), study_form, faculty, cathedra, edu_prog_group, edu_prog, course, group, status
     """
-    queryset = org_models.StudyPlan.objects.filter(is_active=True)
+    queryset = org_models.StudyPlan.objects.filter(is_active=True).order_by('student__last_name')
     serializer_class = serializers.StudyPlanSerializer
     pagination_class = AdvisorBidPagination  # CustomPagination
 
