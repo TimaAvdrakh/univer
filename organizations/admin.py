@@ -214,6 +214,8 @@ class StudentDisciplineAdmin(admin.ModelAdmin):
         'status',
         'study_year',
         'sent',
+        'uuid1c',
+        'is_active',
     ]
 
 

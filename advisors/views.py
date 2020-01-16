@@ -9,7 +9,7 @@ from portal_users.serializers import EducationProgramSerializer, EducationProgra
     StudyPlanSerializer, ProfileShortSerializer
 from portal_users.models import Profile
 from organizations.models import StudentDisciplineInfo
-from portal.curr_settings import student_discipline_info_status, student_discipline_status
+from portal.curr_settings import student_discipline_info_status, student_discipline_status, STUDENT_STATUSES
 from django.db.models import Q, Count, Sum
 from common.paginators import CustomPagination, AdvisorBidPagination
 from . import permissions as adv_permission
@@ -638,6 +638,8 @@ class RegisterResultView(generics.ListAPIView):
         group = request.query_params.get('group')
 
         queryset = self.queryset.all()
+        queryset = queryset.exclude(student__status_id=STUDENT_STATUSES['expelled'])
+
         queryset = queryset.filter(
             status_id=student_discipline_status['confirmed'],
             study_plan__advisor=profile,
@@ -867,6 +869,7 @@ class RegisterStatisticsView(generics.ListAPIView):
             'reg_period': reg_period,
             'offset': offset,
             'limit': limit,
+            'student_status_id': STUDENT_STATUSES['expelled'],
         }
 
         query = '''
@@ -875,8 +878,10 @@ class RegisterStatisticsView(generics.ListAPIView):
                         INNER JOIN organizations_studyplan sp on sd.study_plan_id = sp.uid
                         INNER JOIN portal_users_profile p on sp.student_id = p.uid
                         INNER JOIN organizations_discipline d on sd.discipline_id = d.uid
+                        INNER JOIN portal_users_studentstatus ss on p.status_id = ss.uid
                         WHERE sp.advisor_id=%(advisor_id)s 
                             AND sd.status_id=%(status_id)s
+                            AND ss.uid != %(student_status_id)s
                             AND (%(reg_period)s is null or sd.acad_period_id IN (SELECT coursperm.acad_period_id
                                                                              FROM common_courseacadperiodpermission coursperm
                                                                              WHERE coursperm.registration_period_id=%(reg_period)s))
@@ -1830,6 +1835,7 @@ class CopyStudyPlansListView(generics.ListAPIView):
         # reg_period = self.request.query_params.get('reg_period')  # Дисциплина студента
 
         queryset = self.queryset.filter(advisor=self.request.user.profile)
+        queryset = queryset.exclude(student__status_id=STUDENT_STATUSES['expelled'])
 
         if status_id:
             status_obj = org_models.StudentDisciplineStatus.objects.get(number=status_id)
