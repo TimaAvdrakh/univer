@@ -255,6 +255,7 @@ class TeacherDisciplineAdmin(admin.ModelAdmin):
         'load_type2_uid_1c',
         'language',
         'uuid1c',
+        'is_active',
     ]
 
 
