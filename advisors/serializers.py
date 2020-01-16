@@ -24,7 +24,8 @@ class StudyPlanSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         data = super().to_representation(instance)
-        data['education_program_group'] = instance.education_program.group.code if instance.education_program.group else ' ' # instance.education_program.group.code
+        data[
+            'education_program_group'] = instance.education_program.group.code if instance.education_program.group else ' '  # instance.education_program.group.code
 
         return data
 
@@ -104,6 +105,9 @@ class CheckStudentBidsSerializer(serializers.Serializer):
         comment = self.validated_data.get('comment')
 
         if status == 4:  # Утвержден
+            if not self.all_teacher_chosen(study_plan, acad_periods):
+                raise CustomException(detail='not_all_chosen')
+
             info_status_id = student_discipline_info_status['confirmed']
             status_id = student_discipline_status['confirmed']
         elif status == 3:  # Отклонен
@@ -145,6 +149,18 @@ class CheckStudentBidsSerializer(serializers.Serializer):
                 study_plan=study_plan,
                 comment=comment,
             )
+
+    def all_teacher_chosen(self, study_plan, acad_periods):
+        """Проверим выбраны ли все преподы в указанных акад периодах"""
+        invalid_statuses = [student_discipline_status['not_chosen'],
+                            student_discipline_status['rejected']]
+
+        return not org_models.StudentDiscipline.objects.filter(
+            study_plan=study_plan,
+            acad_period__in=acad_periods,
+            status__in=invalid_statuses,
+            is_active=True,
+        ).exists()
 
 
 class StudyPlanDetailSerializer(serializers.ModelSerializer):

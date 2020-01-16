@@ -167,6 +167,7 @@ class Profile(BaseModel):
         verbose_name='Email',
         default='',
         blank=True,
+        # unique=True,
     )
     skype = models.CharField(
         max_length=200,
@@ -454,7 +455,14 @@ class Role(BaseModel):
 
 class ResetPassword(BaseModel):
     email = models.EmailField(
+        default='',
+        blank=True,
         verbose_name='Email',
+    )
+    username = models.CharField(
+        max_length=150,
+        default='',
+        verbose_name='Логин',
     )
     uuid = models.UUIDField(
         default=uuid4,

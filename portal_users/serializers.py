@@ -13,6 +13,7 @@ from common import serializers as common_serializers
 from uuid import uuid4
 from portal.curr_settings import current_site
 from advisors.models import AdvisorCheck
+from validate_email import validate_email
 
 
 class LoginSerializer(serializers.Serializer):
@@ -233,6 +234,7 @@ class ProfileFullSerializer(serializers.ModelSerializer):
 
 
 class ProfileDetailSerializer(serializers.ModelSerializer):
+    """С префиксом домена в поле аватар"""
     profileId = serializers.CharField(
         source='uid',
     )
@@ -270,8 +272,50 @@ class ProfileDetailSerializer(serializers.ModelSerializer):
         role_serializer = RoleSerializer(instance=role)
         data['role'] = role_serializer.data
 
-        # if data['avatar'] is not None:
-        #     data['avatar'] = current_site + data['avatar']
+        if data['avatar'] is not None:
+            data['avatar'] = current_site + data['avatar']
+
+        return data
+
+
+class ProfileSerializer(serializers.ModelSerializer):
+    """Без префикс домена в поле аватар"""
+    profileId = serializers.CharField(
+        source='uid',
+    )
+    middleName = serializers.CharField(
+        max_length=100,
+        source='middle_name',
+        allow_blank=True,
+    )
+    firstName = serializers.CharField(
+        max_length=100,
+        source='first_name',
+        required=True,
+    )
+    lastName = serializers.CharField(
+        max_length=100,
+        source='last_name',
+        required=True,
+    )
+
+    class Meta:
+        model = models.Profile
+        fields = (
+            'profileId',
+            'firstName',
+            'lastName',
+            'middleName',
+            'phone',
+            'email',
+            'avatar'
+        )
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance=instance)
+        role = models.Role.objects.filter(profile=instance).first()
+        role_serializer = RoleSerializer(instance=role)
+        data['role'] = role_serializer.data
 
         return data
 
@@ -346,11 +390,11 @@ class ForgetPasswordSerializer(serializers.ModelSerializer):
         model = models.ResetPassword
         fields = (
             'uid',
-            'email',
+            'username',
         )
 
     def validate(self, data):
-        if not User.objects.filter(email=data['email'],
+        if not User.objects.filter(username=data['username'],
                                    is_active=True).exists():
             raise CustomException(detail=2)  # not_found
 
@@ -358,13 +402,18 @@ class ForgetPasswordSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         request = self.context.get('request')
-        email = validated_data.get('email')
+        username = validated_data.get('username')
 
-        user = User.objects.get(email=email,
+        user = User.objects.get(username=username,
                                 is_active=True)
+        email = user.profile.email
+        if len(email) == 0 or not validate_email(email):
+            raise CustomException(detail=3)  # has_not_email_or_invalid_email
+
         reset = models.ResetPassword.objects.create(
+            username=username,
+            user=user,
             email=email,
-            user=user
         )
 
         # Создаем задачу для крон
@@ -396,7 +445,7 @@ class ResetPasswordSerializer(serializers.Serializer):
             raise CustomException(detail=4)  # expired
 
         try:
-            user = User.objects.get(email=reset.email)
+            user = User.objects.get(username=reset.username)
         except User.DoesNotExist:
             raise CustomException(detail=3)  # not_found
 
@@ -800,21 +849,21 @@ class ChooseTeacherSerializer(serializers.ModelSerializer):
         return teacher_disciplines
 
 
-class StudentSerializer(serializers.Serializer):
-    profile = ProfileDetailSerializer()
-
-    def to_representation(self, instance):
-        data = super().to_representation(instance)
-
-        if data['profile']['avatar']:
-            data['profile']['avatar'] = current_site + data['profile']['avatar']
-
-        return data
+# class StudentSerializer(serializers.Serializer):
+#     profile = ProfileDetailSerializer()
+#
+#     def to_representation(self, instance):
+#         data = super().to_representation(instance)
+#
+#         if data['profile']['avatar']:
+#             data['profile']['avatar'] = current_site + data['profile']['avatar']
+#
+#         return data
 
 
 class GroupDetailSerializer(serializers.ModelSerializer):
-    headman = ProfileDetailSerializer()
-    kurator = ProfileDetailSerializer()
+    headman = ProfileSerializer()
+    kurator = ProfileSerializer()
     active = serializers.BooleanField(
         default=False,
     )
@@ -842,10 +891,7 @@ class GroupDetailSerializer(serializers.ModelSerializer):
         data['supervisors'] = []
         for study_plan in study_plans:
             advisor_serializer = ProfileDetailSerializer(study_plan.advisor)
-
             advisor_data = advisor_serializer.data
-            if advisor_data['avatar'] is not None:
-                advisor_data['avatar'] = current_site + advisor_data['avatar']
 
             item = advisor_data
             item['edu_program'] = study_plan.education_program.name
@@ -862,10 +908,6 @@ class GroupDetailSerializer(serializers.ModelSerializer):
         serializer = ProfileDetailSerializer(students,
                                              many=True)
         data['students'] = serializer.data
-
-        for student in data['students']:
-            if student['avatar']:
-                student['avatar'] = current_site + student['avatar']
 
         return data
 

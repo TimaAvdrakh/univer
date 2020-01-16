@@ -198,6 +198,7 @@ class StudentDisciplineAdmin(admin.ModelAdmin):
     list_filter = [
         'status',
         'sent',
+        'acad_period',
     ]
     list_display = [
         'student',
@@ -213,6 +214,8 @@ class StudentDisciplineAdmin(admin.ModelAdmin):
         'status',
         'study_year',
         'sent',
+        'uuid1c',
+        'is_active',
     ]
 
 
@@ -230,9 +233,10 @@ class LanguageAdmin(admin.ModelAdmin):
 @admin.register(models.TeacherDiscipline)
 class TeacherDisciplineAdmin(admin.ModelAdmin):
     search_fields = (
-        'teacher__first_name',
+        'uid',
         'teacher__last_name',
-        'teacher__middle_name',
+        'teacher__first_name',
+        'uuid1c',
     )
     autocomplete_fields = (
         'teacher',
@@ -253,6 +257,8 @@ class TeacherDisciplineAdmin(admin.ModelAdmin):
         'load_type2',
         'load_type2_uid_1c',
         'language',
+        'uuid1c',
+        'is_active',
     ]
 
 
@@ -369,13 +375,17 @@ class StatusAdmin(admin.ModelAdmin):
 
 @admin.register(models.StudentDisciplineInfo)
 class StudentDisciplineInfoAdmin(admin.ModelAdmin):
+    search_fields = (
+        'uid',
+        'student__first_name',
+        'student__last_name',
+    )
     autocomplete_fields = (
         'acad_period',
         'study_plan',
         'student',
     )
     list_filter = (
-        'study_plan',
         'status',
     )
     list_display = [

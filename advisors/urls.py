@@ -4,9 +4,14 @@ from . import views
 app_name = 'advisors'
 
 urlpatterns = [
-    # 1 стр
-    path('study_plans/', views.StudyPlansListView.as_view(), name='registration_bid_list'),
-    path('student/disciplines/', views.StudentDisciplineListView.as_view(), name='discipline_short_list'),  # TODO TEST ORDER
+    # 1 стр Заявки на ИУПы обучающихся
+    path('study_plans/', views.StudyPlansListView.as_view(),  # Не используется
+         name='registration_bid_list'),
+    path('study_plans/copy/', views.CopyStudyPlansListView.as_view(),
+         name='registration_bid_list_copy'),
+
+    path('student/disciplines/', views.StudentDisciplineListView.as_view(), name='discipline_short_list'),
+    # TODO TEST ORDER
     path('acad_periods/', views.AcadPeriodListView.as_view(), name='acad_periods_for_filter'),
     path('faculties/', views.FacultyListView.as_view(), name='faculty_list'),
     path('cathedras/', views.CathedraListView.as_view(), name='cathedra_list'),
@@ -16,7 +21,7 @@ urlpatterns = [
 
     path('check/student_choices/', views.CheckStudentChoices.as_view(), name='check_student_choices'),
 
-    # 2 стр
+    # 2 стр ИУПы обучающихся
     path('student/study_plan/', views.GetStudyPlanView.as_view(), name='student_study_plan'),
     path('students/', views.FilteredStudentsListView.as_view(), name='students'),
     path('speciality/', views.SpecialityListView.as_view(), name='speciality_list'),
@@ -39,7 +44,4 @@ urlpatterns = [
 
     path('iup_excel/', views.GenerateIupExcelView.as_view(),
          name='generate_iup_excel'),
-
-    path('study_plans/copy/', views.CopyStudyPlansListView.as_view(),  # TODO FOR TEST
-         name='registration_bid_list_copy'),
 ]

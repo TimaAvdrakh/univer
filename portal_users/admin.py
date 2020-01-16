@@ -196,6 +196,9 @@ class ProfilePhoneAdmin(admin.ModelAdmin):
 
 @admin.register(models.StudentStatus)
 class StudentStatusAdmin(admin.ModelAdmin):
+    search_fields = (
+        'uid',
+    )
     list_display = [
         "name",
         "uid",

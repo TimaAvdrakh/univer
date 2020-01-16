@@ -15,6 +15,8 @@ from integration.models import DocumentChangeLog
 from requests.auth import HTTPBasicAuth
 from bot import bot
 import json
+from reports import views as report_views
+from advisors import views as advisor_views
 
 
 class EmailCronJob(CronJobBase):
@@ -40,9 +42,11 @@ class PasswordResetUrlSendJob(CronJobBase):
             reset_password = task.reset_password
 
             msg_plain = render_to_string('emails/reset_password/reset_password.txt', {'uid': reset_password.uuid,
-                                                                                      'lang': task.lang_code})
+                                                                                      'lang': task.lang_code,
+                                                                                      'site': current_site})
             msg_html = render_to_string('emails/reset_password/reset_password.html', {'uid': reset_password.uuid,
-                                                                                      'lang': task.lang_code})
+                                                                                      'lang': task.lang_code,
+                                                                                      'site': current_site})
 
             send_mail(
                 'Восстановление пароля',
@@ -375,4 +379,35 @@ class ClosePlannedJournalJob(CronJobBase):
                     journal.close_lessons()
                 task.is_success = True
                 task.save()
+
+
+class GenerateExcelJob(CronJobBase):
+    RUN_EVERY_MINS = 1  # every 1 min
+
+    schedule = Schedule(run_every_mins=RUN_EVERY_MINS)
+    code = 'crop_app.generate_excel'  # a unique code
+
+    def do(self):
+        tasks = models.ExcelTask.objects.filter(is_success=False)[:3]
+        for task in tasks:
+            doc_type = task.doc_type
+
+            # DOC_TYPE_CHOICES = (
+            #     (1, 'Результат регистрации'),
+            #     (2, 'Статистика регистрации '),
+            #     (3, 'Список незарегистрированных'),
+            #     (4, 'Заявки на ИУПЫ обуч'),
+            #     (5, 'ИУПЫ обуч'),
+            # )
+
+            handler = {
+                1: report_views.make_register_result_rxcel,
+                2: report_views.make_register_statistics_excel,
+                3: report_views.make_not_registered_student_excel,
+                4: advisor_views.make_iup_bid_excel,
+                5: advisor_views.make_iup_excel,
+            }
+            handler[doc_type](task)
+            task.is_success = True
+            task.save()
 

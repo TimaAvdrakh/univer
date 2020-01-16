@@ -31,8 +31,6 @@ class LoginView(generics.CreateAPIView):
         if user is not None:
             profile_serializer = serializers.ProfileDetailSerializer(instance=user.profile)
             profile_data = profile_serializer.data
-            if profile_data['avatar'] is not None:
-                profile_data['avatar'] = current_site + profile_data['avatar']
 
             data = {
                 'user': profile_data,
@@ -488,7 +486,16 @@ class RoleGetView(APIView):
                 status=status.HTTP_200_OK
             )
 
+        if request.user.last_login is None or (not request.user.profile.password_changed):
+            return Response(
+                {
+                    'message': 'not_authenticated'
+                },
+                status=status.HTTP_200_OK
+            )
+
         serializer = self.serializer_class(instance=request.user.profile)
+
         return Response(
             serializer.data,
             status=status.HTTP_200_OK

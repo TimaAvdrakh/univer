@@ -232,6 +232,7 @@ class Lesson(BaseModel):
                 self.closed = False
                 self.admin_allow = False
                 self.intermediate_control = False
+                self.subject = ''
 
             if self.load_type2_uid_1c:
                 try:
@@ -239,6 +240,19 @@ class Lesson(BaseModel):
                     self.load_type = load_type2
                 except LoadType2.DoesNotExist:
                     print('LoadType2 not found')
+
+            try:
+                journal = ElectronicJournal.objects.get(flow_uid=self.flow_uid,
+                                                        is_active=True)
+            except ElectronicJournal.DoesNotExist:
+                journal = ElectronicJournal.objects.create(
+                    flow_uid=self.flow_uid,
+                    discipline=self.discipline,
+                    load_type=self.load_type,
+                    study_year=self.study_year,
+                )
+
+            self.el_journal = journal
 
         super(Lesson, self).save(*args, **kwargs)
 
@@ -249,11 +263,11 @@ class Lesson(BaseModel):
     class Meta:
         verbose_name = 'Занятие'
         verbose_name_plural = 'Занятия'
-        unique_together = (
-            'flow_uid',
-            'date',
-            'time',
-        )
+        # unique_together = (
+        #     'flow_uid',
+        #     'date',
+        #     'time',
+        # )
 
 
 class Mark(BaseCatalog):
@@ -466,11 +480,27 @@ class LessonStudent(BaseModel):
                     )
 
             else:  # Если пришла группа, найду группу по uid и привяжу
-                group = Group.objects.get(pk=self.group_identificator)
+                try:
+                    group = Group.objects.get(pk=self.group_identificator)
+                except Group.DoesNotExist:
+                    print('Group does not exist')  # TODO TEST
+                    return
 
             self.group = group
 
         super(LessonStudent, self).save(*args, **kwargs)
+
+        if self.exchange:
+            lessons = Lesson.objects.filter(flow_uid=self.flow_uid,
+                                            is_active=True)
+            for lesson in lessons:
+                try:
+                    StudentPerformance.objects.get(lesson=lesson,
+                                                   student=self.student,
+                                                   is_active=True)
+                except StudentPerformance.DoesNotExist:
+                    StudentPerformance.objects.create(lesson=lesson,
+                                                      student=self.student)
 
     def __str__(self):
         return '{}-{}'.format(self.flow_uid,
