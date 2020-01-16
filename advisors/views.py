@@ -472,7 +472,8 @@ class FilteredStudentsListView(generics.ListAPIView):
             study_plans = study_plans.filter(group_id=group)
 
         student_pks = study_plans.values('student')
-        students = Profile.objects.filter(pk__in=student_pks).order_by('last_name')
+        students = Profile.objects.filter(pk__in=student_pks).\
+            exclude(status_id=STUDENT_STATUSES['expelled']).order_by('last_name')
 
         return students
 
@@ -1133,6 +1134,7 @@ class NotRegisteredStudentListView(generics.ListAPIView):
             'reg_period': reg_period,
             'offset': offset,
             'limit': limit,
+            'student_status_id': STUDENT_STATUSES['expelled'],
         }
 
         query = '''
@@ -1141,7 +1143,10 @@ class NotRegisteredStudentListView(generics.ListAPIView):
                 INNER JOIN organizations_studyplan sp on sd.study_plan_id = sp.uid
                 INNER JOIN portal_users_profile p on sp.student_id = p.uid
                 INNER JOIN organizations_discipline d on sd.discipline_id = d.uid
-                WHERE sp.advisor_id=%(advisor_id)s AND sd.status_id=%(status_id)s
+                INNER JOIN portal_users_studentstatus ss on p.status_id = ss.uid
+                WHERE sp.advisor_id=%(advisor_id)s 
+                AND sd.status_id=%(status_id)s
+                AND ss.uid != %(student_status_id)s
                 AND (%(reg_period)s is null or sd.acad_period_id IN (SELECT coursperm.acad_period_id
                                                                      FROM common_courseacadperiodpermission coursperm
                                                                      WHERE coursperm.registration_period_id=%(reg_period)s))
@@ -1296,6 +1301,8 @@ def make_iup_bid_excel(task):
         is_active=True,
         advisor=profile,
     )
+
+    queryset = queryset.exclude(student__status_id=STUDENT_STATUSES['expelled'])
 
     if reg_period:
         reg_period_obj = common_models.RegistrationPeriod.objects.get(pk=reg_period)

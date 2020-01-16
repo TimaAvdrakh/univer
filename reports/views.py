@@ -6,7 +6,7 @@ from django.shortcuts import HttpResponse
 from organizations import models as org_models
 from openpyxl.styles import Border, Side, Font, Alignment
 from openpyxl import Workbook, load_workbook
-from portal.curr_settings import student_discipline_info_status, student_discipline_status
+from portal.curr_settings import student_discipline_info_status, student_discipline_status, STUDENT_STATUSES
 from common import models as common_models
 from datetime import datetime
 from . import models
@@ -65,6 +65,7 @@ def make_register_result_rxcel(task):
         study_year(!), reg_period(!), acad_period, faculty, speciality, edu_prog, course, group
     """
     queryset = org_models.StudentDiscipline.objects.filter(is_active=True)
+    queryset = queryset.exclude(student__status_id=STUDENT_STATUSES['expelled'])
 
     profile = task.profile
     fields_json = task.fields
@@ -307,6 +308,7 @@ def make_register_statistics_excel(task):
     study_year(!), reg_period(!), acad_period, faculty, speciality, edu_prog, course, group
     """
     queryset = org_models.StudentDiscipline.objects.filter(is_active=True)
+    queryset = queryset.exclude(student__status_id=STUDENT_STATUSES['expelled'])
 
     profile = task.profile
     fields_json = task.fields
@@ -570,6 +572,7 @@ def make_not_registered_student_excel(task):
     study_year(!), reg_period(!), acad_period, faculty, speciality, edu_prog, course, group
     """
     queryset = org_models.StudentDiscipline.objects.filter(is_active=True)
+    queryset = queryset.exclude(student__status_id=STUDENT_STATUSES['expelled'])
 
     profile = task.profile
     fields_json = task.fields
