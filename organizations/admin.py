@@ -233,6 +233,7 @@ class TeacherDisciplineAdmin(admin.ModelAdmin):
         'uid',
         'teacher__last_name',
         'teacher__first_name',
+        'uuid1c',
     )
     autocomplete_fields = (
         'teacher',
