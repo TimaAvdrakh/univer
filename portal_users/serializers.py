@@ -640,7 +640,6 @@ class StudentDisciplineSerializer(serializers.ModelSerializer):
         teachers_serializer = TeacherDisciplineSerializer(instance=teacher_disciplines,
                                                           many=True)
         if languages:
-            """Мультиязычная группа"""
             lang_serializer = LanguageSerializer(instance=languages,
                                                  many=True)
             data['languages'] = lang_serializer.data
@@ -654,10 +653,6 @@ class StudentDisciplineSerializer(serializers.ModelSerializer):
     def __get_allowed_teachers(self, instance):
         study_year_id = self.context.get('study_year_id')
 
-        # lang = instance.study_plan.group.language
-        # if str(lang.uid) == language_multilingual_id:
-        """Если группа мультиязычная, то отдаем преподы независимо от языка преподавания"""
-
         teacher_disciplines = org_models.TeacherDiscipline.objects.filter(
             discipline=instance.discipline,
             load_type2=instance.load_type.load_type2,
@@ -666,24 +661,11 @@ class StudentDisciplineSerializer(serializers.ModelSerializer):
 
         if study_year_id:
             teacher_disciplines = teacher_disciplines.filter(
-                study_period_id=study_year_id,  # TODO test filter by study_year_id
+                study_period_id=study_year_id,
             )
 
-        language_pks = org_models.TeacherDiscipline.objects.filter(
-            discipline=instance.discipline,
-            load_type2=instance.load_type.load_type2,
-            is_active=True,
-        ).values('language').distinct('language')
-        languages = org_models.Language.objects.filter(pk__in=language_pks,
-                                                       is_active=True)
-
-        # else:
-        #     teacher_disciplines = org_models.TeacherDiscipline.objects.filter(
-        #         discipline=instance.discipline,
-        #         language=lang,
-        #         load_type2=instance.load_type.load_type2
-        #     )
-        #     languages = None
+        language_pks = teacher_disciplines.values('language').distinct('language')
+        languages = org_models.Language.objects.filter(pk__in=language_pks)
 
         return teacher_disciplines, languages
 
