@@ -237,6 +237,10 @@ class TeacherDisciplineAdmin(admin.ModelAdmin):
         'teacher__last_name',
         'teacher__first_name',
         'uuid1c',
+        'discipline__name',
+        'load_type2__name',
+        'study_period__start',
+        'study_period__end',
     )
     autocomplete_fields = (
         'teacher',
