@@ -657,14 +657,15 @@ class StudentDisciplineSerializer(serializers.ModelSerializer):
             discipline=instance.discipline,
             load_type2=instance.load_type.load_type2,
             is_active=True,
-        ).order_by('teacher__last_name')
+        )
 
         if study_year_id:
             teacher_disciplines = teacher_disciplines.filter(
                 study_period_id=study_year_id,
             )
-
         language_pks = teacher_disciplines.values('language').distinct('language')
+        teacher_disciplines = teacher_disciplines.order_by('teacher__last_name')
+
         languages = org_models.Language.objects.filter(pk__in=language_pks)
 
         return teacher_disciplines, languages
