@@ -744,6 +744,7 @@ class ChooseTeacherSerializer(serializers.ModelSerializer):
     """Студент выбирает препода или эдвайзер за студента"""
     teacher_discipline = serializers.PrimaryKeyRelatedField(
         queryset=org_models.TeacherDiscipline.objects.filter(is_active=True),
+        allow_null=True,
     )
 
     class Meta:
@@ -755,31 +756,35 @@ class ChooseTeacherSerializer(serializers.ModelSerializer):
 
     def update(self, instance, validated_data):
         request = self.context.get('request')
-
-        teacher_disciplines = self.__get_allowed_teachers(instance)
-        teachers_pk = teacher_disciplines.values('teacher')
-        teachers = models.Profile.objects.filter(pk__in=teachers_pk)
-
         teacher_discipline = validated_data.get('teacher_discipline')
-        chosen_teacher = teacher_discipline.teacher
+        if teacher_discipline is None:
+            """Выбор отменен"""
+            instance.teacher = None
+            instance.status_id = student_discipline_status['not_chosen']
+        else:
+            teacher_disciplines = self.__get_allowed_teachers(instance)
+            teachers_pk = teacher_disciplines.values('teacher')
+            teachers = models.Profile.objects.filter(pk__in=teachers_pk)
 
-        if chosen_teacher not in teachers:
-            raise CustomException(detail='teacher_not_allowed')
+            chosen_teacher = teacher_discipline.teacher
 
-        instance.teacher = chosen_teacher
-        instance.language = teacher_discipline.language
+            if chosen_teacher not in teachers:
+                raise CustomException(detail='teacher_not_allowed')
 
-        if request.user.profile == instance.student:
-            """Студент сам делает выбор"""
-            instance.status_id = student_discipline_status['chosen']
-        elif request.user.profile == instance.study_plan.advisor:
-            """Эдвайзер делает выбор за студента"""
-            instance.status_id = student_discipline_status['changed']
-            AdvisorCheck.objects.create(
-                study_plan=instance.study_plan,
-                acad_period=instance.acad_period,
-                status=5  # Изменено
-            )
+            instance.teacher = chosen_teacher
+            instance.language = teacher_discipline.language
+
+            if request.user.profile == instance.student:
+                """Студент сам делает выбор"""
+                instance.status_id = student_discipline_status['chosen']
+            elif request.user.profile == instance.study_plan.advisor:
+                """Эдвайзер делает выбор за студента"""
+                instance.status_id = student_discipline_status['changed']
+                AdvisorCheck.objects.create(
+                    study_plan=instance.study_plan,
+                    acad_period=instance.acad_period,
+                    status=5  # Изменено
+                )
 
         instance.author = request.user.profile
         instance.save()
