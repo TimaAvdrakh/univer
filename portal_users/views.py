@@ -217,6 +217,7 @@ class StudentDisciplineForRegListView(generics.ListAPIView):
         student_disciplines = org_models.StudentDiscipline.objects.filter(
             study_plan_id=study_plan_id,
             acad_period_id=acad_period_id,
+            study_year_id=study_year_id,
             is_active=True,
         ).exclude(load_type__load_type2__in=not_choosing_load_types2).order_by('discipline')  # TODO TEST
 

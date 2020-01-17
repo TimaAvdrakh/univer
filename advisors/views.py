@@ -578,7 +578,8 @@ class ConfirmedStudentDisciplineListView(generics.ListAPIView):
 
         acad_period_pks_from_sd = org_models.StudentDiscipline.objects.filter(
             study_year_id=study_year,
-            study_plan_id=study_plan_id
+            study_plan_id=study_plan_id,
+            is_active=True,
         ).distinct('acad_period').values('acad_period')
 
         acad_periods = org_models.AcadPeriod.objects.filter(pk__in=acad_period_pks_from_sd)
