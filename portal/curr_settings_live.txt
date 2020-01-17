@@ -87,3 +87,8 @@ BOT_DEV_CHAT_IDS = [568112408, 599748213, 293450762]
 CYCLE_DISCIPLINE = {
     'itog_attest': '85b29da3-31e2-11e9-aa40-0cc47a2bc1bf',
 }
+
+
+STUDENT_STATUSES = {
+    'expelled': '7de14e32-31e2-11e9-aa40-0cc47a2bc1bf',  # отчислен
+}

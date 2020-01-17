@@ -661,6 +661,7 @@ class StudentDisciplineSerializer(serializers.ModelSerializer):
         teacher_disciplines = org_models.TeacherDiscipline.objects.filter(
             discipline=instance.discipline,
             load_type2=instance.load_type.load_type2,
+            is_active=True,
         ).order_by('teacher__last_name')
 
         if study_year_id:
@@ -670,9 +671,11 @@ class StudentDisciplineSerializer(serializers.ModelSerializer):
 
         language_pks = org_models.TeacherDiscipline.objects.filter(
             discipline=instance.discipline,
-            load_type2=instance.load_type.load_type2
+            load_type2=instance.load_type.load_type2,
+            is_active=True,
         ).values('language').distinct('language')
-        languages = org_models.Language.objects.filter(pk__in=language_pks)
+        languages = org_models.Language.objects.filter(pk__in=language_pks,
+                                                       is_active=True)
 
         # else:
         #     teacher_disciplines = org_models.TeacherDiscipline.objects.filter(
@@ -838,6 +841,7 @@ class ChooseTeacherSerializer(serializers.ModelSerializer):
         teacher_disciplines = org_models.TeacherDiscipline.objects.filter(
             discipline=instance.discipline,
             load_type2=instance.load_type.load_type2,
+            is_active=True,
         )
         # else:
         #     teacher_disciplines = org_models.TeacherDiscipline.objects.filter(
