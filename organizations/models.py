@@ -947,3 +947,26 @@ class TeacherDiscipline(BaseModel):
             'load_type2_uid_1c',
             'language',
         )
+
+
+class ControlForm(BaseCatalog):
+    is_exam = models.BooleanField(
+        default=False,
+        verbose_name='Является экзаменом',
+    )
+    is_course_work = models.BooleanField(
+        default=False,
+        verbose_name='Является курсовой работой',
+    )
+    is_gos_exam = models.BooleanField(
+        default=False,
+        verbose_name='Является гос экзаменом',
+    )
+    is_diploma = models.BooleanField(
+        default=False,
+        verbose_name='Является государственным экзаменом',
+    )
+
+    class Meta:
+        verbose_name = 'Форма контроля'
+        verbose_name_plural = 'Формы контроля'

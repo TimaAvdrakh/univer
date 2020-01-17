@@ -486,3 +486,16 @@ class DisciplineComponentAdmin(admin.ModelAdmin):
         'short_name',
         'uid',
     ]
+
+
+@admin.register(models.ControlForm)
+class ControlFormAdmin(admin.ModelAdmin):
+    list_display = [
+        'name',
+        'uid',
+        'is_exam',
+        'is_course_work',
+        'is_gos_exam',
+        'is_diploma',
+        'is_active',
+    ]
