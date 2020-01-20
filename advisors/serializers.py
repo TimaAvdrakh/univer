@@ -106,7 +106,8 @@ class CheckStudentBidsSerializer(serializers.Serializer):
 
         if status == 4:  # Утвержден
             if not self.all_teacher_chosen(study_plan, acad_periods):
-                raise CustomException(detail='not_all_chosen')
+                raise CustomException(detail='not_all_chosen',
+                                      status_code=200)
 
             info_status_id = student_discipline_info_status['confirmed']
             status_id = student_discipline_status['confirmed']

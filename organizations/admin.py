@@ -237,6 +237,10 @@ class TeacherDisciplineAdmin(admin.ModelAdmin):
         'teacher__last_name',
         'teacher__first_name',
         'uuid1c',
+        'discipline__name',
+        'load_type2__name',
+        'study_period__start',
+        'study_period__end',
     )
     autocomplete_fields = (
         'teacher',
@@ -481,4 +485,17 @@ class DisciplineComponentAdmin(admin.ModelAdmin):
         'name',
         'short_name',
         'uid',
+    ]
+
+
+@admin.register(models.ControlForm)
+class ControlFormAdmin(admin.ModelAdmin):
+    list_display = [
+        'name',
+        'uid',
+        'is_exam',
+        'is_course_work',
+        'is_gos_exam',
+        'is_diploma',
+        'is_active',
     ]

@@ -411,3 +411,35 @@ class GenerateExcelJob(CronJobBase):
             task.is_success = True
             task.save()
 
+
+class DeleteDuplicateJob(CronJobBase):
+    RUN_EVERY_MINS = 1  # every 1 min
+
+    schedule = Schedule(run_every_mins=RUN_EVERY_MINS)
+    code = 'crop_app.delete_duplicate'  # a unique code
+
+    def do(self):
+        sd_bool = not org_models.StudentDiscipline.objects.filter(uuid1c='').exists()
+        td_bool = not org_models.TeacherDiscipline.objects.filter(uuid1c='').exists()
+
+        if sd_bool and td_bool:
+            for chat_id in BOT_DEV_CHAT_IDS:
+                bot.send_message(chat_id,
+                                 'Дубликаты удалены')
+
+        tds = org_models.TeacherDiscipline.objects.filter(uuid1c='')[:50]
+        for td in tds:
+            td.delete()
+
+        sds = org_models.StudentDiscipline.objects.filter(uuid1c='')[:50]
+        for sd in sds:
+            sd.delete()
+
+        # pres = models_organizations.Prerequisite.objects.filter(uuid1c='')
+        # for pre in pres:
+        #     pre.delete()
+
+        # posts = models_organizations.Postrequisite.objects.filter(uuid1c='')
+        # for post in posts:
+        #     post.delete()
+

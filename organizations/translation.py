@@ -106,3 +106,7 @@ class DisciplineCycleTranslationOptions(TranslationOptions):
 class DisciplineComponentTranslationOptions(TranslationOptions):
     fields = ('name', 'short_name',)
 
+
+@register(models.ControlForm)
+class ControlFormTranslationOptions(TranslationOptions):
+    fields = ('name',)

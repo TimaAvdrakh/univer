@@ -640,7 +640,6 @@ class StudentDisciplineSerializer(serializers.ModelSerializer):
         teachers_serializer = TeacherDisciplineSerializer(instance=teacher_disciplines,
                                                           many=True)
         if languages:
-            """Мультиязычная группа"""
             lang_serializer = LanguageSerializer(instance=languages,
                                                  many=True)
             data['languages'] = lang_serializer.data
@@ -654,36 +653,20 @@ class StudentDisciplineSerializer(serializers.ModelSerializer):
     def __get_allowed_teachers(self, instance):
         study_year_id = self.context.get('study_year_id')
 
-        # lang = instance.study_plan.group.language
-        # if str(lang.uid) == language_multilingual_id:
-        """Если группа мультиязычная, то отдаем преподы независимо от языка преподавания"""
-
         teacher_disciplines = org_models.TeacherDiscipline.objects.filter(
             discipline=instance.discipline,
             load_type2=instance.load_type.load_type2,
             is_active=True,
-        ).order_by('teacher__last_name')
+        )
 
         if study_year_id:
             teacher_disciplines = teacher_disciplines.filter(
-                study_period_id=study_year_id,  # TODO test filter by study_year_id
+                study_period_id=study_year_id,
             )
+        language_pks = teacher_disciplines.values('language').distinct('language')
+        teacher_disciplines = teacher_disciplines.order_by('teacher__last_name')
 
-        language_pks = org_models.TeacherDiscipline.objects.filter(
-            discipline=instance.discipline,
-            load_type2=instance.load_type.load_type2,
-            is_active=True,
-        ).values('language').distinct('language')
-        languages = org_models.Language.objects.filter(pk__in=language_pks,
-                                                       is_active=True)
-
-        # else:
-        #     teacher_disciplines = org_models.TeacherDiscipline.objects.filter(
-        #         discipline=instance.discipline,
-        #         language=lang,
-        #         load_type2=instance.load_type.load_type2
-        #     )
-        #     languages = None
+        languages = org_models.Language.objects.filter(pk__in=language_pks)
 
         return teacher_disciplines, languages
 
@@ -761,6 +744,7 @@ class ChooseTeacherSerializer(serializers.ModelSerializer):
     """Студент выбирает препода или эдвайзер за студента"""
     teacher_discipline = serializers.PrimaryKeyRelatedField(
         queryset=org_models.TeacherDiscipline.objects.filter(is_active=True),
+        allow_null=True,
     )
 
     class Meta:
@@ -772,31 +756,35 @@ class ChooseTeacherSerializer(serializers.ModelSerializer):
 
     def update(self, instance, validated_data):
         request = self.context.get('request')
-
-        teacher_disciplines = self.__get_allowed_teachers(instance)
-        teachers_pk = teacher_disciplines.values('teacher')
-        teachers = models.Profile.objects.filter(pk__in=teachers_pk)
-
         teacher_discipline = validated_data.get('teacher_discipline')
-        chosen_teacher = teacher_discipline.teacher
+        if teacher_discipline is None:
+            """Выбор отменен"""
+            instance.teacher = None
+            instance.status_id = student_discipline_status['not_chosen']
+        else:
+            teacher_disciplines = self.__get_allowed_teachers(instance)
+            teachers_pk = teacher_disciplines.values('teacher')
+            teachers = models.Profile.objects.filter(pk__in=teachers_pk)
 
-        if chosen_teacher not in teachers:
-            raise CustomException(detail='teacher_not_allowed')
+            chosen_teacher = teacher_discipline.teacher
 
-        instance.teacher = chosen_teacher
-        instance.language = teacher_discipline.language
+            if chosen_teacher not in teachers:
+                raise CustomException(detail='teacher_not_allowed')
 
-        if request.user.profile == instance.student:
-            """Студент сам делает выбор"""
-            instance.status_id = student_discipline_status['chosen']
-        elif request.user.profile == instance.study_plan.advisor:
-            """Эдвайзер делает выбор за студента"""
-            instance.status_id = student_discipline_status['changed']
-            AdvisorCheck.objects.create(
-                study_plan=instance.study_plan,
-                acad_period=instance.acad_period,
-                status=5  # Изменено
-            )
+            instance.teacher = chosen_teacher
+            instance.language = teacher_discipline.language
+
+            if request.user.profile == instance.student:
+                """Студент сам делает выбор"""
+                instance.status_id = student_discipline_status['chosen']
+            elif request.user.profile == instance.study_plan.advisor:
+                """Эдвайзер делает выбор за студента"""
+                instance.status_id = student_discipline_status['changed']
+                AdvisorCheck.objects.create(
+                    study_plan=instance.study_plan,
+                    acad_period=instance.acad_period,
+                    status=5  # Изменено
+                )
 
         instance.author = request.user.profile
         instance.save()
