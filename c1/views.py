@@ -536,7 +536,8 @@ def putfrom1c_copy(request):
                         setattr(
                             finding_object,
                             rule_field['django'],
-                            ContentFile(image, each_elem['uid'] + '.jpg')
+                            ContentFile(image, each_elem['uid'])
+                            # ContentFile(image, each_elem['uid'] + '.jpg')
                         )
 
                     if not is_related and not rule_field['is_binary_data']:

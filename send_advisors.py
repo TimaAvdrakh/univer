@@ -86,7 +86,7 @@ from base64 import b64decode
 
 
 def save_img():
-    with open('D:/test/картинкаbase64.txt') as f:
+    with open('D:/test/image.docx') as f:
         value = f.read()
     print(value)
 
