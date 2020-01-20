@@ -17,7 +17,7 @@ urlpatterns = [
     path('delete_duplicates/', views.ClearRecordWithoutUidView.as_view(), name='clear_records'),
 
     # path('load/avatars/', views.LoadAvatarView.as_view(), name='load_avatars'),
-    # path('delete_all/', views.DelAllView.as_view(), name='delete_all'),
+    # path('delete_all/', views.DelAllView.as_view(), name='delete_all'), -
 
     # url('^putpicturefrom1c/$', views.putpicturefrom1c, name='putpicturefrom1c'),
     # url('^putactfrom1c/$', views.putactfrom1c, name='putactfrom1c'),
