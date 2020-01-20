@@ -536,7 +536,7 @@ def putfrom1c_copy(request):
                         setattr(
                             finding_object,
                             rule_field['django'],
-                            ContentFile(image, each_elem['uid'])
+                            ContentFile(image, each_elem['uid'] + each_elem['extension'])
                             # ContentFile(image, each_elem['uid'] + '.jpg')
                         )
 
