@@ -465,6 +465,7 @@ class Prerequisite(BaseModel):
         default='',
         verbose_name='Уид 1С',
         editable=False,
+        unique=True,
     )
 
     # def save(self, *args, **kwargs):
@@ -479,12 +480,13 @@ class Prerequisite(BaseModel):
     class Meta:
         verbose_name = 'Пререквизит'
         verbose_name_plural = 'Пререквизиты'
-        unique_together = (
-            'study_period',
-            'discipline',
-            'required_discipline',
-            'speciality',
-        )
+
+        # unique_together = (
+        #     'study_period',
+        #     'discipline',
+        #     'required_discipline',
+        #     'speciality',
+        # )
 
 
 class Postrequisite(BaseModel):
@@ -514,6 +516,7 @@ class Postrequisite(BaseModel):
         default='',
         verbose_name='Уид 1С',
         editable=False,
+        unique=True,
     )
 
     # def save(self, *args, **kwargs):
@@ -528,12 +531,13 @@ class Postrequisite(BaseModel):
     class Meta:
         verbose_name = 'Постреквизит'
         verbose_name_plural = 'Постреквизиты'
-        unique_together = (
-            'study_period',
-            'discipline',
-            'available_discipline',
-            'speciality',
-        )
+
+        # unique_together = (
+        #     'study_period',
+        #     'discipline',
+        #     'available_discipline',
+        #     'speciality',
+        # )
 
 
 class Discipline(BaseCatalog):
@@ -808,15 +812,16 @@ class StudentDiscipline(BaseModel):
         verbose_name_plural = 'Дисциплины студента'
         unique_together = (
             'student',
-            'study_plan_uid_1c',
-            'acad_period',
-            'discipline_code',
-            'discipline',
-            'load_type',
-            'hours',
-            'language',  # TODO уточнить! язык меняется
-            'cycle',
-            'study_year',
+            'uuid1c',
+            # 'study_plan_uid_1c',
+            # 'acad_period',
+            # 'discipline_code',
+            # 'discipline',
+            # 'load_type',
+            # 'hours',
+            # 'language',
+            # 'cycle',
+            # 'study_year',
         )
         index_together = (
             'discipline',
@@ -915,6 +920,7 @@ class TeacherDiscipline(BaseModel):
         default='',
         verbose_name='Уид 1С',
         editable=False,
+        unique=True,
     )
 
     # @property  # TODO think of it!
@@ -940,13 +946,14 @@ class TeacherDiscipline(BaseModel):
     class Meta:
         verbose_name = 'Закрепление дисциплин'
         verbose_name_plural = 'Закрепление дисциплин'
-        unique_together = (
-            'teacher',
-            'study_period',
-            'discipline',
-            'load_type2_uid_1c',
-            'language',
-        )
+
+        # unique_together = (
+        #     'teacher',
+        #     'study_period',
+        #     'discipline',
+        #     'load_type2_uid_1c',
+        #     'language',
+        # )
 
 
 class ControlForm(BaseCatalog):
@@ -977,6 +984,7 @@ class DisciplineCredit(BaseModel):
         max_length=100,
         verbose_name='Уид 1С',
         editable=False,
+        unique=True,
     )
     study_plan = models.ForeignKey(
         StudyPlan,
@@ -996,10 +1004,10 @@ class DisciplineCredit(BaseModel):
     credit = models.FloatField(
         verbose_name='Кредит',
     )
-    control_form = models.ForeignKey(
+    chosen_control_forms = models.ManyToManyField(
         ControlForm,
-        on_delete=models.CASCADE,
-        verbose_name='Форма контроля',
+        blank=True,
+        verbose_name='Выбранные формы контроля',
     )
 
     def __str__(self):
@@ -1010,3 +1018,24 @@ class DisciplineCredit(BaseModel):
     class Meta:
         verbose_name = 'Кредит дисциплины'
         verbose_name_plural = 'Кредиты дисциплин'
+
+
+class DisciplineCreditControlForm(BaseModel):
+    discipline_credit = models.ForeignKey(
+        DisciplineCredit,
+        on_delete=models.CASCADE,
+        verbose_name='Кредит дисциплины',
+    )
+    control_form = models.ForeignKey(
+        ControlForm,
+        on_delete=models.CASCADE,
+        verbose_name='Форма контроля',
+    )
+
+    def __str__(self):
+        return '{} {}'.format(self.discipline_credit,
+                              self.control_form)
+
+    class Meta:
+        verbose_name = 'Кредит дисциплины-Форма контроля'
+        verbose_name_plural = 'Кредит дисциплины-Форма контроля'

@@ -509,6 +509,15 @@ class DisciplineCreditAdmin(admin.ModelAdmin):
         'cycle',
         'discipline',
         'credit',
+        'is_active',
+    ]
+
+
+@admin.register(models.DisciplineCreditControlForm)
+class DisciplineCreditControlFormAdmin(admin.ModelAdmin):
+    list_display = [
+        'discipline_credit',
         'control_form',
         'is_active',
     ]
+
