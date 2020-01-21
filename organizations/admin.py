@@ -499,3 +499,16 @@ class ControlFormAdmin(admin.ModelAdmin):
         'is_diploma',
         'is_active',
     ]
+
+
+@admin.register(models.DisciplineCredit)
+class DisciplineCreditAdmin(admin.ModelAdmin):
+    list_display = [
+        'uuid1c',
+        'study_plan',
+        'cycle',
+        'discipline',
+        'credit',
+        'control_form',
+        'is_active',
+    ]

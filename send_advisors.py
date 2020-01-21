@@ -84,10 +84,15 @@ from base64 import b64decode
 # print('ok')
 #a
 
+import json
+
 
 def save_img():
-    with open('D:/test/картинкаbase64.txt') as f:
-        value = f.read()
+    with open('D:/test/profile.json') as f:
+        data = json.load(f)
+        value = data['profiles'][0]['avatar']
+        extension = data['profiles'][0]['extension']
+
     print(value)
 
     # .encode('utf-8')
@@ -99,10 +104,11 @@ def save_img():
     setattr(
         p,
         'avatar',
-        ContentFile(image, 'odmin2020.jpg')
+        ContentFile(image, 'odmin20200120.' + extension)
     )
     p.save()
 
 
 save_img()
+
 

@@ -970,3 +970,43 @@ class ControlForm(BaseCatalog):
     class Meta:
         verbose_name = 'Форма контроля'
         verbose_name_plural = 'Формы контроля'
+
+
+class DisciplineCredit(BaseModel):
+    uuid1c = models.CharField(
+        max_length=100,
+        verbose_name='Уид 1С',
+        editable=False,
+    )
+    study_plan = models.ForeignKey(
+        StudyPlan,
+        on_delete=models.CASCADE,
+        verbose_name='Учебный план',
+    )
+    cycle = models.ForeignKey(
+        DisciplineCycle,
+        on_delete=models.CASCADE,
+        verbose_name='Цикл дисциплины',
+    )
+    discipline = models.ForeignKey(
+        Discipline,
+        on_delete=models.CASCADE,
+        verbose_name='Дисциплина',
+    )
+    credit = models.FloatField(
+        verbose_name='Кредит',
+    )
+    control_form = models.ForeignKey(
+        ControlForm,
+        on_delete=models.CASCADE,
+        verbose_name='Форма контроля',
+    )
+
+    def __str__(self):
+        return '{} {} {}'.format(self.study_plan,
+                                 self.discipline,
+                                 self.credit)
+
+    class Meta:
+        verbose_name = 'Кредит дисциплины'
+        verbose_name_plural = 'Кредиты дисциплин'
