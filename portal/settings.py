@@ -153,7 +153,7 @@ CRON_CLASSES = [
     # "cron_app.cron.SendStudentDisciplinesTo1CJob",
     "cron_app.cron.ClosePlannedJournalJob",
     "cron_app.cron.GenerateExcelJob",
-    "cron_app.cron.DeleteDuplicateJob",
+    # "cron_app.cron.DeleteDuplicateJob",
 ]
 
 # SESSION_COOKIE_AGE = 60
