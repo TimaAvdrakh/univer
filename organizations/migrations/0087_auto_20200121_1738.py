@@ -37,11 +37,11 @@ class Migration(migrations.Migration):
             name='uuid1c',
             field=models.CharField(default='', editable=False, max_length=100, unique=True, verbose_name='Уид 1С'),
         ),
-        migrations.AlterField(
-            model_name='teacherdiscipline',
-            name='uuid1c',
-            field=models.CharField(default='', editable=False, max_length=100, unique=True, verbose_name='Уид 1С'),
-        ),
+        # migrations.AlterField(
+        #     model_name='teacherdiscipline',
+        #     name='uuid1c',
+        #     field=models.CharField(default='', editable=False, max_length=100, unique=True, verbose_name='Уид 1С'),
+        # ),
         migrations.AlterUniqueTogether(
             name='postrequisite',
             unique_together=set(),
@@ -50,14 +50,14 @@ class Migration(migrations.Migration):
             name='prerequisite',
             unique_together=set(),
         ),
-        migrations.AlterUniqueTogether(
-            name='studentdiscipline',
-            unique_together={('student', 'uuid1c')},
-        ),
-        migrations.AlterUniqueTogether(
-            name='teacherdiscipline',
-            unique_together=set(),
-        ),
+        # migrations.AlterUniqueTogether(
+        #     name='studentdiscipline',
+        #     unique_together={('student', 'uuid1c')},
+        # ),
+        # migrations.AlterUniqueTogether(
+        #     name='teacherdiscipline',
+        #     unique_together=set(),
+        # ),
         migrations.CreateModel(
             name='DisciplineCreditControlForm',
             fields=[
