@@ -11,7 +11,8 @@ from portal_users.models import UserCredential, Role, Profile
 from django.core.files.base import ContentFile
 from base64 import b64decode
 from organizations import models as org_models
-from portal.curr_settings import student_discipline_status
+from portal.curr_settings import student_discipline_status, BOT_DEV_CHAT_IDS
+from bot import bot
 
 # def send():
 #     profile_pks = Role.objects.filter(is_supervisor=True).values('profile')
@@ -176,6 +177,9 @@ def find_dups():
                         each.delete()
 
     print('Ok')
+    for chat_id in BOT_DEV_CHAT_IDS:
+        bot.send_message(chat_id,
+                         'Скрипт закончил работу')
 
 
 find_dups()
