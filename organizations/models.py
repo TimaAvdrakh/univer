@@ -816,7 +816,7 @@ class StudentDiscipline(BaseModel):
 
             'study_plan_uid_1c',
             'acad_period',
-            # 'discipline_code',
+            'discipline_code',
             'discipline',
             'load_type',
             'hours',
