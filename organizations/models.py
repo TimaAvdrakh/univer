@@ -821,7 +821,7 @@ class StudentDiscipline(BaseModel):
             'load_type',
             'hours',
             # 'language',
-            # 'cycle',
+            'cycle',
             'study_year',
         )
         index_together = (
