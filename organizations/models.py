@@ -822,7 +822,7 @@ class StudentDiscipline(BaseModel):
             'hours',
             # 'language',
             # 'cycle',
-            # 'study_year',
+            'study_year',
         )
         index_together = (
             'discipline',
@@ -921,7 +921,7 @@ class TeacherDiscipline(BaseModel):
         default='',
         verbose_name='Уид 1С',
         editable=False,
-        unique=True,
+        # unique=True,
     )
 
     # @property  # TODO think of it!
@@ -948,13 +948,13 @@ class TeacherDiscipline(BaseModel):
         verbose_name = 'Закрепление дисциплин'
         verbose_name_plural = 'Закрепление дисциплин'
 
-        # unique_together = (
-        #     'teacher',
-        #     'study_period',
-        #     'discipline',
-        #     'load_type2_uid_1c',
-        #     'language',
-        # )
+        unique_together = (
+            'teacher',
+            'study_period',
+            'discipline',
+            'load_type2_uid_1c',
+            'language',
+        )
 
 
 class ControlForm(BaseCatalog):
