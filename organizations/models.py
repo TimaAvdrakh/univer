@@ -812,13 +812,14 @@ class StudentDiscipline(BaseModel):
         verbose_name_plural = 'Дисциплины студента'
         unique_together = (
             'student',
-            'uuid1c',
-            # 'study_plan_uid_1c',
-            # 'acad_period',
+            # 'uuid1c',
+
+            'study_plan_uid_1c',
+            'acad_period',
             # 'discipline_code',
-            # 'discipline',
-            # 'load_type',
-            # 'hours',
+            'discipline',
+            'load_type',
+            'hours',
             # 'language',
             # 'cycle',
             # 'study_year',
