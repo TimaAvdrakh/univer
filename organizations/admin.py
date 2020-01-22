@@ -503,6 +503,13 @@ class ControlFormAdmin(admin.ModelAdmin):
 
 @admin.register(models.DisciplineCredit)
 class DisciplineCreditAdmin(admin.ModelAdmin):
+    search_fields = (
+        'discipline__name',
+    )
+    autocomplete_fields = (
+        'study_plan',
+        'discipline',
+    )
     list_display = [
         'uuid1c',
         'study_plan',
@@ -515,6 +522,9 @@ class DisciplineCreditAdmin(admin.ModelAdmin):
 
 @admin.register(models.DisciplineCreditControlForm)
 class DisciplineCreditControlFormAdmin(admin.ModelAdmin):
+    autocomplete_fields = (
+        'discipline_credit',
+    )
     list_display = [
         'discipline_credit',
         'control_form',

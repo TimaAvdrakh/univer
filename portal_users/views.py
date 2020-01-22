@@ -48,7 +48,7 @@ class LoginView(generics.CreateAPIView):
                 {
                     'error': 'wrong_username_or_password'
                 },
-                status=status.HTTP_401_UNAUTHORIZED
+                status=status.HTTP_400_BAD_REQUEST
             )
 
 
