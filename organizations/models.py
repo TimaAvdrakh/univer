@@ -971,7 +971,7 @@ class ControlForm(BaseCatalog):
     )
     is_diploma = models.BooleanField(
         default=False,
-        verbose_name='Является государственным экзаменом',
+        verbose_name='Является защитой диплома/диссертации ',
     )
 
     class Meta:
@@ -1039,3 +1039,7 @@ class DisciplineCreditControlForm(BaseModel):
     class Meta:
         verbose_name = 'Кредит дисциплины-Форма контроля'
         verbose_name_plural = 'Кредит дисциплины-Форма контроля'
+        unique_together = (
+            'discipline_credit',
+            'control_form',
+        )
