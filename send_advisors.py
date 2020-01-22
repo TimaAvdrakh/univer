@@ -10,6 +10,8 @@ from portal.curr_settings import current_site
 from portal_users.models import UserCredential, Role, Profile
 from django.core.files.base import ContentFile
 from base64 import b64decode
+from organizations import models as org_models
+from portal.curr_settings import student_discipline_status
 
 # def send():
 #     profile_pks = Role.objects.filter(is_supervisor=True).values('profile')
@@ -87,28 +89,93 @@ from base64 import b64decode
 import json
 
 
-def save_img():
-    with open('D:/test/profile.json') as f:
-        data = json.load(f)
-        value = data['profiles'][0]['avatar']
-        extension = data['profiles'][0]['extension']
+# def save_img():
+#     with open('D:/test/profile.json') as f:
+#         data = json.load(f)
+#         value = data['profiles'][0]['avatar']
+#         extension = data['profiles'][0]['extension']
+#
+#     print(value)
+#
+#     # .encode('utf-8')
+#     # data_index = base64_string.index('base64') + 7
+#     # filedata = base64_string[data_index:len(base64_string)]
+#     image = b64decode(value)
+#     p = Profile.objects.get(user__username='odmin')
+#
+#     setattr(
+#         p,
+#         'avatar',
+#         ContentFile(image, 'odmin20200120.' + extension)
+#     )
+#     p.save()
 
-    print(value)
 
-    # .encode('utf-8')
-    # data_index = base64_string.index('base64') + 7
-    # filedata = base64_string[data_index:len(base64_string)]
-    image = b64decode(value)
-    p = Profile.objects.get(user__username='odmin')
+# save_img()
 
-    setattr(
-        p,
-        'avatar',
-        ContentFile(image, 'odmin20200120.' + extension)
+
+def find_dups():
+    dsds = org_models.StudentDiscipline.objects.all().distinct(
+        'student',
+        'study_plan_uid_1c',
+        'acad_period',
+        'discipline_code',
+        'discipline',
+        'load_type',
+        'hours',
+        'cycle',
+        'study_year',
     )
-    p.save()
+
+    for item in dsds:
+        sds = org_models.StudentDiscipline.objects.filter(
+            student=item.student,
+            study_plan_uid_1c=item.study_plan_uid_1c,
+            acad_period=item.acad_period,
+            discipline_code=item.discipline_code,
+            discipline=item.discipline,
+            load_type=item.load_type,
+            hours=item.hours,
+            cycle=item.cycle,
+            study_year=item.study_year,
+        )
+        if len(sds) > 1:
+            print('Duplicate: {}-{}-{}-{}-{}-{}-{}-{}-{}'.format(
+                sds[0].student.user.username,
+                sds[0].study_plan_uid_1c,
+                sds[0].acad_period.name,
+                sds[0].discipline.name,
+                sds[0].discipline_code,
+                sds[0].load_type.name,
+                sds[0].hours,
+                sds[0].cycle.name,
+                sds[0].study_year.repr_name,
+            ))
+
+            uuid1c = ''
+            for sd in sds:
+                if len(sd.uuid1c) > 0:
+                    uuid1c = sd.uuid1c
+
+            confirmed_sds = sds.filter(status_id=student_discipline_status['confirmed'])
+            if len(confirmed_sds) > 0:
+                for i, each in enumerate(confirmed_sds):
+                    if i == 0:
+                        each.uuid1c = uuid1c
+                        each.save()
+                    else:
+                        each.delete()
+                sds.exclude(status_id=student_discipline_status['confirmed']).delete()
+
+            else:
+                for i, each in enumerate(sds):
+                    if i == 0:
+                        each.uuid1c = uuid1c
+                        each.save()
+                    else:
+                        each.delete()
+
+    print('Ok')
 
 
-save_img()
-
-
+find_dups()

@@ -14,7 +14,9 @@ urlpatterns = [
     path('delete/', views.deactivate_obj, name='delete_records'),
 
 
-    path('delete_duplicates/', views.ClearRecordWithoutUidView.as_view(), name='clear_records'),
+    # path('delete_duplicates/', views.ClearRecordWithoutUidView.as_view(), name='clear_records'),
+    path('find_dups/', views.FindDuplicateView.as_view(), name='find_dups'),
+
 
     # path('load/avatars/', views.LoadAvatarView.as_view(), name='load_avatars'),
     # path('delete_all/', views.DelAllView.as_view(), name='delete_all'), -

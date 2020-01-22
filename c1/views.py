@@ -23,6 +23,7 @@ from rest_framework.views import APIView
 from .models import *
 from django.views.decorators.csrf import csrf_exempt
 from portal.local_settings import DELETE_RECORDS_API_TOKEN
+from portal.curr_settings import student_discipline_status
 
 
 @csrf_exempt
@@ -581,31 +582,100 @@ def putfrom1c_copy(request):
             )
 
 
-class ClearRecordWithoutUidView(generics.RetrieveAPIView):
+# class ClearRecordWithoutUidView(generics.RetrieveAPIView):
+#     def get(self, request, *args, **kwargs):
+#         # if not request.user.is_superuser:
+#         #     return Response(
+#         #         {
+#         #             'message': 'forbidden'
+#         #         },
+#         #         status=status.HTTP_400_BAD_REQUEST
+#         #     )
+#
+#         tds = models_organizations.TeacherDiscipline.objects.filter(uuid1c='')
+#         for td in tds:
+#             td.delete()
+#
+#         # sds = models_organizations.StudentDiscipline.objects.filter(uuid1c='')
+#         # for sd in sds:
+#         #     sd.delete()
+#
+#         # pres = models_organizations.Prerequisite.objects.filter(uuid1c='')
+#         # for pre in pres:
+#         #     pre.delete()
+#
+#         # posts = models_organizations.Postrequisite.objects.filter(uuid1c='')
+#         # for post in posts:
+#         #     post.delete()
+#
+#         return Response(
+#             {
+#                 'message': 'ok'
+#             },
+#             status=status.HTTP_400_BAD_REQUEST
+#         )
+
+
+class FindDuplicateView(generics.RetrieveAPIView):
     def get(self, request, *args, **kwargs):
-        # if not request.user.is_superuser:
-        #     return Response(
-        #         {
-        #             'message': 'forbidden'
-        #         },
-        #         status=status.HTTP_400_BAD_REQUEST
+
+        # dsds = models_organizations.StudentDiscipline.objects.all().distinct(
+        #     'student',
+        #     'study_plan_uid_1c',
+        #     'acad_period',
+        #     'discipline_code',
+        #     'discipline',
+        #     'load_type',
+        #     'hours',
+        #     'cycle',
+        #     'study_year',
+        # )
+        #
+        # for item in dsds:
+        #     sds = models_organizations.StudentDiscipline.objects.filter(
+        #         student=item.student,
+        #         study_plan_uid_1c=item.study_plan_uid_1c,
+        #         acad_period=item.acad_period,
+        #         discipline_code=item.discipline_code,
+        #         discipline=item.discipline,
+        #         load_type=item.load_type,
+        #         hours=item.hours,
+        #         cycle=item.cycle,
+        #         study_year=item.study_year,
         #     )
-
-        tds = models_organizations.TeacherDiscipline.objects.filter(uuid1c='')
-        for td in tds:
-            td.delete()
-
-        # sds = models_organizations.StudentDiscipline.objects.filter(uuid1c='')
-        # for sd in sds:
-        #     sd.delete()
-
-        # pres = models_organizations.Prerequisite.objects.filter(uuid1c='')
-        # for pre in pres:
-        #     pre.delete()
-
-        # posts = models_organizations.Postrequisite.objects.filter(uuid1c='')
-        # for post in posts:
-        #     post.delete()
+        #     if len(sds) > 1:
+        #         print('Duplicate: {}-{}-{}-{}-{}-{}-{}-{}-{}'.format(
+        #             sds[0].student.user.username,
+        #             sds[0].study_plan_uid_1c,
+        #             sds[0].acad_period.name,
+        #             sds[0].discipline.name,
+        #             sds[0].discipline_code,
+        #             sds[0].load_type.name,
+        #             sds[0].hours,
+        #             sds[0].cycle.name,
+        #             sds[0].study_year.repr_name,
+        #         ))
+        #         confirmed_exist = False
+        #         uuid1c = ''
+        #         for sd in sds:
+        #             if len(sd.uuid1c) > 0:
+        #                 uuid1c = sd.uuid1c
+        #
+        #         for sd in sds:
+        #             if str(sd.status_id) == student_discipline_status['confirmed']:
+        #                 sd.uuid1c = uuid1c
+        #                 sd.save()
+        #                 confirmed_exist = True
+        #
+        #         if confirmed_exist:
+        #             sds.exclude(status_id=student_discipline_status['confirmed']).delete()
+        #         else:
+        #             for i, each in enumerate(sds):
+        #                 if i == 0:
+        #                     continue
+        #                 each.delete()
+        #
+        # print('Ok')
 
         return Response(
             {
