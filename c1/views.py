@@ -24,6 +24,7 @@ from .models import *
 from django.views.decorators.csrf import csrf_exempt
 from portal.local_settings import DELETE_RECORDS_API_TOKEN
 from portal.curr_settings import student_discipline_status
+from django.db import connection
 
 
 @csrf_exempt
@@ -622,8 +623,109 @@ class FindDuplicateView(generics.RetrieveAPIView):
             uuid1c='',
         )
         for sd in sds:
+            print(sd.uid)
+            # print('UID 1C:', sd.uuid1c)
             sd.uuid1c = None
             sd.save()
-            print('UID 1C:', sd.pk)
+            # print('UID 1C:', sd.uuid1c)
+            # print('\n')
 
         print('To null. ok')
+
+        return Response(
+            {
+                'messag': 'ok'
+            },
+            status=status.HTTP_200_OK
+        )
+
+        # query = '''
+        #                 SELECT sd.student_id, sd.study_plan_uid_1c, sd.acad_period_id,
+        #                        sd.discipline_code, sd.discipline_id,
+        #                        sd.load_type_id, sd.hours, sd.cycle_id, sd.study_year_id,
+        #                        COUNT(*) AS dup_count
+        #                 FROM organizations_studentdiscipline sd
+        #                 WHERE sd.study_year_id = 'c4f1122b-31f5-11e9-aa40-0cc47a2bc1bf'
+        #                 GROUP BY sd.student_id, sd.study_plan_uid_1c, sd.acad_period_id,
+        #                          sd.discipline_code, sd.discipline_id,
+        #                          sd.load_type_id, sd.hours, sd.cycle_id, sd.study_year_id
+        #                 HAVING COUNT(*) > 1
+        #             '''
+        #
+        # with connection.cursor() as cursor:
+        #     cursor.execute(query)
+        #
+        #     rows = cursor.fetchall()
+        #
+        # for item in rows:
+        #     sds = models_organizations.StudentDiscipline.objects.filter(
+        #         student=item[0],
+        #         study_plan_uid_1c=item[1],
+        #         acad_period=item[2],
+        #         discipline_code=item[3],
+        #         discipline=item[4],
+        #         load_type=item[5],
+        #         hours=item[6],
+        #         cycle=item[7],
+        #         study_year=item[8],
+        #     )
+        #     print('Dup_num: ', item[9])
+        #     if len(sds) > 1:
+        #         # print('Duplicate: {}-{}-{}-{}-{}-{}-{}-{}-{}'.format(
+        #         #     sds[0].student.user.username,
+        #         #     sds[0].study_plan_uid_1c,
+        #         #     sds[0].acad_period.name,
+        #         #     sds[0].discipline.name,
+        #         #     sds[0].discipline_code,
+        #         #     sds[0].load_type.name,
+        #         #     sds[0].hours,
+        #         #     sds[0].cycle.name,
+        #         #     sds[0].study_year.repr_name,
+        #         # ))
+        #
+        #         uuid1c = None
+        #         for sd in sds:
+        #             if sd.uuid1c is not None:
+        #                 uuid1c = sd.uuid1c
+        #
+        #         confirmed_sds = sds.filter(status_id=student_discipline_status['confirmed'])
+        #         if len(confirmed_sds) > 0:
+        #             for i, each in enumerate(confirmed_sds):
+        #                 if i == 0:
+        #                     each.uuid1c = uuid1c
+        #                     each.save()
+        #                 else:
+        #                     each.delete()
+        #             sds.exclude(status_id=student_discipline_status['confirmed']).delete()
+        #
+        #         else:
+        #             for i, each in enumerate(sds):
+        #                 if i == 0:
+        #                     each.uuid1c = uuid1c
+        #                     each.save()
+        #                 else:
+        #                     each.delete()
+        #
+        # return Response(
+        #     {
+        #         'messag': 'ok'
+        #     },
+        #     status=status.HTTP_200_OK
+        # )
+
+        # sds = org_models.StudentDiscipline.objects.filter(
+        #     study_year_id='c4f1122b-31f5-11e9-aa40-0cc47a2bc1bf',
+        #     uuid1c__isnull=True,
+        # )
+        # for sd in sds:
+        #     print(sd.uid)
+        #     sd.delete()
+        #
+        # print('no uid delete. ok')
+        #
+        # return Response(
+        #     {
+        #         'messag': 'ok'
+        #     },
+        #     status=status.HTTP_200_OK
+        # )
