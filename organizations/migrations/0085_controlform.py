@@ -11,26 +11,26 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        # migrations.CreateModel(
-        #     name='ControlForm',
-        #     fields=[
-        #         ('uid', models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False, unique=True, verbose_name='Уникальный идентификатор')),
-        #         ('is_active', models.BooleanField(default=True)),
-        #         ('created', models.DateTimeField(auto_now_add=True)),
-        #         ('updated', models.DateTimeField(auto_now=True)),
-        #         ('deleted', models.DateTimeField(blank=True, null=True)),
-        #         ('name', models.CharField(max_length=800, verbose_name='Название')),
-        #         ('name_ru', models.CharField(max_length=800, null=True, verbose_name='Название')),
-        #         ('name_kk', models.CharField(max_length=800, null=True, verbose_name='Название')),
-        #         ('name_en', models.CharField(max_length=800, null=True, verbose_name='Название')),
-        #         ('is_exam', models.BooleanField(default=False, verbose_name='Является экзаменом')),
-        #         ('is_course_work', models.BooleanField(default=False, verbose_name='Является курсовой работой')),
-        #         ('is_gos_exam', models.BooleanField(default=False, verbose_name='Является гос экзаменом')),
-        #         ('is_diploma', models.BooleanField(default=False, verbose_name='Является государственным экзаменом')),
-        #     ],
-        #     options={
-        #         'verbose_name': 'Форма контроля',
-        #         'verbose_name_plural': 'Формы контроля',
-        #     },
-        # ),
+        migrations.CreateModel(
+            name='ControlForm',
+            fields=[
+                ('uid', models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False, unique=True, verbose_name='Уникальный идентификатор')),
+                ('is_active', models.BooleanField(default=True)),
+                ('created', models.DateTimeField(auto_now_add=True)),
+                ('updated', models.DateTimeField(auto_now=True)),
+                ('deleted', models.DateTimeField(blank=True, null=True)),
+                ('name', models.CharField(max_length=800, verbose_name='Название')),
+                ('name_ru', models.CharField(max_length=800, null=True, verbose_name='Название')),
+                ('name_kk', models.CharField(max_length=800, null=True, verbose_name='Название')),
+                ('name_en', models.CharField(max_length=800, null=True, verbose_name='Название')),
+                ('is_exam', models.BooleanField(default=False, verbose_name='Является экзаменом')),
+                ('is_course_work', models.BooleanField(default=False, verbose_name='Является курсовой работой')),
+                ('is_gos_exam', models.BooleanField(default=False, verbose_name='Является гос экзаменом')),
+                ('is_diploma', models.BooleanField(default=False, verbose_name='Является государственным экзаменом')),
+            ],
+            options={
+                'verbose_name': 'Форма контроля',
+                'verbose_name_plural': 'Формы контроля',
+            },
+        ),
     ]
