@@ -252,7 +252,7 @@ def to_null():
         uuid1c='',
     )
     for sd in sds:
-        # print(sd.uid)
+        print(sd.uid)
         # print('UID 1C:', sd.uuid1c)
         sd.uuid1c = None
         sd.save()
@@ -262,7 +262,7 @@ def to_null():
     print('To null. ok')
 
 
-# to_null()
+to_null()
 
 
 def del_no_uid():
@@ -277,4 +277,4 @@ def del_no_uid():
     print('no uid delete. ok')
 
 
-del_no_uid()
+# del_no_uid()
