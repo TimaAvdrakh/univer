@@ -12,7 +12,8 @@ from django.core.files.base import ContentFile
 from base64 import b64decode
 from organizations import models as org_models
 from portal.curr_settings import student_discipline_status, BOT_DEV_CHAT_IDS
-from bot import bot
+# from bot import bot
+from django.db import connection
 
 # def send():
 #     profile_pks = Role.objects.filter(is_supervisor=True).values('profile')
@@ -116,30 +117,49 @@ import json
 
 
 def find_dups():
-    dsds = org_models.StudentDiscipline.objects.all().distinct(
-        'student',
-        'study_plan_uid_1c',
-        'acad_period',
-        'discipline_code',
-        'discipline',
-        'load_type',
-        'hours',
-        'cycle',
-        'study_year',
-    )
+    # dsds = org_models.StudentDiscipline.objects.all().distinct(
+    #     'student',
+    #     'study_plan_uid_1c',
+    #     'acad_period',
+    #     'discipline_code',
+    #     'discipline',
+    #     'load_type',
+    #     'hours',
+    #     'cycle',
+    #     'study_year',
+    # )
 
-    for item in dsds:
+    query = '''
+                SELECT sd.student_id, sd.study_plan_uid_1c, sd.acad_period_id, 
+                       sd.discipline_code, sd.discipline_id,
+                       sd.load_type_id, sd.hours, sd.cycle_id, sd.study_year_id,
+                       COUNT(*) AS dup_count
+                FROM organizations_studentdiscipline sd
+                WHERE sd.study_year_id = 'c4f1122b-31f5-11e9-aa40-0cc47a2bc1bf'
+                GROUP BY sd.student_id, sd.study_plan_uid_1c, sd.acad_period_id, 
+                         sd.discipline_code, sd.discipline_id,
+                         sd.load_type_id, sd.hours, sd.cycle_id, sd.study_year_id
+                HAVING COUNT(*) > 1
+            '''
+
+    with connection.cursor() as cursor:
+        cursor.execute(query)
+
+        rows = cursor.fetchall()
+
+    for item in rows:
         sds = org_models.StudentDiscipline.objects.filter(
-            student=item.student,
-            study_plan_uid_1c=item.study_plan_uid_1c,
-            acad_period=item.acad_period,
-            discipline_code=item.discipline_code,
-            discipline=item.discipline,
-            load_type=item.load_type,
-            hours=item.hours,
-            cycle=item.cycle,
-            study_year=item.study_year,
+            student=item[0],
+            study_plan_uid_1c=item[1],
+            acad_period=item[2],
+            discipline_code=item[3],
+            discipline=item[4],
+            load_type=item[5],
+            hours=item[6],
+            cycle=item[7],
+            study_year=item[8],
         )
+        print('Dup_num: ', item[9])
         if len(sds) > 1:
             print('Duplicate: {}-{}-{}-{}-{}-{}-{}-{}-{}'.format(
                 sds[0].student.user.username,
@@ -153,9 +173,9 @@ def find_dups():
                 sds[0].study_year.repr_name,
             ))
 
-            uuid1c = ''
+            uuid1c = None
             for sd in sds:
-                if len(sd.uuid1c) > 0:
+                if sd.uuid1c is not None:
                     uuid1c = sd.uuid1c
 
             confirmed_sds = sds.filter(status_id=student_discipline_status['confirmed'])
@@ -177,11 +197,84 @@ def find_dups():
                         each.delete()
 
     print('Ok')
-    for chat_id in BOT_DEV_CHAT_IDS:
-        bot.send_message(chat_id,
-                         'Скрипт закончил работу')
+
+    # for chat_id in BOT_DEV_CHAT_IDS:
+    #     bot.send_message(chat_id,
+    #                      'Скрипт закончил работу')
 
 
-find_dups()
+# find_dups()
 
-# 1
+
+def find_dups_2():
+    query = '''
+                SELECT sd.student_id, 
+                       sd.uuid1c,
+                       COUNT(*) AS dup_count
+                FROM organizations_studentdiscipline sd
+                GROUP BY sd.student_id, sd.uuid1c
+                HAVING COUNT(*) > 1
+            '''
+
+    with connection.cursor() as cursor:
+        cursor.execute(query)
+
+        rows = cursor.fetchall()
+
+    for item in rows:
+        sds = org_models.StudentDiscipline.objects.filter(
+            student=item[0],
+            uuid1c=item[1],
+        )
+        print('Dup_num: ', item[2])
+
+        if len(sds) > 1:
+            print('Duplicate:{}, student: {}, uuid1c: {}'.format(
+                item[2],
+                sds[0].student.user.username,
+                item[1],
+                # sds[0].study_plan_uid_1c,
+                # sds[0].acad_period.name,
+                # sds[0].discipline.name,
+                # sds[0].discipline_code,
+                # sds[0].load_type.name,
+                # sds[0].hours,
+                # sds[0].cycle.name,
+                # sds[0].study_year.repr_name,
+            ))
+
+
+# find_dups_2()
+
+
+def to_null():
+    sds = org_models.StudentDiscipline.objects.filter(
+        uuid1c='',
+    )
+    for sd in sds:
+        # print(sd.uid)
+        # print('UID 1C:', sd.uuid1c)
+        sd.uuid1c = None
+        sd.save()
+        # print('UID 1C:', sd.uuid1c)
+        # print('\n')
+
+    print('To null. ok')
+
+
+# to_null()
+
+
+def del_no_uid():
+    sds = org_models.StudentDiscipline.objects.filter(
+        study_year_id='c4f1122b-31f5-11e9-aa40-0cc47a2bc1bf',
+        uuid1c__isnull=True,
+    )
+    for sd in sds:
+        print(sd.uid)
+        sd.delete()
+
+    print('no uid delete. ok')
+
+
+del_no_uid()

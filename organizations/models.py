@@ -774,7 +774,7 @@ class StudentDiscipline(BaseModel):
     )
     uuid1c = models.CharField(  # TODO выгрузить с 1С, дальше unique_together = (student, uuid1c)
         max_length=100,
-        default='',
+        null=True,
         verbose_name='Уид 1С',
         editable=False,
     )
@@ -812,16 +812,17 @@ class StudentDiscipline(BaseModel):
         verbose_name_plural = 'Дисциплины студента'
         unique_together = (
             'student',
-            # 'uuid1c',
-            'study_plan_uid_1c',
-            'acad_period',
-            'discipline_code',
-            'discipline',
-            'load_type',
-            'hours',
-            # 'language',
-            'cycle',
-            'study_year',
+            'uuid1c',
+
+            # 'study_plan_uid_1c',
+            # 'acad_period',
+            # 'discipline_code',
+            # 'discipline',
+            # 'load_type',
+            # 'hours',
+            # # 'language',
+            # 'cycle',
+            # 'study_year',
         )
         index_together = (
             'discipline',
@@ -1003,6 +1004,12 @@ class DisciplineCredit(BaseModel):
     )
     credit = models.FloatField(
         verbose_name='Кредит',
+    )
+    acad_period = models.ForeignKey(
+        AcadPeriod,
+        null=True,
+        on_delete=models.CASCADE,
+        verbose_name='Акад период',
     )
     chosen_control_forms = models.ManyToManyField(
         ControlForm,

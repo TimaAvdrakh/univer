@@ -184,6 +184,8 @@ class StudentDisciplineAdmin(admin.ModelAdmin):
         'uid',
         'student__first_name',
         'student__last_name',
+        'student__user__username',
+        'uuid1c',
     )
     autocomplete_fields = (
         'student',
