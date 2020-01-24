@@ -13,10 +13,10 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RemoveField(
-            model_name='disciplinecredit',
-            name='control_form',
-        ),
+        # migrations.RemoveField(
+        #     model_name='disciplinecredit',
+        #     name='control_form',
+        # ),
         migrations.AddField(
             model_name='disciplinecredit',
             name='chosen_control_forms',
