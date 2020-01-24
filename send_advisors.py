@@ -161,17 +161,17 @@ def find_dups():
         )
         print('Dup_num: ', item[9])
         if len(sds) > 1:
-            # print('Duplicate: {}-{}-{}-{}-{}-{}-{}-{}-{}'.format(
-            #     sds[0].student.user.username,
-            #     sds[0].study_plan_uid_1c,
-            #     sds[0].acad_period.name,
-            #     sds[0].discipline.name,
-            #     sds[0].discipline_code,
-            #     sds[0].load_type.name,
-            #     sds[0].hours,
-            #     sds[0].cycle.name,
-            #     sds[0].study_year.repr_name,
-            # ))
+            print('Duplicate: {}-{}-{}-{}-{}-{}-{}-{}-{}'.format(
+                sds[0].student.user.username,
+                sds[0].study_plan_uid_1c,
+                sds[0].acad_period.name,
+                sds[0].discipline.name,
+                sds[0].discipline_code,
+                sds[0].load_type.name,
+                sds[0].hours,
+                sds[0].cycle.name,
+                sds[0].study_year.repr_name,
+            ))
 
             uuid1c = None
             for sd in sds:
@@ -201,9 +201,6 @@ def find_dups():
     # for chat_id in BOT_DEV_CHAT_IDS:
     #     bot.send_message(chat_id,
     #                      'Скрипт закончил работу')
-
-
-find_dups()
 
 
 def find_dups_2():
@@ -262,9 +259,6 @@ def to_null():
     print('To null. ok')
 
 
-# to_null()
-
-
 def del_no_uid():
     sds = org_models.StudentDiscipline.objects.filter(
         study_year_id='c4f1122b-31f5-11e9-aa40-0cc47a2bc1bf',
@@ -277,4 +271,6 @@ def del_no_uid():
     print('no uid delete. ok')
 
 
-# del_no_uid()
+to_null()
+find_dups()
+del_no_uid()

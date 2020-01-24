@@ -619,9 +619,7 @@ def putfrom1c_copy(request):
 
 class FindDuplicateView(generics.RetrieveAPIView):
     def get(self, request, *args, **kwargs):
-        sds = models_organizations.StudentDiscipline.objects.filter(
-            uuid1c='',
-        )
+        sds = models_organizations.StudentDiscipline.objects.filter(uuid1c='')
         for sd in sds:
             print(sd.uid)
             # print('UID 1C:', sd.uuid1c)
