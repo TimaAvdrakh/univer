@@ -37,6 +37,7 @@ INSTALLED_APPS = [
     'univer_admin',
     'student_journal',
     'integration',
+    'abiturient'
 ]
 
 MIDDLEWARE = [
