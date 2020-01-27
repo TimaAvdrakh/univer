@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from organizations import models as org_models
 from portal_users.serializers import ProfileShortSerializer, StudentDisciplineStatusSerializer
-from portal.curr_settings import student_discipline_info_status, student_discipline_status
+from portal.curr_settings import student_discipline_info_status, student_discipline_status, not_choosing_load_types2
 from cron_app.models import AdvisorRejectedBidTask
 from . import models
 from portal_users.utils import get_current_study_year
@@ -167,7 +167,7 @@ class CheckStudentBidsSerializer(serializers.Serializer):
             status__in=invalid_statuses,
             is_active=True,
             study_year=study_year,
-        ).exists()
+        ).exclude(load_type__load_type2__in=not_choosing_load_types2).exists()
 
 
 class StudyPlanDetailSerializer(serializers.ModelSerializer):
