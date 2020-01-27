@@ -97,15 +97,20 @@ class CheckStudentBidsSerializer(serializers.Serializer):
         allow_blank=True,
         help_text='Причина отклонения заявки студента',
     )
+    study_year = serializers.PrimaryKeyRelatedField(
+        queryset=org_models.StudyPeriod.objects.filter(is_study_year=True,
+                                                       is_active=True)
+    )
 
     def save(self, **kwargs):
         study_plan = self.validated_data.get('study_plan')
         acad_periods = self.validated_data.get('acad_periods')
         status = self.validated_data.get('status')
         comment = self.validated_data.get('comment')
+        study_year = self.validated_data.get('study_year')
 
         if status == 4:  # Утвержден
-            if not self.all_teacher_chosen(study_plan, acad_periods):
+            if not self.all_teacher_chosen(study_plan, acad_periods, study_year):
                 raise CustomException(detail='not_all_chosen',
                                       status_code=200)
 
@@ -151,7 +156,7 @@ class CheckStudentBidsSerializer(serializers.Serializer):
                 comment=comment,
             )
 
-    def all_teacher_chosen(self, study_plan, acad_periods):
+    def all_teacher_chosen(self, study_plan, acad_periods, study_year):
         """Проверим выбраны ли все преподы в указанных акад периодах"""
         invalid_statuses = [student_discipline_status['not_chosen'],
                             student_discipline_status['rejected']]
@@ -161,6 +166,7 @@ class CheckStudentBidsSerializer(serializers.Serializer):
             acad_period__in=acad_periods,
             status__in=invalid_statuses,
             is_active=True,
+            study_year=study_year,
         ).exists()
 
 
