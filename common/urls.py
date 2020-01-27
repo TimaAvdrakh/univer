@@ -19,4 +19,4 @@ urlpatterns = [
     path('study_plan/study_years/', views.StudyYearFromStudyPlan.as_view(), name='study_years_from_study_plan'),
 ]
 
-#12
+#123
