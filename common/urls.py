@@ -16,4 +16,5 @@ urlpatterns = [
     path('study_forms/', views.StudyFormListView.as_view(), name='study_forms'),
 
     path('test_status_codes/', views.TestStatusCodeView.as_view(), name='test_status_codes'),
+    path('study_plan/study_years/', views.StudyYearFromStudyPlan.as_view(), name='study_years_from_study_plan'),
 ]

@@ -143,3 +143,37 @@ class TestStatusCodeView(generics.RetrieveAPIView):
             },
             status=int(code)
         )
+
+
+class StudyYearFromStudyPlan(generics.RetrieveAPIView):
+    def get(self, request, *args, **kwargs):
+        study_plan_id = request.query_params.get('study_plan')
+        try:
+            study_plan = org_models.StudyPlan.objects.get(pk=study_plan_id,
+                                                          is_active=True)
+        except org_models.StudyPlan.DoesNotExist:
+            return Response(
+                {
+                    'message': 'not_found'
+                },
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        study_year_pks = org_models.StudyYearCourse.objects.filter(
+            study_plan=study_plan,
+            is_active=True
+        ).values('study_year')
+        study_years = org_models.StudyPeriod.objects.filter(
+            pk__in=study_year_pks,
+            is_study_year=True,
+            is_active=True,
+        ).order_by('start')
+        serializer = serializers.StudyPeriodSerializer(
+            instance=study_years,
+            many=True,
+        )
+        return Response(
+            serializer.data,
+            status=status.HTTP_200_OK
+        )
+
