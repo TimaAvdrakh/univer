@@ -52,6 +52,47 @@ class GetAcadPeriodsForRegisterView(generics.ListAPIView):
         )
 
 
+class GetAcadPeriodsForRegisterCopyView(generics.ListAPIView):
+    """Получить доступные для регистрации акам периоды
+    Принимает query_param: ?study_plan="<uid study_plan>"
+    """
+    serializer_class = serializers.AcadPeriodSerializer
+
+    def list(self, request, *args, **kwargs):
+        study_plan_id = request.query_params.get('study_plan')
+
+        study_plan = org_models.StudyPlan.objects.get(
+            pk=study_plan_id,
+            is_active=True,
+        )
+        current_course = study_plan.current_course
+        if current_course is None:
+            return Response(
+                {
+                    "message": "not_actual_study_plan"
+                },
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        today = date.today()
+        acad_period_pks = models.CourseAcadPeriodPermission.objects.filter(
+            registration_period__start_date__lte=today,
+            registration_period__end_date__gte=today,
+            course=current_course,
+        ).values('acad_period')
+        acad_periods = org_models.AcadPeriod.objects.filter(
+            pk__in=acad_period_pks,
+            is_active=True,
+        )
+
+        serializer = self.serializer_class(acad_periods,
+                                           many=True)
+        return Response(
+            serializer.data,
+            status=status.HTTP_200_OK
+        )
+
+
 class LevelListView(generics.ListAPIView):
     """Получить список уровней"""
     queryset = Level.objects.filter(is_active=True)
@@ -176,4 +217,3 @@ class StudyYearFromStudyPlan(generics.RetrieveAPIView):
             serializer.data,
             status=status.HTTP_200_OK
         )
-
