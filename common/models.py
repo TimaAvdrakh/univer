@@ -29,7 +29,7 @@ class BaseModel(models.Model):
         null=True,
         blank=True,
     )
-    sort = models.IntegerField(default=500)
+    sort = models.IntegerField(default=500,)
     exchange = False
 
 
