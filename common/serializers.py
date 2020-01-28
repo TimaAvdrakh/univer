@@ -118,6 +118,10 @@ class StudyFormSerializer(serializers.ModelSerializer):
 
 
 class CourseSerializer(serializers.ModelSerializer):
+    uid = serializers.IntegerField(
+        source='number',
+    )
+
     class Meta:
         model = models.Course
         fields = (

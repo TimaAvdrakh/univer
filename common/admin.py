@@ -126,5 +126,6 @@ class LogAdmin(admin.ModelAdmin):
 class CourseAdmin(admin.ModelAdmin):
     list_display = (
         'name',
+        'number',
         'uid'
     )

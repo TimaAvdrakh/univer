@@ -271,6 +271,11 @@ class Log(BaseModel):
 
 
 class Course(BaseCatalog):
+    number = models.IntegerField(
+        null=True,
+        verbose_name='Номер',
+    )
+
     class Meta:
         verbose_name = 'Курс'
         verbose_name_plural = 'Курсы'

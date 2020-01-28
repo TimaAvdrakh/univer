@@ -12,20 +12,20 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RemoveField(
-            model_name='disciplinecredit',
-            name='control_form',
-        ),
-        migrations.AddField(
-            model_name='disciplinecredit',
-            name='acad_period',
-            field=models.ForeignKey(null=True,
-                                    on_delete=django.db.models.deletion.CASCADE,
-                                    to='organizations.AcadPeriod',
-                                    verbose_name='Акад период'),
-        ),
-        migrations.AlterUniqueTogether(
-            name='studentdiscipline',
-            unique_together={('student', 'uuid1c')},
-        ),
+        # migrations.RemoveField(
+        #     model_name='disciplinecredit',
+        #     name='control_form',
+        # ),
+        # migrations.AddField(
+        #     model_name='disciplinecredit',
+        #     name='acad_period',
+        #     field=models.ForeignKey(null=True,
+        #                             on_delete=django.db.models.deletion.CASCADE,
+        #                             to='organizations.AcadPeriod',
+        #                             verbose_name='Акад период'),
+        # ),
+        # migrations.AlterUniqueTogether(
+        #     name='studentdiscipline',
+        #     unique_together={('student', 'uuid1c')},
+        # ),
     ]
