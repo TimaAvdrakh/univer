@@ -444,6 +444,10 @@ class Role(BaseModel):
         default=False,
         verbose_name='Эдвайзор',
     )
+    is_selection_committer = models.BooleanField(
+        default=False,
+        verbose_name='Специалист приемной комиссии',
+    )
 
     def __str__(self):
         return '{}'.format(self.profile.user.username)

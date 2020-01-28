@@ -34,6 +34,7 @@ class RoleSerializer(serializers.ModelSerializer):
             'is_teacher',
             'is_org_admin',
             'is_supervisor',
+            'is_selection_committer',
         )
 
 
