@@ -20,6 +20,9 @@ urlpatterns = [
 
     path('test_status_codes/', views.TestStatusCodeView.as_view(), name='test_status_codes'),
     path('study_plan/study_years/', views.StudyYearFromStudyPlan.as_view(), name='study_years_from_study_plan'),
+
+    path('courses/', views.CourseListView.as_view(), name='cources'),
+    path('student_discipline/status/', views.StudentDisciplineStatusListView.as_view(), name='student_discipline_status'),
 ]
 
 #123454

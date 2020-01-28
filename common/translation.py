@@ -25,3 +25,8 @@ class NationalityTranslationOptions(TranslationOptions):
 @register(models.Citizenship)
 class CitizenshipTranslationOptions(TranslationOptions):
     fields = ('name',)
+
+
+@register(models.Course)
+class CourseTranslationOptions(TranslationOptions):
+    fields = ('name',)

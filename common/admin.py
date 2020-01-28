@@ -120,3 +120,11 @@ class LogAdmin(admin.ModelAdmin):
         'profile',
         'date',
     )
+
+
+@admin.register(models.Course)
+class CourseAdmin(admin.ModelAdmin):
+    list_display = (
+        'name',
+        'uid'
+    )

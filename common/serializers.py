@@ -115,3 +115,12 @@ class StudyFormSerializer(serializers.ModelSerializer):
             'uid',
             'name',
         )
+
+
+class CourseSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.Course
+        fields = (
+            'uid',
+            'name',
+        )

@@ -267,3 +267,9 @@ class Log(BaseModel):
     class Meta:
         verbose_name = 'Лог'
         verbose_name_plural = 'Логи'
+
+
+class Course(BaseCatalog):
+    class Meta:
+        verbose_name = 'Курс'
+        verbose_name_plural = 'Курсы'

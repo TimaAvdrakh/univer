@@ -7,6 +7,8 @@ from rest_framework.response import Response
 from rest_framework import status
 from portal_users.models import Level, AchievementType
 from datetime import date
+from organizations import serializers as org_serializers
+from portal_users import serializers as user_serializers
 
 
 class AcadPeriodListView(generics.ListAPIView):
@@ -217,3 +219,15 @@ class StudyYearFromStudyPlan(generics.RetrieveAPIView):
             serializer.data,
             status=status.HTTP_200_OK
         )
+
+
+class CourseListView(generics.ListAPIView):
+    """Получить список курсов"""
+    queryset = models.Course.objects.filter(is_active=True)
+    serializer_class = serializers.CourseSerializer
+
+
+class StudentDisciplineStatusListView(generics.ListAPIView):
+    """Получить список cтатусов при выборе препода"""
+    queryset = org_models.StudentDisciplineStatus.objects.filter(is_active=True)
+    serializer_class = user_serializers.StudentDisciplineStatusSerializer

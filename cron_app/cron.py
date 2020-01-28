@@ -17,6 +17,7 @@ from bot import bot
 import json
 from reports import views as report_views
 from advisors import views as advisor_views
+from common import models as common_models
 
 
 class EmailCronJob(CronJobBase):
@@ -443,3 +444,20 @@ class GenerateExcelJob(CronJobBase):
 #         # for post in posts:
 #         #     post.delete()
 #
+
+
+class NotifyStudentToRegisterJob(CronJobBase):
+    """Уведомление студентам на почту во время регистрации на дисциплины"""
+    RUN_EVERY_MINS = 1  # every 1 min
+
+    schedule = Schedule(run_every_mins=RUN_EVERY_MINS)
+    code = 'crop_app.notify_student_to_register'
+
+    def do(self):
+        today = datetime.today()
+        reg_periods = common_models.RegistrationPeriod.objects.filter(
+            end_date__gte=today,
+            is_active=True,
+        ).values('study_year')
+
+        # org_models.StudentDiscipline.objects.filter(study)
