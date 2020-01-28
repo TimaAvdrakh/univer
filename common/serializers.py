@@ -124,3 +124,16 @@ class CourseSerializer(serializers.ModelSerializer):
             'uid',
             'name',
         )
+
+
+class StudentDisciplineStatusSerializer(serializers.ModelSerializer):
+    uid = serializers.IntegerField(
+        source='number',
+    )
+
+    class Meta:
+        model = org_models.StudentDisciplineStatus
+        fields = (
+            'name',
+            'uid',
+        )

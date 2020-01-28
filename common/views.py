@@ -230,4 +230,4 @@ class CourseListView(generics.ListAPIView):
 class StudentDisciplineStatusListView(generics.ListAPIView):
     """Получить список cтатусов при выборе препода"""
     queryset = org_models.StudentDisciplineStatus.objects.filter(is_active=True)
-    serializer_class = user_serializers.StudentDisciplineStatusSerializer
+    serializer_class = serializers.StudentDisciplineStatusSerializer
