@@ -194,13 +194,15 @@ class StudentDisciplineAdmin(admin.ModelAdmin):
         'discipline',
         'study_plan',
         # 'study_year',
-        # 'acad_period',
-        # 'language',
+        'acad_period',
+        'language',
+        'study_year',
+        'load_type',
     )
     list_filter = [
         'status',
         'sent',
-        'acad_period',
+        # 'acad_period',
     ]
     list_display = [
         'student',
