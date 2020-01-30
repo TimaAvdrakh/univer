@@ -27,6 +27,7 @@ class StudyPlanSerializer(serializers.ModelSerializer):
         data['education_program_group'] = instance.education_program.group.code if instance.education_program.group else ' '  # instance.education_program.group.code
         data['acad_periods'] = []
         data['loading'] = False
+        data['error'] = False
 
         return data
 
