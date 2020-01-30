@@ -146,6 +146,7 @@ class StudentDisciplineListView(generics.ListAPIView):
             'is_more': is_more,
             'old_status': old_status,
             'acad_period': acad_period_obj.repr_name,
+            'uid': acad_period,
         }
 
         return Response(
