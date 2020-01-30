@@ -137,11 +137,15 @@ class StudentDisciplineListView(generics.ListAPIView):
         serializer = self.serializer_class(instance=queryset,
                                            many=True)
 
+        acad_period_obj = org_models.AcadPeriod.objects.get(pk=acad_period,
+                                                            is_active=True)
+
         resp = {
             'total_credit': total_credit,
             'disciplines': serializer.data,
             'is_more': is_more,
-            'old_status': old_status
+            'old_status': old_status,
+            'acad_period': acad_period_obj.repr_name,
         }
 
         return Response(
