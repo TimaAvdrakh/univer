@@ -50,6 +50,7 @@ class StudentDisciplineShortSerializer(serializers.ModelSerializer):
     def to_representation(self, instance):
         data = super().to_representation(instance=instance)
         data['credit'] = instance.credit
+        data['acad_period'] = instance.acad_period.repr_name
 
         return data
 
