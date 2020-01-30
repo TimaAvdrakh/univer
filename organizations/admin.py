@@ -51,9 +51,13 @@ class SpecialityAdmin(admin.ModelAdmin):
 
 @admin.register(models.Faculty)
 class FacultyAdmin(admin.ModelAdmin):
+    autocomplete_fields = (
+        'dekan',
+    )
     list_display = [
         'name',
         'uid',
+        'dekan',
     ]
 
 
@@ -119,6 +123,7 @@ class PreparationLevelAdmin(admin.ModelAdmin):
     list_display = [
         'name',
         'uid',
+        'shifr',
     ]
 
 

@@ -52,6 +52,13 @@ class StudyForm(BaseCatalog):
 
 
 class Faculty(BaseCatalog):
+    dekan = models.ForeignKey(
+        'portal_users.Profile',
+        null=True,
+        on_delete=models.CASCADE,
+        verbose_name='Декан',
+    )
+
     class Meta:
         verbose_name = 'Факультет'
         verbose_name_plural = 'Факультеты'
@@ -152,6 +159,12 @@ class Speciality(BaseCatalog):
 
 
 class PreparationLevel(BaseCatalog):
+    shifr = models.CharField(
+        null=True,
+        max_length=500,
+        verbose_name='Шифр',
+    )
+
     class Meta:
         verbose_name = 'Уровень подготовки'
         verbose_name_plural = 'Уровни подготовок'
