@@ -793,7 +793,7 @@ class GetFileView(generics.RetrieveAPIView):
                 {
                     'message': 'not_found',
                 },
-                status=status.HTTP_404_NOT_FOUND,
+                status=status.HTTP_200_OK,
             )
         self.check_object_permissions(request,
                                       task)
