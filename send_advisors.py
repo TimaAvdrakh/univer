@@ -179,6 +179,9 @@ def find_dups():
                     uuid1c = sd.uuid1c
 
             confirmed_sds = sds.filter(status_id=student_discipline_status['confirmed'])
+            changed_sds = sds.filter(status_id=student_discipline_status['changed'])
+            rejected_sds = sds.filter(status_id=student_discipline_status['rejected'])
+            chosen_sds = sds.filter(status_id=student_discipline_status['chosen'])
             if len(confirmed_sds) > 0:
                 for i, each in enumerate(confirmed_sds):
                     if i == 0:
@@ -188,6 +191,30 @@ def find_dups():
                         each.delete()
                 sds.exclude(status_id=student_discipline_status['confirmed']).delete()
 
+            elif len(changed_sds) > 0:
+                for i, each in enumerate(changed_sds):
+                    if i == 0:
+                        each.uuid1c = uuid1c
+                        each.save()
+                    else:
+                        each.delete()
+                sds.exclude(status_id=student_discipline_status['changed']).delete()
+            elif len(rejected_sds) > 0:
+                for i, each in enumerate(rejected_sds):
+                    if i == 0:
+                        each.uuid1c = uuid1c
+                        each.save()
+                    else:
+                        each.delete()
+                sds.exclude(status_id=student_discipline_status['rejected']).delete()
+            elif len(chosen_sds) > 0:
+                for i, each in enumerate(chosen_sds):
+                    if i == 0:
+                        each.uuid1c = uuid1c
+                        each.save()
+                    else:
+                        each.delete()
+                sds.exclude(status_id=student_discipline_status['chosen']).delete()
             else:
                 for i, each in enumerate(sds):
                     if i == 0:
