@@ -1417,7 +1417,7 @@ def make_iup_bid_excel(task):
         ws[a].border = border
 
         b = 'B' + row_num
-        ws[b] = study_plan.education_program.group.code
+        ws[b] = study_plan.education_program.group.code if study_plan.education_program.group else ' '  # study_plan.education_program.group.code
         ws[b].font = font
         ws[b].alignment = wrap_alignment
         ws[b].border = border
