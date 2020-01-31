@@ -62,6 +62,9 @@ class PlanCloseJournalTaskAdmin(admin.ModelAdmin):
 
 @admin.register(models.ExcelTask)
 class ExcelTaskAdmin(admin.ModelAdmin):
+    search_fields = (
+        'token',
+    )
     autocomplete_fields = (
         'profile',
     )
