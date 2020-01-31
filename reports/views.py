@@ -784,21 +784,51 @@ class GetFileView(generics.RetrieveAPIView):
 
     def get(self, request, *args, **kwargs):
         token = request.query_params.get('token')
+        get = request.query_params.get('get')
+
         try:
             task = ExcelTask.objects.get(token=token,
                                          is_success=True,
                                          is_active=True)
-        except ExcelTask.DoesNotExist:
-            return Response(
-                {
-                    'message': 'not_found',
-                },
-                status=status.HTTP_200_OK,
-            )
-        self.check_object_permissions(request,
-                                      task)
+            self.check_object_permissions(request,
+                                          task)
 
-        with open(task.file_path, 'rb') as f:
-            response = HttpResponse(f, content_type='application/ms-excel')
-            response['Content-Disposition'] = 'attachment; filename="regresult' + str(uuid4()) + '.xls"'
-            return response
+            if get == 'status':
+                resp = {
+                    'done': True
+                }
+            elif get == 'file':
+                with open(task.file_path, 'rb') as f:
+                    response = HttpResponse(f, content_type='application/ms-excel')
+                    response['Content-Disposition'] = 'attachment; filename="regresult' + str(uuid4()) + '.xls"'
+                    return response
+            else:
+                return Response(
+                    {
+                        'message': 'invalid_param',
+                    },
+                    status=status.HTTP_200_OK
+                )
+        except ExcelTask.DoesNotExist:
+            if get == 'status':
+                resp = {
+                    'done': False
+                }
+            elif get == 'file':
+                return Response(
+                    {
+                        'message': 'not_found',
+                    },
+                    status=status.HTTP_200_OK,
+                )
+            else:
+                return Response(
+                    {
+                        'message': 'invalid_param',
+                    },
+                    status=status.HTTP_200_OK
+                )
+        return Response(
+            resp,
+            status=status.HTTP_200_OK
+        )
