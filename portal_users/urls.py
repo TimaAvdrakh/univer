@@ -17,6 +17,10 @@ urlpatterns = [
     path('test/', views.TestView.as_view(), name='test'),
 
     path('my_discipline/', views.StudentDisciplineForRegListView.as_view(), name='my_disciplines_for_reg'),
+    path('my_discipline/copy/',
+         views.StudentDisciplineForRegListCopyView.as_view(),
+         name='my_disciplines_for_reg_copy'),
+
     path('my_discipline/<pk>/edit/', views.ChooseTeacherView.as_view(), name='choose_teacher'),
 
     path('my_study_plans/', views.MyStudyPlanListView.as_view(), name='my_study_plans'),

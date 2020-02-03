@@ -13,6 +13,8 @@ from . import permissions
 from .utils import get_current_study_year
 from common.csrf_exempt_auth_class import CsrfExemptSessionAuthentication
 from portal.curr_settings import student_discipline_info_status, current_site, not_choosing_load_types2
+from datetime import date
+from common import models as common_models
 
 
 class LoginView(generics.CreateAPIView):
@@ -228,6 +230,126 @@ class StudentDisciplineForRegListView(generics.ListAPIView):
             serializer.data,
             status=status.HTTP_200_OK
         )
+
+
+class StudentDisciplineForRegListCopyView(generics.ListAPIView):
+    """Получить список дисциплин для регистрации
+       Принимает: query_params: ?study_plan=<uid study_plan>&acad_period=<uid acad_period>
+    """
+    serializer_class = serializers.StudentDisciplineSerializer
+    permission_classes = (
+        IsAuthenticated,
+        permissions.StudyPlanPermission,
+    )
+
+    def list(self, request, *args, **kwargs):
+        study_plan_id = request.query_params.get('study_plan')
+        acad_period_id = request.query_params.get('acad_period')
+        study_year_id = request.query_params.get('study_year')
+
+        try:
+            study_plan = org_models.StudyPlan.objects.get(
+                pk=study_plan_id,
+                is_active=True,
+            )
+        except org_models.StudyPlan.DoesNotExist:
+            return Response(
+                {
+                    'message': 'not_found',
+                },
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        self.check_object_permissions(self.request,
+                                      study_plan)
+
+        if len(acad_period_id) > 0:
+            try:
+                org_models.StudentDisciplineInfo.objects.get(
+                    study_plan_id=study_plan_id,
+                    acad_period_id=acad_period_id,
+                )
+            except org_models.StudentDisciplineInfo.DoesNotExist:  # Создаем StudentDisciplineInfo если не создан
+                org_models.StudentDisciplineInfo.objects.create(
+                    student=study_plan.student,
+                    study_plan_id=study_plan_id,
+                    acad_period_id=acad_period_id,
+                    status_id=student_discipline_info_status["not_started"],
+                )
+
+            student_disciplines = org_models.StudentDiscipline.objects.filter(
+                study_plan_id=study_plan_id,
+                acad_period_id=acad_period_id,
+                study_year_id=study_year_id,
+                is_active=True,
+            ).exclude(load_type__load_type2__in=not_choosing_load_types2).order_by('discipline')
+
+            serializer = self.serializer_class(student_disciplines,
+                                               context={'study_year_id': study_year_id},
+                                               many=True)
+            return Response(
+                serializer.data,
+                status=status.HTTP_200_OK
+            )
+        else:
+            """Передаем все дисциплины группой"""
+            current_course = study_plan.current_course
+            if current_course is None:
+                return Response(
+                    {
+                        "message": "not_actual_study_plan"
+                    },
+                    status=status.HTTP_403_FORBIDDEN
+                )
+
+            today = date.today()
+            acad_period_pks = common_models.CourseAcadPeriodPermission.objects.filter(
+                registration_period__start_date__lte=today,
+                registration_period__end_date__gte=today,
+                course=current_course,
+            ).values('acad_period')
+            acad_periods = org_models.AcadPeriod.objects.filter(
+                pk__in=acad_period_pks,
+                is_active=True,
+            )
+
+            resp = []
+
+            for acad_period in acad_periods:
+                try:
+                    org_models.StudentDisciplineInfo.objects.get(
+                        study_plan_id=study_plan_id,
+                        acad_period=acad_period,
+                    )
+                except org_models.StudentDisciplineInfo.DoesNotExist:  # Создаем StudentDisciplineInfo если не создан
+                    org_models.StudentDisciplineInfo.objects.create(
+                        student=study_plan.student,
+                        study_plan_id=study_plan_id,
+                        acad_period=acad_period,
+                        status_id=student_discipline_info_status["not_started"],
+                    )
+
+                student_disciplines = org_models.StudentDiscipline.objects.filter(
+                    study_plan=study_plan,
+                    acad_period=acad_period,
+                    study_year_id=study_year_id,
+                    is_active=True,
+                ).exclude(load_type__load_type2__in=not_choosing_load_types2).order_by('discipline')
+
+                serializer = self.serializer_class(student_disciplines,
+                                                   context={'study_year_id': study_year_id},
+                                                   many=True)
+
+                item_key = acad_period.repr_name
+                item = {
+                    item_key: serializer.data
+                }
+                resp.append(item)
+
+            return Response(
+                resp,
+                status=status.HTTP_200_OK
+            )
 
 
 class MyStudyPlanListView(generics.ListAPIView):
