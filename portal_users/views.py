@@ -295,30 +295,35 @@ class StudentDisciplineForRegListCopyView(generics.ListAPIView):
                 status=status.HTTP_200_OK
             )
         else:
-            """Передаем все дисциплины группой"""
-            current_course = study_plan.current_course
-            if current_course is None:
-                return Response(
-                    {
-                        "message": "not_actual_study_plan"
-                    },
-                    status=status.HTTP_403_FORBIDDEN
-                )
-
-            today = date.today()
-            acad_period_pks = common_models.CourseAcadPeriodPermission.objects.filter(
-                registration_period__start_date__lte=today,
-                registration_period__end_date__gte=today,
-                course=current_course,
-            ).values('acad_period')
-            acad_periods = org_models.AcadPeriod.objects.filter(
-                pk__in=acad_period_pks,
-                is_active=True,
-            )
+            # """Передаем все дисциплины группой"""
+            # current_course = study_plan.current_course
+            # if current_course is None:
+            #     return Response(
+            #         {
+            #             "message": "not_actual_study_plan"
+            #         },
+            #         status=status.HTTP_403_FORBIDDEN
+            #     )
+            #
+            # today = date.today()
+            # acad_period_pks = common_models.CourseAcadPeriodPermission.objects.filter(
+            #     registration_period__start_date__lte=today,
+            #     registration_period__end_date__gte=today,
+            #     course=current_course,
+            # ).values('acad_period')
+            # acad_periods = org_models.AcadPeriod.objects.filter(
+            #     pk__in=acad_period_pks,
+            #     is_active=True,
+            # )
 
             resp = []
 
-            for acad_period in acad_periods:
+            for acad_period_id in acad_period_id_list:
+                acad_period = org_models.AcadPeriod.objects.get(
+                    pk=acad_period_id,
+                    is_active=True,
+                )
+
                 try:
                     org_models.StudentDisciplineInfo.objects.get(
                         study_plan_id=study_plan_id,
