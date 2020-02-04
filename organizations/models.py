@@ -475,10 +475,10 @@ class Prerequisite(BaseModel):
     )
     uuid1c = models.CharField(  # TODO
         max_length=100,
-        default='',
+        null=True,
         verbose_name='Уид 1С',
         editable=False,
-        unique=True,
+        # unique=True,
     )
 
     # def save(self, *args, **kwargs):
@@ -494,12 +494,12 @@ class Prerequisite(BaseModel):
         verbose_name = 'Пререквизит'
         verbose_name_plural = 'Пререквизиты'
 
-        # unique_together = (
-        #     'study_period',
-        #     'discipline',
-        #     'required_discipline',
-        #     'speciality',
-        # )
+        unique_together = (
+            'study_period',
+            'discipline',
+            'required_discipline',
+            'speciality',
+        )
 
 
 class Postrequisite(BaseModel):
@@ -526,10 +526,10 @@ class Postrequisite(BaseModel):
     )
     uuid1c = models.CharField(  # TODO
         max_length=100,
-        default='',
+        null=True,
         verbose_name='Уид 1С',
         editable=False,
-        unique=True,
+        # unique=True,
     )
 
     # def save(self, *args, **kwargs):
@@ -545,12 +545,12 @@ class Postrequisite(BaseModel):
         verbose_name = 'Постреквизит'
         verbose_name_plural = 'Постреквизиты'
 
-        # unique_together = (
-        #     'study_period',
-        #     'discipline',
-        #     'available_discipline',
-        #     'speciality',
-        # )
+        unique_together = (
+            'study_period',
+            'discipline',
+            'available_discipline',
+            'speciality',
+        )
 
 
 class Discipline(BaseCatalog):
@@ -826,14 +826,13 @@ class StudentDiscipline(BaseModel):
         unique_together = (
             'student',
             # 'uuid1c',
-
             'study_plan_uid_1c',
             'acad_period',
             'discipline_code',
             'discipline',
             'load_type',
             'hours',
-            # 'language',
+            'language',
             'cycle',
             'study_year',
         )
@@ -931,7 +930,7 @@ class TeacherDiscipline(BaseModel):
     )
     uuid1c = models.CharField(  # TODO
         max_length=100,
-        default='',
+        null=True,
         verbose_name='Уид 1С',
         editable=False,
         # unique=True,

@@ -24,8 +24,8 @@ class Migration(migrations.Migration):
             name='prerequisite',
             unique_together={('study_period', 'discipline', 'required_discipline', 'speciality')},
         ),
-        migrations.AlterUniqueTogether(
-            name='studentdiscipline',
-            unique_together={('student', 'study_plan', 'acad_period', 'discipline_code', 'discipline', 'load_type', 'hours', 'language', 'cycle', 'study_year')},
-        ),
+        # migrations.AlterUniqueTogether(
+        #     name='studentdiscipline',
+        #     unique_together={('student', 'study_plan', 'acad_period', 'discipline_code', 'discipline', 'load_type', 'hours', 'language', 'cycle', 'study_year')},
+        # ),
     ]
