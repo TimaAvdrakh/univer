@@ -54,6 +54,13 @@ class TimeWindow(BaseCatalog):
                                    self.from_time,
                                    self.to_time)
 
+    def save(self, *args, **kwargs):
+        if self.exchange:
+            if self._state.adding:
+                self.sort = 500
+
+        super(TimeWindow, self).save(*args, **kwargs)
+
     class Meta:
         verbose_name = 'Временное окно'
         verbose_name_plural = 'Временные окна'

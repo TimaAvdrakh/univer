@@ -244,7 +244,7 @@ class StudentDisciplineForRegListCopyView(generics.ListAPIView):
 
     def list(self, request, *args, **kwargs):
         study_plan_id = request.query_params.get('study_plan')
-        acad_period_id = request.query_params.get('acad_period')
+        acad_period_ids = request.query_params.get('acad_period')
         study_year_id = request.query_params.get('study_year')
 
         try:
@@ -263,7 +263,10 @@ class StudentDisciplineForRegListCopyView(generics.ListAPIView):
         self.check_object_permissions(self.request,
                                       study_plan)
 
-        if len(acad_period_id) > 0:
+        acad_period_id_list = acad_period_ids.split(',')  # TODO
+
+        if len(acad_period_id_list) == 1:
+            acad_period_id = acad_period_id_list[0]
             try:
                 org_models.StudentDisciplineInfo.objects.get(
                     study_plan_id=study_plan_id,
