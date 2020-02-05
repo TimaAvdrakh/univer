@@ -648,6 +648,7 @@ class StudentDisciplineSerializer(serializers.ModelSerializer):
             data['languages'] = []
 
         data['selection_teachers'] = teachers_serializer.data
+        data['ruled_out'] = False
 
         return data
 

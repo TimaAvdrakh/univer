@@ -339,9 +339,9 @@ class StudentDisciplineForRegListCopyView(generics.ListAPIView):
                                                    context={'study_year_id': study_year_id},
                                                    many=True)
 
-                item_key = acad_period.repr_name
                 item = {
-                    item_key: serializer.data
+                    'name': acad_period.repr_name,
+                    'disciplines': serializer.data,
                 }
                 resp.append(item)
 
