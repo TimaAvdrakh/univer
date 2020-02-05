@@ -264,7 +264,7 @@ class StudentDisciplineForRegListCopyView(generics.ListAPIView):
         self.check_object_permissions(self.request,
                                       study_plan)
 
-        if len(acad_period_id) > 1:
+        if reg_period_id is None:
             try:
                 org_models.StudentDisciplineInfo.objects.get(
                     study_plan_id=study_plan_id,
