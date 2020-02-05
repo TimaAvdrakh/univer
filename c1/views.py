@@ -466,15 +466,6 @@ def putfrom1c_copy(request):
                             finding_object.exchange = True
                         except MultipleObjectsReturned:
                             print(q, 'MultipleObjectsReturned: ' + str(cnt + 1) + current_rule['model'])
-                            # Test
-                            if Manager is models_organizations.StudentDiscipline:
-                                sds = Manager.objects.filter(**q)
-                                for sd in sds:
-                                    sd.exchange = True
-                                    sd.uuid1c = each_elem['uuid1c']
-                                    sd.save()
-
-                            # Test
                             continue
                     else:
                         try:

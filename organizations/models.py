@@ -792,6 +792,28 @@ class StudentDiscipline(BaseModel):
         editable=False,
     )
 
+    def set_uuid1c(self):
+        """
+        Установит поле uuid1c дубликатам текущей записи
+        """
+        sds = StudentDiscipline.objects.filter(
+            student=self.student,
+            study_plan_uid_1c=self.study_plan_uid_1c,
+            acad_period=self.acad_period,
+            discipline_code=self.discipline_code,
+            discipline=self.discipline,
+            load_type=self.load_type,
+            hours=self.hours,
+            # language=sd.language,
+            cycle=self.cycle,
+            study_year=self.study_year,
+        )
+
+        for obj in sds:
+            # obj.exchange = True
+            obj.uuid1c = self.uuid1c
+            obj.save()
+
     def save(self, *args, **kwargs):
         if self.exchange:
             if self._state.adding:
@@ -805,6 +827,11 @@ class StudentDiscipline(BaseModel):
                 self.study_plan = study_plan
             except StudyPlan.DoesNotExist:
                 print('StudyPlan not found')
+
+            # Test
+            if self.uuid1c:
+                self.set_uuid1c()
+            # Test
 
         super(StudentDiscipline, self).save(*args, **kwargs)
 
@@ -832,7 +859,7 @@ class StudentDiscipline(BaseModel):
             'discipline',
             'load_type',
             'hours',
-            # 'language',
+            'language',
             'cycle',
             'study_year',
         )
