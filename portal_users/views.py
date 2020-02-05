@@ -236,7 +236,7 @@ class StudentDisciplineForRegListCopyView(generics.ListAPIView):
     """Получить список дисциплин для регистрации
        Принимает: query_params: ?study_plan=<uid study_plan>&acad_period=<uid acad_period>
     """
-    serializer_class = serializers.StudentDisciplineSerializer
+    serializer_class = serializers.StudentDisciplineListSerializer
     permission_classes = (
         IsAuthenticated,
         permissions.StudyPlanPermission,
@@ -283,7 +283,8 @@ class StudentDisciplineForRegListCopyView(generics.ListAPIView):
                 acad_period_id=acad_period_id,
                 study_year_id=study_year_id,
                 is_active=True,
-            ).exclude(load_type__load_type2__in=not_choosing_load_types2).order_by('discipline')
+            ).exclude(load_type__load_type2__in=not_choosing_load_types2).\
+                distinct('discipline').order_by('discipline')
 
             serializer = self.serializer_class(student_disciplines,
                                                context={'study_year_id': study_year_id},
@@ -333,7 +334,8 @@ class StudentDisciplineForRegListCopyView(generics.ListAPIView):
                     acad_period=acad_period,
                     study_year_id=study_year_id,
                     is_active=True,
-                ).exclude(load_type__load_type2__in=not_choosing_load_types2).order_by('discipline')
+                ).exclude(load_type__load_type2__in=not_choosing_load_types2).\
+                    distinct('discipline').order_by('discipline')
 
                 serializer = self.serializer_class(student_disciplines,
                                                    context={'study_year_id': study_year_id},

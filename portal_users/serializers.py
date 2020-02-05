@@ -7,7 +7,7 @@ from django.contrib.auth import password_validation
 from cron_app.models import ResetPasswordUrlSendTask, CredentialsEmailTask, NotifyAdvisorTask
 from common.utils import password_generator
 from organizations import models as org_models
-from portal.curr_settings import student_discipline_status, student_discipline_info_status, language_multilingual_id
+from portal.curr_settings import student_discipline_status, student_discipline_info_status, language_multilingual_id, not_choosing_load_types2
 from django.db.models import Q
 from common import serializers as common_serializers
 from uuid import uuid4
@@ -620,6 +620,105 @@ class StudentDisciplineSerializer(serializers.ModelSerializer):
             'uid',
             'acad_period',
             'discipline',
+            'load_type',
+            'hours',
+            'status',
+            'author',
+            'teacher',
+            'language',
+        )
+        read_only_fields = (
+            'uid',
+            'student',
+            'study_plan',
+            'hours',
+            'language',
+        )
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        teacher_disciplines, languages = self.__get_allowed_teachers(instance)
+        teachers_serializer = TeacherDisciplineSerializer(instance=teacher_disciplines,
+                                                          many=True)
+        if languages:
+            lang_serializer = LanguageSerializer(instance=languages,
+                                                 many=True)
+            data['languages'] = lang_serializer.data
+        else:
+            data['languages'] = []
+
+        data['selection_teachers'] = teachers_serializer.data
+        data['ruled_out'] = False
+
+        return data
+
+    def __get_allowed_teachers(self, instance):
+        study_year_id = self.context.get('study_year_id')
+
+        teacher_disciplines = org_models.TeacherDiscipline.objects.filter(
+            discipline=instance.discipline,
+            load_type2=instance.load_type.load_type2,
+            is_active=True,
+        )
+
+        if study_year_id:
+            teacher_disciplines = teacher_disciplines.filter(
+                study_period_id=study_year_id,
+            )
+        language_pks = teacher_disciplines.values('language').distinct('language')
+        teacher_disciplines = teacher_disciplines.order_by('teacher__last_name')
+
+        languages = org_models.Language.objects.filter(pk__in=language_pks)
+
+        return teacher_disciplines, languages
+
+
+class StudentDisciplineListSerializer(serializers.ModelSerializer):
+    """Используется для списка дисциплин в Регистрации на дисциплины"""
+
+    discipline = serializers.CharField(read_only=True)
+
+    class Meta:
+        model = org_models.StudentDiscipline
+        fields = (
+            'uid',
+            'discipline',
+        )
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        data['credit'] = instance.credit
+
+        sds = org_models.StudentDiscipline.objects.filter(
+            student=instance.student,
+            discipline=instance.discipline,
+            study_plan=instance.study_plan,
+            study_year=instance.study_year,
+            acad_period=instance.acad_period,
+        ).exclude(load_type__load_type2__in=not_choosing_load_types2).order_by('discipline')
+
+        serializer = StudentDisciplineCopySerializer(instance=sds,
+                                                     many=True)
+        data['load_types'] = serializer.data
+
+        return data
+
+
+class StudentDisciplineCopySerializer(serializers.ModelSerializer):
+    acad_period = serializers.CharField(read_only=True)
+    # discipline = serializers.CharField(read_only=True)
+    load_type = serializers.CharField(read_only=True)
+    teacher = ProfileShortSerializer()
+    status = StudentDisciplineStatusSerializer()
+    author = ProfileShortSerializer()
+    language = serializers.CharField()
+
+    class Meta:
+        model = org_models.StudentDiscipline
+        fields = (
+            'uid',
+            'acad_period',
+            # 'discipline',
             'load_type',
             'hours',
             'status',
