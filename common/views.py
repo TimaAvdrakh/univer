@@ -95,8 +95,8 @@ class GetAcadPeriodsForRegisterCopyView(generics.ListAPIView):
         )
 
 
-class GetAcadPeriodsInRegPeriodView(generics.ListAPIView):  # TODO
-    """Получить акад периоды в указанный период регистрации
+class GetRegPeriodAcadPeriodsView(generics.ListAPIView):  # TODO
+    """Получить акад периоды в указанном периоде регистрации
     Принимает query_param: ?study_plan="<uid study_plan>, reg_period "
     """
     serializer_class = serializers.AcadPeriodSerializer
@@ -118,10 +118,8 @@ class GetAcadPeriodsInRegPeriodView(generics.ListAPIView):  # TODO
                 status=status.HTTP_403_FORBIDDEN
             )
 
-        today = date.today()
         acad_period_pks = models.CourseAcadPeriodPermission.objects.filter(
-            registration_period__start_date__lte=today,
-            registration_period__end_date__gte=today,
+            registration_period_id=reg_period,
             course=current_course,
         ).values('acad_period')
         acad_periods = org_models.AcadPeriod.objects.filter(

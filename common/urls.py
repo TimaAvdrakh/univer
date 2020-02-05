@@ -10,6 +10,9 @@ urlpatterns = [
     path('acad_periods_for_reg/copy/', views.GetAcadPeriodsForRegisterCopyView.as_view(),
          name='acad_periods_for_reg_copy'),
 
+    path('reg_period/acad_periods/', views.GetRegPeriodAcadPeriodsView.as_view(),
+         name='reg_period_acad_periods'),
+
     path('levels/', views.LevelListView.as_view(), name='levels'),
     path('achievement_types/', views.AchievementTypeListView.as_view(), name='achievement_types'),
 
