@@ -832,7 +832,7 @@ class StudentDiscipline(BaseModel):
             'discipline',
             'load_type',
             'hours',
-            'language',
+            # 'language',
             'cycle',
             'study_year',
         )
