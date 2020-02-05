@@ -15,8 +15,8 @@ class Migration(migrations.Migration):
             name='uuid1c',
             field=models.CharField(editable=False, max_length=100, null=True, unique=True, verbose_name='Уид 1С'),
         ),
-        # migrations.AlterUniqueTogether(
-        #     name='prerequisite',
-        #     unique_together={('study_period', 'discipline', 'required_discipline', 'speciality')},
-        # ),
+        migrations.AlterUniqueTogether(
+            name='prerequisite',
+            unique_together={('study_period', 'discipline', 'required_discipline', 'speciality')},
+        ),
     ]

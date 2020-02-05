@@ -11,8 +11,8 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        # migrations.AlterUniqueTogether(
-        #     name='studentdiscipline',
-        #     unique_together={('student', 'study_plan_uid_1c', 'acad_period', 'discipline_code', 'discipline', 'load_type', 'hours', 'language', 'cycle', 'study_year')},
-        # ),
+        migrations.AlterUniqueTogether(
+            name='studentdiscipline',
+            unique_together={('student', 'study_plan_uid_1c', 'acad_period', 'discipline_code', 'discipline', 'load_type', 'hours', 'language', 'cycle', 'study_year')},
+        ),
     ]
