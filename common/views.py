@@ -90,15 +90,15 @@ class GetAcadPeriodsForRegisterCopyView(generics.ListAPIView):
 
         serializer = self.serializer_class(acad_periods,
                                            many=True)
-        data = serializer.data
-        data.append(
+        resp = serializer.data
+        resp.append(
             {
                 'name': _('all period'),
                 'uid': None,
             }
         )
         return Response(
-            serializer.data,
+            resp,
             status=status.HTTP_200_OK
         )
 
