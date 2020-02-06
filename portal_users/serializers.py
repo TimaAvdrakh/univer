@@ -7,7 +7,8 @@ from django.contrib.auth import password_validation
 from cron_app.models import ResetPasswordUrlSendTask, CredentialsEmailTask, NotifyAdvisorTask
 from common.utils import password_generator
 from organizations import models as org_models
-from portal.curr_settings import student_discipline_status, student_discipline_info_status, language_multilingual_id, not_choosing_load_types2
+from portal.curr_settings import student_discipline_status, student_discipline_info_status, language_multilingual_id, \
+    not_choosing_load_types2
 from django.db.models import Q
 from common import serializers as common_serializers
 from uuid import uuid4
@@ -767,9 +768,13 @@ class StudentDisciplineCopySerializer(serializers.ModelSerializer):
         for item in statuses:
             if item.number == 5:
                 author = data['author']
-                data['listStatus'][item.number] = '{} {} {}'.format(author['lastName'],
-                                                                    author['firstName'],
-                                                                    author['middleName'])
+                if author:
+                    author_name = '{} {} {}'.format(author['lastName'],
+                                                    author['firstName'],
+                                                    author['middleName'])
+                else:
+                    author_name = ''
+                data['listStatus'][item.number] = author_name
             else:
                 data['listStatus'][item.number] = item.name
 
