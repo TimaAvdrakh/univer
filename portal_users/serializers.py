@@ -765,7 +765,13 @@ class StudentDisciplineCopySerializer(serializers.ModelSerializer):
         data['listStatus'] = {}
         statuses = org_models.StudentDisciplineStatus.objects.filter(is_active=True)
         for item in statuses:
-            data['listStatus'][item.number] = item.name
+            if item.number == 5:
+                author = data['author']
+                data['listStatus'][item.number] = '{} {} {}'.format(author['lastName'],
+                                                                    author['firstName'],
+                                                                    author['middleName'])
+            else:
+                data['listStatus'][item.number] = item.name
 
         return data
 
