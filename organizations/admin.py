@@ -206,7 +206,7 @@ class StudentDisciplineAdmin(admin.ModelAdmin):
     )
     list_filter = [
         'status',
-        'sent',
+        # 'sent',
         # 'acad_period',
     ]
     list_display = [
@@ -218,11 +218,11 @@ class StudentDisciplineAdmin(admin.ModelAdmin):
         'hours',
         'teacher',
         'language',
-        'author',
-        'discipline_code',
+        # 'author',
+        # 'discipline_code',
         'status',
         'study_year',
-        'sent',
+        # 'sent',
         'uuid1c',
         'is_active',
     ]
