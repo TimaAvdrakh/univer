@@ -1313,3 +1313,5 @@ msgstr "Өткізілген"
 msgid "all"
 msgstr "барлығы"
 
+msgid "all period"
+msgstr "Барлык период"

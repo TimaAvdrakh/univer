@@ -9,6 +9,7 @@ from portal_users.models import Level, AchievementType
 from datetime import date
 from organizations import serializers as org_serializers
 from portal_users import serializers as user_serializers
+from django.utils.translation import gettext as _
 
 
 class AcadPeriodListView(generics.ListAPIView):
@@ -89,6 +90,13 @@ class GetAcadPeriodsForRegisterCopyView(generics.ListAPIView):
 
         serializer = self.serializer_class(acad_periods,
                                            many=True)
+        data = serializer.data
+        data.append(
+            {
+                'name': _('all period'),
+                'uid': None,
+            }
+        )
         return Response(
             serializer.data,
             status=status.HTTP_200_OK

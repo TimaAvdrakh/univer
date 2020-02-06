@@ -749,6 +749,24 @@ class StudentDisciplineCopySerializer(serializers.ModelSerializer):
         data['selection_teachers'] = teachers_serializer.data
         data['ruled_out'] = False
 
+        # teacher_data = data['teacher']
+        # org_models.TeacherDiscipline.objects.filter(
+        #     teacher_id=teacher_data['profileId'],
+        #
+        # )
+        # data['teacher'] = {
+        #     'uid': '',
+        #     'teacher': teacher_data,
+        #     'language': data['language'],
+        # }
+        status_data = data['status']
+        data['status'] = status_data['number']
+
+        data['listStatus'] = {}
+        statuses = org_models.StudentDisciplineStatus.objects.filter(is_active=True)
+        for item in statuses:
+            data['listStatus'][item.number] = item.name
+
         return data
 
     def __get_allowed_teachers(self, instance):
