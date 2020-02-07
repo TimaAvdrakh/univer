@@ -890,6 +890,7 @@ class ChooseTeacherSerializer(serializers.ModelSerializer):
         if teacher_discipline is None:
             """Выбор отменен"""
             instance.teacher = None
+            instance.language = None
             instance.status_id = student_discipline_status['not_chosen']
         else:
             teacher_disciplines = self.__get_allowed_teachers(instance)

@@ -298,6 +298,123 @@ def del_no_uid():
     print('no uid delete. ok')
 
 
-to_null()
-find_dups()
-del_no_uid()
+# to_null()
+# find_dups()
+# del_no_uid()
+
+
+def find_dups_disc_code():
+    # dsds = org_models.StudentDiscipline.objects.all().distinct(
+    #     'student',
+    #     'study_plan_uid_1c',
+    #     'acad_period',
+    #     'discipline_code',
+    #     'discipline',
+    #     'load_type',
+    #     'hours',
+    #     'cycle',
+    #     'study_year',
+    # )
+
+    '''
+    'student',
+    'study_plan',
+    'acad_period',
+    'discipline',
+    'load_type',
+    'hours',
+    'study_year',
+    '''
+
+    query = '''
+                SELECT sd.student_id, sd.study_plan_uid_1c, sd.acad_period_id, sd.discipline_id,
+                       sd.load_type_id, sd.hours, sd.study_year_id,
+                       COUNT(*) AS dup_count
+                FROM organizations_studentdiscipline sd
+                WHERE sd.study_year_id = 'c4f1122b-31f5-11e9-aa40-0cc47a2bc1bf'
+                GROUP BY sd.student_id, sd.study_plan_uid_1c, sd.acad_period_id, sd.discipline_id,
+                         sd.load_type_id, sd.hours, sd.study_year_id
+                HAVING COUNT(*) > 1
+            '''
+
+    with connection.cursor() as cursor:
+        cursor.execute(query)
+
+        rows = cursor.fetchall()
+
+    for item in rows:
+        sds = org_models.StudentDiscipline.objects.filter(
+            student=item[0],
+            study_plan_uid_1c=item[1],
+            acad_period=item[2],
+            discipline=item[3],
+            load_type=item[4],
+            hours=item[5],
+            study_year=item[6],
+        )
+        print('Dup_num: ', item[7])
+        if len(sds) > 1:
+            print('Duplicate: {}-{}-{}-{}-{}-{}-{}'.format(
+                sds[0].student.user.username,
+                sds[0].study_plan_uid_1c,
+                sds[0].acad_period.name,
+                sds[0].discipline.name,
+                sds[0].load_type.name,
+                sds[0].hours,
+                sds[0].study_year.repr_name,
+            ))
+
+            uuid1c = None
+            for sd in sds:
+                if sd.uuid1c is not None:
+                    uuid1c = sd.uuid1c
+            #
+            # confirmed_sds = sds.filter(status_id=student_discipline_status['confirmed'])
+            # changed_sds = sds.filter(status_id=student_discipline_status['changed'])
+            # rejected_sds = sds.filter(status_id=student_discipline_status['rejected'])
+            # chosen_sds = sds.filter(status_id=student_discipline_status['chosen'])
+
+            # if len(confirmed_sds) > 0:
+            #     for i, each in enumerate(confirmed_sds):
+            #         if i == 0:
+            #             each.uuid1c = uuid1c
+            #             each.save()
+            #         else:
+            #             each.delete()
+            #     sds.exclude(status_id=student_discipline_status['confirmed']).delete()
+            #
+            # elif len(changed_sds) > 0:
+            #     for i, each in enumerate(changed_sds):
+            #         if i == 0:
+            #             each.uuid1c = uuid1c
+            #             each.save()
+            #         else:
+            #             each.delete()
+            #     sds.exclude(status_id=student_discipline_status['changed']).delete()
+            # elif len(rejected_sds) > 0:
+            #     for i, each in enumerate(rejected_sds):
+            #         if i == 0:
+            #             each.uuid1c = uuid1c
+            #             each.save()
+            #         else:
+            #             each.delete()
+            #     sds.exclude(status_id=student_discipline_status['rejected']).delete()
+            # elif len(chosen_sds) > 0:
+            #     for i, each in enumerate(chosen_sds):
+            #         if i == 0:
+            #             each.uuid1c = uuid1c
+            #             each.save()
+            #         else:
+            #             each.delete()
+            #     sds.exclude(status_id=student_discipline_status['chosen']).delete()
+            # else:
+
+            for each in sds:
+                if each.uuid1c is None:
+                    each.uuid1c = uuid1c
+                    each.save()
+
+    print('Ok')
+
+
+find_dups_disc_code()
