@@ -206,6 +206,7 @@ class StudentDisciplineAdmin(admin.ModelAdmin):
     )
     list_filter = [
         'status',
+        'study_year',
         # 'sent',
         # 'acad_period',
     ]
