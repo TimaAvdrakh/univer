@@ -264,36 +264,11 @@ class StudentDisciplineForRegListCopyView(generics.ListAPIView):
         self.check_object_permissions(self.request,
                                       study_plan)
 
-        if reg_period_id is None:
-            try:
-                org_models.StudentDisciplineInfo.objects.get(
-                    study_plan_id=study_plan_id,
-                    acad_period_id=acad_period_id,
-                )
-            except org_models.StudentDisciplineInfo.DoesNotExist:  # Создаем StudentDisciplineInfo если не создан
-                org_models.StudentDisciplineInfo.objects.create(
-                    student=study_plan.student,
-                    study_plan_id=study_plan_id,
-                    acad_period_id=acad_period_id,
-                    status_id=student_discipline_info_status["not_started"],
-                )
+        is_advisor = False
+        if study_plan.advisor == request.user.profile:
+            is_advisor = True
 
-            student_disciplines = org_models.StudentDiscipline.objects.filter(
-                study_plan_id=study_plan_id,
-                acad_period_id=acad_period_id,
-                study_year_id=study_year_id,
-                is_active=True,
-            ).exclude(load_type__load_type2__in=not_choosing_load_types2).\
-                distinct('discipline').order_by('discipline')
-
-            serializer = self.serializer_class(student_disciplines,
-                                               context={'study_year_id': study_year_id},
-                                               many=True)
-            return Response(
-                serializer.data,
-                status=status.HTTP_200_OK
-            )
-        else:
+        if reg_period_id and is_advisor:
             """Передаем все дисциплины группой"""
             current_course = study_plan.current_course
             if current_course is None:
@@ -334,7 +309,7 @@ class StudentDisciplineForRegListCopyView(generics.ListAPIView):
                     acad_period=acad_period,
                     study_year_id=study_year_id,
                     is_active=True,
-                ).exclude(load_type__load_type2__in=not_choosing_load_types2).\
+                ).exclude(load_type__load_type2__in=not_choosing_load_types2). \
                     distinct('discipline').order_by('discipline')
 
                 serializer = self.serializer_class(student_disciplines,
@@ -349,6 +324,37 @@ class StudentDisciplineForRegListCopyView(generics.ListAPIView):
 
             return Response(
                 resp,
+                status=status.HTTP_200_OK
+            )
+        elif not is_advisor:
+            pass
+        else:
+            try:
+                org_models.StudentDisciplineInfo.objects.get(
+                    study_plan_id=study_plan_id,
+                    acad_period_id=acad_period_id,
+                )
+            except org_models.StudentDisciplineInfo.DoesNotExist:  # Создаем StudentDisciplineInfo если не создан
+                org_models.StudentDisciplineInfo.objects.create(
+                    student=study_plan.student,
+                    study_plan_id=study_plan_id,
+                    acad_period_id=acad_period_id,
+                    status_id=student_discipline_info_status["not_started"],
+                )
+
+            student_disciplines = org_models.StudentDiscipline.objects.filter(
+                study_plan_id=study_plan_id,
+                acad_period_id=acad_period_id,
+                study_year_id=study_year_id,
+                is_active=True,
+            ).exclude(load_type__load_type2__in=not_choosing_load_types2).\
+                distinct('discipline').order_by('discipline')
+
+            serializer = self.serializer_class(student_disciplines,
+                                               context={'study_year_id': study_year_id},
+                                               many=True)
+            return Response(
+                serializer.data,
                 status=status.HTTP_200_OK
             )
 
