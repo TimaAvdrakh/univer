@@ -467,24 +467,36 @@ class ChooseTeacherView(generics.UpdateAPIView):
         )
 
 
-class MyGroupListView(generics.ListAPIView):
-    """Получить инфо о моих группах"""
+class MyGroupListView(generics.RetrieveAPIView):
+    """Получить группу выбранного учебного плана"""
     serializer_class = serializers.GroupDetailSerializer
+    permission_classes = (
+        IsAuthenticated,
+        permissions.StudyPlanPermission,
+    )
 
-    def get_queryset(self):
-        profile = self.request.user.profile
-        current_study_year = get_current_study_year()
+    def get(self, request, *args, **kwargs):
+        study_plan_id = request.query_params.get('study_plan')
 
-        my_group_pks = org_models.StudyPlan.objects.filter(
-            student=profile,
-            study_period__end__gt=current_study_year.get('start'),
-            is_active=True
-        ).values('group')
-        my_groups = org_models.Group.objects.filter(
-            pk__in=my_group_pks,
-            is_active=True,
+        try:
+            study_plan = org_models.StudyPlan.objects.get(
+                pk=study_plan_id,
+                is_active=True,
+            )
+            self.check_object_permissions(request, study_plan)
+        except org_models.StudyPlan.DoesNotExist:
+            return Response(
+                {
+                    'message': 'not_found'
+                },
+                status=400
+            )
+        serializer = self.serializer_class(study_plan.group)
+
+        return Response(
+            serializer.data,
+            status=200
         )
-        return my_groups
 
 
 class NotifyAdviser(generics.CreateAPIView):

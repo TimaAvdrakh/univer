@@ -1055,11 +1055,32 @@ class DisciplineCredit(BaseModel):
         blank=True,
         verbose_name='Выбранные формы контроля',
     )
+    study_plan_uid_1c = models.CharField(
+        max_length=100,
+        null=True,
+        verbose_name='uid 1c учебного плана',
+    )
+    student = models.ForeignKey(
+        'portal_users.Profile',
+        on_delete=models.CASCADE,
+        null=True,
+        verbose_name='Студент',
+    )
 
     def __str__(self):
         return '{} {} {}'.format(self.study_plan,
                                  self.discipline,
                                  self.credit)
+
+    def save(self, *args, **kwargs):
+        if self.exchange:
+            try:
+                study_plan = StudyPlan.objects.get(student=self.student,
+                                                   uid_1c=self.study_plan_uid_1c)
+                self.study_plan = study_plan
+            except StudyPlan.DoesNotExist:
+                print('StudyPlan not found')
+        super().save(*args, **kwargs)
 
     class Meta:
         verbose_name = 'Кредит дисциплины'
