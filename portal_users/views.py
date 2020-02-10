@@ -491,7 +491,8 @@ class MyGroupListView(generics.RetrieveAPIView):
                 },
                 status=400
             )
-        serializer = self.serializer_class(study_plan.group)
+        serializer = self.serializer_class(study_plan.group,
+                                           context={'context': request})
 
         return Response(
             serializer.data,
