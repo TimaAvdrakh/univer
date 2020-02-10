@@ -1079,7 +1079,7 @@ class DisciplineCredit(BaseModel):
                                                    uid_1c=self.study_plan_uid_1c)
                 self.study_plan = study_plan
             except StudyPlan.DoesNotExist:
-                print('StudyPlan not found')
+                print('StudyPlan not found!')
         super().save(*args, **kwargs)
 
     class Meta:
