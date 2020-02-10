@@ -519,6 +519,7 @@ class DisciplineCreditAdmin(admin.ModelAdmin):
     autocomplete_fields = (
         'study_plan',
         'discipline',
+        'student',
     )
     list_display = [
         'uuid1c',
