@@ -1024,7 +1024,7 @@ class DisciplineCredit(BaseModel):
         max_length=100,
         verbose_name='Уид 1С',
         editable=False,
-        unique=True,
+        # unique=True,
     )
     study_plan = models.ForeignKey(
         StudyPlan,
@@ -1085,6 +1085,10 @@ class DisciplineCredit(BaseModel):
     class Meta:
         verbose_name = 'Кредит дисциплины'
         verbose_name_plural = 'Кредиты дисциплин'
+        unique_together = (
+            'uuid1c',
+            'student',
+        )
 
 
 class DisciplineCreditControlForm(BaseModel):
