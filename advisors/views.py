@@ -1883,3 +1883,16 @@ class CopyStudyPlansListView(generics.ListAPIView):
             queryset = queryset.filter(pk__in=study_plan_pks)
 
         return queryset
+
+
+class DeactivateDiscipline(generics.UpdateAPIView):
+    """
+    Деактивировать дисциплины
+    """
+    permission_classes = (
+        IsAuthenticated,
+        # adv_permission.StudentDisciplinePermission,
+    )
+    queryset = org_models.StudentDiscipline.objects.all()
+    serializer_class = serializers.DeactivateDisciplineSerializer
+

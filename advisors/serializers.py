@@ -323,3 +323,23 @@ class NotRegisteredStudentSerializer(serializers.Serializer):
     #     data['student'] = instance.student.full_name
     #
     #     return data
+
+
+class DeactivateDisciplineSerializer(serializers.ModelSerializer):
+    """
+    Деактивирует дисциплины студента
+    """
+    class Meta:
+        model = org_models.StudentDiscipline
+        fields = (
+            'uid',
+        )
+
+    def update(self, instance, validated_data):
+        org_models.StudentDiscipline.objects.filter(
+            student=instance.student,
+            discipline=instance.discipline,
+            acad_period=instance.acad_period
+        ).update(is_active=False)
+
+        return instance

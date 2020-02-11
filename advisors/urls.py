@@ -44,4 +44,7 @@ urlpatterns = [
 
     path('iup_excel/', views.GenerateIupExcelView.as_view(),
          name='generate_iup_excel'),
+
+    path('discipline/<pk>/deactivate/', views.DeactivateDiscipline.as_view(),
+         name='deactivate_discipline'),
 ]
