@@ -337,8 +337,13 @@ def find_dups_disc_code():
                        COUNT(*) AS dup_count
                 FROM organizations_studentdiscipline sd
                 WHERE sd.study_year_id = 'c4f1122b-31f5-11e9-aa40-0cc47a2bc1bf' AND sd.student_id = 'd2c75bf5-3552-11e9-aa40-0cc47a2bc1bf'
-                GROUP BY sd.student_id, sd.study_plan_uid_1c, sd.acad_period_id, sd.discipline_id,
-                         sd.load_type_id, sd.hours, sd.study_year_id
+                GROUP BY sd.student_id, 
+                         sd.study_plan_uid_1c, 
+                         sd.acad_period_id, 
+                         sd.discipline_id,
+                         sd.load_type_id, 
+                         sd.hours, 
+                         sd.study_year_id
                 HAVING COUNT(*) > 1
             '''
 
