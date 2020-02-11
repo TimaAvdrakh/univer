@@ -581,7 +581,7 @@ class StudentAllDisciplineListView(generics.ListAPIView):
             student_disciplines = org_models.StudentDiscipline.objects.filter(
                 study_plan_id=study_plan_id,
                 acad_period=acad_period,
-                is_active=True,
+                # is_active=True,
             ).order_by('discipline')
             serializer = self.serializer_class(student_disciplines,
                                                many=True)
