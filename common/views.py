@@ -94,7 +94,7 @@ class GetAcadPeriodsForRegisterCopyView(generics.ListAPIView):
         resp.append(
             {
                 'name': _('all period'),
-                'uid': None,
+                'uid': 'all',
             }
         )
         return Response(
