@@ -14,6 +14,7 @@ import json
 from cron_app.models import ExcelTask
 from rest_framework.permissions import IsAuthenticated
 from . import permissions
+from django.utils.translation import gettext as _
 
 
 class RegisterResultExcelView(generics.RetrieveAPIView):
@@ -828,6 +829,29 @@ class GetFileView(generics.RetrieveAPIView):
                     },
                     status=status.HTTP_200_OK
                 )
+        return Response(
+            resp,
+            status=status.HTTP_200_OK
+        )
+
+
+class ReportListView(generics.ListAPIView):
+    def list(self, request, *args, **kwargs):
+        resp = [
+            {
+                'name': _('Registration result'),
+                'uid': 'RegistrationResult',
+            },
+            {
+                'name': _('Registration statistics'),
+                'uid': 'RegistrationStatistics',
+            },
+            {
+                'name': _('Unregistered List'),
+                'uid': 'UnregisteredList',
+            },
+        ]
+
         return Response(
             resp,
             status=status.HTTP_200_OK

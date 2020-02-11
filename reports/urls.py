@@ -15,4 +15,7 @@ urlpatterns = [
 
     path('get_file/', views.GetFileView.as_view(),
          name='get_file'),
+
+    path('report_list/', views.ReportListView.as_view(),
+         name='report_list'),
 ]
