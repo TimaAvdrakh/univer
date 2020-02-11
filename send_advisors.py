@@ -371,7 +371,7 @@ def find_dups_disc_code():
 
             uuid1c = None
             for sd in sds:
-                if sd.uuid1c is not None:
+                if sd.uuid1c is not None and len(sd.uuid1c) > 0:
                     uuid1c = sd.uuid1c
             #
             # confirmed_sds = sds.filter(status_id=student_discipline_status['confirmed'])
@@ -415,7 +415,7 @@ def find_dups_disc_code():
             # else:
 
             for each in sds:
-                if each.uuid1c is None:
+                if each.uuid1c is None or len(each.uuid1c) == 0:
                     each.uuid1c = uuid1c
                     each.save()
 
