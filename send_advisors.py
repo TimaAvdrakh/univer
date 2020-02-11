@@ -349,13 +349,13 @@ def find_dups_disc_code():
 
     for item in rows:
         sds = org_models.StudentDiscipline.objects.filter(
-            student=item[0],
+            student_id=item[0],
             study_plan_uid_1c=item[1],
-            acad_period=item[2],
-            discipline=item[3],
-            load_type=item[4],
+            acad_period_id=item[2],
+            discipline_id=item[3],
+            load_type_id=item[4],
             hours=item[5],
-            study_year=item[6],
+            study_year_id=item[6],
         )
         print('Dup_num: ', item[7])
         if len(sds) > 1:

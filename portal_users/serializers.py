@@ -701,6 +701,8 @@ class StudentDisciplineListSerializer(serializers.ModelSerializer):
         serializer = StudentDisciplineCopySerializer(instance=sds,
                                                      many=True)
         data['load_types'] = serializer.data
+        data['hide'] = False
+        data['loader'] = False
 
         return data
 
