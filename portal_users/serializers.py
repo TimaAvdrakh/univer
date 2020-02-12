@@ -1266,3 +1266,77 @@ class TeacherShortSerializer(serializers.ModelSerializer):
             pass
 
         return data
+
+
+class ControlFormSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = org_models.ControlForm
+        fields = (
+            'uid',
+            'name',
+            'is_exam',
+            'is_course_work',
+            'is_gos_exam',
+            'is_diploma',
+        )
+
+
+class StudentDisciplineControlFormSerializer(serializers.ModelSerializer):
+    """Используется для вывода Дисциплин Студентов для выбора Формы контроля"""
+
+    discipline = serializers.CharField(read_only=True)
+
+    class Meta:
+        model = org_models.StudentDiscipline
+        fields = (
+            'uid',
+            'discipline',
+        )
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+
+        try:
+            discipline_credit = org_models.DisciplineCredit.objects.get(
+                study_plan=instance.study_plan,
+                cycle=instance.cycle,
+                discipline=instance.discipline,
+                acad_period=instance.acad_period,
+                student=instance.student,
+
+            )
+        except org_models.DisciplineCredit.DoesNotExist:
+            raise CustomException(detail='not_found')
+
+        control_form_pks = org_models.DisciplineCreditControlForm.objects.filter(
+            discipline_credit=discipline_credit,
+        ).values('control_form')
+        control_forms = org_models.ControlForm.objects.filter(pk__in=control_form_pks)
+        serializer = ControlFormSerializer(control_forms,
+                                           many=True)
+        data['select'] = serializer.data
+        chosen_control_forms = discipline_credit.chosen_control_forms.all()
+
+        data['chosen_control_forms'] = ControlFormSerializer(chosen_control_forms,
+                                                             many=True).data
+        data['discipline_credit'] = discipline_credit.uid
+        data['hide'] = False
+        data['loader'] = False
+
+        return data
+
+
+class ChooseControlFormSerializer(serializers.ModelSerializer):
+    """Выбор формы контроля"""
+    class Meta:
+        model = org_models.DisciplineCredit
+        fields = (
+            'uid',
+            'chosen_control_forms',
+        )
+
+    def update(self, instance, validated_data):
+        chosen_control_forms = validated_data.get('chosen_control_forms')
+        instance.chosen_control_forms.set(chosen_control_forms)
+
+        return instance

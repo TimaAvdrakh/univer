@@ -24,3 +24,13 @@ class StudyPlanPermission(BasePermission):
 class ProfilePermission(BasePermission):
     def has_object_permission(self, request, view, obj):
         return request.user.profile == obj
+
+
+class DisciplineCreditPermission(BasePermission):
+    """Выбирает формы контроля сам студент или его эдвайзер"""
+    def has_object_permission(self, request, view, obj):
+        if obj.student == request.user.profile:
+            return True
+
+        if obj.study_plan.advisor == request.user.profile:
+            return True

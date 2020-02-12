@@ -1319,12 +1319,9 @@ msgstr "Барлык период"
 msgid "all period"
 msgstr "Барлык период"
 
-msgid "Registration result"
-msgstr "Тіркеу нәтижесі"
+msgid "Registration result" msgstr "Тіркеу нәтижесі"
 
-msgid "Registration statistics"
-msgstr "Тіркеу статистикасы"
+msgid "Registration statistics" msgstr "Тіркеу статистикасы"
 
-msgid "Unregistered List"
-msgstr "Тіркелмегендер тізімі"
+msgid "Unregistered List" msgstr "Тіркелмегендер тізімі"
 

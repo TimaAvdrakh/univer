@@ -39,4 +39,9 @@ urlpatterns = [
     path('avatar/upload/', views.AvatarUploadView.as_view(), name='avatar_upload'),
 
     path('my_roles/', views.RoleGetView.as_view(), name='my_roles'),
+
+    path('my_discipline/control_forms/', views.ChooseControlFormListView.as_view(),
+         name='discipline_control_forms'),
+    path('control_forms/<pk>/choose/', views.ChooseFormControlView.as_view(),
+         name='choose_control_forms'),
 ]
