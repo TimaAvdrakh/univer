@@ -14,6 +14,7 @@ from organizations import models as org_models
 from portal.curr_settings import student_discipline_status, BOT_DEV_CHAT_IDS
 # from bot import bot
 from django.db import connection
+from django.core.mail import send_mail
 
 # def send():
 #     profile_pks = Role.objects.filter(is_supervisor=True).values('profile')
@@ -423,8 +424,13 @@ def find_dups_disc_code():
                 if each.uuid1c is None or len(each.uuid1c) == 0:
                     each.uuid1c = uuid1c
                     each.save()
+                    print('copied!')
 
     print('Ok')
+    send_mail('Script worked',
+              'Script is ok',
+              'avtoexpertastana@gmail.com',
+              ['auganenu@gmail.com'])
 
 
 find_dups_disc_code()
