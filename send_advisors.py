@@ -446,6 +446,16 @@ def handle_1():
         student_id='730fdbde-3554-11e9-aa40-0cc47a2bc1bf',
     )
     for item in sds_with_uuid1c:
+        print('Duplicate: {}-{}-{}-{}-{}-{}-{}'.format(
+            item.student.user.username,
+            item.study_plan_uid_1c,
+            item.acad_period.name,
+            item.discipline.name,
+            item.load_type.name,
+            item.hours,
+            item.study_year.repr_name,
+        ))
+
         duplicates = org_models.StudentDiscipline.objects.filter(
             uuid1c__isnull=True,
             status__in=status_list,
@@ -457,9 +467,20 @@ def handle_1():
             discipline_code=item.discipline_code,
             study_year=item.study_year,
         )
+        print(len(duplicates))
 
         if duplicates.exists():
             duplicate = duplicates.first()
+
+            print('Duplicate: {}-{}-{}-{}-{}-{}-{}'.format(
+                duplicate.student.user.username,
+                duplicate.study_plan_uid_1c,
+                duplicate.acad_period.name,
+                duplicate.discipline.name,
+                duplicate.load_type.name,
+                duplicate.hours,
+                duplicate.study_year.repr_name,
+            ))
 
             item.author = duplicate.author
             item.teacher = duplicate.teacher
