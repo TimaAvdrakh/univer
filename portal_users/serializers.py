@@ -1303,7 +1303,6 @@ class StudentDisciplineControlFormSerializer(serializers.ModelSerializer):
                 discipline=instance.discipline,
                 acad_period=instance.acad_period,
                 student=instance.student,
-
             )
         except org_models.DisciplineCredit.DoesNotExist:
             raise CustomException(detail='not_found')
@@ -1316,9 +1315,11 @@ class StudentDisciplineControlFormSerializer(serializers.ModelSerializer):
                                            many=True)
         data['select'] = serializer.data
         chosen_control_forms = discipline_credit.chosen_control_forms.all()
+        chosen_control_forms_data = ControlFormSerializer(chosen_control_forms,
+                                                          many=True).data
+        chosen_control_forms_list = [item['uid'] for item in chosen_control_forms_data]
+        data['chosen_control_forms'] = chosen_control_forms_list
 
-        data['chosen_control_forms'] = ControlFormSerializer(chosen_control_forms,
-                                                             many=True).data
         data['discipline_credit'] = discipline_credit.uid
         data['hide'] = False
         data['loader'] = False
@@ -1328,6 +1329,7 @@ class StudentDisciplineControlFormSerializer(serializers.ModelSerializer):
 
 class ChooseControlFormSerializer(serializers.ModelSerializer):
     """Выбор формы контроля"""
+
     class Meta:
         model = org_models.DisciplineCredit
         fields = (
