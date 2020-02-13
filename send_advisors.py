@@ -507,8 +507,8 @@ def handle_2():
     )
     for item in sds_with_uuid1c:
         duplicates = org_models.StudentDiscipline.objects.filter(
-            uuid1c__isnull=True,
-            status__in=status_list,
+            Q(uuid1c__isnull=True) | Q(uuid1c=''),
+            status__pk__in=status_list,
             student=item.student,
             study_plan=item.study_plan,
             acad_period=item.acad_period,
