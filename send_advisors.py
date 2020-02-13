@@ -433,4 +433,80 @@ def find_dups_disc_code():
               ['auganenu@gmail.com'])
 
 
-find_dups_disc_code()
+# find_dups_disc_code()
+
+
+def handle_1():
+    status_list = [student_discipline_status['confirmed'], student_discipline_status['changed'],
+                    student_discipline_status['rejected'], student_discipline_status['chosen']]
+
+    sds_with_uuid1c = org_models.StudentDiscipline.objects.filter(
+        uuid1c__isnull=False,
+        status_id=student_discipline_status['not_chosen'],
+    )
+    for item in sds_with_uuid1c:
+        duplicates = org_models.StudentDiscipline.objects.filter(
+            uuid1c__isnull=True,
+            status_id__in=status_list,
+            student=item.student,
+            study_plan=item.study_plan,
+            discipline=item.discipline,
+            load_type=item.load_type,
+            hours=item.hours,
+            discipline_code=item.discipline_code,
+            study_year=item.study_year,
+        )
+
+        if duplicates.exists():
+            duplicate = duplicates.first()
+            item.author = duplicate.author
+            item.teacher = duplicate.teacher
+            item.language = duplicate.language
+            item.status = duplicate.status
+            item.save()
+
+    print('Ok')
+    send_mail('Handle 1',
+              'Script is ok',
+              'avtoexpertastana@gmail.com',
+              ['auganenu@gmail.com'])
+
+
+def handle_2():
+    status_list = [student_discipline_status['confirmed'], student_discipline_status['changed'],
+                   student_discipline_status['rejected'], student_discipline_status['chosen']]
+
+    sds_with_uuid1c = org_models.StudentDiscipline.objects.filter(
+        uuid1c__isnull=False,
+        status_id=student_discipline_status['not_chosen'],
+    )
+    for item in sds_with_uuid1c:
+        duplicates = org_models.StudentDiscipline.objects.filter(
+            uuid1c__isnull=True,
+            status_id__in=status_list,
+            student=item.student,
+            study_plan=item.study_plan,
+            acad_period=item.acad_period,
+            discipline=item.discipline,
+            load_type=item.load_type,
+            discipline_code=item.discipline_code,
+            study_year=item.study_year,
+        )
+
+        if duplicates.exists():
+            duplicate = duplicates.first()
+
+            item.author = duplicate.author
+            item.teacher = duplicate.teacher
+            item.language = duplicate.language
+            item.status = duplicate.status
+            item.save()
+    print('Ok')
+    send_mail('Handle 2',
+              'Script is ok',
+              'avtoexpertastana@gmail.com',
+              ['auganenu@gmail.com'])
+
+
+handle_1()
+handle_2()
