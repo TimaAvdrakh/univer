@@ -747,7 +747,7 @@ class ChooseControlFormListView(generics.ListAPIView):
                     study_year_id=study_year_id,
                     is_active=True,
                     cycle_id=CYCLE_DISCIPLINE['itog_attest'],
-                ).exclude(load_type__load_type2__in=not_choosing_load_types2).order_by('discipline')
+                ).order_by('discipline')
 
                 serializer = self.serializer_class(student_disciplines,
                                                    context={'study_year_id': study_year_id},
@@ -783,7 +783,7 @@ class ChooseControlFormListView(generics.ListAPIView):
                 study_year_id=study_year_id,
                 is_active=True,
                 cycle_id=CYCLE_DISCIPLINE['itog_attest'],
-            ).exclude(load_type__load_type2__in=not_choosing_load_types2).order_by('discipline')
+            ).order_by('discipline')
 
             serializer = self.serializer_class(student_disciplines,
                                                context={'study_year_id': study_year_id},
@@ -834,7 +834,7 @@ class ChooseControlFormListView(generics.ListAPIView):
                     study_year_id=study_year_id,
                     is_active=True,
                     cycle_id=CYCLE_DISCIPLINE['itog_attest'],
-                ).exclude(load_type__load_type2__in=not_choosing_load_types2).order_by('discipline')
+                ).order_by('discipline')
 
                 serializer = self.serializer_class(student_disciplines,
                                                    context={'study_year_id': study_year_id},
