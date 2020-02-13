@@ -835,13 +835,28 @@ class StudentDiscipline(BaseModel):
 
         super(StudentDiscipline, self).save(*args, **kwargs)
 
+    # @property
+    # def credit(self):
+    #     """Возвращает кредит дисциплины""" Note: старое свойство
+    #     return calculate_credit(self.discipline,
+    #                             self.student,
+    #                             self.acad_period,
+    #                             self.cycle)
+
     @property
     def credit(self):
         """Возвращает кредит дисциплины"""
-        return calculate_credit(self.discipline,
-                                self.student,
-                                self.acad_period,
-                                self.cycle)
+        try:
+            discipline_credit = DisciplineCredit.objects.get(
+                study_plan=self.study_plan,
+                cycle=self.cycle,
+                discipline=self.discipline,
+                acad_period=self.acad_period,
+                student=self.student,
+            )
+            return discipline_credit.credit
+        except DisciplineCredit.DoesNotExist:
+            return 0
 
     def __str__(self):
         return '{} {}'.format(self.acad_period,
