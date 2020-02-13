@@ -448,7 +448,7 @@ def handle_1():
     for item in sds_with_uuid1c:
         duplicates = org_models.StudentDiscipline.objects.filter(
             uuid1c__isnull=True,
-            status_id__in=status_list,
+            status__in=status_list,
             student=item.student,
             study_plan=item.study_plan,
             discipline=item.discipline,
@@ -460,6 +460,7 @@ def handle_1():
 
         if duplicates.exists():
             duplicate = duplicates.first()
+
             item.author = duplicate.author
             item.teacher = duplicate.teacher
             item.language = duplicate.language
@@ -485,7 +486,7 @@ def handle_2():
     for item in sds_with_uuid1c:
         duplicates = org_models.StudentDiscipline.objects.filter(
             uuid1c__isnull=True,
-            status_id__in=status_list,
+            status__in=status_list,
             student=item.student,
             study_plan=item.study_plan,
             acad_period=item.acad_period,
@@ -503,6 +504,7 @@ def handle_2():
             item.language = duplicate.language
             item.status = duplicate.status
             item.save()
+
     print('Ok')
     send_mail('Handle 2',
               'Script is ok',
