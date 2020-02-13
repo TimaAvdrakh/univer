@@ -15,6 +15,7 @@ from portal.curr_settings import student_discipline_status, BOT_DEV_CHAT_IDS
 # from bot import bot
 from django.db import connection
 from django.core.mail import send_mail
+from django.db.models import Q, Count
 
 # def send():
 #     profile_pks = Role.objects.filter(is_supervisor=True).values('profile')
@@ -457,8 +458,8 @@ def handle_1():
         ))
 
         duplicates = org_models.StudentDiscipline.objects.filter(
-            uuid1c__isnull=True,
-            status__in=status_list,
+            Q(uuid1c__isnull=True) | Q(uuid1c=''),
+            status__pk__in=status_list,
             student=item.student,
             study_plan=item.study_plan,
             discipline=item.discipline,
