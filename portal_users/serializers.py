@@ -15,6 +15,8 @@ from uuid import uuid4
 from portal.curr_settings import current_site
 from advisors.models import AdvisorCheck
 from validate_email import validate_email
+from datetime import date
+from common import models as common_models
 
 
 class LoginSerializer(serializers.Serializer):
@@ -1063,31 +1065,72 @@ class NotifyAdviserSerializer(serializers.Serializer):
     )
     acad_period = serializers.PrimaryKeyRelatedField(
         queryset=org_models.AcadPeriod.objects.filter(is_active=True),
+        required=False,
     )
 
     def save(self, **kwargs):
         study_plan = self.validated_data.get('study_plan')
         acad_period = self.validated_data.get('acad_period')
 
-        try:
-            student_discipline_info = org_models.StudentDisciplineInfo.objects.get(
-                study_plan=study_plan,
-                acad_period=acad_period
-            )
-        except org_models.StudentDisciplineInfo.DoesNotExist:
-            student_discipline_info = org_models.StudentDisciplineInfo.objects.create(
-                student=study_plan.student,
-                study_plan=study_plan,
-                acad_period=acad_period,
-                status_id=student_discipline_info_status["not_started"],
-            )
+        if acad_period:
+            try:
+                student_discipline_info = org_models.StudentDisciplineInfo.objects.get(
+                    study_plan=study_plan,
+                    acad_period=acad_period
+                )
+            except org_models.StudentDisciplineInfo.DoesNotExist:
+                student_discipline_info = org_models.StudentDisciplineInfo.objects.create(
+                    student=study_plan.student,
+                    study_plan=study_plan,
+                    acad_period=acad_period,
+                    status_id=student_discipline_info_status["not_started"],
+                )
 
-        if str(student_discipline_info.status_id) == student_discipline_info_status['chosen']:
-            """Все дисциплины выбраны для выбранного академ/периода"""
-            # Создаем задачу для отправки уведомления
-            NotifyAdvisorTask.objects.create(stud_discipline_info=student_discipline_info)
+            if str(student_discipline_info.status_id) == student_discipline_info_status['chosen']:
+                """Все дисциплины выбраны для выбранного академ/периода"""
+                # Создаем задачу для отправки уведомления
+                NotifyAdvisorTask.objects.create(stud_discipline_info=student_discipline_info)
+            else:
+                raise CustomException(detail="not_all_chosen")
         else:
-            raise CustomException(detail="not_all_chosen")
+            """
+            Если акад период не передал, 
+            то из правил берем доступыне акад периоды для регистрации
+            """
+            current_course = study_plan.current_course
+            if current_course is None:
+                raise CustomException(detail="not_actual_study_plan")
+
+            today = date.today()
+            acad_period_pks = common_models.CourseAcadPeriodPermission.objects.filter(
+                registration_period__start_date__lte=today,
+                registration_period__end_date__gte=today,
+                course=current_course,
+            ).values('acad_period')
+            acad_periods = org_models.AcadPeriod.objects.filter(
+                pk__in=acad_period_pks,
+                is_active=True,
+            )
+            for acad_period in acad_periods:
+                try:
+                    student_discipline_info = org_models.StudentDisciplineInfo.objects.get(
+                        study_plan=study_plan,
+                        acad_period=acad_period
+                    )
+                except org_models.StudentDisciplineInfo.DoesNotExist:
+                    student_discipline_info = org_models.StudentDisciplineInfo.objects.create(
+                        student=study_plan.student,
+                        study_plan=study_plan,
+                        acad_period=acad_period,
+                        status_id=student_discipline_info_status["not_started"],
+                    )
+
+                if str(student_discipline_info.status_id) == student_discipline_info_status['chosen']:
+                    """Все дисциплины выбраны для выбранного академ/периода"""
+                    # Создаем задачу для отправки уведомления
+                    NotifyAdvisorTask.objects.create(stud_discipline_info=student_discipline_info)
+                else:
+                    raise CustomException(detail="not_all_chosen")
 
 
 class ProfileContactEditSerializer(serializers.ModelSerializer):

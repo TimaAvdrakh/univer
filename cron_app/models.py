@@ -59,7 +59,7 @@ class CredentialsEmailTask(BaseTask):
 
 class NotifyAdvisorTask(BaseTask):
     """Задача для отправки уведомление Эдвайзеру,
-    о завершении выбора студента
+        о завершении выбора студента
     """
     stud_discipline_info = models.ForeignKey(
         'organizations.StudentDisciplineInfo',

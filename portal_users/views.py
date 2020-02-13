@@ -312,6 +312,12 @@ class StudentDisciplineForRegListCopyView(generics.ListAPIView):
                 ).exclude(load_type__load_type2__in=not_choosing_load_types2). \
                     distinct('discipline').order_by('discipline')
 
+                if not student_disciplines.exists():
+                    """
+                    Если дисциплин студентов нет, то исключим акад период из ответа
+                    """
+                    continue
+
                 serializer = self.serializer_class(student_disciplines,
                                                    context={'study_year_id': study_year_id},
                                                    many=True)
@@ -398,6 +404,12 @@ class StudentDisciplineForRegListCopyView(generics.ListAPIView):
                     is_active=True,
                 ).exclude(load_type__load_type2__in=not_choosing_load_types2). \
                     distinct('discipline').order_by('discipline')
+
+                if not student_disciplines.exists():
+                    """
+                    Если дисциплин студентов нет, то исключим акад период из ответа
+                    """
+                    continue
 
                 serializer = self.serializer_class(student_disciplines,
                                                    context={'study_year_id': study_year_id},
@@ -749,6 +761,12 @@ class ChooseControlFormListView(generics.ListAPIView):
                     cycle_id=CYCLE_DISCIPLINE['itog_attest'],
                 ).order_by('discipline')
 
+                if not student_disciplines.exists():
+                    """
+                    Если дисциплин студентов нет, то исключим акад период из ответа
+                    """
+                    continue
+
                 serializer = self.serializer_class(student_disciplines,
                                                    context={'study_year_id': study_year_id},
                                                    many=True)
@@ -835,6 +853,12 @@ class ChooseControlFormListView(generics.ListAPIView):
                     is_active=True,
                     cycle_id=CYCLE_DISCIPLINE['itog_attest'],
                 ).order_by('discipline')
+
+                if not student_disciplines.exists():
+                    """
+                    Если дисциплин студентов нет, то исключим акад период из ответа
+                    """
+                    continue
 
                 serializer = self.serializer_class(student_disciplines,
                                                    context={'study_year_id': study_year_id},
