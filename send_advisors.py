@@ -444,7 +444,7 @@ def handle_1():
     sds_with_uuid1c = org_models.StudentDiscipline.objects.filter(
         uuid1c__isnull=False,
         status_id=student_discipline_status['not_chosen'],
-        student_id='730fdbde-3554-11e9-aa40-0cc47a2bc1bf',
+        # student_id='730fdbde-3554-11e9-aa40-0cc47a2bc1bf',
     )
     for item in sds_with_uuid1c:
         print('Duplicate: {}-{}-{}-{}-{}-{}-{}'.format(
@@ -503,7 +503,7 @@ def handle_2():
     sds_with_uuid1c = org_models.StudentDiscipline.objects.filter(
         uuid1c__isnull=False,
         status_id=student_discipline_status['not_chosen'],
-        student_id='c528659c-1cc3-11ea-aa49-0cc47a2bc1bf',
+        # student_id='c528659c-1cc3-11ea-aa49-0cc47a2bc1bf',
     )
     for item in sds_with_uuid1c:
         duplicates = org_models.StudentDiscipline.objects.filter(
