@@ -656,6 +656,7 @@ def find_dups_with_uid():
               ['auganenu@gmail.com'])
 
 
+# TODO запустить две следущие функции
 # del_no_uid()
 # find_dups_with_uid()
 
