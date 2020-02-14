@@ -544,16 +544,16 @@ def find_dups_with_uid():
     '''
 
     query = '''
-                SELECT   sd.student_id,
-                         sd.uuid1c, 
-                         sd.study_plan_uid_1c, 
-                         sd.acad_period_id,
-                         sd.discipline_code,
-                         sd.discipline_id,
-                         sd.load_type_id, 
-                         sd.hours, 
-                         sd.study_year_id
-                         sd.cycle_id,
+                SELECT sd.student_id,
+                       sd.uuid1c, 
+                       sd.study_plan_uid_1c, 
+                       sd.acad_period_id,
+                       sd.discipline_code,
+                       sd.discipline_id,
+                       sd.load_type_id, 
+                       sd.hours, 
+                       sd.study_year_id,
+                       sd.cycle_id,
                        COUNT(*) AS dup_count
                 FROM organizations_studentdiscipline sd
                 WHERE sd.study_year_id = 'c4f1122b-31f5-11e9-aa40-0cc47a2bc1bf' AND student_id = 'ad55d6b1-355c-11e9-aa40-0cc47a2bc1bf'
@@ -566,7 +566,7 @@ def find_dups_with_uid():
                          sd.load_type_id, 
                          sd.hours, 
                          sd.study_year_id,
-                         sd.cycle_id,
+                         sd.cycle_id
                 HAVING COUNT(*) > 1
             '''
 
