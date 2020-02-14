@@ -1139,7 +1139,7 @@ class DisciplineCreditControlForm(BaseModel):
                 self.discipline_credit = discipline_credit
 
             except DisciplineCredit.DoesNotExist:
-                print('DisciplineCredit NOT FOUND')
+                print('DisciplineCredit NOT FOUND!')
 
         super().save(*args, **kwargs)
 
