@@ -29,6 +29,15 @@ class StudyPlanSerializer(serializers.ModelSerializer):
         data['loading'] = False
         data['error'] = False
 
+        study_year = self.context.get('study_year')
+        status_id = self.context.get('status_id')
+
+
+        disciplines = org_models.StudentDiscipline.objects.filter(
+            study_plan=instance,
+
+        )
+
         return data
 
 

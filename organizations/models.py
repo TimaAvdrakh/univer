@@ -1117,6 +1117,31 @@ class DisciplineCreditControlForm(BaseModel):
         on_delete=models.CASCADE,
         verbose_name='Форма контроля',
     )
+    discipline_credit_uuid1c = models.CharField(
+        max_length=100,
+        verbose_name='Уид 1С дисциплины кредита',
+        null=True,
+    )
+    student = models.ForeignKey(
+        'portal_users.User',
+        on_delete=models.CASCADE,
+        null=True,
+        verbose_name='Студент',
+    )
+
+    def save(self, *args, **kwargs):
+        if self.exchange:
+            try:
+                discipline_credit = DisciplineCredit.objects.get(
+                    uuid1c=self.discipline_credit_uuid1c,
+                    student=self.student,
+                )
+                self.discipline_credit = discipline_credit
+
+            except DisciplineCredit.DoesNotExist:
+                print('DisciplineCredit NOT FOUND')
+
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return '{} {}'.format(self.discipline_credit,
