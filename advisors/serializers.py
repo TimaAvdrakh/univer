@@ -25,7 +25,6 @@ class StudyPlanSerializer(serializers.ModelSerializer):
     def to_representation(self, instance):
         data = super().to_representation(instance)
         data['education_program_group'] = instance.education_program.group.code if instance.education_program.group else ' '  # instance.education_program.group.code
-        data['acad_periods'] = []
         data['loading'] = False
         data['error'] = False
 
@@ -80,7 +79,7 @@ class StudyPlanSerializer(serializers.ModelSerializer):
                     'uid': acad_period.uid,
                 }
                 disciplines_data.append(resp)
-        data['disciplines'] = disciplines_data
+        data['acad_periods'] = disciplines_data
         # Test
 
         return data
