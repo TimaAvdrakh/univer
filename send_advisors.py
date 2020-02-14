@@ -534,8 +534,8 @@ def handle_2():
               ['auganenu@gmail.com'])
 
 
-handle_1()
-handle_2()
+# handle_1()
+# handle_2()
 
 
 def find_dups_with_uid():
@@ -556,7 +556,7 @@ def find_dups_with_uid():
                          sd.cycle_id,
                        COUNT(*) AS dup_count
                 FROM organizations_studentdiscipline sd
-                WHERE sd.study_year_id = 'c4f1122b-31f5-11e9-aa40-0cc47a2bc1bf'
+                WHERE sd.study_year_id = 'c4f1122b-31f5-11e9-aa40-0cc47a2bc1bf' AND student_id = 'ad55d6b1-355c-11e9-aa40-0cc47a2bc1bf'
                 GROUP BY sd.student_id,
                          sd.uuid1c, 
                          sd.study_plan_uid_1c, 
@@ -654,4 +654,7 @@ def find_dups_with_uid():
               'Script is ok',
               'avtoexpertastana@gmail.com',
               ['auganenu@gmail.com'])
+
+
+find_dups_with_uid()
 
