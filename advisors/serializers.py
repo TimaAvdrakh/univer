@@ -29,14 +29,59 @@ class StudyPlanSerializer(serializers.ModelSerializer):
         data['loading'] = False
         data['error'] = False
 
-        study_year = self.context.get('study_year')
+        # Test
+        study_year_id = self.context.get('study_year')
         status_id = self.context.get('status_id')
+        acad_periods = self.context.get('acad_periods')
 
+        disciplines_data = []
 
-        disciplines = org_models.StudentDiscipline.objects.filter(
-            study_plan=instance,
+        if acad_periods is not None:
+            acad_period_list = acad_periods.split(',')
 
-        )
+            disciplines = org_models.StudentDiscipline.objects.filter(
+                study_plan=instance,
+                study_year_id=study_year_id,
+                is_active=True,
+            )
+
+            if status_id:
+                disciplines = disciplines.filter(status_id=status_id)
+
+            for acad_period_id in acad_period_list:
+                acad_period = org_models.AcadPeriod.objects.get(pk=acad_period_id)
+
+                discipline_in_acad_per = disciplines.filter(acad_period=acad_period)\
+                    .distinct('discipline').\
+                    order_by('discipline')
+
+                total_credit = sum(i.credit for i in discipline_in_acad_per)
+
+                is_more = len(discipline_in_acad_per) > 3
+
+                discipline_in_acad_per = discipline_in_acad_per[:3]
+                serializer = StudentDisciplineShortSerializer(discipline_in_acad_per,
+                                                              many=True)
+
+                checks = models.AdvisorCheck.objects.filter(study_plan=instance,
+                                                            acad_period=acad_period)
+
+                if checks.exists():
+                    old_status = checks.latest('id').status
+                else:
+                    old_status = 0
+
+                resp = {
+                    'total_credit': total_credit,
+                    'disciplines': serializer.data,
+                    'is_more': is_more,
+                    'old_status': old_status,
+                    'acad_period': acad_period.repr_name,
+                    'uid': acad_period.uid,
+                }
+                disciplines_data.append(resp)
+        data['disciplines'] = disciplines_data
+        # Test
 
         return data
 

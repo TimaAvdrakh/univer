@@ -1834,18 +1834,19 @@ class CopyStudyPlansListView(generics.ListAPIView):
     serializer_class = serializers.StudyPlanSerializer
     pagination_class = AdvisorBidPagination  # CustomPagination
 
-    def get_queryset(self):
-        study_year = self.request.query_params.get('study_year')  # Дисциплина студента
-        study_form = self.request.query_params.get('study_form')
-        faculty = self.request.query_params.get('faculty')
-        cathedra = self.request.query_params.get('cathedra')
-        edu_prog_group = self.request.query_params.get('edu_prog_group')
-        edu_prog = self.request.query_params.get('edu_prog')
-        course = self.request.query_params.get('course')  # Дисциплина студента
-        group = self.request.query_params.get('group')
+    def list(self, request, *args, **kwargs):
+        study_year = request.query_params.get('study_year')
+        study_form = request.query_params.get('study_form')
+        faculty = request.query_params.get('faculty')
+        cathedra = request.query_params.get('cathedra')
+        edu_prog_group = request.query_params.get('edu_prog_group')
+        edu_prog = request.query_params.get('edu_prog')
+        course = request.query_params.get('course')
+        group = request.query_params.get('group')
 
-        status_id = self.request.query_params.get('status')  # В Дисциплине студента
-        # reg_period = self.request.query_params.get('reg_period')  # Дисциплина студента
+        status_id = request.query_params.get('status')
+        acad_periods = request.query_params.get('acad_periods')
+        # reg_period = self.request.query_params.get('reg_period')
 
         queryset = self.queryset.filter(advisor=self.request.user.profile)
         queryset = queryset.exclude(student__status_id=STUDENT_STATUSES['expelled'])
@@ -1882,7 +1883,14 @@ class CopyStudyPlansListView(generics.ListAPIView):
             ).values('study_plan')
             queryset = queryset.filter(pk__in=study_plan_pks)
 
-        return queryset
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.serializer_class(page,
+                                               many=True,
+                                               context={'study_year': study_year,
+                                                        'status_id': status_id,
+                                                        'acad_periods': acad_periods})
+            return self.get_paginated_response(serializer.data)
 
 
 class DeactivateDiscipline(generics.UpdateAPIView):
