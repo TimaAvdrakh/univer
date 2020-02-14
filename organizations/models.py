@@ -1123,7 +1123,7 @@ class DisciplineCreditControlForm(BaseModel):
         null=True,
     )
     student = models.ForeignKey(
-        'portal_users.User',
+        'portal_users.Profile',
         on_delete=models.CASCADE,
         null=True,
         verbose_name='Студент',
@@ -1151,6 +1151,7 @@ class DisciplineCreditControlForm(BaseModel):
         verbose_name = 'Кредит дисциплины-Форма контроля'
         verbose_name_plural = 'Кредит дисциплины-Форма контроля'
         unique_together = (
-            'discipline_credit',
+            'discipline_credit_uuid1c',
+            'student',
             'control_form',
         )
