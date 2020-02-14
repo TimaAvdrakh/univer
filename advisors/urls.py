@@ -11,6 +11,8 @@ urlpatterns = [
          name='registration_bid_list_copy'),
 
     path('student/disciplines/', views.StudentDisciplineListView.as_view(), name='discipline_short_list'),
+    path('student/disciplines/grouped/', views.StudentDisciplineGroupListView(),
+         name='student_discipline_group_list'),
 
     path('acad_periods/', views.AcadPeriodListView.as_view(), name='acad_periods_for_filter'),
     path('faculties/', views.FacultyListView.as_view(), name='faculty_list'),
