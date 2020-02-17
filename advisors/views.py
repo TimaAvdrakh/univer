@@ -162,6 +162,9 @@ class StudentDisciplineGroupListView(views.APIView):  # TODO CHECK
     Получение дисциплин студента группой, query_params:
     study_plan(!), study_year(!), acad_period(!), status
     """
+    permission_classes = (
+        IsAuthenticated
+    )
     queryset = org_models.StudentDiscipline.objects.filter(is_active=True)
     serializer_class = serializers.StudentDisciplineShortSerializer
 
