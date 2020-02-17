@@ -157,7 +157,7 @@ class StudentDisciplineListView(generics.ListAPIView):
         )
 
 
-class StudentDisciplineGroupListView(generics.ListAPIView):  # TODO CHECK
+class StudentDisciplineGroupListView(views.APIView):  # TODO CHECK
     """
     Получение дисциплин студента группой, query_params:
     study_plan(!), study_year(!), acad_period(!), status
