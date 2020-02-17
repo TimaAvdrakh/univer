@@ -57,6 +57,8 @@ class MyPerformanceView(generics.RetrieveAPIView):
             item['missed_count'] = missed_count
             item['av_curr_mark'] = av_curr_mark or ''
             item['itog_curr_mark'] = av_curr_mark * 0.6 if av_curr_mark is not None else ''
+            item['disciplines'] = []
+            item['getSubjects'] = False
             resp.append(item)
 
         page = self.paginate_queryset(resp)

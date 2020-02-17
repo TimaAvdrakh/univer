@@ -15,6 +15,8 @@ from uuid import uuid4
 from portal.curr_settings import current_site
 from advisors.models import AdvisorCheck
 from validate_email import validate_email
+from datetime import date
+from common import models as common_models
 
 
 class LoginSerializer(serializers.Serializer):
@@ -701,6 +703,8 @@ class StudentDisciplineListSerializer(serializers.ModelSerializer):
         serializer = StudentDisciplineCopySerializer(instance=sds,
                                                      many=True)
         data['load_types'] = serializer.data
+        data['hide'] = False
+        data['loader'] = False
 
         return data
 
@@ -1061,31 +1065,72 @@ class NotifyAdviserSerializer(serializers.Serializer):
     )
     acad_period = serializers.PrimaryKeyRelatedField(
         queryset=org_models.AcadPeriod.objects.filter(is_active=True),
+        required=False,
     )
 
     def save(self, **kwargs):
         study_plan = self.validated_data.get('study_plan')
         acad_period = self.validated_data.get('acad_period')
 
-        try:
-            student_discipline_info = org_models.StudentDisciplineInfo.objects.get(
-                study_plan=study_plan,
-                acad_period=acad_period
-            )
-        except org_models.StudentDisciplineInfo.DoesNotExist:
-            student_discipline_info = org_models.StudentDisciplineInfo.objects.create(
-                student=study_plan.student,
-                study_plan=study_plan,
-                acad_period=acad_period,
-                status_id=student_discipline_info_status["not_started"],
-            )
+        if acad_period:
+            try:
+                student_discipline_info = org_models.StudentDisciplineInfo.objects.get(
+                    study_plan=study_plan,
+                    acad_period=acad_period
+                )
+            except org_models.StudentDisciplineInfo.DoesNotExist:
+                student_discipline_info = org_models.StudentDisciplineInfo.objects.create(
+                    student=study_plan.student,
+                    study_plan=study_plan,
+                    acad_period=acad_period,
+                    status_id=student_discipline_info_status["not_started"],
+                )
 
-        if str(student_discipline_info.status_id) == student_discipline_info_status['chosen']:
-            """Все дисциплины выбраны для выбранного академ/периода"""
-            # Создаем задачу для отправки уведомления
-            NotifyAdvisorTask.objects.create(stud_discipline_info=student_discipline_info)
+            if str(student_discipline_info.status_id) == student_discipline_info_status['chosen']:
+                """Все дисциплины выбраны для выбранного академ/периода"""
+                # Создаем задачу для отправки уведомления
+                NotifyAdvisorTask.objects.create(stud_discipline_info=student_discipline_info)
+            else:
+                raise CustomException(detail="not_all_chosen")
         else:
-            raise CustomException(detail="not_all_chosen")
+            """
+            Если акад период не передал, 
+            то из правил берем доступыне акад периоды для регистрации
+            """
+            current_course = study_plan.current_course
+            if current_course is None:
+                raise CustomException(detail="not_actual_study_plan")
+
+            today = date.today()
+            acad_period_pks = common_models.CourseAcadPeriodPermission.objects.filter(
+                registration_period__start_date__lte=today,
+                registration_period__end_date__gte=today,
+                course=current_course,
+            ).values('acad_period')
+            acad_periods = org_models.AcadPeriod.objects.filter(
+                pk__in=acad_period_pks,
+                is_active=True,
+            )
+            for acad_period in acad_periods:
+                try:
+                    student_discipline_info = org_models.StudentDisciplineInfo.objects.get(
+                        study_plan=study_plan,
+                        acad_period=acad_period
+                    )
+                except org_models.StudentDisciplineInfo.DoesNotExist:
+                    student_discipline_info = org_models.StudentDisciplineInfo.objects.create(
+                        student=study_plan.student,
+                        study_plan=study_plan,
+                        acad_period=acad_period,
+                        status_id=student_discipline_info_status["not_started"],
+                    )
+
+                if str(student_discipline_info.status_id) == student_discipline_info_status['chosen']:
+                    """Все дисциплины выбраны для выбранного академ/периода"""
+                    # Создаем задачу для отправки уведомления
+                    NotifyAdvisorTask.objects.create(stud_discipline_info=student_discipline_info)
+                else:
+                    raise CustomException(detail="not_all_chosen")
 
 
 class ProfileContactEditSerializer(serializers.ModelSerializer):
@@ -1264,3 +1309,79 @@ class TeacherShortSerializer(serializers.ModelSerializer):
             pass
 
         return data
+
+
+class ControlFormSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = org_models.ControlForm
+        fields = (
+            'uid',
+            'name',
+            'is_exam',
+            'is_course_work',
+            'is_gos_exam',
+            'is_diploma',
+        )
+
+
+class StudentDisciplineControlFormSerializer(serializers.ModelSerializer):
+    """Используется для вывода Дисциплин Студентов для выбора Формы контроля"""
+
+    discipline = serializers.CharField(read_only=True)
+
+    class Meta:
+        model = org_models.StudentDiscipline
+        fields = (
+            'uid',
+            'discipline',
+        )
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+
+        try:
+            discipline_credit = org_models.DisciplineCredit.objects.get(
+                study_plan=instance.study_plan,
+                cycle=instance.cycle,
+                discipline=instance.discipline,
+                acad_period=instance.acad_period,
+                student=instance.student,
+            )
+        except org_models.DisciplineCredit.DoesNotExist:
+            raise CustomException(detail='not_found')
+
+        control_form_pks = org_models.DisciplineCreditControlForm.objects.filter(
+            discipline_credit=discipline_credit,
+        ).values('control_form')
+        control_forms = org_models.ControlForm.objects.filter(pk__in=control_form_pks)
+        serializer = ControlFormSerializer(control_forms,
+                                           many=True)
+        data['select'] = serializer.data
+        chosen_control_forms = discipline_credit.chosen_control_forms.all()
+        chosen_control_forms_data = ControlFormSerializer(chosen_control_forms,
+                                                          many=True).data
+        chosen_control_forms_list = [item['uid'] for item in chosen_control_forms_data]
+        data['chosen_control_forms'] = chosen_control_forms_list
+
+        data['discipline_credit'] = discipline_credit.uid
+        data['hide'] = False
+        data['loader'] = False
+
+        return data
+
+
+class ChooseControlFormSerializer(serializers.ModelSerializer):
+    """Выбор формы контроля"""
+
+    class Meta:
+        model = org_models.DisciplineCredit
+        fields = (
+            'uid',
+            'chosen_control_forms',
+        )
+
+    def update(self, instance, validated_data):
+        chosen_control_forms = validated_data.get('chosen_control_forms')
+        instance.chosen_control_forms.set(chosen_control_forms)
+
+        return instance

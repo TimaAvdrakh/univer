@@ -11,7 +11,9 @@ urlpatterns = [
          name='registration_bid_list_copy'),
 
     path('student/disciplines/', views.StudentDisciplineListView.as_view(), name='discipline_short_list'),
-    # TODO TEST ORDER
+    path('student/disciplines/grouped/', views.StudentDisciplineGroupListView.as_view(),
+         name='student_discipline_group_list'),
+
     path('acad_periods/', views.AcadPeriodListView.as_view(), name='acad_periods_for_filter'),
     path('faculties/', views.FacultyListView.as_view(), name='faculty_list'),
     path('cathedras/', views.CathedraListView.as_view(), name='cathedra_list'),
@@ -44,4 +46,7 @@ urlpatterns = [
 
     path('iup_excel/', views.GenerateIupExcelView.as_view(),
          name='generate_iup_excel'),
+
+    path('discipline/<pk>/deactivate/', views.DeactivateDiscipline.as_view(),
+         name='deactivate_discipline'),
 ]

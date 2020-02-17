@@ -835,13 +835,28 @@ class StudentDiscipline(BaseModel):
 
         super(StudentDiscipline, self).save(*args, **kwargs)
 
+    # @property
+    # def credit(self):
+    #     """Возвращает кредит дисциплины""" Note: старое свойство
+    #     return calculate_credit(self.discipline,
+    #                             self.student,
+    #                             self.acad_period,
+    #                             self.cycle)
+
     @property
     def credit(self):
         """Возвращает кредит дисциплины"""
-        return calculate_credit(self.discipline,
-                                self.student,
-                                self.acad_period,
-                                self.cycle)
+        try:
+            discipline_credit = DisciplineCredit.objects.get(
+                study_plan=self.study_plan,
+                cycle=self.cycle,
+                discipline=self.discipline,
+                acad_period=self.acad_period,
+                student=self.student,
+            )
+            return discipline_credit.credit
+        except DisciplineCredit.DoesNotExist:
+            return 0
 
     def __str__(self):
         return '{} {}'.format(self.acad_period,
@@ -1024,7 +1039,7 @@ class DisciplineCredit(BaseModel):
         max_length=100,
         verbose_name='Уид 1С',
         editable=False,
-        unique=True,
+        # unique=True,
     )
     study_plan = models.ForeignKey(
         StudyPlan,
@@ -1055,15 +1070,40 @@ class DisciplineCredit(BaseModel):
         blank=True,
         verbose_name='Выбранные формы контроля',
     )
+    study_plan_uid_1c = models.CharField(
+        max_length=100,
+        null=True,
+        verbose_name='uid 1c учебного плана',
+    )
+    student = models.ForeignKey(
+        'portal_users.Profile',
+        on_delete=models.CASCADE,
+        null=True,
+        verbose_name='Студент',
+    )
 
     def __str__(self):
         return '{} {} {}'.format(self.study_plan,
                                  self.discipline,
                                  self.credit)
 
+    def save(self, *args, **kwargs):
+        if self.exchange:
+            try:
+                study_plan = StudyPlan.objects.get(student=self.student,
+                                                   uid_1c=self.study_plan_uid_1c)
+                self.study_plan = study_plan
+            except StudyPlan.DoesNotExist:
+                print('StudyPlan not found!')
+        super().save(*args, **kwargs)
+
     class Meta:
         verbose_name = 'Кредит дисциплины'
         verbose_name_plural = 'Кредиты дисциплин'
+        unique_together = (
+            'uuid1c',
+            'student',
+        )
 
 
 class DisciplineCreditControlForm(BaseModel):
@@ -1077,6 +1117,31 @@ class DisciplineCreditControlForm(BaseModel):
         on_delete=models.CASCADE,
         verbose_name='Форма контроля',
     )
+    discipline_credit_uuid1c = models.CharField(
+        max_length=100,
+        verbose_name='Уид 1С дисциплины кредита',
+        null=True,
+    )
+    student = models.ForeignKey(
+        'portal_users.Profile',
+        on_delete=models.CASCADE,
+        null=True,
+        verbose_name='Студент',
+    )
+
+    def save(self, *args, **kwargs):
+        if self.exchange:
+            try:
+                discipline_credit = DisciplineCredit.objects.get(
+                    uuid1c=self.discipline_credit_uuid1c,
+                    student=self.student,
+                )
+                self.discipline_credit = discipline_credit
+
+            except DisciplineCredit.DoesNotExist:
+                print('DisciplineCredit NOT FOUND!')
+
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return '{} {}'.format(self.discipline_credit,
@@ -1086,6 +1151,7 @@ class DisciplineCreditControlForm(BaseModel):
         verbose_name = 'Кредит дисциплины-Форма контроля'
         verbose_name_plural = 'Кредит дисциплины-Форма контроля'
         unique_together = (
-            'discipline_credit',
+            'discipline_credit_uuid1c',
+            'student',
             'control_form',
         )

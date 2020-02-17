@@ -157,6 +157,75 @@ class StudentDisciplineListView(generics.ListAPIView):
         )
 
 
+class StudentDisciplineGroupListView(generics.ListAPIView):  # TODO CHECK
+    """
+    Получение дисциплин студента группой, query_params:
+    study_plan(!), study_year(!), acad_period(!), status
+    """
+    queryset = org_models.StudentDiscipline.objects.filter(is_active=True)
+    serializer_class = serializers.StudentDisciplineShortSerializer
+
+    def list(self, request, *args, **kwargs):
+        study_plans = self.request.query_params.get('study_plans')
+        study_year = self.request.query_params.get('study_year')
+        acad_period = self.request.query_params.get('acad_period')
+        status_id = self.request.query_params.get('status')
+        # reg_period = self.request.query_params.get('reg_period')
+
+        study_plan_list = study_plans.split(',')
+
+        disciplines = []
+
+        for sp in study_plan_list:
+
+            checks = models.AdvisorCheck.objects.filter(study_plan_id=sp,
+                                                        acad_period_id=acad_period)
+
+            if checks.exists():
+                old_status = checks.latest('id').status
+            else:
+                old_status = 0
+
+            queryset = self.queryset.all()
+            if sp:
+                queryset = queryset.filter(study_plan_id=sp)
+            if status_id:
+                status_obj = org_models.StudentDisciplineStatus.objects.get(number=status_id)
+                queryset = queryset.filter(status=status_obj)
+            if study_year:
+                queryset = queryset.filter(study_year_id=study_year)
+            if acad_period:
+                queryset = queryset.filter(acad_period_id=acad_period)
+
+            queryset = queryset.distinct('discipline').order_by('discipline')  # TODO TEST
+            total_credit = sum(i.credit for i in queryset)
+
+            is_more = len(queryset) > 3
+            queryset = queryset[:3]
+            serializer = self.serializer_class(instance=queryset,
+                                               many=True)
+
+            acad_period_obj = org_models.AcadPeriod.objects.get(pk=acad_period,
+                                                                is_active=True)
+
+            resp = {
+                'study_plan': sp,
+                'total_credit': total_credit,
+                'disciplines': serializer.data,
+                'is_more': is_more,
+                'old_status': old_status,
+                'acad_period': acad_period_obj.repr_name,
+                'uid': acad_period,
+            }
+
+            disciplines.append(resp)
+
+        return Response(
+            disciplines,
+            status=status.HTTP_200_OK
+        )
+
+
 class AcadPeriodListView(generics.ListAPIView):
     """Получить список акад периодов по курсу и периоду регистрации,
     study_year(!) reg_period(!), study_form, faculty, cathedra, edu_prog_group, edu_prog, course, group, status
@@ -1836,18 +1905,19 @@ class CopyStudyPlansListView(generics.ListAPIView):
     serializer_class = serializers.StudyPlanSerializer
     pagination_class = AdvisorBidPagination  # CustomPagination
 
-    def get_queryset(self):
-        study_year = self.request.query_params.get('study_year')  # Дисциплина студента
-        study_form = self.request.query_params.get('study_form')
-        faculty = self.request.query_params.get('faculty')
-        cathedra = self.request.query_params.get('cathedra')
-        edu_prog_group = self.request.query_params.get('edu_prog_group')
-        edu_prog = self.request.query_params.get('edu_prog')
-        course = self.request.query_params.get('course')  # Дисциплина студента
-        group = self.request.query_params.get('group')
+    def list(self, request, *args, **kwargs):
+        study_year = request.query_params.get('study_year')
+        study_form = request.query_params.get('study_form')
+        faculty = request.query_params.get('faculty')
+        cathedra = request.query_params.get('cathedra')
+        edu_prog_group = request.query_params.get('edu_prog_group')
+        edu_prog = request.query_params.get('edu_prog')
+        course = request.query_params.get('course')
+        group = request.query_params.get('group')
 
-        status_id = self.request.query_params.get('status')  # В Дисциплине студента
-        # reg_period = self.request.query_params.get('reg_period')  # Дисциплина студента
+        status_id = request.query_params.get('status')
+        acad_periods = request.query_params.get('acad_periods')
+        # reg_period = self.request.query_params.get('reg_period')
 
         queryset = self.queryset.filter(advisor=self.request.user.profile)
         queryset = queryset.exclude(student__status_id=STUDENT_STATUSES['expelled'])
@@ -1884,4 +1954,24 @@ class CopyStudyPlansListView(generics.ListAPIView):
             ).values('study_plan')
             queryset = queryset.filter(pk__in=study_plan_pks)
 
-        return queryset
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.serializer_class(page,
+                                               many=True,
+                                               context={'study_year': study_year,
+                                                        'status_id': status_id,
+                                                        'acad_periods': acad_periods})
+            return self.get_paginated_response(serializer.data)
+
+
+class DeactivateDiscipline(generics.UpdateAPIView):
+    """
+    Деактивировать дисциплины
+    """
+    permission_classes = (
+        IsAuthenticated,
+        # adv_permission.StudentDisciplinePermission,
+    )
+    queryset = org_models.StudentDiscipline.objects.all()
+    serializer_class = serializers.DeactivateDisciplineSerializer
+

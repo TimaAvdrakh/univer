@@ -94,7 +94,7 @@ class GetAcadPeriodsForRegisterCopyView(generics.ListAPIView):
         resp.append(
             {
                 'name': _('all period'),
-                'uid': None,
+                'uid': 'all',
             }
         )
         return Response(
@@ -103,7 +103,7 @@ class GetAcadPeriodsForRegisterCopyView(generics.ListAPIView):
         )
 
 
-class GetRegPeriodAcadPeriodsView(generics.ListAPIView):  # TODO
+class GetRegPeriodAcadPeriodsView(generics.ListAPIView):  # TODO a
     """Получить акад периоды в указанном периоде регистрации
     Принимает query_param: ?study_plan="<uid study_plan>, reg_period "
     """
