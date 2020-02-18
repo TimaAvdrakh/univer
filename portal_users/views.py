@@ -76,15 +76,17 @@ class PasswordChangeView(generics.CreateAPIView):
         user = request.user
         serializer = self.serializer_class(data=request.data,
                                            context={'request': request})
-        serializer.is_valid(raise_exception=True)
-        self.perform_create(serializer)
-        login(request, user)
-        return Response(
-            {
-                'message': 1  # Успешно
-            },
-            status=status.HTTP_200_OK
-        )
+        if serializer.is_valid(raise_exception=True):
+            self.perform_create(serializer)
+            login(request, user)
+            return Response(
+                {
+                    'message': 1  # Успешно
+                },
+                status=status.HTTP_200_OK
+            )
+        else:
+            return Response({'message': serializer.error_messages}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class ForgetPasswordView(generics.CreateAPIView):
@@ -238,7 +240,7 @@ class StudentDisciplineForRegListCopyView(generics.ListAPIView):
     """
     serializer_class = serializers.StudentDisciplineListSerializer
     permission_classes = (
-        IsAuthenticated,
+        # IsAuthenticated,
         permissions.StudyPlanPermission,
     )
 
