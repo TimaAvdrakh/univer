@@ -227,68 +227,6 @@ class StudentDisciplineGroupListView(views.APIView):  # TODO CHECK
         )
 
 
-    def list(self, request, *args, **kwargs):
-        study_plans = self.request.query_params.get('study_plans')
-        study_year = self.request.query_params.get('study_year')
-        acad_period = self.request.query_params.get('acad_period')
-        status_id = self.request.query_params.get('status')
-        # reg_period = self.request.query_params.get('reg_period')
-
-        study_plan_list = study_plans.split(',')
-
-        disciplines = []
-
-        for sp in study_plan_list:
-
-            checks = models.AdvisorCheck.objects.filter(study_plan_id=sp,
-                                                        acad_period_id=acad_period)
-
-            if checks.exists():
-                old_status = checks.latest('id').status
-            else:
-                old_status = 0
-
-            queryset = self.queryset.all()
-            if sp:
-                queryset = queryset.filter(study_plan_id=sp)
-            if status_id:
-                status_obj = org_models.StudentDisciplineStatus.objects.get(number=status_id)
-                queryset = queryset.filter(status=status_obj)
-            if study_year:
-                queryset = queryset.filter(study_year_id=study_year)
-            if acad_period:
-                queryset = queryset.filter(acad_period_id=acad_period)
-
-            queryset = queryset.distinct('discipline').order_by('discipline')  # TODO TEST
-            total_credit = sum(i.credit for i in queryset)
-
-            is_more = len(queryset) > 3
-            queryset = queryset[:3]
-            serializer = self.serializer_class(instance=queryset,
-                                               many=True)
-
-            acad_period_obj = org_models.AcadPeriod.objects.get(pk=acad_period,
-                                                                is_active=True)
-
-            resp = {
-                'study_plan': sp,
-                'total_credit': total_credit,
-                'disciplines': serializer.data,
-                'is_more': is_more,
-                'old_status': old_status,
-                'acad_period': acad_period_obj.repr_name,
-                'uid': acad_period,
-            }
-
-            disciplines.append(resp)
-
-        return Response(
-            disciplines,
-            status=status.HTTP_200_OK
-        )
-
-
-
 class AcadPeriodListView(generics.ListAPIView):
     """Получить список акад периодов по курсу и периоду регистрации,
     study_year(!) reg_period(!), study_form, faculty, cathedra, edu_prog_group, edu_prog, course, group, status
