@@ -17,6 +17,9 @@ from advisors.models import AdvisorCheck
 from validate_email import validate_email
 from datetime import date
 from common import models as common_models
+from django.utils.translation import ugettext as _
+
+
 
 
 class LoginSerializer(serializers.Serializer):
@@ -214,6 +217,7 @@ class ProfileFullSerializer(serializers.ModelSerializer):
 
         role = models.Role.objects.filter(profile=instance).first()
         is_employee = False
+
         if role.is_teacher or role.is_supervisor or role.is_org_admin:
             is_employee = True
             teacher = models.Teacher.objects.get(profile=instance)
@@ -1287,6 +1291,16 @@ class TeacherPositionSerializer(serializers.ModelSerializer):
             'cathedra',
             'is_main',
         )
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+
+        if instance.is_main:
+            data['work'] = _('Основное место работы')
+        else:
+            data['work'] = _('Совместительство')
+
+        return data
 
 
 class TeacherShortSerializer(serializers.ModelSerializer):
