@@ -219,7 +219,6 @@ class ProfileFullSerializer(serializers.ModelSerializer):
             teacher = models.Teacher.objects.get(profile=instance)
             # data['employee'] = TeacherSerializer(teacher).data
             data.update(TeacherSerializer(teacher).data)
-            data['employee'] = 'Проверка'
             teacher_positions = models.TeacherPosition.objects.filter(profile=instance,
                                                                       is_active=True)
             data['positions'] = TeacherPositionSerializer(teacher_positions,
