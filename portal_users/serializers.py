@@ -234,6 +234,7 @@ class ProfileFullSerializer(serializers.ModelSerializer):
 
         if request.user.profile != instance:
             data['identity_documents'] = []
+        print(data)
 
         return data
 
