@@ -217,8 +217,8 @@ class ProfileFullSerializer(serializers.ModelSerializer):
         if role.is_teacher or role.is_supervisor or role.is_org_admin:
             is_employee = True
             teacher = models.Teacher.objects.get(profile=instance)
-            data['employee'] = TeacherSerializer(teacher).data
-            data.update(data['employee'])
+            # data['employee'] = TeacherSerializer(teacher).data
+            data.update(TeacherSerializer(teacher).data)
             teacher_positions = models.TeacherPosition.objects.filter(profile=instance,
                                                                       is_active=True)
             data['positions'] = TeacherPositionSerializer(teacher_positions,
@@ -234,7 +234,6 @@ class ProfileFullSerializer(serializers.ModelSerializer):
 
         if request.user.profile != instance:
             data['identity_documents'] = []
-        print(data)
 
         return data
 
