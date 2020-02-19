@@ -84,8 +84,8 @@ class AchievementFullSerializer(serializers.ModelSerializer):
         fields = (
             'uid',
             'achievement_type',
-            'achievement_type__name',
-            'level__name',
+            'achievement_type_name',
+            'level_name',
             'level',
             'content',
         )
