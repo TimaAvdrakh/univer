@@ -73,6 +73,13 @@ class AchievementSerializer(serializers.ModelSerializer):
             'content',
         )
 
+    def to_representation(self, instance):
+        data = super().to_representation(instance=instance)
+        if data['achievement_type']:
+            data['achievement_type_name'] = data['achievement_type']['name']
+            data['level_name'] = data['level'].get('name')
+        return data
+
 
 class AchievementFullSerializer(serializers.ModelSerializer):
     achievement_type = common_serializers.AchievementTypeSerializer()
@@ -88,11 +95,12 @@ class AchievementFullSerializer(serializers.ModelSerializer):
             'content',
         )
 
-    # def to_representation(self, instance):
-    #     data = super().to_representation(instance=instance)
-    #     data['achievement_type_name'] = data['achievement_type']
-    #     data['level_name'] = data['level'].get('name')
-    #     return data
+    def to_representation(self, instance):
+        data = super().to_representation(instance=instance)
+        if data['achievement_type']:
+            data['achievement_type_name'] = data['achievement_type']['name']
+            data['level_name'] = data['level'].get('name')
+        return data
 
 
 class ProfileFullSerializer(serializers.ModelSerializer):
