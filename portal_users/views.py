@@ -351,7 +351,7 @@ class StudentDisciplineForRegListCopyView(generics.ListAPIView):
                 study_plan_id=study_plan_id,
                 acad_period_id=acad_period_id,
                 # study_year_id=study_year_id,
-                # is_active=True,
+                is_active=True,
             ).exclude(load_type__load_type2__in=not_choosing_load_types2).distinct('discipline').order_by('discipline')
             print(student_disciplines)
 
