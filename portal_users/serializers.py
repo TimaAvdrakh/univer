@@ -84,11 +84,16 @@ class AchievementFullSerializer(serializers.ModelSerializer):
         fields = (
             'uid',
             'achievement_type',
-            'achievement_type_name',
-            'level_name',
             'level',
             'content',
         )
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance=instance)
+        data['achievement_type_name'] = data['achievement_type'].get('name')
+        data['level_name'] = data['level'].get('name')
+        return data
+
 
 class ProfileFullSerializer(serializers.ModelSerializer):
     """Используется для получения и редактирования профиля"""
