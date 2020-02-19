@@ -69,6 +69,8 @@ class AchievementSerializer(serializers.ModelSerializer):
         fields = (
             'uid',
             'achievement_type',
+            'achievement_type__name',
+            'level__name',
             'level',
             'content',
         )
@@ -87,7 +89,6 @@ class AchievementFullSerializer(serializers.ModelSerializer):
             'level',
             'content',
         )
-
 
 class ProfileFullSerializer(serializers.ModelSerializer):
     """Используется для получения и редактирования профиля"""

@@ -311,8 +311,7 @@ class StudentDisciplineForRegListCopyView(generics.ListAPIView):
                     acad_period=acad_period,
                     study_year_id=study_year_id,
                     is_active=True,
-                ).exclude(load_type__load_type2__in=not_choosing_load_types2). \
-                    distinct('discipline').order_by('discipline')
+                ).exclude(load_type__load_type2__in=not_choosing_load_types2).distinct('discipline').order_by('discipline')
 
                 if not student_disciplines.exists():
                     """
@@ -351,10 +350,10 @@ class StudentDisciplineForRegListCopyView(generics.ListAPIView):
             student_disciplines = org_models.StudentDiscipline.objects.filter(
                 study_plan_id=study_plan_id,
                 acad_period_id=acad_period_id,
-                study_year_id=study_year_id,
-                is_active=True,
-            ).exclude(load_type__load_type2__in=not_choosing_load_types2).\
-                distinct('discipline').order_by('discipline')
+                # study_year_id=study_year_id,
+                # is_active=True,
+            ).exclude(load_type__load_type2__in=not_choosing_load_types2).distinct('discipline').order_by('discipline')
+            print(student_disciplines)
 
             serializer = self.serializer_class(student_disciplines,
                                                context={'study_year_id': study_year_id},
@@ -694,6 +693,7 @@ class ChooseControlFormListView(generics.ListAPIView):
     )
 
     def list(self, request, *args, **kwargs):
+
         study_plan_id = request.query_params.get('study_plan')
         acad_period_id = request.query_params.get('acad_period')
         study_year_id = request.query_params.get('study_year')
