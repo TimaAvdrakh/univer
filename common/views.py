@@ -173,56 +173,30 @@ class StudyYearListView(generics.ListAPIView):
 
         return queryset
 
-from rest_framework.views import APIView
 
-
-class RegistrationPeriodListView(APIView):
+class RegistrationPeriodListView(generics.ListAPIView):
     """Справочник периодов регистрации
     study_year"""
     queryset = models.RegistrationPeriod.objects.filter(is_active=True)
     serializer_class = serializers.RegistrationPeriodSerializer
 
-    def get(self, request, format=None):
+    def get_queryset(self):
         study_year = self.request.query_params.get('study_year')
-        queryset = self.queryset.values(
-            'uid',
-            'name',
-            'start_date',
-            'end_date',
-        )
+        queryset = self.queryset.all()
+
         if study_year:
-            queryset = queryset.filter(study_year_id=study_year).values(
-                'uid',
-                'name',
-                'start_date',
-                'end_date',
-            )
-        return Response(queryset, status=status.HTTP_200_OK)
-
-
-# class RegistrationPeriodListView(generics.ListAPIView):
-#     """Справочник периодов регистрации
-#     study_year"""
-#     queryset = models.RegistrationPeriod.objects.filter(is_active=True)
-#     serializer_class = serializers.RegistrationPeriodSerializer
-#
-#     def get_queryset(self):
-#         study_year = self.request.query_params.get('study_year')
-#         queryset = self.queryset.all()
-#
-#         if study_year:
-#             # study_year_obj = org_models.StudyPeriod.objects.get(pk=study_year)
-#             # study_year_start = date(year=study_year_obj.start,
-#             #                         month=9,
-#             #                         day=1)
-#             # study_year_end = date(year=study_year_obj.end,
-#             #                       month=9,
-#             #                       day=1)
-#             # queryset = queryset.filter(start_date__year__gte=study_year_obj.start,
-#             #                            end_date__lte=study_year_end)
-#             print()
-#             queryset = queryset.select_related('study_year').filter(study_year_id=study_year)
-#         return queryset
+            # study_year_obj = org_models.StudyPeriod.objects.get(pk=study_year)
+            # study_year_start = date(year=study_year_obj.start,
+            #                         month=9,
+            #                         day=1)
+            # study_year_end = date(year=study_year_obj.end,
+            #                       month=9,
+            #                       day=1)
+            # queryset = queryset.filter(start_date__year__gte=study_year_obj.start,
+            #                            end_date__lte=study_year_end)
+            print()
+            queryset = queryset.filter(study_year_id=study_year)
+        return queryset
 
 
 class StudyFormListView(generics.ListAPIView):
