@@ -537,8 +537,9 @@ class NotifyAdviser(generics.CreateAPIView):
 
         self.check_object_permissions(request,
                                       study_plan)
-
-        serializer = self.serializer_class(data=request.data)
+        datas = request.data
+        datas['status'] = True
+        serializer = self.serializer_class(data=datas)
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(

@@ -1086,10 +1086,14 @@ class NotifyAdviserSerializer(serializers.Serializer):
         queryset=org_models.AcadPeriod.objects.filter(is_active=True),
         required=False,
     )
+    status = serializers.BooleanField(default=False)
 
     def save(self, **kwargs):
         study_plan = self.validated_data.get('study_plan')
         acad_period = self.validated_data.get('acad_period')
+        status = self.validated_data.get('status')
+        self.validated_data.pop('status')
+
 
         if acad_period:
             try:
@@ -1105,7 +1109,7 @@ class NotifyAdviserSerializer(serializers.Serializer):
                     status_id=student_discipline_info_status["not_started"],
                 )
 
-            if str(student_discipline_info.status_id) == student_discipline_info_status['chosen']:
+            if str(student_discipline_info.status_id) == student_discipline_info_status['chosen'] or status:
                 """Все дисциплины выбраны для выбранного академ/периода"""
                 # Создаем задачу для отправки уведомления
                 NotifyAdvisorTask.objects.create(stud_discipline_info=student_discipline_info)
@@ -1144,7 +1148,7 @@ class NotifyAdviserSerializer(serializers.Serializer):
                         status_id=student_discipline_info_status["not_started"],
                     )
 
-                if str(student_discipline_info.status_id) == student_discipline_info_status['chosen']:
+                if str(student_discipline_info.status_id) == student_discipline_info_status['chosen'] or status:
                     """Все дисциплины выбраны для выбранного академ/периода"""
                     # Создаем задачу для отправки уведомления
                     NotifyAdvisorTask.objects.create(stud_discipline_info=student_discipline_info)
