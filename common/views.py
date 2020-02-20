@@ -180,7 +180,7 @@ from datetime import datetime
 class RegistrationPeriodListView(APIView):
     """Справочник периодов регистрации
     study_year"""
-    queryset = models.RegistrationPeriod.objects.filter(is_active=True)
+    queryset = models.RegistrationPeriod.objects.select_related('study_year').filter(is_active=True)
     serializer_class = serializers.RegistrationPeriodSerializer
 
     def get(self, request, format=None):
@@ -193,7 +193,7 @@ class RegistrationPeriodListView(APIView):
             'end_date',
         )
         if study_year:
-            queryset = queryset.select_related('study_year').filter(study_year_id=study_year).values(
+            queryset = queryset.filter(study_year_id=study_year).values(
                 'uid',
                 'name',
                 'start_date',
