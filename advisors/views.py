@@ -701,6 +701,7 @@ class RegisterResultView(generics.ListAPIView):
         study_year(!), reg_period(!), acad_period, faculty, speciality, edu_prog, course, group
     """
     serializer_class = serializers.StudentDisciplineSerializer
+    page_size = 30
     queryset = org_models.StudentDiscipline.objects.exclude(
         student__status_id=STUDENT_STATUSES['expelled'],
         is_active=False)
