@@ -195,7 +195,7 @@ class RegistrationPeriodListView(generics.ListAPIView):
             # queryset = queryset.filter(start_date__year__gte=study_year_obj.start,
             #                            end_date__lte=study_year_end)
 
-            queryset = queryset.filter(study_year_id=study_year)
+            queryset = queryset.select_related('study_year_id').filter(study_year_id=study_year)
         return queryset
 
 
