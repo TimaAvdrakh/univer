@@ -173,6 +173,32 @@ class StudyYearListView(generics.ListAPIView):
 
         return queryset
 
+from rest_framework.views import APIView
+
+
+class RegistrationPeriodListView(APIView):
+    """Справочник периодов регистрации
+    study_year"""
+    queryset = models.RegistrationPeriod.objects.filter(is_active=True)
+    serializer_class = serializers.RegistrationPeriodSerializer
+
+    def get(self, request, format=None):
+        study_year = self.request.query_params.get('study_year')
+        queryset = self.queryset.all().values(
+            'uid',
+            'name',
+            'start_date',
+            'end_date',
+        )
+        if study_year:
+            queryset = queryset.select_related('study_year').filter(study_year_id=study_year).values(
+                'uid',
+                'name',
+                'start_date',
+                'end_date',
+            )
+        return Response(queryset, status=status.HTTP_200_OK)
+
 
 class RegistrationPeriodListView(generics.ListAPIView):
     """Справочник периодов регистрации
@@ -194,7 +220,7 @@ class RegistrationPeriodListView(generics.ListAPIView):
             #                       day=1)
             # queryset = queryset.filter(start_date__year__gte=study_year_obj.start,
             #                            end_date__lte=study_year_end)
-
+            print()
             queryset = queryset.select_related('study_year').filter(study_year_id=study_year)
         return queryset
 
