@@ -745,17 +745,23 @@ class RegisterResultView(generics.ListAPIView):
                 course=course
             ).values('study_plan')
 
-        distincted_queryset = queryset.filter(**query).distinct('discipline', 'load_type', 'hours', 'language', 'teacher')
+        distincted_queryset = queryset.filter(**query).distinct(
+            'discipline', 'load_type', 'hours', 'language', 'teacher')
+        # print(distincted_queryset)
+        page = self.paginate_queryset(distincted_queryset)
+        # print(page, 'page')
 
         student_discipline_list = []
-        for item in distincted_queryset:
-            student_count = queryset.filter(
-                discipline=item.discipline,
-                load_type=item.load_type,
-                language=item.language,
-                teacher=item.teacher,
-                hours=item.hours,
-            ).distinct('student').count()
+        for item in page:
+            query2 = dict()
+            query2.update(query)
+            query2['discipline'] = item.discipline
+            query2['load_type'] = item.load_type
+            query2['language'] = item.language
+            query2['teacher'] = item.teacher
+            query2['hours'] = item.hours
+            student_count = queryset.filter(**query2).distinct('student').count()
+
             d = {
                 'discipline': item.discipline,
                 'load_type': item.load_type,
@@ -766,9 +772,9 @@ class RegisterResultView(generics.ListAPIView):
             }
             student_discipline_list.append(d)
 
-        page = self.paginate_queryset(student_discipline_list)
-        if page is not None:
-            serializer = self.serializer_class(page, many=True)
+        # page = self.paginate_queryset(student_discipline_list)
+        if student_discipline_list is not None:
+            serializer = self.serializer_class(student_discipline_list, many=True)
             return self.get_paginated_response(serializer.data)
 
 
