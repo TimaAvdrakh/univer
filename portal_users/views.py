@@ -635,6 +635,13 @@ class InterestsEditView(generics.UpdateAPIView):
     queryset = models.Profile.objects.filter(is_active=True)
     serializer_class = serializers.ProfileInterestsEditSerializer
 
+    def put(self, request, *args, **kwargs):
+        interests = kwargs.get('interests')
+        for interest in interests:
+            interest['name'] = interest.pop('content')
+        kwargs['interests'] = interests
+        return self.update(request, *args, **kwargs)
+
 
 class AchievementsEditView(generics.UpdateAPIView):
     """Редактировать достижения"""
