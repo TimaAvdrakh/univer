@@ -1211,7 +1211,8 @@ class ProfileInterestsEditSerializer(serializers.ModelSerializer):
         )
 
     def update(self, instance, validated_data):
-        self.data
+        v = self.data
+        print(v)
         interests = validated_data.get('interests')
 
         for interest in interests:
