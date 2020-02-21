@@ -62,6 +62,11 @@ class InterestAdmin(admin.ModelAdmin):
     autocomplete_fields = (
         'profile',
     )
+    search_fields = (
+        'profile__first_name',
+        'profile__last_name',
+    )
+
     # form = make_ajax_form(models.Interest, {
     #     'profile': 'profile'
     # })
