@@ -645,6 +645,7 @@ class InterestsEditView(generics.UpdateAPIView):
                 x['name'] = x.pop('content')
                 interests.append(x)
             data['interests'] = interests
+        print(data['interests'])
         serializer = self.get_serializer(instance, data=data, partial=partial)
         serializer.is_valid(raise_exception=True)
         self.perform_update(serializer)
