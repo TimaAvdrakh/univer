@@ -1251,6 +1251,11 @@ class ProfileAchievementsEditSerializer(serializers.ModelSerializer):
     def update(self, instance, validated_data):
         achievements = validated_data.get('achievements')
         for achievement in achievements:
+            if achievement['achievement_type'].get('uid'):
+                achievement['achievement_type'] = achievement['achievement_type'].get('uid')
+            if achievement['level'].get('uid'):
+                achievement['level'] = achievement['level'].get('uid')
+
             models.Achievement.objects.get_or_create(
                 profile=instance,
                 level_id=achievement['level'],
