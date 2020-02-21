@@ -1214,7 +1214,6 @@ class ProfileInterestsEditSerializer(serializers.ModelSerializer):
         interests = validated_data.get('interests')
 
         for interest in interests:
-            print(interest)
             models.Interest.objects.get_or_create(
                 profile=instance,
                 name=interest['name'],
