@@ -1212,6 +1212,8 @@ class ProfileInterestsEditSerializer(serializers.ModelSerializer):
 
     def update(self, instance, validated_data):
         interests = validated_data.get('interests')
+        if validated_data.get('content'):
+            interests = validated_data.pop('content')
         for interest in interests:
             models.Interest.objects.get_or_create(
                 profile=instance,
