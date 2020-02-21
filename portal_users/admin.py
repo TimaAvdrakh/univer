@@ -59,6 +59,13 @@ class MaritalStatusAdmin(admin.ModelAdmin):
 
 @admin.register(models.Interest)
 class InterestAdmin(admin.ModelAdmin):
+    autocomplete_fields = (
+        'profile',
+    )
+    # form = make_ajax_form(models.Interest, {
+    #     'profile': 'profile'
+    # })
+
     list_filter = (
         "is_active",
     )
