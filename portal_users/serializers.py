@@ -1211,10 +1211,11 @@ class ProfileInterestsEditSerializer(serializers.ModelSerializer):
         )
 
     def update(self, instance, validated_data):
+        validated_data2 = validated_data
         if validated_data.get('content'):
-            interests = validated_data.pop('content')
+            interests = validated_data2.pop('content')
         else:
-            interests = validated_data.get('interests')
+            interests = validated_data2.get('interests')
 
         for interest in interests:
             models.Interest.objects.get_or_create(
@@ -1225,7 +1226,6 @@ class ProfileInterestsEditSerializer(serializers.ModelSerializer):
 
         interests_for_del = validated_data.get('interests_for_del')
         models.Interest.objects.filter(pk__in=interests_for_del).update(is_active=False)
-
         return instance
 
 
