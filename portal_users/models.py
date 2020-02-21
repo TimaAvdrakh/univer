@@ -405,10 +405,13 @@ class Interest(BaseCatalog):
         null=True,
         on_delete=models.CASCADE,
         verbose_name='Профиль',
-        related_name='interests',
+        related_name='interests'
     )
 
     class Meta:
+        indexes = [
+            models.Index(fields=['profile']),
+        ]
         verbose_name = 'Увлечение'
         verbose_name_plural = 'Увлечения'
 
