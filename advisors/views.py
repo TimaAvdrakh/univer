@@ -986,7 +986,6 @@ class RegisterStatisticsView(generics.ListAPIView):
 
         # distincted_queryset = queryset.distinct('discipline', 'study_plan__group')
 
-        print(rows)
         student_discipline_list = []
         for row in rows:
             group_id = row[0]
