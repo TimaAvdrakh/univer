@@ -630,7 +630,7 @@ class ContactEditView(generics.UpdateAPIView):
 class InterestsEditView(generics.UpdateAPIView):
     """Редактировать интересы"""
     permission_classes = (
-        IsAuthenticated,
+        # IsAuthenticated,
         permissions.ProfilePermission,
     )
     queryset = models.Profile.objects.filter(is_active=True)
