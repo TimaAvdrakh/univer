@@ -216,7 +216,7 @@ class CheckStudentBidsSerializer(serializers.Serializer):
 
     def all_teacher_chosen(self, study_plan, acad_periods, study_year, status_check):
         """Проверим выбраны ли все преподы в указанных акад периодах"""
-        if status_check:
+        if not status_check:
             invalid_statuses = [student_discipline_status['not_chosen'], student_discipline_status['rejected']]
         else:
             invalid_statuses = [student_discipline_status['not_chosen']]
