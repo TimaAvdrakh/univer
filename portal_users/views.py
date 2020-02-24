@@ -15,6 +15,7 @@ from common.csrf_exempt_auth_class import CsrfExemptSessionAuthentication
 from portal.curr_settings import student_discipline_info_status, not_choosing_load_types2, CYCLE_DISCIPLINE
 from datetime import date
 from common import models as common_models
+from rest_framework.views import APIView
 
 
 class LoginView(generics.CreateAPIView):
