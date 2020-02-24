@@ -25,6 +25,7 @@ from openpyxl.styles import Border, Side, Font, Alignment
 from django.db import connection
 from portal.curr_settings import current_site
 from cron_app.models import ExcelTask
+from django.core.cache import cache
 import json
 
 
@@ -998,16 +999,20 @@ class RegisterStatisticsView(generics.ListAPIView):
                 is_active=True,
             ).distinct('student').count()
 
-            d = {
-                'faculty': org_models.StudentDiscipline.objects.get(pk=first_sd).study_plan.faculty.name,
-                'cathedra': org_models.StudentDiscipline.objects.get(pk=first_sd).study_plan.cathedra.name,
-                'speciality': org_models.StudentDiscipline.objects.get(pk=first_sd).study_plan.speciality.name,
-                'group': org_models.Group.objects.get(pk=group_id).name,
-                'student_count': group_student_count,
-                'discipline': org_models.Discipline.objects.get(pk=discipline_id).name,
-                'not_chosen_student_count': not_chosen_student_count,
-                'percent_of_non_chosen_student': (not_chosen_student_count / group_student_count) * 100,
-            }
+            d = cache.get("getstudentdisciplinedetaildata" + str(first_sd))
+
+            if d is None:
+                d = {
+                    'faculty': org_models.StudentDiscipline.objects.get(pk=first_sd).study_plan.faculty.name,
+                    'cathedra': org_models.StudentDiscipline.objects.get(pk=first_sd).study_plan.cathedra.name,
+                    'speciality': org_models.StudentDiscipline.objects.get(pk=first_sd).study_plan.speciality.name,
+                    'group': org_models.Group.objects.get(pk=group_id).name,
+                    'student_count': group_student_count,
+                    'discipline': org_models.Discipline.objects.get(pk=discipline_id).name,
+                    'not_chosen_student_count': not_chosen_student_count,
+                    'percent_of_non_chosen_student': (not_chosen_student_count / group_student_count) * 100,
+                }
+                cache.set("getstudentdisciplinedetaildata" + str(first_sd), d)
             student_discipline_list.append(d)
 
         # for student_discipline in distincted_queryset:
