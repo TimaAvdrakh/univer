@@ -496,8 +496,7 @@ class CheckStudentChoices(generics.CreateAPIView):
                 },
                 status=status.HTTP_404_NOT_FOUND
             )
-        self.check_object_permissions(request,
-                                      sp)
+        self.check_object_permissions(request, sp)
 
         serializer = self.serializer_class(data=request.data)
         serializer.is_valid(raise_exception=True)
