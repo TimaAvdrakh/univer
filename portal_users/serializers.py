@@ -1212,7 +1212,6 @@ class ProfileInterestsEditSerializer(serializers.ModelSerializer):
 
     def update(self, instance, validated_data):
         interests = validated_data.get('interests')
-
         for interest in interests:
             models.Interest.objects.get_or_create(
                 profile=instance,
@@ -1222,6 +1221,7 @@ class ProfileInterestsEditSerializer(serializers.ModelSerializer):
 
         interests_for_del = validated_data.get('interests_for_del')
         models.Interest.objects.filter(pk__in=interests_for_del).update(is_active=False)
+
         return instance
 
 
