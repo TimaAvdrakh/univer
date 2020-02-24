@@ -635,28 +635,6 @@ class InterestsEditView(generics.UpdateAPIView):
     queryset = models.Profile.objects.filter(is_active=True)
     serializer_class = serializers.ProfileInterestsEditSerializer
 
-    def update(self, request, *args, **kwargs):
-        partial = kwargs.pop('partial', False)
-        instance = self.get_object()
-        data = request.data
-        if request.data.get('interests') and request.data.get('interests')[0].get('content'):
-            interests = list()
-            for x in request.data.get('interests'):
-                x['name'] = x.pop('content')
-                interests.append(x)
-            data['interests'] = interests
-        print(data['interests'])
-        serializer = self.get_serializer(instance, data=data, partial=partial)
-        serializer.is_valid(raise_exception=True)
-        self.perform_update(serializer)
-
-        if getattr(instance, '_prefetched_objects_cache', None):
-            # If 'prefetch_related' has been applied to a queryset, we need to
-            # forcibly invalidate the prefetch cache on the instance.
-            instance._prefetched_objects_cache = {}
-
-        return Response(serializer.data)
-
 
 class AchievementsEditView(generics.UpdateAPIView):
     """Редактировать достижения"""
