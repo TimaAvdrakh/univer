@@ -240,6 +240,3 @@ class UserCredentialAdmin(admin.ModelAdmin):
         "password",
         "created",
     ]
-
-
-admin.site.register(models.EroroText)

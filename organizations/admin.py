@@ -542,3 +542,4 @@ class DisciplineCreditControlFormAdmin(admin.ModelAdmin):
         'is_active',
     ]
 
+admin.site.register(models.EroroText)
