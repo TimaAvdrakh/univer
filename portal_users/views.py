@@ -292,48 +292,43 @@ class StudentDisciplineForRegListCopyView(generics.ListAPIView):
                 is_active=True,
             )
 
-            # resp = []
-            key = 'acad_period_pks_'
-            [key + str(obj['acad_period']) for obj in acad_period_pks]
-            resp = cache.get(key)
+            resp = list()
 
-            if resp is None:
-                for acad_period in acad_periods:
-                    try:
-                        org_models.StudentDisciplineInfo.objects.get(
-                            study_plan_id=study_plan_id,
-                            acad_period=acad_period,
-                        )
-                    except org_models.StudentDisciplineInfo.DoesNotExist:  # Создаем StudentDisciplineInfo если не создан
-                        org_models.StudentDisciplineInfo.objects.create(
-                            student=study_plan.student,
-                            study_plan_id=study_plan_id,
-                            acad_period=acad_period,
-                            status_id=student_discipline_info_status["not_started"],
-                        )
-
-                    student_disciplines = org_models.StudentDiscipline.objects.filter(
-                        study_plan=study_plan,
+            for acad_period in acad_periods:
+                try:
+                    org_models.StudentDisciplineInfo.objects.get(
+                        study_plan_id=study_plan_id,
                         acad_period=acad_period,
-                        study_year_id=study_year_id,
-                        is_active=True,
-                    ).exclude(load_type__load_type2__in=not_choosing_load_types2).distinct('discipline').order_by('discipline')
+                    )
+                except org_models.StudentDisciplineInfo.DoesNotExist:  # Создаем StudentDisciplineInfo если не создан
+                    org_models.StudentDisciplineInfo.objects.create(
+                        student=study_plan.student,
+                        study_plan_id=study_plan_id,
+                        acad_period=acad_period,
+                        status_id=student_discipline_info_status["not_started"],
+                    )
 
-                    if not student_disciplines.exists():
-                        """
-                        Если дисциплин студентов нет, то исключим акад период из ответа
-                        """
-                        continue
+                student_disciplines = org_models.StudentDiscipline.objects.filter(
+                    study_plan=study_plan,
+                    acad_period=acad_period,
+                    study_year_id=study_year_id,
+                    is_active=True,
+                ).exclude(load_type__load_type2__in=not_choosing_load_types2).distinct('discipline').order_by('discipline')
 
-                    serializer = self.serializer_class(student_disciplines,
-                                                       context={'study_year_id': study_year_id},
-                                                       many=True).data
-                    item = {
-                        'name': acad_period.repr_name,
-                        'disciplines': serializer,
-                    }
-                    resp.append(item)
-                cache.set(key, resp)
+                if not student_disciplines.exists():
+                    """
+                    Если дисциплин студентов нет, то исключим акад период из ответа
+                    """
+                    continue
+
+                serializer = self.serializer_class(student_disciplines,
+                                                   context={'study_year_id': study_year_id},
+                                                   many=True).data
+                item = {
+                    'name': acad_period.repr_name,
+                    'disciplines': serializer,
+                }
+            resp.append(item)
             return Response(
                 resp,
                 status=status.HTTP_200_OK
