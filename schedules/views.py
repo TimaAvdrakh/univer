@@ -337,11 +337,25 @@ class ScheduleListView(generics.ListAPIView):
                 class_room,
                 my_schedule,
             ),
+            'last_date': CURRENT_API + '/schedules/?last_date={0}&next_week=1&group={1}&discipline={2}&teacher={3}&class_room={4}&my={5}'.format(
+                monday,
+                group,
+                discipline,
+                teacher,
+                class_room,
+                my_schedule,
+            ),
+            'first_date': CURRENT_API + '/schedules/?first_date={0}&next_week=1&group={1}&discipline={2}&teacher={3}&class_room={4}&my={5}'.format(
+                monday,
+                group,
+                discipline,
+                teacher,
+                class_room,
+                my_schedule,
+            ),
             'results': resp
-        }
 
-        resp_wrapper['last_date'] = resp_wrapper['next']
-        resp_wrapper['first_date'] = resp_wrapper['prev']
+        }
         return Response(
             resp_wrapper,
             status=status.HTTP_200_OK
