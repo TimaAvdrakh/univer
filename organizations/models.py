@@ -864,7 +864,7 @@ class StudentDiscipline(BaseModel):
                 discipline=self.discipline,
                 acad_period=self.acad_period,
                 student=self.student,
-            ).values_list('credit', flat=True)
+            ).first()
             return discipline_credit
 
 
