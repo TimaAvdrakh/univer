@@ -340,6 +340,8 @@ class ScheduleListView(generics.ListAPIView):
             'results': resp
         }
 
+        resp_wrapper['last_date'] = resp_wrapper['next']
+        resp_wrapper['first_date'] = resp_wrapper['prev']
         return Response(
             resp_wrapper,
             status=status.HTTP_200_OK
