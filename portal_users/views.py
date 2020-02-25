@@ -333,7 +333,7 @@ class StudentDisciplineForRegListCopyView(generics.ListAPIView):
                         'disciplines': serializer,
                     }
                     resp.append(item)
-                    cache.set(cache_acad_period_pks, resp)
+                    cache.set(key, resp)
                 return Response(
                     resp,
                     status=status.HTTP_200_OK
