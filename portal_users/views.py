@@ -16,7 +16,6 @@ from portal.curr_settings import student_discipline_info_status, not_choosing_lo
 from datetime import date
 from common import models as common_models
 from rest_framework.views import APIView
-from django.core.cache import cache
 
 
 class LoginView(generics.CreateAPIView):
