@@ -292,7 +292,7 @@ class StudentDisciplineForRegListCopyView(generics.ListAPIView):
                 is_active=True,
             )
 
-            resp = []
+            # resp = []
             key = 'acad_period_pks_'
             [key + str(obj['acad_period']) for obj in acad_period_pks]
             resp = cache.get(key)
@@ -333,7 +333,7 @@ class StudentDisciplineForRegListCopyView(generics.ListAPIView):
                         'disciplines': serializer,
                     }
                     resp.append(item)
-                    cache.set(key, resp)
+                cache.set(key, resp)
             return Response(
                 resp,
                 status=status.HTTP_200_OK
