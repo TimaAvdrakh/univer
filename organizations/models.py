@@ -865,7 +865,7 @@ class StudentDiscipline(BaseModel):
                 acad_period=self.acad_period,
                 student=self.student,
             ).first()
-            return discipline_credit
+            return discipline_credit.credit
 
 
     def __str__(self):
