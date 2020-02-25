@@ -294,7 +294,7 @@ class StudentDisciplineForRegListCopyView(generics.ListAPIView):
 
             resp = []
             key = 'acad_period_pks_'
-            [key + str(acad_period) for acad_period in acad_period_pks]
+            [key + str(obj['acad_period']) for obj in acad_period_pks]
             resp = cache.get(key)
 
             if resp is None:
