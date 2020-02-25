@@ -295,9 +295,9 @@ class StudentDisciplineForRegListCopyView(generics.ListAPIView):
             resp = []
             key = 'acad_period_pks_'
             [key + str(acad_period) for acad_period in acad_period_pks]
-            cache_acad_period_pks = cache.get(key)
+            resp = cache.get(key)
 
-            if cache_acad_period_pks is None:
+            if resp is None:
                 for acad_period in acad_periods:
                     try:
                         org_models.StudentDisciplineInfo.objects.get(
@@ -334,10 +334,10 @@ class StudentDisciplineForRegListCopyView(generics.ListAPIView):
                     }
                     resp.append(item)
                     cache.set(key, resp)
-                return Response(
-                    resp,
-                    status=status.HTTP_200_OK
-                )
+            return Response(
+                resp,
+                status=status.HTTP_200_OK
+            )
         elif acad_period_id:
             try:
                 org_models.StudentDisciplineInfo.objects.get(
