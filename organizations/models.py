@@ -857,6 +857,16 @@ class StudentDiscipline(BaseModel):
             return discipline_credit.credit
         except DisciplineCredit.DoesNotExist:
             return 0
+        except DisciplineCredit.MultipleObjectsReturned:
+            discipline_credit = DisciplineCredit.objects.filter(
+                study_plan=self.study_plan,
+                cycle=self.cycle,
+                discipline=self.discipline,
+                acad_period=self.acad_period,
+                student=self.student,
+            ).values_list('credit', flat=True)
+            return discipline_credit
+
 
     def __str__(self):
         return '{} {}'.format(self.acad_period,
