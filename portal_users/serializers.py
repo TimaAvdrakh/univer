@@ -1388,6 +1388,14 @@ class StudentDisciplineControlFormSerializer(serializers.ModelSerializer):
             )
         except org_models.DisciplineCredit.DoesNotExist:
             raise CustomException(detail='not_found')
+        except org_models.DisciplineCredit.MultipleObjectsReturned:
+            discipline_credit = org_models.DisciplineCredit.objects.filter(
+                study_plan=instance.study_plan,
+                cycle=instance.cycle,
+                discipline=instance.discipline,
+                acad_period=instance.acad_period,
+                student=instance.student,
+            ).first()
 
         control_form_pks = org_models.DisciplineCreditControlForm.objects.filter(
             discipline_credit=discipline_credit,
