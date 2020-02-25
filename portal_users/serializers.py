@@ -719,8 +719,7 @@ class StudentDisciplineListSerializer(serializers.ModelSerializer):
             acad_period=instance.acad_period,
         ).exclude(load_type__load_type2__in=not_choosing_load_types2).order_by('discipline')
 
-        serializer = StudentDisciplineCopySerializer(instance=sds,
-                                                     many=True)
+        serializer = StudentDisciplineCopySerializer(instance=sds, many=True)
         data['load_types'] = serializer.data
         data['hide'] = False
         data['loader'] = False

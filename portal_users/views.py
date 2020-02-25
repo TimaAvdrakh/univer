@@ -241,7 +241,7 @@ class StudentDisciplineForRegListCopyView(generics.ListAPIView):
     """
     serializer_class = serializers.StudentDisciplineListSerializer
     permission_classes = (
-        # IsAuthenticated,
+        IsAuthenticated,
         permissions.StudyPlanPermission,
     )
 
@@ -320,9 +320,7 @@ class StudentDisciplineForRegListCopyView(generics.ListAPIView):
                     """
                     continue
 
-                serializer = self.serializer_class(student_disciplines,
-                                                   context={'study_year_id': study_year_id},
-                                                   many=True)
+                serializer = self.serializer_class(student_disciplines, context={'study_year_id': study_year_id}, many=True)
 
                 item = {
                     'name': acad_period.repr_name,
