@@ -712,7 +712,7 @@ class StudentDisciplineListSerializer(serializers.ModelSerializer):
         try:
             data['credit'] = instance.credit
         except:
-            data['credit'] = instance.credit[0]
+            pass
 
         sds = org_models.StudentDiscipline.objects.filter(
             student=instance.student,
