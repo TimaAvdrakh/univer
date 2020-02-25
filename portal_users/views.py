@@ -16,6 +16,7 @@ from portal.curr_settings import student_discipline_info_status, not_choosing_lo
 from datetime import date
 from common import models as common_models
 from rest_framework.views import APIView
+from django.core.cache import cache
 
 
 class LoginView(generics.CreateAPIView):
@@ -241,7 +242,7 @@ class StudentDisciplineForRegListCopyView(generics.ListAPIView):
     """
     serializer_class = serializers.StudentDisciplineListSerializer
     permission_classes = (
-        # IsAuthenticated,
+        IsAuthenticated,
         permissions.StudyPlanPermission,
     )
 
@@ -292,48 +293,51 @@ class StudentDisciplineForRegListCopyView(generics.ListAPIView):
             )
 
             resp = []
+            key = 'acad_period_pks_'
+            [key + str(acad_period) for acad_period in acad_period_pks]
+            cache_acad_period_pks = cache.get(key)
 
-            for acad_period in acad_periods:
-                try:
-                    org_models.StudentDisciplineInfo.objects.get(
-                        study_plan_id=study_plan_id,
+            if cache_acad_period_pks is None:
+                for acad_period in acad_periods:
+                    try:
+                        org_models.StudentDisciplineInfo.objects.get(
+                            study_plan_id=study_plan_id,
+                            acad_period=acad_period,
+                        )
+                    except org_models.StudentDisciplineInfo.DoesNotExist:  # Создаем StudentDisciplineInfo если не создан
+                        org_models.StudentDisciplineInfo.objects.create(
+                            student=study_plan.student,
+                            study_plan_id=study_plan_id,
+                            acad_period=acad_period,
+                            status_id=student_discipline_info_status["not_started"],
+                        )
+
+                    student_disciplines = org_models.StudentDiscipline.objects.filter(
+                        study_plan=study_plan,
                         acad_period=acad_period,
-                    )
-                except org_models.StudentDisciplineInfo.DoesNotExist:  # Создаем StudentDisciplineInfo если не создан
-                    org_models.StudentDisciplineInfo.objects.create(
-                        student=study_plan.student,
-                        study_plan_id=study_plan_id,
-                        acad_period=acad_period,
-                        status_id=student_discipline_info_status["not_started"],
-                    )
+                        study_year_id=study_year_id,
+                        is_active=True,
+                    ).exclude(load_type__load_type2__in=not_choosing_load_types2).distinct('discipline').order_by('discipline')
 
-                student_disciplines = org_models.StudentDiscipline.objects.filter(
-                    study_plan=study_plan,
-                    acad_period=acad_period,
-                    study_year_id=study_year_id,
-                    is_active=True,
-                ).exclude(load_type__load_type2__in=not_choosing_load_types2).distinct('discipline').order_by('discipline')
+                    if not student_disciplines.exists():
+                        """
+                        Если дисциплин студентов нет, то исключим акад период из ответа
+                        """
+                        continue
 
-                if not student_disciplines.exists():
-                    """
-                    Если дисциплин студентов нет, то исключим акад период из ответа
-                    """
-                    continue
-
-                serializer = self.serializer_class(student_disciplines,
-                                                   context={'study_year_id': study_year_id},
-                                                   many=True)
-
-                item = {
-                    'name': acad_period.repr_name,
-                    'disciplines': serializer.data,
-                }
-                resp.append(item)
-
-            return Response(
-                resp,
-                status=status.HTTP_200_OK
-            )
+                    serializer = self.serializer_class(student_disciplines,
+                                                       context={'study_year_id': study_year_id},
+                                                       many=True).data
+                    item = {
+                        'name': acad_period.repr_name,
+                        'disciplines': serializer,
+                    }
+                    resp.append(item)
+                    cache.set(cache_acad_period_pks, resp)
+                return Response(
+                    resp,
+                    status=status.HTTP_200_OK
+                )
         elif acad_period_id:
             try:
                 org_models.StudentDisciplineInfo.objects.get(
