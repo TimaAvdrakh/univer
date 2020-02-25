@@ -864,8 +864,9 @@ class StudentDiscipline(BaseModel):
                 discipline=self.discipline,
                 acad_period=self.acad_period,
                 student=self.student,
-            ).first()
-            return discipline_credit.credit
+            )
+            EroroText.objects.create(text='DisciplineCredit UID = {}'.format(discipline_credit.values_list('uid', flat=True)))
+            return discipline_credit.first().credit
 
 
     def __str__(self):
@@ -1165,3 +1166,14 @@ class DisciplineCreditControlForm(BaseModel):
             'student',
             'control_form',
         )
+
+
+class EroroText(models.Model):
+    text = models.TextField(verbose_name='текст ошибки')
+
+    def __str__(self):
+        return self.text
+
+    class Meta:
+        verbose_name = 'текст ошибки'
+        verbose_name_plural = 'текста ошибки'
