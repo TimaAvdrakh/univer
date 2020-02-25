@@ -709,7 +709,10 @@ class StudentDisciplineListSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         data = super().to_representation(instance)
-        data['credit'] = instance.credit
+        try:
+            data['credit'] = instance.credit
+        except:
+            data['credit'] = instance.credit[0]
 
         sds = org_models.StudentDiscipline.objects.filter(
             student=instance.student,
