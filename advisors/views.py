@@ -1296,8 +1296,7 @@ class NotRegisteredStudentListView(generics.ListAPIView):
         student_discipline_list = []
         for row in rows:
             st = ""
-            [st + x + ', ' for x in set(row[10:][0].split(','))]
-            # print(row[10:], type(row[10:]))
+            [st + x + ', ' for x in set(row[10:][0].split(',').sort())]
             d = {
                 'faculty': row[1],
                 'cathedra': row[3],
