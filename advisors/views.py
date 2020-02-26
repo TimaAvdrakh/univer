@@ -1255,7 +1255,7 @@ class NotRegisteredStudentListView(generics.ListAPIView):
                    string_agg(CONCAT(p.last_name, ' ', p.first_name, ' ', p.middle_name), ',') 
                 FROM organizations_studentdiscipline sd
                 INNER JOIN organizations_studyplan sp on sd.study_plan_id = sp.uid
-                INNER JOIN distinct portal_users_profile p on sp.student_id = p.uid
+                INNER JOIN portal_users_profile p on sp.student_id = p.uid
                 INNER JOIN organizations_discipline d on sd.discipline_id = d.uid
                 inner join organizations_faculty  as faks  on sp.faculty_id = faks.uid
                 inner join organizations_cathedra  as cathedras  on sp.cathedra_id = cathedras.uid
@@ -1295,13 +1295,21 @@ class NotRegisteredStudentListView(generics.ListAPIView):
 
         student_discipline_list = []
         for row in rows:
+            values = list()
+            v = row[10:][0]
+            values.append(v)
+            for x in row[10:]:
+                if v != x:
+                    values.append(x)
+                    v = x
+
             d = {
                 'faculty': row[1],
                 'cathedra': row[3],
                 'speciality': row[5],
                 'group': row[7],
                 'discipline': row[9],
-                'student': row[10:],
+                'student': values,
             }
             # d = {
             #     'faculty': org_models.Faculty.objects.get(pk=row[0]).name,
