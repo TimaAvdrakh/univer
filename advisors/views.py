@@ -1303,8 +1303,9 @@ class NotRegisteredStudentListView(generics.ListAPIView):
                 'speciality': row[5],
                 'group': row[7],
                 'discipline': row[9],
-                'student': [st],
+                'student': st,
             }
+            print(st)
             # d = {
             #     'faculty': org_models.Faculty.objects.get(pk=row[0]).name,
             #     'cathedra': org_models.Cathedra.objects.get(pk=row[1]).name,
