@@ -1285,7 +1285,6 @@ class NotRegisteredStudentListView(generics.ListAPIView):
                   specties.name,
                   groupss.name,
                   disciplines.name,
-                  string_agg(CONCAT(p.last_name, ' ', p.first_name, ' ', p.middle_name), ',') 
                 LIMIT %(limit)s OFFSET %(offset)s;'''
 
         with connection.cursor() as cursor:
@@ -1296,21 +1295,13 @@ class NotRegisteredStudentListView(generics.ListAPIView):
 
         student_discipline_list = []
         for row in rows:
-            values = list()
-            v = row[10:][0]
-            values.append(v)
-            for x in row[10:]:
-                if v != x:
-                    values.append(x)
-                    v = x
-
             d = {
                 'faculty': row[1],
                 'cathedra': row[3],
                 'speciality': row[5],
                 'group': row[7],
                 'discipline': row[9],
-                'student': values,
+                'student': '{}'.format(set(row[10:].split(','))),
             }
             # d = {
             #     'faculty': org_models.Faculty.objects.get(pk=row[0]).name,
