@@ -1799,6 +1799,13 @@ def make_iup_excel(task):
             },
             status=status.HTTP_404_NOT_FOUND
         )
+    try:
+        decan_name_cell = 'E10'
+        p = study_plan.faculty.dekan
+        ws[decan_name_cell] = "{} {} {}".format(p.last_name, p.first_name, p.middle_name)
+        ws[decan_name_cell].font = font
+    except:
+        pass
 
     student_name_cell = 'C17'
     ws[student_name_cell] = study_plan.student.full_name
@@ -1933,16 +1940,18 @@ def make_iup_excel(task):
     ws['D' + str(row_num)].border = bottom_border
     ws['E' + str(row_num)].border = border
 
+    # row_num += 2
+    # ws['A' + str(row_num)] = 'Регистратор'
+    # ws['A' + str(row_num)].font = font
+
     row_num += 2
-    ws['A' + str(row_num)] = 'Регистратор'
+    p = study_plan.advisor
+    ws['A' + str(row_num)] = "Эдвайзер {} {} {}".format(p.last_name, p.first_name, p.middle_name)
     ws['A' + str(row_num)].font = font
 
     row_num += 2
-    ws['A' + str(row_num)] = 'Эдвайзер'
-    ws['A' + str(row_num)].font = font
-
-    row_num += 2
-    ws['A' + str(row_num)] = 'Обучающийся'
+    p = study_plan.student
+    ws['A' + str(row_num)] = "Обучающийся {} {} {}".format(p.last_name, p.first_name, p.middle_name)
     ws['A' + str(row_num)].font = font
 
     file_name = 'temp_files/iupi{}.xlsx'.format(str(uuid4()))
