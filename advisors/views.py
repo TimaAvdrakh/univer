@@ -1247,7 +1247,7 @@ class NotRegisteredStudentListView(generics.ListAPIView):
         #         LIMIT %(limit)s OFFSET %(offset)s;
         #     '''
         query = '''
-            SELECT sp.faculty_id,           faks.name,
+            SELECT distinct sp.faculty_id, faks.name,
                    sp.cathedra_id,          cathedras.name,
                    sp.speciality_id,        specties.name,
                    sp.group_id,             groupss.name,
@@ -1286,7 +1286,6 @@ class NotRegisteredStudentListView(generics.ListAPIView):
                   groupss.name,
                   disciplines.name
                 LIMIT %(limit)s OFFSET %(offset)s;'''
-
 
         with connection.cursor() as cursor:
             cursor.execute(query,
