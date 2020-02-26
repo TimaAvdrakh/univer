@@ -1302,7 +1302,7 @@ class NotRegisteredStudentListView(generics.ListAPIView):
                 'speciality': row[5],
                 'group': row[7],
                 'discipline': row[9],
-                'student': [0,'{}'.format(set(row[10:][0].split(',')))],
+                'student': ['{}'.format(set(row[10:][0].split(',')))],
             }
             # d = {
             #     'faculty': org_models.Faculty.objects.get(pk=row[0]).name,
