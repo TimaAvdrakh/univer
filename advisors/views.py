@@ -1284,7 +1284,8 @@ class NotRegisteredStudentListView(generics.ListAPIView):
                   cathedras.name,
                   specties.name,
                   groupss.name,
-                  disciplines.name
+                  disciplines.name,
+                  string_agg(CONCAT(p.last_name, ' ', p.first_name, ' ', p.middle_name), ',') 
                 LIMIT %(limit)s OFFSET %(offset)s;'''
 
         with connection.cursor() as cursor:
