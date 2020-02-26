@@ -1295,7 +1295,6 @@ class NotRegisteredStudentListView(generics.ListAPIView):
 
         student_discipline_list = []
         for row in rows:
-            st = ""
             d = {
                 'faculty': row[1],
                 'cathedra': row[3],
@@ -1304,7 +1303,6 @@ class NotRegisteredStudentListView(generics.ListAPIView):
                 'discipline': row[9],
                 'student': ', '.join(sorted(set(row[10:][0].split(',')))),
             }
-            print(st)
             # d = {
             #     'faculty': org_models.Faculty.objects.get(pk=row[0]).name,
             #     'cathedra': org_models.Cathedra.objects.get(pk=row[1]).name,
