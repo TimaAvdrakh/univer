@@ -1284,7 +1284,7 @@ class NotRegisteredStudentListView(generics.ListAPIView):
                   cathedras.name,
                   specties.name,
                   groupss.name,
-                  disciplines.name,
+                  disciplines.name
                 LIMIT %(limit)s OFFSET %(offset)s;'''
 
         with connection.cursor() as cursor:
