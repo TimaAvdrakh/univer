@@ -1295,13 +1295,14 @@ class NotRegisteredStudentListView(generics.ListAPIView):
 
         student_discipline_list = []
         for row in rows:
+            # print(row[10:], type(row[10:]))
             d = {
                 'faculty': row[1],
                 'cathedra': row[3],
                 'speciality': row[5],
                 'group': row[7],
                 'discipline': row[9],
-                'student': '{}'.format(set(row[10:].split(','))),
+                'student': '{}'.format(set(row[10:][0].split(','))),
             }
             # d = {
             #     'faculty': org_models.Faculty.objects.get(pk=row[0]).name,
