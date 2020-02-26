@@ -180,6 +180,7 @@ class ScheduleListView(generics.ListAPIView):
         resp = dict()
         resp['first_date'] = monday
         resp['last_date'] = saturday
+        resp['times'] = list()
 
         if my_schedule and my_schedule == '1':
             """Мое расписание"""
@@ -223,6 +224,7 @@ class ScheduleListView(generics.ListAPIView):
                     'week_day': _(day.strftime('%A')),
                     'windows': window_list
                 }
+                resp['times'] += window_list
                 resp['teacher'].append(teacher_day)
 
             resp['is_teacher_empty'] = is_teacher_empty
@@ -280,12 +282,14 @@ class ScheduleListView(generics.ListAPIView):
                         'week_day': _(day.strftime('%A')),
                         'windows': window_list,
                     }
+                    resp['times'] += window_list
                     d['days'].append(stud_day)
                 d['is_empty'] = is_empty
                 resp['student'].append(d)
         else:
             is_empty = True
             resp['days'] = []
+
 
             for day in work_week:
                 day_lessons = lessons.filter(date=day).order_by('time__from_time')
@@ -316,7 +320,7 @@ class ScheduleListView(generics.ListAPIView):
                     'week_day': _(day.strftime('%A')),
                     'windows': window_list
                 }
-
+                resp['times'] += window_list
                 resp['days'].append(d)
             resp['is_empty'] = is_empty
 
