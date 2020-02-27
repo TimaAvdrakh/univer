@@ -400,3 +400,23 @@ class DeactivateDisciplineSerializer(serializers.ModelSerializer):
         ).update(is_active=False)
 
         return instance
+
+
+class ActivateDisciplineSerializer(serializers.ModelSerializer):
+    """
+    Деактивирует дисциплины студента
+    """
+    class Meta:
+        model = org_models.StudentDiscipline
+        fields = (
+            'uid',
+        )
+
+    def update(self, instance, validated_data):
+        org_models.StudentDiscipline.objects.filter(
+            student=instance.student,
+            discipline=instance.discipline,
+            acad_period=instance.acad_period
+        ).update(is_active=True)
+
+        return instance

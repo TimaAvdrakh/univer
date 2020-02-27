@@ -49,4 +49,6 @@ urlpatterns = [
 
     path('discipline/<pk>/deactivate/', views.DeactivateDiscipline.as_view(),
          name='deactivate_discipline'),
+
+    path('discipline/<pk>/activate/', views.ActivateDiscipline.as_view(), name='activate_discipline')
 ]

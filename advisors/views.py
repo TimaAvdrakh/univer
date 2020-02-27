@@ -2037,3 +2037,15 @@ class DeactivateDiscipline(generics.UpdateAPIView):
     queryset = org_models.StudentDiscipline.objects.all()
     serializer_class = serializers.DeactivateDisciplineSerializer
 
+
+class ActivateDiscipline(generics.UpdateAPIView):
+    """
+    Деактивировать дисциплины
+    """
+    permission_classes = (
+        IsAuthenticated,
+        # adv_permission.StudentDisciplinePermission,
+    )
+    queryset = org_models.StudentDiscipline.objects.all()
+    serializer_class = serializers.ActivateDisciplineSerializer
+
