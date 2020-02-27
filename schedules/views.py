@@ -324,6 +324,7 @@ class ScheduleListView(generics.ListAPIView):
                 resp['days'].append(d)
             resp['is_empty'] = is_empty
 
+        resp['days'] = list(set(resp['days']))
         resp_wrapper = {
             'next': CURRENT_API + '/schedules/?date={0}&next_week=1&group={1}&discipline={2}&teacher={3}&class_room={4}&my={5}'.format(
                 monday,
