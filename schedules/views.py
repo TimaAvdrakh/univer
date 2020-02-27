@@ -16,6 +16,7 @@ from portal_users.serializers import ProfileShortSerializer
 from rest_framework.permissions import IsAuthenticated
 from . import permissions
 from django.db.models import Avg, Q
+import json
 
 
 class TimeWindowListView(generics.ListAPIView):
@@ -325,7 +326,7 @@ class ScheduleListView(generics.ListAPIView):
             resp['is_empty'] = is_empty
 
         times = resp['times']
-        resp['times'] = list(set(times))
+        resp['times'] = list(set([json.dumps(x) for x in times]))
         resp_wrapper = {
             'next': CURRENT_API + '/schedules/?date={0}&next_week=1&group={1}&discipline={2}&teacher={3}&class_room={4}&my={5}'.format(
                 monday,
