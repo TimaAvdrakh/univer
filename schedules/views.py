@@ -205,8 +205,8 @@ class ScheduleListView(generics.ListAPIView):
                     window_item = {
                         'id': str(time_window.uid),
                         'name': time_window.name,
-                        'start': time_window.from_time,
-                        'end': time_window.to_time,
+                        'start': time_window.from_time.strftime('%d.%m.%Y %H:%M'),
+                        'end': time_window.to_time.strftime('%d.%m.%Y %H:%M'),
                         'lesson': {},
                     }
 
@@ -222,7 +222,7 @@ class ScheduleListView(generics.ListAPIView):
                 teacher_day = {
                     'date': day.strftime("%d.%m.%Y"),
                     'week_day': _(day.strftime('%A')),
-                    'windows': window_list
+                    'windows': list(set([json.dumps(x) for x in window_list]))
                 }
                 resp['teacher'].append(teacher_day)
 
@@ -262,8 +262,8 @@ class ScheduleListView(generics.ListAPIView):
                         window_item = {
                             'id': str(time_window.uid),
                             'name': time_window.name,
-                            'start': time_window.from_time,
-                            'end': time_window.to_time,
+                            'start': time_window.from_time.strftime('%d.%m.%Y %H:%M'),
+                            'end': time_window.to_time.strftime('%d.%m.%Y %H:%M'),
                             'lesson': {},
                         }
 
@@ -279,7 +279,7 @@ class ScheduleListView(generics.ListAPIView):
                     stud_day = {
                         'date': day.strftime("%d.%m.%Y"),
                         'week_day': _(day.strftime('%A')),
-                        'windows': window_list,
+                        'windows': list(set([json.dumps(x) for x in window_list])),
                     }
                     d['days'].append(stud_day)
                 d['is_empty'] = is_empty
@@ -299,8 +299,8 @@ class ScheduleListView(generics.ListAPIView):
                     window_item = {
                         'id': str(time_window.uid),
                         'name': time_window.name,
-                        'start': time_window.from_time,
-                        'end': time_window.to_time,
+                        'start': time_window.from_time.strftime('%d.%m.%Y %H:%M'),
+                        'end': time_window.to_time.strftime('%d.%m.%Y %H:%M'),
                         'lesson': {},
                     }
 
@@ -316,7 +316,7 @@ class ScheduleListView(generics.ListAPIView):
                 d = {
                     'date': day.strftime("%d.%m.%Y"),
                     'week_day': _(day.strftime('%A')),
-                    'windows': window_list
+                    'windows': list(set([json.dumps(x) for x in window_list]))
                 }
                 resp['days'].append(d)
             resp['is_empty'] = is_empty
