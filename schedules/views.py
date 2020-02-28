@@ -198,15 +198,15 @@ class ScheduleListView(generics.ListAPIView):
             for day in work_week:
                 teacher_day_lessons = teacher_lessons.filter(date=day).order_by('time__from_time')
 
-                time_windows = models.TimeWindow.objects.filter(is_active=True).order_by('from_time')
+                time_windows = models.TimeWindow.objects.filter(is_active=True).distinct('start', 'name').order_by('from_time')
 
                 window_list = []
                 for time_window in time_windows:
                     window_item = {
                         'id': str(time_window.uid),
                         'name': time_window.name,
-                        'start': time_window.from_time.strftime('%d.%m.%Y %H:%M'),
-                        'end': time_window.to_time.strftime('%d.%m.%Y %H:%M'),
+                        'start': time_window.from_time,
+                        'end': time_window.to_time,
                         'lesson': {},
                     }
 
@@ -255,15 +255,15 @@ class ScheduleListView(generics.ListAPIView):
                 for day in work_week:
                     stud_day_lessons = stud_lessons.filter(date=day).order_by('time__from_time')
 
-                    time_windows = models.TimeWindow.objects.filter(is_active=True).order_by('from_time')
+                    time_windows = models.TimeWindow.objects.filter(is_active=True).distinct('start', 'name').order_by('from_time')
 
                     window_list = []
                     for time_window in time_windows:
                         window_item = {
                             'id': str(time_window.uid),
                             'name': time_window.name,
-                            'start': time_window.from_time.strftime('%d.%m.%Y %H:%M'),
-                            'end': time_window.to_time.strftime('%d.%m.%Y %H:%M'),
+                            'start': time_window.from_time,
+                            'end': time_window.to_time,
                             'lesson': {},
                         }
 
@@ -292,15 +292,15 @@ class ScheduleListView(generics.ListAPIView):
             for day in work_week:
                 day_lessons = lessons.filter(date=day).order_by('time__from_time')
 
-                time_windows = models.TimeWindow.objects.filter(is_active=True).order_by('from_time')
+                time_windows = models.TimeWindow.objects.filter(is_active=True).distinct('start', 'name').order_by('from_time')
 
                 window_list = []
                 for time_window in time_windows:
                     window_item = {
                         'id': str(time_window.uid),
                         'name': time_window.name,
-                        'start': time_window.from_time.strftime('%d.%m.%Y %H:%M'),
-                        'end': time_window.to_time.strftime('%d.%m.%Y %H:%M'),
+                        'start': time_window.from_time,
+                        'end': time_window.to_time,
                         'lesson': {},
                     }
 
