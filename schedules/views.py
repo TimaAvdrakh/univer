@@ -205,8 +205,8 @@ class ScheduleListView(generics.ListAPIView):
                     window_item = {
                         'id': str(time_window.uid),
                         'name': time_window.name,
-                        'start': time_window.from_time,
-                        'end': time_window.to_time,
+                        'start': time_window.from_time.strftime('%H:%M'),
+                        'end': time_window.to_time.strftime('%H:%M'),
                         'lesson': {},
                     }
 
@@ -262,8 +262,8 @@ class ScheduleListView(generics.ListAPIView):
                         window_item = {
                             'id': str(time_window.uid),
                             'name': time_window.name,
-                            'start': time_window.from_time,
-                            'end': time_window.to_time,
+                            'start': time_window.from_time.strftime('%H:%M'),
+                            'end': time_window.to_time.strftime('%H:%M'),
                             'lesson': {},
                         }
 
@@ -299,8 +299,8 @@ class ScheduleListView(generics.ListAPIView):
                     window_item = {
                         'id': str(time_window.uid),
                         'name': time_window.name,
-                        'start': time_window.from_time,
-                        'end': time_window.to_time,
+                        'start': time_window.from_time.strftime('%H:%M'),
+                        'end': time_window.to_time.strftime('%H:%M'),
                         'lesson': {},
                     }
 
