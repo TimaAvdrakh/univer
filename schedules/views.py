@@ -206,8 +206,8 @@ class ScheduleListView(generics.ListAPIView):
                     window_item = {
                         'id': str(time_window.uid),
                         'name': time_window.name,
-                        'start': time_window.from_time.strftime('d.m.Y'),
-                        'end': time_window.to_time.strftime('d.m.Y'),
+                        'start': time_window.from_time,
+                        'end': time_window.to_time,
                         'lesson': {},
                     }
 
@@ -264,8 +264,8 @@ class ScheduleListView(generics.ListAPIView):
                         window_item = {
                             'id': str(time_window.uid),
                             'name': time_window.name,
-                            'start': time_window.from_time.strftime('d.m.Y'),
-                            'end': time_window.to_time.strftime('d.m.Y'),
+                            'start': time_window.from_time,
+                            'end': time_window.to_time,
                             'lesson': {},
                         }
 
@@ -302,8 +302,8 @@ class ScheduleListView(generics.ListAPIView):
                     window_item = {
                         'id': str(time_window.uid),
                         'name': time_window.name,
-                        'start': time_window.from_time.strftime('d.m.Y'),
-                        'end': time_window.to_time.strftime('d.m.Y'),
+                        'start': time_window.from_time,
+                        'end': time_window.to_time,
                         'lesson': {},
                     }
 
@@ -325,8 +325,7 @@ class ScheduleListView(generics.ListAPIView):
                 resp['days'].append(d)
             resp['is_empty'] = is_empty
 
-        times = resp['times']
-        resp['times'] = list(set([json.dumps(x) for x in times]))
+
         resp_wrapper = {
             'next': CURRENT_API + '/schedules/?date={0}&next_week=1&group={1}&discipline={2}&teacher={3}&class_room={4}&my={5}'.format(
                 monday,
