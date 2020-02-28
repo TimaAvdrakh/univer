@@ -204,10 +204,10 @@ class ScheduleListView(generics.ListAPIView):
                 window_list = []
                 for time_window in time_windows:
                     window_item = {
-                        'id': time_window.uid.uuid4().hex,
+                        'id': str(time_window.uid),
                         'name': time_window.name,
-                        'start': time_window.from_time,
-                        'end': time_window.to_time,
+                        'start': time_window.from_time.strftime('d.m.Y'),
+                        'end': time_window.to_time.strftime('d.m.Y'),
                         'lesson': {},
                     }
 
@@ -262,10 +262,10 @@ class ScheduleListView(generics.ListAPIView):
                     window_list = []
                     for time_window in time_windows:
                         window_item = {
-                            'id': time_window.uid,
+                            'id': str(time_window.uid),
                             'name': time_window.name,
-                            'start': time_window.from_time,
-                            'end': time_window.to_time,
+                            'start': time_window.from_time.strftime('d.m.Y'),
+                            'end': time_window.to_time.strftime('d.m.Y'),
                             'lesson': {},
                         }
 
@@ -300,7 +300,7 @@ class ScheduleListView(generics.ListAPIView):
                 window_list = []
                 for time_window in time_windows:
                     window_item = {
-                        'id': time_window.uid,
+                        'id': str(time_window.uid),
                         'name': time_window.name,
                         'start': time_window.from_time.strftime('d.m.Y'),
                         'end': time_window.to_time.strftime('d.m.Y'),
