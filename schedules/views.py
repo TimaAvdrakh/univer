@@ -208,8 +208,8 @@ class ScheduleListView(generics.ListAPIView):
                     }
 
                     try:
-                        lesson = teacher_day_lessons.get(time=time_window)
-                        window_item['lesson'] = self.serializer_class(lesson).data
+                        lesson = teacher_day_lessons.filter(time=time_window)
+                        window_item['lesson'] = self.serializer_class(lesson, many=True).data
                         is_teacher_empty = False
                     except models.Lesson.DoesNotExist:
                         pass
@@ -265,8 +265,8 @@ class ScheduleListView(generics.ListAPIView):
                         }
 
                         try:
-                            lesson = stud_day_lessons.get(time=time_window)
-                            window_item['lesson'] = self.serializer_class(lesson).data
+                            lesson = stud_day_lessons.filter(time=time_window)
+                            window_item['lesson'] = self.serializer_class(lesson, many=True).data
                             is_empty = False
                         except models.Lesson.DoesNotExist:
                             pass
