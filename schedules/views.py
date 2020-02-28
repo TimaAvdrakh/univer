@@ -190,9 +190,6 @@ class ScheduleListView(generics.ListAPIView):
             resp['student'] = []
             resp['is_teacher'] = Role.objects.filter(profile=profile,
                                                      is_teacher=True).exists()
-            resp['is_student'] = Role.objects.filter(profile=profile,
-                                                     is_student=True).exists()
-
             teacher_lessons = lessons.filter(teachers__in=[profile])
 
             for day in work_week:
@@ -288,7 +285,6 @@ class ScheduleListView(generics.ListAPIView):
             is_empty = True
             resp['days'] = []
 
-
             for day in work_week:
                 day_lessons = lessons.filter(date=day).order_by('time__from_time')
 
@@ -305,8 +301,8 @@ class ScheduleListView(generics.ListAPIView):
                     }
 
                     try:
-                        lesson = day_lessons.get(time=time_window)
-                        window_item['lesson'] = self.serializer_class(lesson).data
+                        lesson = day_lessons.filter(time=time_window)
+                        window_item['lesson'] = self.serializer_class(lesson, many=True).data
                         is_empty = False
                     except models.Lesson.DoesNotExist:
                         pass
