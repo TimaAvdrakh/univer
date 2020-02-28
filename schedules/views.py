@@ -292,7 +292,7 @@ class ScheduleListView(generics.ListAPIView):
             for day in work_week:
                 day_lessons = lessons.filter(date=day).order_by('time__from_time')
 
-                time_windows = models.TimeWindow.objects.filter(is_active=True).distinct('uid', 'from_time', 'name').order_by('from_time')
+                time_windows = models.TimeWindow.objects.filter(is_active=True).distinct('from_time', 'name').order_by('from_time')
 
                 window_list = []
                 for time_window in time_windows:
