@@ -526,7 +526,7 @@ class JournalDetailView(generics.RetrieveAPIView):
             flow_uid=journal.flow_uid,
             is_active=True,
         ).values('student')
-        students = Profile.objects.filter(pk__in=student_pks)
+        students = Profile.objects.filter(pk__in=student_pks).order_by('full_name')
 
         for s in students:
             d = {
