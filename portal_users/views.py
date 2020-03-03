@@ -558,7 +558,7 @@ class StudentAllDisciplineListView(generics.ListAPIView):
         IsAuthenticated,
         permissions.StudyPlanPermission,
     )
-    serializer_class = serializers.StudentDisciplineShortSerializer
+    serializer_class = serializers.StudentDisciplineShortSerializer2
 
     def list(self, request, *args, **kwargs):
         study_plan_id = request.query_params.get('study_plan')
@@ -599,7 +599,9 @@ class StudentAllDisciplineListView(generics.ListAPIView):
                                                many=True)
             item_key = acad_period.repr_name
             item = {
-                item_key: serializer.data
+                'name_period': item_key,
+                'count_credits': acad_period.disciplinecredit_set.count(),
+                'disciplines': serializer.data
             }
             resp.append(item)
 

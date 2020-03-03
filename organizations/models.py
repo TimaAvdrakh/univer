@@ -571,6 +571,10 @@ class Discipline(BaseCatalog):
         #     'name',
         # )
 
+    @property
+    def count_credits(self):
+        self.disciplinecredit_set.all().count()
+
     # def save(self, *args, **kwargs):
     #     if self.exchange:
     #         """При выгрузке деактивируем существующие пре и постреквизити"""
@@ -843,6 +847,42 @@ class StudentDiscipline(BaseModel):
     #                             self.acad_period,
     #                             self.cycle)
 
+
+
+
+    @property
+    def credit_obj(self):
+        try:
+            discipline_credit = DisciplineCredit.objects.get(
+                study_plan=self.study_plan,
+                cycle=self.cycle,
+                discipline=self.discipline,
+                acad_period=self.acad_period,
+                student=self.student,
+            )
+
+            return {
+                'credit': discipline_credit.credit,
+                'control_form': discipline_credit.chosen_control_forms.all().values_list('name', 'uid')
+            }
+
+        except DisciplineCredit.DoesNotExist:
+            return 0
+        except DisciplineCredit.MultipleObjectsReturned:
+            discipline_credit = DisciplineCredit.objects.filter(
+                study_plan=self.study_plan,
+                cycle=self.cycle,
+                discipline=self.discipline,
+                acad_period=self.acad_period,
+                student=self.student,
+            )
+            EroroText.objects.create(text='DisciplineCredit UID = {}'.format(discipline_credit.values_list('uid', flat=True)))
+            return {
+                'credit': discipline_credit.credit,
+                'control_form': discipline_credit.chosen_control_forms.all().values_list('name', 'uid')
+            }
+
+
     @property
     def credit(self):
         """Возвращает кредит дисциплины"""
@@ -867,7 +907,6 @@ class StudentDiscipline(BaseModel):
             )
             EroroText.objects.create(text='DisciplineCredit UID = {}'.format(discipline_credit.values_list('uid', flat=True)))
             return discipline_credit.first().credit
-
 
     def __str__(self):
         return '{} {}'.format(self.acad_period,

@@ -7,6 +7,7 @@ from django.contrib.auth import password_validation
 from cron_app.models import ResetPasswordUrlSendTask, CredentialsEmailTask, NotifyAdvisorTask
 from common.utils import password_generator
 from organizations import models as org_models
+from organizations import serializers as org_serializers
 from portal.curr_settings import student_discipline_status, student_discipline_info_status, language_multilingual_id, \
     not_choosing_load_types2
 from django.db.models import Q
@@ -1058,6 +1059,27 @@ class GroupDetailSerializer(serializers.ModelSerializer):
         data['students'] = serializer.data
 
         return data
+
+
+class StudentDisciplineShortSerializer2(serializers.ModelSerializer):
+    """Используется для получения всех дисциплин студента во всех акад.периодах"""
+
+    # acad_period = serializers.CharField(read_only=True)
+    discipline = serializers.CharField(read_only=True)
+    load_type = serializers.CharField(read_only=True)
+
+    class Meta:
+        model = org_models.StudentDiscipline
+        fields = (
+            'uid',
+            # 'study_plan',
+            # 'acad_period',
+            'discipline',
+            'load_type',
+            'credit_obj',
+            'hours',
+
+        )
 
 
 class StudentDisciplineShortSerializer(serializers.ModelSerializer):
