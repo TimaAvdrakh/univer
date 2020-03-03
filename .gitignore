@@ -12,3 +12,4 @@ media/*
 temp_files/*
 local_settings.txt
 curr_settings.txt
+/univer-back.iml
