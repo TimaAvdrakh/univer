@@ -183,6 +183,7 @@ class AcadPeriodAdmin(admin.ModelAdmin):
     ]
 
 
+#admin.site.register(models.StudentDiscipline)
 @admin.register(models.StudentDiscipline)
 class StudentDisciplineAdmin(admin.ModelAdmin):
     search_fields = (
@@ -192,6 +193,7 @@ class StudentDisciplineAdmin(admin.ModelAdmin):
         'student__user__username',
         'uuid1c',
     )
+
     autocomplete_fields = (
         'student',
         'teacher',
@@ -204,12 +206,14 @@ class StudentDisciplineAdmin(admin.ModelAdmin):
         'study_year',
         'load_type',
     )
+
     list_filter = [
         'status',
         'study_year',
         # 'sent',
         # 'acad_period',
     ]
+
     list_display = [
         'student',
         'study_plan',
