@@ -858,7 +858,7 @@ class StudentDiscipline(BaseModel):
                 acad_period=self.acad_period,
                 student=self.student,
             )
-            discipline_credit = list(discipline_credit.disciplinecreditcontrolform_set.all().values('name', 'uid'))
+            discipline_credit = list(discipline_credit.chosen_control_forms.all().values('name', 'uid'))
         except DisciplineCredit.DoesNotExist:
             discipline_credit = [{'error': 'DoesNotExist'}]
         except DisciplineCredit.MultipleObjectsReturned:
@@ -871,7 +871,7 @@ class StudentDiscipline(BaseModel):
             ).first()
             EroroText.objects.create(
                 text='DisciplineCredit UID = {}'.format(discipline_credit.values_list('uid', flat=True)))
-            discipline_credit = list(discipline_credit.disciplinecreditcontrolform_set.all().values('name', 'uid'))
+            discipline_credit = list(discipline_credit.chosen_control_forms.all().values('name', 'uid'))
         return discipline_credit
 
     @property
@@ -887,7 +887,7 @@ class StudentDiscipline(BaseModel):
 
             return {
                 'credit': discipline_credit.credit,
-                'control_form': discipline_credit.disciplinecreditcontrolform_set.all().values_list('name', 'uid')
+                'control_form': discipline_credit.chosen_control_forms.all().values_list('name', 'uid')
             }
 
         except DisciplineCredit.DoesNotExist:
@@ -903,7 +903,7 @@ class StudentDiscipline(BaseModel):
             EroroText.objects.create(text='DisciplineCredit UID = {}'.format(discipline_credit.values_list('uid', flat=True)))
             return {
                 'credit': discipline_credit.credit,
-                'control_form': discipline_credit.disciplinecreditcontrolform_set.all().values_list('name', 'uid')
+                'control_form': discipline_credit.chosen_control_forms.all().values_list('name', 'uid')
             }
 
 

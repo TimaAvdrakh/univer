@@ -1095,6 +1095,8 @@ class StudentDisciplineShortSerializer(serializers.ModelSerializer):
             # 'study_plan',
             # 'acad_period',
             'discipline',
+            # 'control_form',
+            'credit_obj',
             'load_type',
             'hours',
         )
