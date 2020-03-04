@@ -1998,7 +1998,7 @@ class CopyStudyPlansListView(generics.ListAPIView):
             ).values('study_plan')
 
             sd = sd.filter(status=status_obj)
-
+            # gfdfgdg
             queryset = queryset.filter(pk__in=study_plan_pks_from_sd)
         lookup = Q()
         sd_lookup = Q()
