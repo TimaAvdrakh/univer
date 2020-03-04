@@ -600,7 +600,8 @@ class StudentAllDisciplineListView(generics.ListAPIView):
             item_key = acad_period.repr_name
             item = {
                 'name_period': item_key,
-                'count_credits': acad_period.disciplinecredit_set.filter(is_active=True).count(),
+                'count_credits': acad_period.disciplinecredit_set.filter(
+                    study_plan_id=study_plan_id, is_active=True).count(),
                 'disciplines': serializer.data
             }
             resp.append(item)
