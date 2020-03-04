@@ -16,6 +16,7 @@ from portal.curr_settings import student_discipline_info_status, not_choosing_lo
 from datetime import date
 from common import models as common_models
 from rest_framework.views import APIView
+from django.utils.translation import ugettext as _
 
 
 class LoginView(generics.CreateAPIView):
@@ -381,48 +382,54 @@ class StudentDisciplineForRegListCopyView(generics.ListAPIView):
                 is_active=True,
             )
             resp = []
+            reg_period = common_models.RegistrationPeriod.objects.get(uid=reg_period_id)
+            if reg_period.start_date <= today <= reg_period.end_date:
 
-            for acad_period in acad_periods:
-                try:
-                    org_models.StudentDisciplineInfo.objects.get(
-                        study_plan_id=study_plan_id,
+                for acad_period in acad_periods:
+                    try:
+                        org_models.StudentDisciplineInfo.objects.get(
+                            study_plan_id=study_plan_id,
+                            acad_period=acad_period,
+                        )
+                    except org_models.StudentDisciplineInfo.DoesNotExist:  # Создаем StudentDisciplineInfo если не создан
+                        org_models.StudentDisciplineInfo.objects.create(
+                            student=study_plan.student,
+                            study_plan_id=study_plan_id,
+                            acad_period=acad_period,
+                            status_id=student_discipline_info_status["not_started"],
+                        )
+
+                    student_disciplines = org_models.StudentDiscipline.objects.filter(
+                        study_plan=study_plan,
                         acad_period=acad_period,
-                    )
-                except org_models.StudentDisciplineInfo.DoesNotExist:  # Создаем StudentDisciplineInfo если не создан
-                    org_models.StudentDisciplineInfo.objects.create(
-                        student=study_plan.student,
-                        study_plan_id=study_plan_id,
-                        acad_period=acad_period,
-                        status_id=student_discipline_info_status["not_started"],
-                    )
+                        study_year_id=study_year_id,
+                        is_active=True,
+                    ).exclude(load_type__load_type2__in=not_choosing_load_types2). \
+                        distinct('discipline').order_by('discipline')
 
-                student_disciplines = org_models.StudentDiscipline.objects.filter(
-                    study_plan=study_plan,
-                    acad_period=acad_period,
-                    study_year_id=study_year_id,
-                    is_active=True,
-                ).exclude(load_type__load_type2__in=not_choosing_load_types2). \
-                    distinct('discipline').order_by('discipline')
+                    if not student_disciplines.exists():
+                        """
+                        Если дисциплин студентов нет, то исключим акад период из ответа
+                        """
+                        continue
 
-                if not student_disciplines.exists():
-                    """
-                    Если дисциплин студентов нет, то исключим акад период из ответа
-                    """
-                    continue
+                    serializer = self.serializer_class(student_disciplines,
+                                                       context={'study_year_id': study_year_id},
+                                                       many=True)
 
-                serializer = self.serializer_class(student_disciplines,
-                                                   context={'study_year_id': study_year_id},
-                                                   many=True)
+                    item = {
+                        'name': acad_period.repr_name,
+                        'disciplines': serializer.data,
+                    }
+                    resp.append(item)
 
-                item = {
-                    'name': acad_period.repr_name,
-                    'disciplines': serializer.data,
-                }
-                resp.append(item)
-
+                return Response(
+                    resp,
+                    status=status.HTTP_200_OK
+                )
             return Response(
-                resp,
-                status=status.HTTP_200_OK
+                {'error': _('current day is not included in the period')},
+                status=status.HTTP_400_BAD_REQUEST
             )
 
 
