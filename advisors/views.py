@@ -163,7 +163,7 @@ class StudentDisciplineGroupListView(views.APIView):  # TODO CHECK
     study_plan(!), study_year(!), acad_period(!), status
     """
     permission_classes = (
-        IsAuthenticated
+        IsAuthenticated,
     )
     queryset = org_models.StudentDiscipline.objects.filter(is_active=True)
     serializer_class = serializers.StudentDisciplineShortSerializer
@@ -1982,10 +1982,12 @@ class CopyStudyPlansListView(generics.ListAPIView):
 
         status_id = request.query_params.get('status')
         acad_periods = request.query_params.get('acad_periods')
-        # reg_period = self.request.query_params.get('reg_period')
+        #reg_period = self.request.query_params.get('reg_period')
 
         queryset = self.queryset.filter(advisor=self.request.user.profile)
         queryset = queryset.exclude(student__status_id=STUDENT_STATUSES['expelled'])
+
+        sd = org_models.StudentDiscipline.objects.filter(study_year_id=study_year)
 
         if status_id:
             status_obj = org_models.StudentDisciplineStatus.objects.get(number=status_id)
@@ -1995,20 +1997,28 @@ class CopyStudyPlansListView(generics.ListAPIView):
                 status=status_obj,
             ).values('study_plan')
 
+            sd = sd.filter(status=status_obj)
+
             queryset = queryset.filter(pk__in=study_plan_pks_from_sd)
 
         if study_form:
             queryset = queryset.filter(study_form_id=study_form)
+            sd = sd.filter(study_plan__study_form_id=study_form)
         if faculty:
             queryset = queryset.filter(faculty_id=faculty)
+            sd = sd.filter(study_plan__faculty_id=faculty)
         if cathedra:
             queryset = queryset.filter(cathedra_id=cathedra)
+            sd = sd.filter(study_plan__cathedra_id=cathedra)
         if edu_prog:
             queryset = queryset.filter(education_program_id=edu_prog)
+            sd = sd.filter(study_plan__education_program_id=edu_prog)
         if edu_prog_group:
             queryset = queryset.filter(education_program__group_id=edu_prog_group)
+            sd = sd.filter(study_plan__education_program__group_id=edu_prog_group)
         if group:
             queryset = queryset.filter(group_id=group)
+            sd = sd.filter(study_plan__group_id=group)
         if study_year:
             study_year_obj = org_models.StudyPeriod.objects.get(pk=study_year)
             queryset = queryset.filter(study_period__end__gt=study_year_obj.start)
@@ -2018,6 +2028,27 @@ class CopyStudyPlansListView(generics.ListAPIView):
                 course=course
             ).values('study_plan')
             queryset = queryset.filter(pk__in=study_plan_pks)
+
+        reg_period = common_models.RegistrationPeriod.objects.get(study_year=study_year)
+
+        if course:
+            acad_period_pks = common_models.CourseAcadPeriodPermission.objects.filter(
+                registration_period_id=reg_period,
+                course=course
+            ).values_list('acad_period', flat=True)
+        else:
+            acad_period_pks = common_models.CourseAcadPeriodPermission.objects.filter(
+                registration_period_id=reg_period,
+            ).values_list('acad_period', flat=True)
+
+        acad_periods_repr = org_models.AcadPeriod.objects.filter(is_active=True,
+                                                                 pk__in=acad_period_pks,)
+        acad_period_pks_from_sd = sd.values('acad_period')
+        acad_periods_repr = acad_periods_repr.filter(pk__in=acad_period_pks_from_sd)
+
+        sd = sd.filter(acad_period__in=acad_periods_repr).values_list('student', flat=True).distinct()
+
+        queryset = queryset.filter(student__in=sd)
 
         page = self.paginate_queryset(queryset)
         if page is not None:
