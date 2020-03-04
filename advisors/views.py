@@ -2070,4 +2070,3 @@ class DeactivateDiscipline(generics.UpdateAPIView):
     )
     queryset = org_models.StudentDiscipline.objects.all()
     serializer_class = serializers.DeactivateDisciplineSerializer
-
