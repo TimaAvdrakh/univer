@@ -427,10 +427,14 @@ class StudentDisciplineForRegListCopyView(generics.ListAPIView):
                     resp,
                     status=status.HTTP_200_OK
                 )
-            return Response(
-                {'error': _('current day is not included in the period')},
-                status=status.HTTP_400_BAD_REQUEST
-            )
+            else:
+                return Response(
+                    {
+                        'uid': study_plan.advisor_id,
+                        'error': _('current day is not included in the period')
+                    },
+                    status=status.HTTP_200_OK
+                )
 
 
 class MyStudyPlanListView(generics.ListAPIView):
