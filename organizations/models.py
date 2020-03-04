@@ -796,30 +796,6 @@ class StudentDiscipline(BaseModel):
         editable=False,
     )
 
-    @property
-    def control_form(self):
-        try:
-            discipline_credit = DisciplineCredit.objects.get(
-                study_plan=self.study_plan,
-                cycle=self.cycle,
-                discipline=self.discipline,
-                acad_period=self.acad_period,
-                student=self.student,
-            )
-            discipline_credit = list(discipline_credit.disciplinecreditcontrolform_set.all().values('name', 'uid'))
-        except DisciplineCredit.DoesNotExist:
-            discipline_credit = [{'error': 'DoesNotExist'}]
-        except DisciplineCredit.MultipleObjectsReturned:
-            discipline_credit = DisciplineCredit.objects.filter(
-                study_plan=self.study_plan,
-                cycle=self.cycle,
-                discipline=self.discipline,
-                acad_period=self.acad_period,
-                student=self.student,
-            ).first()
-            EroroText.objects.create(text='DisciplineCredit UID = {}'.format(discipline_credit.values_list('uid', flat=True)))
-            discipline_credit = list(discipline_credit.disciplinecreditcontrolform_set.all().values('name', 'uid'))
-        return discipline_credit
 
     def set_uuid1c(self):
         """
@@ -871,6 +847,32 @@ class StudentDiscipline(BaseModel):
     #                             self.student,
     #                             self.acad_period,
     #                             self.cycle)
+
+    @property
+    def control_form(self):
+        try:
+            discipline_credit = DisciplineCredit.objects.get(
+                study_plan=self.study_plan,
+                cycle=self.cycle,
+                discipline=self.discipline,
+                acad_period=self.acad_period,
+                student=self.student,
+            )
+            discipline_credit = list(discipline_credit.disciplinecreditcontrolform_set.all().values('name', 'uid'))
+        except DisciplineCredit.DoesNotExist:
+            discipline_credit = [{'error': 'DoesNotExist'}]
+        except DisciplineCredit.MultipleObjectsReturned:
+            discipline_credit = DisciplineCredit.objects.filter(
+                study_plan=self.study_plan,
+                cycle=self.cycle,
+                discipline=self.discipline,
+                acad_period=self.acad_period,
+                student=self.student,
+            ).first()
+            EroroText.objects.create(
+                text='DisciplineCredit UID = {}'.format(discipline_credit.values_list('uid', flat=True)))
+            discipline_credit = list(discipline_credit.disciplinecreditcontrolform_set.all().values('name', 'uid'))
+        return discipline_credit
 
     @property
     def credit_obj(self):
