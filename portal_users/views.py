@@ -382,8 +382,8 @@ class StudentDisciplineForRegListCopyView(generics.ListAPIView):
                 is_active=True,
             )
             resp = []
-            reg_period = common_models.RegistrationPeriod.objects.get(uid=reg_period_id)
-            if reg_period.start_date <= today <= reg_period.end_date:
+
+            if acad_period_pks:
 
                 for acad_period in acad_periods:
                     try:
