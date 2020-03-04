@@ -887,7 +887,7 @@ class StudentDiscipline(BaseModel):
 
             return {
                 'credit': discipline_credit.credit,
-                'control_form': discipline_credit.chosen_control_forms.all().values_list('name', 'uid')
+                'control_form': discipline_credit.disciplinecreditcontrolform_set.all().values_list('name', 'uid')
             }
 
         except DisciplineCredit.DoesNotExist:
@@ -903,7 +903,7 @@ class StudentDiscipline(BaseModel):
             EroroText.objects.create(text='DisciplineCredit UID = {}'.format(discipline_credit.values_list('uid', flat=True)))
             return {
                 'credit': discipline_credit.credit,
-                'control_form': discipline_credit.chosen_control_forms.all().values_list('name', 'uid')
+                'control_form': discipline_credit.disciplinecreditcontrolform_set.all().values_list('name', 'uid')
             }
 
 
