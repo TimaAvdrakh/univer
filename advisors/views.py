@@ -2000,28 +2000,43 @@ class CopyStudyPlansListView(generics.ListAPIView):
             sd = sd.filter(status=status_obj)
 
             queryset = queryset.filter(pk__in=study_plan_pks_from_sd)
-
+        lookup = Q()
+        sd_lookup = Q()
         if study_form:
-            queryset = queryset.filter(study_form_id=study_form)
-            sd = sd.filter(study_plan__study_form_id=study_form)
+            lookup = lookup & Q(study_form_id=study_form)
+            sd_lookup = sd_lookup & Q(study_plan__study_form_id=study_form)
+            # queryset = queryset.filter(study_form_id=study_form)
+            # sd = sd.filter(study_plan__study_form_id=study_form)
         if faculty:
-            queryset = queryset.filter(faculty_id=faculty)
-            sd = sd.filter(study_plan__faculty_id=faculty)
+            lookup = lookup & Q(faculty_id=faculty)
+            sd_lookup = sd_lookup & Q(study_plan__faculty_id=faculty)
+            # queryset = queryset.filter(faculty_id=faculty)
+            # sd = sd.filter(study_plan__faculty_id=faculty)
         if cathedra:
-            queryset = queryset.filter(cathedra_id=cathedra)
-            sd = sd.filter(study_plan__cathedra_id=cathedra)
+            lookup = lookup & Q(cathedra_id=cathedra)
+            sd_lookup = sd_lookup & Q(study_plan__cathedra_id=cathedra)
+        #     queryset = queryset.filter(cathedra_id=cathedra)
+        #     sd = sd.filter(study_plan__cathedra_id=cathedra)
         if edu_prog:
-            queryset = queryset.filter(education_program_id=edu_prog)
-            sd = sd.filter(study_plan__education_program_id=edu_prog)
+            lookup = lookup & Q(education_program_id=edu_prog)
+            sd_lookup = sd_lookup & Q(study_plan__education_program_id=edu_prog)
+            # queryset = queryset.filter(education_program_id=edu_prog)
+            # sd = sd.filter(study_plan__education_program_id=edu_prog)
         if edu_prog_group:
-            queryset = queryset.filter(education_program__group_id=edu_prog_group)
-            sd = sd.filter(study_plan__education_program__group_id=edu_prog_group)
+            lookup = lookup & Q(education_program__group_id=edu_prog_group)
+            sd_lookup = sd_lookup & Q(study_plan__education_program__group_id=edu_prog_group)
+            # queryset = queryset.filter(education_program__group_id=edu_prog_group)
+            # sd = sd.filter(study_plan__education_program__group_id=edu_prog_group)
         if group:
-            queryset = queryset.filter(group_id=group)
-            sd = sd.filter(study_plan__group_id=group)
+            lookup = lookup & Q(group_id=group)
+            sd_lookup = sd_lookup & Q(study_plan__group_id=group)
+            # queryset = queryset.filter(group_id=group)
+            # sd = sd.filter(study_plan__group_id=group)
         if study_year:
             study_year_obj = org_models.StudyPeriod.objects.get(pk=study_year)
             queryset = queryset.filter(study_period__end__gt=study_year_obj.start)
+        queryset = queryset.filter(lookup)
+        sd = sd.filter(sd_lookup)
         if course and study_year:
             study_plan_pks = org_models.StudyYearCourse.objects.filter(
                 study_year_id=study_year,
