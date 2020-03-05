@@ -897,9 +897,22 @@ class ChooseFormControlView(generics.UpdateAPIView):
     queryset = org_models.DisciplineCredit.objects.filter(is_active=True)
     serializer_class = serializers.ChooseControlFormSerializer
 
-    def put(self, request, *args, **kwargs):
+    def update(self, request, *args, **kwargs):
+        partial = kwargs.pop('partial', False)
+        data = request.data
         if request.user.profile.role.is_student:
-            kwargs['status'] = 2
+            data['status'] = request.data.status
         elif request.user.profile.role.is_supervisor:
-            kwargs['status'] = 5
-        return self.update(request, *args, **kwargs)
+            data['status'] = 5
+
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=data, partial=partial)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+
+        if getattr(instance, '_prefetched_objects_cache', None):
+            # If 'prefetch_related' has been applied to a queryset, we need to
+            # forcibly invalidate the prefetch cache on the instance.
+            instance._prefetched_objects_cache = {}
+
+        return Response(serializer.data)
