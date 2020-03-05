@@ -1393,6 +1393,7 @@ class StudentDisciplineControlFormSerializer(serializers.ModelSerializer):
     """Используется для вывода Дисциплин Студентов для выбора Формы контроля"""
 
     discipline = serializers.CharField(read_only=True)
+    status = serializers.CharField(read_only=True)
 
     class Meta:
         model = org_models.StudentDiscipline
