@@ -1399,6 +1399,7 @@ class StudentDisciplineControlFormSerializer(serializers.ModelSerializer):
         fields = (
             'uid',
             'discipline',
+            'status',
         )
 
     def to_representation(self, instance):
