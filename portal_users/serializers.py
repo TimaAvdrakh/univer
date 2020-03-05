@@ -1441,17 +1441,7 @@ class StudentDisciplineControlFormSerializer(serializers.ModelSerializer):
 
         statuses = org_models.StudentDisciplineStatus.objects.filter(is_active=True)
         for item in statuses:
-            if item.number == 5:
-                author = data['author']
-                if author:
-                    author_name = '{} {} {}'.format(author['lastName'],
-                                                    author['firstName'],
-                                                    author['middleName'])
-                else:
-                    author_name = ''
-                data['listStatus'][item.number] = author_name
-            else:
-                data['listStatus'][item.number] = item.name
+            data['listStatus'][item.number] = item.name
 
         data['discipline_credit'] = discipline_credit.uid
         data['hide'] = False
