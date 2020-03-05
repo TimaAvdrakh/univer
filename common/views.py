@@ -271,7 +271,7 @@ class StudyYearFromStudyPlan(generics.RetrieveAPIView):
 
 class CourseListView(generics.ListAPIView):
     """Получить список курсов"""
-    queryset = models.Course.objects.filter(is_active=True)
+    queryset = models.Course.objects.filter(is_active=True).order_by('number')
     serializer_class = serializers.CourseSerializer
 
 

@@ -1385,3 +1385,18 @@ class ChooseControlFormSerializer(serializers.ModelSerializer):
         instance.chosen_control_forms.set(chosen_control_forms)
 
         return instance
+
+
+class ProfileForAdviserSerializer(serializers.ModelSerializer):
+    """Список студентов для полного списка адвайзеру"""
+
+    class Meta:
+        model = models.Profile
+        fields = (
+            'uid',
+            'first_name',
+            'last_name',
+            'middle_name',
+            'birth_date',
+            'status',
+        )

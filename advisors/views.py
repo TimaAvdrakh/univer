@@ -1998,7 +1998,6 @@ class CopyStudyPlansListView(generics.ListAPIView):
             ).values('study_plan')
 
             sd = sd.filter(status=status_obj)
-            # gfdfgdg
             queryset = queryset.filter(pk__in=study_plan_pks_from_sd)
         lookup = Q()
         sd_lookup = Q()
@@ -2085,3 +2084,35 @@ class DeactivateDiscipline(generics.UpdateAPIView):
     )
     queryset = org_models.StudentDiscipline.objects.all()
     serializer_class = serializers.DeactivateDisciplineSerializer
+
+
+class StudentProfilesList(generics.ListAPIView):
+    queryset = org_models.StudyPlan.objects.filter(is_active=True).order_by('student__last_name')
+    serializer_class = serializers.StudentProfilesListSerializer
+    pagination_class = AdvisorBidPagination  # CustomPagination
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.queryset.filter(advisor=self.request.user.profile).exclude(
+            student__status_id=STUDENT_STATUSES['expelled'])
+
+        start_year = request.query_params.get('start_year')
+        study_form = request.query_params.get('study_form')
+        preperation_level = request.query_params.get('preperation_level')
+        faculty = request.query_params.get('faculty')
+        cathedra = request.query_params.get('cathedra')
+        speciality = request.query_params.get('speciality')
+        edu_prog_group = request.query_params.get('edu_prog_group')
+        edu_prog = request.query_params.get('edu_prog')
+        course = request.query_params.get('course')
+        group = request.query_params.get('group')
+        student_status = request.query_params.get('student_status')
+        gender = request.query_params.get('gender')
+        citizenship = request.query_params.get('citizenship')
+
+        status_id = request.query_params.get('status')
+
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.serializer_class(page,
+                                               many=True, )
+            return self.get_paginated_response(serializer.data)
