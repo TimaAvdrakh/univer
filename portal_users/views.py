@@ -433,7 +433,7 @@ class StudentDisciplineForRegListCopyView(generics.ListAPIView):
                         'uid': study_plan.advisor_id,
                         'error': 400
                     },
-                    status=status.HTTP_200_OK
+                    status=status.HTTP_400_BAD_REQUEST
                 )
 
 
