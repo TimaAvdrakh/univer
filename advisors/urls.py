@@ -50,5 +50,10 @@ urlpatterns = [
     path('discipline/<pk>/deactivate/', views.DeactivateDiscipline.as_view(),
          name='deactivate_discipline'),
 
-    path('discipline/<pk>/activate/', views.ActivateDiscipline.as_view(), name='activate_discipline')
+    path('discipline/<pk>/activate/', views.ActivateDiscipline.as_view(), name='activate_discipline'),
+
+    # 4 стр Список учащихся
+    path('students/all/', views.StudentProfilesList.as_view(),
+         name='student_profiles'),
+
 ]
