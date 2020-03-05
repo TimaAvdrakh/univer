@@ -78,27 +78,26 @@ class GetAcadPeriodsForRegisterCopyView(generics.ListAPIView):
             )
 
         today = date.today()
-        acad_period_pks = models.CourseAcadPeriodPermission.objects.filter(
+        acad_period_pks = list(models.CourseAcadPeriodPermission.objects.filter(
             registration_period__start_date__lte=today,
             registration_period__end_date__gte=today,
             course=current_course,
-        ).values('acad_period')
+        ).values_list('acad_period', flat=True))
+
         acad_periods = org_models.AcadPeriod.objects.filter(
             pk__in=acad_period_pks,
             is_active=True,
         )
 
-        serializer = self.serializer_class(acad_periods,
-                                           many=True)
-        resp = serializer.data
-        resp.append(
+        serializer = self.serializer_class(acad_periods, many=True).data
+        serializer.append(
             {
                 'name': _('all period'),
                 'uid': 'all',
             }
         )
         return Response(
-            resp,
+            serializer,
             status=status.HTTP_200_OK
         )
 
@@ -195,7 +194,6 @@ class RegistrationPeriodListView(generics.ListAPIView):
             #                       day=1)
             # queryset = queryset.filter(start_date__year__gte=study_year_obj.start,
             #                            end_date__lte=study_year_end)
-
             queryset = queryset.filter(study_year_id=study_year)
         return queryset
 

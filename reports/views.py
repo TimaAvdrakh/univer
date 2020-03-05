@@ -788,11 +788,8 @@ class GetFileView(generics.RetrieveAPIView):
         get = request.query_params.get('get')
 
         try:
-            task = ExcelTask.objects.get(token=token,
-                                         is_success=True,
-                                         is_active=True)
-            self.check_object_permissions(request,
-                                          task)
+            task = ExcelTask.objects.get(token=token, is_success=True, is_active=True)
+            self.check_object_permissions(request, task)
 
             if get == 'status':
                 resp = {
