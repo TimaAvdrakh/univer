@@ -896,3 +896,10 @@ class ChooseFormControlView(generics.UpdateAPIView):
     )
     queryset = org_models.DisciplineCredit.objects.filter(is_active=True)
     serializer_class = serializers.ChooseControlFormSerializer
+
+    def put(self, request, *args, **kwargs):
+        if request.user.profile.role.is_student:
+            kwargs['status'] = 2
+        elif request.user.profile.role.is_supervisor:
+            kwargs['status'] = 5
+        return self.update(request, *args, **kwargs)
