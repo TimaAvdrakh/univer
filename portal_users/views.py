@@ -894,9 +894,9 @@ class ChooseFormControlView(generics.UpdateAPIView):
     serializer_class = serializers.ChooseControlFormSerializer
 
     def update(self, request, *args, **kwargs):
+        data = request.data
         partial = kwargs.pop('partial', False)
         try:
-            data = request.data
             if request.user.profile.role.is_student:
                 data['status'] = request.data.status
             elif request.user.profile.role.is_supervisor:
