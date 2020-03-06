@@ -1,5 +1,3 @@
-from django.shortcuts import render
-from rest_framework.views import APIView
 from rest_framework import generics
 from rest_framework import status
 from rest_framework.response import Response
@@ -11,12 +9,10 @@ from organizations import models as org_models
 from rest_framework.permissions import IsAuthenticated
 from . import permissions
 from .utils import get_current_study_year
-from common.csrf_exempt_auth_class import CsrfExemptSessionAuthentication
 from portal.curr_settings import student_discipline_info_status, not_choosing_load_types2, CYCLE_DISCIPLINE
 from datetime import date
 from common import models as common_models
 from rest_framework.views import APIView
-from django.utils.translation import ugettext as _
 
 
 class LoginView(generics.CreateAPIView):
@@ -897,22 +893,25 @@ class ChooseFormControlView(generics.UpdateAPIView):
     queryset = org_models.DisciplineCredit.objects.filter(is_active=True)
     serializer_class = serializers.ChooseControlFormSerializer
 
-    # def update(self, request, *args, **kwargs):
-    #     partial = kwargs.pop('partial', False)
-    #     data = request.data
-    #     if request.user.profile.role.is_student:
-    #         data['status'] = request.data.status
-    #     elif request.user.profile.role.is_supervisor:
-    #         data['status'] = 5
-    #
-    #     instance = self.get_object()
-    #     serializer = self.get_serializer(instance, data=data, partial=partial)
-    #     serializer.is_valid(raise_exception=True)
-    #     self.perform_update(serializer)
-    #
-    #     if getattr(instance, '_prefetched_objects_cache', None):
-    #         # If 'prefetch_related' has been applied to a queryset, we need to
-    #         # forcibly invalidate the prefetch cache on the instance.
-    #         instance._prefetched_objects_cache = {}
-    #
-    #     return Response(serializer.data)
+    def update(self, request, *args, **kwargs):
+        partial = kwargs.pop('partial', False)
+        try:
+            data = request.data
+            if request.user.profile.role.is_student:
+                data['status'] = request.data.status
+            elif request.user.profile.role.is_supervisor:
+                data['status'] = 5
+        except:
+            pass
+
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=data, partial=partial)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+
+        if getattr(instance, '_prefetched_objects_cache', None):
+            # If 'prefetch_related' has been applied to a queryset, we need to
+            # forcibly invalidate the prefetch cache on the instance.
+            instance._prefetched_objects_cache = {}
+
+        return Response(serializer.data)
