@@ -165,7 +165,7 @@ class StudyYearListView(generics.ListAPIView):
 
         queryset = self.queryset.all()
 
-        if my == '1':
+        if my == '1':  # Если пользователь является студентом
             study_plans = org_models.StudyPlan.objects.filter(student=profile,
                                                               is_active=True)
             study_year_pks = org_models.StudyYearCourse.objects.filter(study_plan__in=study_plans).values('study_year')
@@ -277,3 +277,6 @@ class StudentDisciplineStatusListView(generics.ListAPIView):
     """Получить список cтатусов при выборе препода"""
     queryset = org_models.StudentDisciplineStatus.objects.filter(is_active=True)
     serializer_class = serializers.StudentDisciplineStatusSerializer
+
+# class ProfilesEntryDateListView(generics.ListAPIView):
+#     queryset = org_models.StudyPlan.objects.filter()
