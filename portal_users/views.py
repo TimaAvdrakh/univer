@@ -898,9 +898,10 @@ class ChooseFormControlView(generics.UpdateAPIView):
         partial = kwargs.pop('partial', False)
         try:
             if request.user.profile.role.is_student:
-                data['status'] = request.data.status
+                data['status'] = org_models.StudentDisciplineStatus.objects.get(number=2).uid
             elif request.user.profile.role.is_supervisor:
-                data['status'] = 5
+                data['status'] = org_models.StudentDisciplineStatus.objects.get(number=5).uid
+                data['teacher'] = request.user.profile.uid
             instance = self.get_object()
             serializer = self.get_serializer(instance, data=data, partial=partial)
             serializer.is_valid(raise_exception=True)

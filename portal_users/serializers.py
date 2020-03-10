@@ -1458,6 +1458,8 @@ class ChooseControlFormSerializer(serializers.ModelSerializer):
         fields = (
             'uid',
             'chosen_control_forms',
+            'status',
+            'teacher',
         )
 
     def update(self, instance, validated_data):
