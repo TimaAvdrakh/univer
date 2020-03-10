@@ -472,3 +472,16 @@ class PrepartionLevelListSerializer(serializers.ModelSerializer):
             'uid',
             'name',
         )
+
+
+class StudentsByDisciplineIDSerializer(serializers.ModelSerializer):
+    """
+    Список студентов по uid дисциплины
+    """
+    student = ProfileShortSerializer()
+
+    class Meta:
+        model = org_models.StudentDiscipline
+        fields = (
+            'student',
+        )

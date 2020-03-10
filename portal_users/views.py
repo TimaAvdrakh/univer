@@ -1,3 +1,5 @@
+from django.shortcuts import render
+from rest_framework.views import APIView
 from rest_framework import generics
 from rest_framework import status
 from rest_framework.response import Response
@@ -911,6 +913,11 @@ class ChooseFormControlView(generics.UpdateAPIView):
                 # If 'prefetch_related' has been applied to a queryset, we need to
                 # forcibly invalidate the prefetch cache on the instance.
                 instance._prefetched_objects_cache = {}
+
+            return Response(serializer.data)
+        except:
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+
 
             return Response(serializer.data)
         except:

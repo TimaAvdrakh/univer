@@ -711,7 +711,7 @@ class RegisterResultView(generics.ListAPIView):
     pagination_class = CustomPagination
 
     def list(self, request, *args, **kwargs):
-
+        query = dict()
         queryset = self.queryset
         my = request.query_params.get('my')
 
@@ -2118,7 +2118,6 @@ class StudentProfilesList(generics.ListAPIView):
     serializer_class = serializers.StudentProfilesListSerializer
     pagination_class = AdvisorBidPagination  # CustomPagination
 
-    # ghfhfhfh
     def list(self, request, *args, **kwargs):
         queryset = self.queryset.filter(advisor=self.request.user.profile)
 

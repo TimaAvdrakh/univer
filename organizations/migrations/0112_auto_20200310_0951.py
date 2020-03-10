@@ -5,6 +5,10 @@ import django.db.models.deletion
 
 
 class Migration(migrations.Migration):
+<<<<<<< HEAD
+=======
+
+>>>>>>> origin/bernar
     dependencies = [
         ('portal_users', '0055_auto_20200225_1056'),
         ('organizations', '0111_erorotext'),
@@ -14,15 +18,23 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='disciplinecredit',
             name='status',
+<<<<<<< HEAD
             field=models.ForeignKey(null=True, on_delete=django.db.models.deletion.CASCADE,
                                     related_name='discipline_credit_status', to='organizations.StudentDisciplineStatus',
                                     verbose_name='Статус диспцилины'),
+=======
+            field=models.ForeignKey(null=True, on_delete=django.db.models.deletion.CASCADE, related_name='discipline_credit_status', to='organizations.StudentDisciplineStatus', verbose_name='Статус диспцилины'),
+>>>>>>> origin/bernar
         ),
         migrations.AddField(
             model_name='disciplinecredit',
             name='teacher',
+<<<<<<< HEAD
             field=models.ForeignKey(null=True, on_delete=django.db.models.deletion.CASCADE,
                                     related_name='discipline_credit_teacher', to='portal_users.Profile',
                                     verbose_name='Преподаватель'),
+=======
+            field=models.ForeignKey(null=True, on_delete=django.db.models.deletion.CASCADE, related_name='discipline_credit_teacher', to='portal_users.Profile', verbose_name='Преподаватель'),
+>>>>>>> origin/bernar
         ),
     ]
