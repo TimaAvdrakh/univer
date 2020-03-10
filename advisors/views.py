@@ -2118,7 +2118,7 @@ class StudentProfilesList(generics.ListAPIView):
         queryset = self.queryset.filter(advisor=self.request.user.profile).exclude(
             student__status_id=STUDENT_STATUSES['expelled'])
 
-        start_year = request.query_params.get('start_year')
+        entry_year = request.query_params.get('start_year')
         study_form = request.query_params.get('study_form')
         preperation_level = request.query_params.get('preperation_level')
         faculty = request.query_params.get('faculty')
@@ -2161,7 +2161,7 @@ class StudentsByDisplinesIDListView(generics.ListAPIView):
         course = request.query_params.get('course')
         group = request.query_params.get('group')
 
-        acad_period = request.query_params.get('acad_periods')
+        acad_period = request.query_params.get('acad_period')
         reg_period = request.query_params.get('reg_period')
 
         lookup = Q(status_id=student_discipline_status['confirmed'],
