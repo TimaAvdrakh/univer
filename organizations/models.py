@@ -796,7 +796,6 @@ class StudentDiscipline(BaseModel):
         editable=False,
     )
 
-
     def set_uuid1c(self):
         """
         Установит поле uuid1c дубликатам текущей записи

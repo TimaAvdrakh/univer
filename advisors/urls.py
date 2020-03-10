@@ -40,6 +40,9 @@ urlpatterns = [
     path('not_registered/students/', views.NotRegisteredStudentListView.as_view(),  # TODO order_by
          name='not_registered_students'),
 
+    path('registration/results/discipline/', views.StudentsByDisplinesIDListView.as_view(),
+         name='student_to_discipline'),
+
     # Excel views
     path('excel/', views.GenerateIupBidExcelView.as_view(),
          name='generate_excel'),

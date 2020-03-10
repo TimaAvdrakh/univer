@@ -334,11 +334,14 @@ class StudentDisciplineSerializer(serializers.ModelSerializer):
         fields = (
             'uid',
             'discipline',
+            'discipline_id',
             'load_type',
             'hours',
             'language',
             'teacher',
             'student_count',
+            'load_type_id',
+            'language_id',
         )
 
 
@@ -431,6 +434,19 @@ class StudentProfilesListSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = org_models.StudyPlan
+        fields = (
+            'student',
+        )
+
+
+class StudentsByDisciplineIDSerializer(serializers.ModelSerializer):
+    """
+    Список студентов по uid дисциплины
+    """
+    student = ProfileShortSerializer()
+
+    class Meta:
+        model = org_models.StudentDiscipline
         fields = (
             'student',
         )
