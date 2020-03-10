@@ -1458,6 +1458,8 @@ class ChooseControlFormSerializer(serializers.ModelSerializer):
         fields = (
             'uid',
             'chosen_control_forms',
+            'status',
+            'teacher',
         )
 
     def update(self, instance, validated_data):
@@ -1469,6 +1471,8 @@ class ChooseControlFormSerializer(serializers.ModelSerializer):
 
 class ProfileForAdviserSerializer(serializers.ModelSerializer):
     """Список студентов для полного списка адвайзеру"""
+    status = serializers.CharField()
+
 
     class Meta:
         model = models.Profile
@@ -1479,4 +1483,43 @@ class ProfileForAdviserSerializer(serializers.ModelSerializer):
             'middle_name',
             'birth_date',
             'status',
+        )
+
+
+class StudentStatusListSerializer(serializers.ModelSerializer):
+    """
+    Список статуса студента
+    """
+
+    class Meta:
+        model = models.StudentStatus
+        fields = (
+            'uid',
+            'name',
+        )
+
+
+class GenderListSerializer(serializers.ModelSerializer):
+    """
+    Список пола пользователей
+    """
+
+    class Meta:
+        model = models.Gender
+        fields = (
+            'uid',
+            'name',
+        )
+
+
+class CitizenshipListSerializer(serializers.ModelSerializer):
+    """
+    Список национальностей полбзователей
+    """
+
+    class Meta:
+        model = common_models.Citizenship
+        fields = (
+            'uid',
+            'name',
         )

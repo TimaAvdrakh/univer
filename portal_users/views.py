@@ -1,5 +1,3 @@
-from django.shortcuts import render
-from rest_framework.views import APIView
 from rest_framework import generics
 from rest_framework import status
 from rest_framework.response import Response
@@ -11,12 +9,10 @@ from organizations import models as org_models
 from rest_framework.permissions import IsAuthenticated
 from . import permissions
 from .utils import get_current_study_year
-from common.csrf_exempt_auth_class import CsrfExemptSessionAuthentication
 from portal.curr_settings import student_discipline_info_status, not_choosing_load_types2, CYCLE_DISCIPLINE
 from datetime import date
 from common import models as common_models
 from rest_framework.views import APIView
-from django.utils.translation import ugettext as _
 
 
 class LoginView(generics.CreateAPIView):
@@ -898,21 +894,64 @@ class ChooseFormControlView(generics.UpdateAPIView):
     serializer_class = serializers.ChooseControlFormSerializer
 
     def update(self, request, *args, **kwargs):
-        partial = kwargs.pop('partial', False)
         data = request.data
-        if request.user.profile.role.is_student:
-            data['status'] = request.data.status
-        elif request.user.profile.role.is_supervisor:
-            data['status'] = 5
+        partial = kwargs.pop('partial', False)
+        try:
+            if request.user.profile.role.is_student:
+                data['status'] = org_models.StudentDisciplineStatus.objects.get(number=2).uid
+            elif request.user.profile.role.is_supervisor:
+                data['status'] = org_models.StudentDisciplineStatus.objects.get(number=5).uid
+                data['teacher'] = request.user.profile.uid
+            instance = self.get_object()
+            serializer = self.get_serializer(instance, data=data, partial=partial)
+            serializer.is_valid(raise_exception=True)
+            self.perform_update(serializer)
 
-        instance = self.get_object()
-        serializer = self.get_serializer(instance, data=data, partial=partial)
-        serializer.is_valid(raise_exception=True)
-        self.perform_update(serializer)
+            if getattr(instance, '_prefetched_objects_cache', None):
+                # If 'prefetch_related' has been applied to a queryset, we need to
+                # forcibly invalidate the prefetch cache on the instance.
+                instance._prefetched_objects_cache = {}
 
-        if getattr(instance, '_prefetched_objects_cache', None):
-            # If 'prefetch_related' has been applied to a queryset, we need to
-            # forcibly invalidate the prefetch cache on the instance.
-            instance._prefetched_objects_cache = {}
+            return Response(serializer.data)
+        except:
+            return Response(status=status.HTTP_400_BAD_REQUEST)
 
-        return Response(serializer.data)
+
+class StudentStatusListView(generics.ListAPIView):
+    """
+    Список статуса студентов для эдвайзера
+    """
+    queryset = models.StudentStatus.objects
+    serializer_class = serializers.StudentStatusListSerializer
+
+    def get_queryset(self):
+        queryset = self.queryset.filter(is_active=True).order_by('name')
+        return queryset
+
+
+class GenderListView(generics.ListAPIView):
+    """
+    Список пола пользователей
+    """
+    queryset = models.Gender.objects
+    serializer_class = serializers.GenderListSerializer
+
+    def get_queryset(self):
+        queryset = self.queryset.filter(is_active=True).order_by('name')
+        return queryset
+
+
+class CitizenshipListView(generics.ListAPIView):
+    """
+    Список национальностей пользователей
+    """
+    queryset = common_models.Citizenship.objects
+    serializer_class = serializers.CitizenshipListSerializer
+
+    def get_queryset(self):
+        queryset = self.queryset.filter(is_active=True).order_by('name')
+        student_pks = org_models.StudyPlan.objects.filter(advisor=self.request.user.profile).values('student')
+        citizenship_pks = models.Profile.objects.filter(pk__in=student_pks).values('citizenship')
+        queryset = queryset.filter(pk__in=citizenship_pks)
+
+        return queryset

@@ -44,4 +44,11 @@ urlpatterns = [
          name='discipline_control_forms'),
     path('control_forms/<pk>/choose/', views.ChooseFormControlView.as_view(),
          name='choose_control_forms'),
+    path('student_status/', views.StudentStatusListView.as_view(),
+         name='student_status'),
+    path('gender/', views.GenderListView.as_view(),
+         name='gender'),
+    path('citizenship/', views.CitizenshipListView.as_view(),
+         name='citizenship')
+
 ]

@@ -566,12 +566,16 @@ class SpecialityListView(generics.ListAPIView):
 
         study_year = self.request.query_params.get('study_year')
         faculty = self.request.query_params.get('faculty')
+        cathedra = self.request.query_params.get('cathedra')
 
         study_plans = org_models.StudyPlan.objects.filter(advisor=profile,
                                                           is_active=True)
 
         if faculty:
             study_plans = study_plans.filter(faculty_id=faculty)
+
+        if cathedra:
+            study_plans = study_plans.filter(cathedra_id=cathedra)
 
         if study_year:
             study_year_obj = org_models.StudyPeriod.objects.get(pk=study_year)
@@ -707,11 +711,20 @@ class RegisterResultView(generics.ListAPIView):
     pagination_class = CustomPagination
 
     def list(self, request, *args, **kwargs):
-        query = dict()
+
         queryset = self.queryset
+        my = request.query_params.get('my')
+
+        query = dict()
+
         profile = request.user.profile
+
+        if my == '1':  # Если пользователь является учителем
+            queryset = queryset.filter(teacher=profile)
+        else:
+            query['study_plan__advisor'] = profile
+
         query['status_id'] = student_discipline_status['confirmed']
-        query['study_plan__advisor'] = profile
 
         if request.query_params.get('acad_period'):
             query['acad_period_id'] = request.query_params.get('acad_period')
@@ -746,7 +759,7 @@ class RegisterResultView(generics.ListAPIView):
             ).values('study_plan')
 
         distincted_queryset = queryset.filter(**query).distinct(
-            'discipline', 'load_type', 'hours', 'language', 'teacher')
+            'discipline', 'load_type', 'hours', 'language', 'teacher', )
         # print(distincted_queryset)
         page = self.paginate_queryset(distincted_queryset)
         # print(page, 'page')
@@ -755,6 +768,9 @@ class RegisterResultView(generics.ListAPIView):
         for item in page:
             query2 = dict()
             query2.update(query)
+            query2['discipline_id'] = item.discipline_id
+            query2['load_type_id'] = item.load_type_id
+            query2['language_id'] = item.language_id
             query2['discipline'] = item.discipline
             query2['load_type'] = item.load_type
             query2['language'] = item.language
@@ -763,12 +779,15 @@ class RegisterResultView(generics.ListAPIView):
             student_count = queryset.filter(**query2).distinct('student').count()
 
             d = {
+                'discipline_id': item.discipline_id,
                 'discipline': item.discipline,
                 'load_type': item.load_type,
                 'hours': item.hours,
                 'language': item.language,
                 'teacher': item.teacher,
-                'student_count': student_count
+                'student_count': student_count,
+                'load_type_id': item.load_type_id,
+                'language_id': item.language_id,
             }
             student_discipline_list.append(d)
 
@@ -2099,13 +2118,13 @@ class StudentProfilesList(generics.ListAPIView):
     serializer_class = serializers.StudentProfilesListSerializer
     pagination_class = AdvisorBidPagination  # CustomPagination
 
+    # ghfhfhfh
     def list(self, request, *args, **kwargs):
-        queryset = self.queryset.filter(advisor=self.request.user.profile).exclude(
-            student__status_id=STUDENT_STATUSES['expelled'])
+        queryset = self.queryset.filter(advisor=self.request.user.profile)
 
-        start_year = request.query_params.get('start_year')
+        entry_year = request.query_params.get('entry_year')
         study_form = request.query_params.get('study_form')
-        preperation_level = request.query_params.get('preperation_level')
+        preparation_level = request.query_params.get('preparation_level')
         faculty = request.query_params.get('faculty')
         cathedra = request.query_params.get('cathedra')
         speciality = request.query_params.get('speciality')
@@ -2117,10 +2136,128 @@ class StudentProfilesList(generics.ListAPIView):
         gender = request.query_params.get('gender')
         citizenship = request.query_params.get('citizenship')
 
-        status_id = request.query_params.get('status')
+        lookup = Q()
+
+        if entry_year:
+            lookup = lookup & Q(entry_date__year=entry_year)
+        if study_form:
+            lookup = lookup & Q(study_form_id=study_form)
+        if faculty:
+            lookup = lookup & Q(faculty_id=faculty)
+        if cathedra:
+            lookup = lookup & Q(cathedra_id=cathedra)
+        if edu_prog:
+            lookup = lookup & Q(education_program_id=edu_prog)
+        if edu_prog_group:
+            lookup = lookup & Q(education_program__group_id=edu_prog_group)
+        if group:
+            lookup = lookup & Q(group_id=group)
+        if preparation_level:
+            lookup = lookup & Q(preparation_level_id=preparation_level)
+        if speciality:
+            lookup = lookup & Q(speciality_id=speciality)
+        if course:
+            study_plan_pks = org_models.StudyYearCourse.objects.filter(course=course).values('study_plan')
+            lookup = lookup & Q(pk__in=study_plan_pks)
+        if student_status:
+            lookup = lookup & Q(student__status_id=student_status)
+        if gender:
+            lookup = lookup & Q(student__gender=gender)
+        if citizenship:
+            lookup = lookup & Q(student__citizenship=citizenship)
+
+        queryset = queryset.filter(lookup)
 
         page = self.paginate_queryset(queryset)
         if page is not None:
             serializer = self.serializer_class(page,
                                                many=True, )
             return self.get_paginated_response(serializer.data)
+
+
+class StudentsByDisplinesIDListView(generics.ListAPIView):
+    queryset = org_models.StudentDiscipline.objects.filter(is_active=True)
+    serializer_class = serializers.StudentsByDisciplineIDSerializer
+    pagination_class = CustomPagination
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.queryset.filter(teacher=self.request.user.profile).exclude(
+            student__status_id=STUDENT_STATUSES['expelled'])
+
+        discipline_id = request.query_params.get('discipline_id')
+        load_type_id = request.query_params.get('load_type_id')
+        language_id = request.query_params.get('language_id')
+        hours = request.query_params.get('hours')
+
+        study_year = request.query_params.get('study_year')
+        faculty = request.query_params.get('faculty')
+        edu_prog = request.query_params.get('edu_prog')
+        course = request.query_params.get('course')
+        group = request.query_params.get('group')
+
+        acad_period = request.query_params.get('acad_period')
+        reg_period = request.query_params.get('reg_period')
+
+        lookup = Q(status_id=student_discipline_status['confirmed'],
+                   discipline_id=discipline_id,
+                   load_type_id=load_type_id,
+                   language_id=language_id,
+                   hours=hours)
+
+        queryset = queryset.filter(lookup)
+
+        if acad_period:
+            lookup = lookup & Q(acad_period_id=acad_period)
+
+        if reg_period:
+            query_temp = common_models.CourseAcadPeriodPermission.objects.filter(
+                registration_period_id=reg_period
+            ).values('acad_period')
+            lookup = lookup & Q(acad_period__in=query_temp)
+
+        if faculty:
+            lookup = lookup & Q(study_plan__faculty_id=faculty)
+
+        if edu_prog:
+            lookup = lookup & Q(study_plan__education_program_id=edu_prog)
+
+        if group:
+            lookup = lookup & Q(study_plan__group_id=group)
+
+        if study_year:
+            lookup = lookup & Q(study_year_id=study_year)
+
+        if course and study_year:
+            query_temp = org_models.StudyYearCourse.objects.filter(
+                study_year_id=study_year,
+                course=course,
+            ).values('study_plan')
+            lookup = lookup & Q(study_year__in=query_temp)
+
+        queryset = queryset.filter(lookup)
+
+        page = self.paginate_queryset(queryset)
+
+        if page is not None:
+            serializer = self.serializer_class(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+
+class EntryYearListView(generics.ListAPIView):
+    queryset = org_models.StudyPlan.objects.filter(is_active=True).order_by('entry_date__year')
+    serializer_class = serializers.EntryYearSerializer
+
+    def get_queryset(self):
+        queryset = self.queryset.filter(advisor=self.request.user.profile).distinct('entry_date__year')
+        return queryset
+
+
+class PreparationsLevelListView(generics.ListAPIView):
+    queryset = org_models.PreparationLevel.objects.filter(is_active=True).order_by('name')
+    serializer_class = serializers.PrepartionLevelListSerializer
+
+    def get_queryset(self):
+        study_plans = org_models.StudyPlan.objects.filter(advisor=self.request.user.profile,
+                                                          is_active=True).values('preparation_level')
+        queryset = self.queryset.filter(pk__in=study_plans)
+        return queryset
