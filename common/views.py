@@ -78,27 +78,26 @@ class GetAcadPeriodsForRegisterCopyView(generics.ListAPIView):
             )
 
         today = date.today()
-        acad_period_pks = models.CourseAcadPeriodPermission.objects.filter(
+        acad_period_pks = list(models.CourseAcadPeriodPermission.objects.filter(
             registration_period__start_date__lte=today,
             registration_period__end_date__gte=today,
             course=current_course,
-        ).values('acad_period')
+        ).values_list('acad_period', flat=True))
+
         acad_periods = org_models.AcadPeriod.objects.filter(
             pk__in=acad_period_pks,
             is_active=True,
         )
 
-        serializer = self.serializer_class(acad_periods,
-                                           many=True)
-        resp = serializer.data
-        resp.append(
+        serializer = self.serializer_class(acad_periods, many=True).data
+        serializer.append(
             {
                 'name': _('all period'),
                 'uid': 'all',
             }
         )
         return Response(
-            resp,
+            serializer,
             status=status.HTTP_200_OK
         )
 
@@ -166,7 +165,7 @@ class StudyYearListView(generics.ListAPIView):
 
         queryset = self.queryset.all()
 
-        if my == '1':
+        if my == '1':  # Если пользователь является студентом
             study_plans = org_models.StudyPlan.objects.filter(student=profile,
                                                               is_active=True)
             study_year_pks = org_models.StudyYearCourse.objects.filter(study_plan__in=study_plans).values('study_year')
@@ -195,7 +194,6 @@ class RegistrationPeriodListView(generics.ListAPIView):
             #                       day=1)
             # queryset = queryset.filter(start_date__year__gte=study_year_obj.start,
             #                            end_date__lte=study_year_end)
-
             queryset = queryset.filter(study_year_id=study_year)
         return queryset
 
@@ -271,7 +269,7 @@ class StudyYearFromStudyPlan(generics.RetrieveAPIView):
 
 class CourseListView(generics.ListAPIView):
     """Получить список курсов"""
-    queryset = models.Course.objects.filter(is_active=True)
+    queryset = models.Course.objects.filter(is_active=True).order_by('number')
     serializer_class = serializers.CourseSerializer
 
 
@@ -279,3 +277,6 @@ class StudentDisciplineStatusListView(generics.ListAPIView):
     """Получить список cтатусов при выборе препода"""
     queryset = org_models.StudentDisciplineStatus.objects.filter(is_active=True)
     serializer_class = serializers.StudentDisciplineStatusSerializer
+
+# class ProfilesEntryDateListView(generics.ListAPIView):
+#     queryset = org_models.StudyPlan.objects.filter()

@@ -11,10 +11,10 @@ from organizations import models as org_models
 from rest_framework.permissions import IsAuthenticated
 from . import permissions
 from .utils import get_current_study_year
-from common.csrf_exempt_auth_class import CsrfExemptSessionAuthentication
 from portal.curr_settings import student_discipline_info_status, not_choosing_load_types2, CYCLE_DISCIPLINE
 from datetime import date
 from common import models as common_models
+from rest_framework.views import APIView
 
 
 class LoginView(generics.CreateAPIView):
@@ -76,15 +76,17 @@ class PasswordChangeView(generics.CreateAPIView):
         user = request.user
         serializer = self.serializer_class(data=request.data,
                                            context={'request': request})
-        serializer.is_valid(raise_exception=True)
-        self.perform_create(serializer)
-        login(request, user)
-        return Response(
-            {
-                'message': 1  # Успешно
-            },
-            status=status.HTTP_200_OK
-        )
+        if serializer.is_valid(raise_exception=True):
+            self.perform_create(serializer)
+            login(request, user)
+            return Response(
+                {
+                    'message': 1  # Успешно
+                },
+                status=status.HTTP_200_OK
+            )
+        else:
+            return Response({'message': serializer.error_messages}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class ForgetPasswordView(generics.CreateAPIView):
@@ -309,8 +311,7 @@ class StudentDisciplineForRegListCopyView(generics.ListAPIView):
                     acad_period=acad_period,
                     study_year_id=study_year_id,
                     is_active=True,
-                ).exclude(load_type__load_type2__in=not_choosing_load_types2). \
-                    distinct('discipline').order_by('discipline')
+                ).exclude(load_type__load_type2__in=not_choosing_load_types2).distinct('discipline').order_by('discipline')
 
                 if not student_disciplines.exists():
                     """
@@ -318,9 +319,7 @@ class StudentDisciplineForRegListCopyView(generics.ListAPIView):
                     """
                     continue
 
-                serializer = self.serializer_class(student_disciplines,
-                                                   context={'study_year_id': study_year_id},
-                                                   many=True)
+                serializer = self.serializer_class(student_disciplines, context={'study_year_id': study_year_id}, many=True)
 
                 item = {
                     'name': acad_period.repr_name,
@@ -349,10 +348,9 @@ class StudentDisciplineForRegListCopyView(generics.ListAPIView):
             student_disciplines = org_models.StudentDiscipline.objects.filter(
                 study_plan_id=study_plan_id,
                 acad_period_id=acad_period_id,
-                study_year_id=study_year_id,
+                # study_year_id=study_year_id,
                 is_active=True,
-            ).exclude(load_type__load_type2__in=not_choosing_load_types2).\
-                distinct('discipline').order_by('discipline')
+            ).exclude(load_type__load_type2__in=not_choosing_load_types2).distinct('discipline').order_by('discipline')
 
             serializer = self.serializer_class(student_disciplines,
                                                context={'study_year_id': study_year_id},
@@ -383,48 +381,58 @@ class StudentDisciplineForRegListCopyView(generics.ListAPIView):
             )
             resp = []
 
-            for acad_period in acad_periods:
-                try:
-                    org_models.StudentDisciplineInfo.objects.get(
-                        study_plan_id=study_plan_id,
+            if acad_period_pks:
+
+                for acad_period in acad_periods:
+                    try:
+                        org_models.StudentDisciplineInfo.objects.get(
+                            study_plan_id=study_plan_id,
+                            acad_period=acad_period,
+                        )
+                    except org_models.StudentDisciplineInfo.DoesNotExist:  # Создаем StudentDisciplineInfo если не создан
+                        org_models.StudentDisciplineInfo.objects.create(
+                            student=study_plan.student,
+                            study_plan_id=study_plan_id,
+                            acad_period=acad_period,
+                            status_id=student_discipline_info_status["not_started"],
+                        )
+
+                    student_disciplines = org_models.StudentDiscipline.objects.filter(
+                        study_plan=study_plan,
                         acad_period=acad_period,
-                    )
-                except org_models.StudentDisciplineInfo.DoesNotExist:  # Создаем StudentDisciplineInfo если не создан
-                    org_models.StudentDisciplineInfo.objects.create(
-                        student=study_plan.student,
-                        study_plan_id=study_plan_id,
-                        acad_period=acad_period,
-                        status_id=student_discipline_info_status["not_started"],
-                    )
+                        study_year_id=study_year_id,
+                        is_active=True,
+                    ).exclude(load_type__load_type2__in=not_choosing_load_types2). \
+                        distinct('discipline').order_by('discipline')
 
-                student_disciplines = org_models.StudentDiscipline.objects.filter(
-                    study_plan=study_plan,
-                    acad_period=acad_period,
-                    study_year_id=study_year_id,
-                    is_active=True,
-                ).exclude(load_type__load_type2__in=not_choosing_load_types2). \
-                    distinct('discipline').order_by('discipline')
+                    if not student_disciplines.exists():
+                        """
+                        Если дисциплин студентов нет, то исключим акад период из ответа
+                        """
+                        continue
 
-                if not student_disciplines.exists():
-                    """
-                    Если дисциплин студентов нет, то исключим акад период из ответа
-                    """
-                    continue
+                    serializer = self.serializer_class(student_disciplines,
+                                                       context={'study_year_id': study_year_id},
+                                                       many=True)
 
-                serializer = self.serializer_class(student_disciplines,
-                                                   context={'study_year_id': study_year_id},
-                                                   many=True)
+                    item = {
+                        'name': acad_period.repr_name,
+                        'disciplines': serializer.data,
+                    }
+                    resp.append(item)
 
-                item = {
-                    'name': acad_period.repr_name,
-                    'disciplines': serializer.data,
-                }
-                resp.append(item)
-
-            return Response(
-                resp,
-                status=status.HTTP_200_OK
-            )
+                return Response(
+                    resp,
+                    status=status.HTTP_200_OK
+                )
+            else:
+                return Response(
+                    {
+                        'uid': study_plan.advisor_id,
+                        'error': 400
+                    },
+                    status=status.HTTP_400_BAD_REQUEST
+                )
 
 
 class MyStudyPlanListView(generics.ListAPIView):
@@ -537,8 +545,9 @@ class NotifyAdviser(generics.CreateAPIView):
 
         self.check_object_permissions(request,
                                       study_plan)
-
-        serializer = self.serializer_class(data=request.data)
+        datas = request.data
+        datas['status'] = True
+        serializer = self.serializer_class(data=datas)
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(
@@ -558,7 +567,7 @@ class StudentAllDisciplineListView(generics.ListAPIView):
         IsAuthenticated,
         permissions.StudyPlanPermission,
     )
-    serializer_class = serializers.StudentDisciplineShortSerializer
+    serializer_class = serializers.StudentDisciplineShortSerializer2
 
     def list(self, request, *args, **kwargs):
         study_plan_id = request.query_params.get('study_plan')
@@ -599,7 +608,8 @@ class StudentAllDisciplineListView(generics.ListAPIView):
                                                many=True)
             item_key = acad_period.repr_name
             item = {
-                item_key: serializer.data
+                'name_period': item_key,
+                'disciplines': serializer.data
             }
             resp.append(item)
 
@@ -628,7 +638,7 @@ class ContactEditView(generics.UpdateAPIView):
 class InterestsEditView(generics.UpdateAPIView):
     """Редактировать интересы"""
     permission_classes = (
-        IsAuthenticated,
+        # IsAuthenticated,
         permissions.ProfilePermission,
     )
     queryset = models.Profile.objects.filter(is_active=True)
@@ -692,6 +702,7 @@ class ChooseControlFormListView(generics.ListAPIView):
     )
 
     def list(self, request, *args, **kwargs):
+
         study_plan_id = request.query_params.get('study_plan')
         acad_period_id = request.query_params.get('acad_period')
         study_year_id = request.query_params.get('study_year')
@@ -883,3 +894,66 @@ class ChooseFormControlView(generics.UpdateAPIView):
     )
     queryset = org_models.DisciplineCredit.objects.filter(is_active=True)
     serializer_class = serializers.ChooseControlFormSerializer
+
+    def update(self, request, *args, **kwargs):
+        data = request.data
+        partial = kwargs.pop('partial', False)
+        try:
+            if request.user.profile.role.is_student:
+                data['status'] = org_models.StudentDisciplineStatus.objects.get(number=2).uid
+            elif request.user.profile.role.is_supervisor:
+                data['status'] = org_models.StudentDisciplineStatus.objects.get(number=5).uid
+                data['teacher'] = request.user.profile.uid
+            instance = self.get_object()
+            serializer = self.get_serializer(instance, data=data, partial=partial)
+            serializer.is_valid(raise_exception=True)
+            self.perform_update(serializer)
+
+            if getattr(instance, '_prefetched_objects_cache', None):
+                # If 'prefetch_related' has been applied to a queryset, we need to
+                # forcibly invalidate the prefetch cache on the instance.
+                instance._prefetched_objects_cache = {}
+
+            return Response(serializer.data)
+        except:
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+
+
+class StudentStatusListView(generics.ListAPIView):
+    """
+    Список статуса студентов для эдвайзера
+    """
+    queryset = models.StudentStatus.objects
+    serializer_class = serializers.StudentStatusListSerializer
+
+    def get_queryset(self):
+        queryset = self.queryset.filter(is_active=True).order_by('name')
+        return queryset
+
+
+class GenderListView(generics.ListAPIView):
+    """
+    Список пола пользователей
+    """
+    queryset = models.Gender.objects
+    serializer_class = serializers.GenderListSerializer
+
+    def get_queryset(self):
+        queryset = self.queryset.filter(is_active=True).order_by('name')
+        return queryset
+
+
+class CitizenshipListView(generics.ListAPIView):
+    """
+    Список национальностей пользователей
+    """
+    queryset = common_models.Citizenship.objects
+    serializer_class = serializers.CitizenshipListSerializer
+
+    def get_queryset(self):
+        queryset = self.queryset.filter(is_active=True).order_by('name')
+        student_pks = org_models.StudyPlan.objects.filter(advisor=self.request.user.profile).values('student')
+        citizenship_pks = models.Profile.objects.filter(pk__in=student_pks).values('citizenship')
+        queryset = queryset.filter(pk__in=citizenship_pks)
+
+        return queryset

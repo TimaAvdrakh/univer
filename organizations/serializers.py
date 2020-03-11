@@ -10,3 +10,13 @@ class DisciplineSerializer(serializers.ModelSerializer):
             'name',
         )
 
+
+class DisciplineSerializer2(serializers.ModelSerializer):
+    class Meta:
+        model = models.Discipline
+        fields = (
+            'uid',
+            'name',
+            'count_credits',
+        )
+

@@ -7,6 +7,7 @@ from django.contrib.auth import password_validation
 from cron_app.models import ResetPasswordUrlSendTask, CredentialsEmailTask, NotifyAdvisorTask
 from common.utils import password_generator
 from organizations import models as org_models
+from organizations import serializers as org_serializers
 from portal.curr_settings import student_discipline_status, student_discipline_info_status, language_multilingual_id, \
     not_choosing_load_types2
 from django.db.models import Q
@@ -17,6 +18,9 @@ from advisors.models import AdvisorCheck
 from validate_email import validate_email
 from datetime import date
 from common import models as common_models
+from django.utils.translation import ugettext as _
+
+
 
 
 class LoginSerializer(serializers.Serializer):
@@ -70,6 +74,13 @@ class AchievementSerializer(serializers.ModelSerializer):
             'content',
         )
 
+    def to_representation(self, instance):
+        data = super().to_representation(instance=instance)
+        if data['achievement_type']:
+            data['achievement_type_name'] = data['achievement_type']['name']
+            data['level_name'] = data['level'].get('name')
+        return data
+
 
 class AchievementFullSerializer(serializers.ModelSerializer):
     achievement_type = common_serializers.AchievementTypeSerializer()
@@ -84,6 +95,13 @@ class AchievementFullSerializer(serializers.ModelSerializer):
             'level',
             'content',
         )
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance=instance)
+        if data['achievement_type']:
+            data['achievement_type_name'] = data['achievement_type']['name']
+            data['level_name'] = data['level'].get('name')
+        return data
 
 
 class ProfileFullSerializer(serializers.ModelSerializer):
@@ -214,10 +232,12 @@ class ProfileFullSerializer(serializers.ModelSerializer):
 
         role = models.Role.objects.filter(profile=instance).first()
         is_employee = False
+
         if role.is_teacher or role.is_supervisor or role.is_org_admin:
             is_employee = True
             teacher = models.Teacher.objects.get(profile=instance)
-            data['employee'] = TeacherSerializer(teacher).data
+            # data['employee'] = TeacherSerializer(teacher).data
+            data.update(TeacherSerializer(teacher).data)
             teacher_positions = models.TeacherPosition.objects.filter(profile=instance,
                                                                       is_active=True)
             data['positions'] = TeacherPositionSerializer(teacher_positions,
@@ -690,7 +710,10 @@ class StudentDisciplineListSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         data = super().to_representation(instance)
-        data['credit'] = instance.credit
+        try:
+            data['credit'] = instance.credit
+        except:
+            pass
 
         sds = org_models.StudentDiscipline.objects.filter(
             student=instance.student,
@@ -700,8 +723,7 @@ class StudentDisciplineListSerializer(serializers.ModelSerializer):
             acad_period=instance.acad_period,
         ).exclude(load_type__load_type2__in=not_choosing_load_types2).order_by('discipline')
 
-        serializer = StudentDisciplineCopySerializer(instance=sds,
-                                                     many=True)
+        serializer = StudentDisciplineCopySerializer(instance=sds, many=True)
         data['load_types'] = serializer.data
         data['hide'] = False
         data['loader'] = False
@@ -1039,7 +1061,7 @@ class GroupDetailSerializer(serializers.ModelSerializer):
         return data
 
 
-class StudentDisciplineShortSerializer(serializers.ModelSerializer):
+class StudentDisciplineShortSerializer2(serializers.ModelSerializer):
     """Используется для получения всех дисциплин студента во всех акад.периодах"""
 
     # acad_period = serializers.CharField(read_only=True)
@@ -1054,6 +1076,28 @@ class StudentDisciplineShortSerializer(serializers.ModelSerializer):
             # 'acad_period',
             'discipline',
             'load_type',
+            'credit_obj',
+            'hours',
+        )
+
+
+class StudentDisciplineShortSerializer(serializers.ModelSerializer):
+    """Используется для получения всех дисциплин студента во всех акад.периодах"""
+
+    # acad_period = serializers.CharField(read_only=True)
+    discipline = serializers.CharField(read_only=True)
+    load_type = serializers.CharField(read_only=True)
+
+    class Meta:
+        model = org_models.StudentDiscipline
+        fields = (
+            'uid',
+            # 'study_plan',
+            # 'acad_period',
+            'discipline',
+            # 'control_form',
+            'credit_obj',
+            'load_type',
             'hours',
         )
 
@@ -1067,10 +1111,14 @@ class NotifyAdviserSerializer(serializers.Serializer):
         queryset=org_models.AcadPeriod.objects.filter(is_active=True),
         required=False,
     )
+    status = serializers.BooleanField(default=False)
 
     def save(self, **kwargs):
         study_plan = self.validated_data.get('study_plan')
         acad_period = self.validated_data.get('acad_period')
+        status = self.validated_data.get('status')
+        self.validated_data.pop('status')
+
 
         if acad_period:
             try:
@@ -1086,10 +1134,11 @@ class NotifyAdviserSerializer(serializers.Serializer):
                     status_id=student_discipline_info_status["not_started"],
                 )
 
-            if str(student_discipline_info.status_id) == student_discipline_info_status['chosen']:
+            if str(student_discipline_info.status_id) == student_discipline_info_status['chosen'] or status:
                 """Все дисциплины выбраны для выбранного академ/периода"""
                 # Создаем задачу для отправки уведомления
-                NotifyAdvisorTask.objects.create(stud_discipline_info=student_discipline_info)
+                if not status:
+                    NotifyAdvisorTask.objects.create(stud_discipline_info=student_discipline_info)
             else:
                 raise CustomException(detail="not_all_chosen")
         else:
@@ -1125,10 +1174,11 @@ class NotifyAdviserSerializer(serializers.Serializer):
                         status_id=student_discipline_info_status["not_started"],
                     )
 
-                if str(student_discipline_info.status_id) == student_discipline_info_status['chosen']:
+                if str(student_discipline_info.status_id) == student_discipline_info_status['chosen'] or status:
                     """Все дисциплины выбраны для выбранного академ/периода"""
                     # Создаем задачу для отправки уведомления
-                    NotifyAdvisorTask.objects.create(stud_discipline_info=student_discipline_info)
+                    if not status:
+                        NotifyAdvisorTask.objects.create(stud_discipline_info=student_discipline_info)
                 else:
                     raise CustomException(detail="not_all_chosen")
 
@@ -1226,6 +1276,11 @@ class ProfileAchievementsEditSerializer(serializers.ModelSerializer):
     def update(self, instance, validated_data):
         achievements = validated_data.get('achievements')
         for achievement in achievements:
+            if achievement['achievement_type'].get('uid'):
+                achievement['achievement_type'] = achievement['achievement_type'].get('uid')
+            if achievement['level'].get('uid'):
+                achievement['level'] = achievement['level'].get('uid')
+
             models.Achievement.objects.get_or_create(
                 profile=instance,
                 level_id=achievement['level'],
@@ -1287,6 +1342,16 @@ class TeacherPositionSerializer(serializers.ModelSerializer):
             'is_main',
         )
 
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+
+        if instance.is_main:
+            data['work'] = _('Основное место работы')
+        else:
+            data['work'] = _('Совместительство')
+
+        return data
+
 
 class TeacherShortSerializer(serializers.ModelSerializer):
     class Meta:
@@ -1328,12 +1393,14 @@ class StudentDisciplineControlFormSerializer(serializers.ModelSerializer):
     """Используется для вывода Дисциплин Студентов для выбора Формы контроля"""
 
     discipline = serializers.CharField(read_only=True)
+    status = StudentDisciplineStatusSerializer()
 
     class Meta:
         model = org_models.StudentDiscipline
         fields = (
             'uid',
             'discipline',
+            'status',
         )
 
     def to_representation(self, instance):
@@ -1349,6 +1416,14 @@ class StudentDisciplineControlFormSerializer(serializers.ModelSerializer):
             )
         except org_models.DisciplineCredit.DoesNotExist:
             raise CustomException(detail='not_found')
+        except org_models.DisciplineCredit.MultipleObjectsReturned:
+            discipline_credit = org_models.DisciplineCredit.objects.filter(
+                study_plan=instance.study_plan,
+                cycle=instance.cycle,
+                discipline=instance.discipline,
+                acad_period=instance.acad_period,
+                student=instance.student,
+            ).first()
 
         control_form_pks = org_models.DisciplineCreditControlForm.objects.filter(
             discipline_credit=discipline_credit,
@@ -1362,6 +1437,11 @@ class StudentDisciplineControlFormSerializer(serializers.ModelSerializer):
                                                           many=True).data
         chosen_control_forms_list = [item['uid'] for item in chosen_control_forms_data]
         data['chosen_control_forms'] = chosen_control_forms_list
+        data['listStatus'] = dict()
+
+        statuses = org_models.StudentDisciplineStatus.objects.filter(is_active=True)
+        for item in statuses:
+            data['listStatus'][item.number] = item.name
 
         data['discipline_credit'] = discipline_credit.uid
         data['hide'] = False
@@ -1378,6 +1458,8 @@ class ChooseControlFormSerializer(serializers.ModelSerializer):
         fields = (
             'uid',
             'chosen_control_forms',
+            'status',
+            'teacher',
         )
 
     def update(self, instance, validated_data):
@@ -1385,3 +1467,59 @@ class ChooseControlFormSerializer(serializers.ModelSerializer):
         instance.chosen_control_forms.set(chosen_control_forms)
 
         return instance
+
+
+class ProfileForAdviserSerializer(serializers.ModelSerializer):
+    """Список студентов для полного списка адвайзеру"""
+    status = serializers.CharField()
+
+
+    class Meta:
+        model = models.Profile
+        fields = (
+            'uid',
+            'first_name',
+            'last_name',
+            'middle_name',
+            'birth_date',
+            'status',
+        )
+
+
+class StudentStatusListSerializer(serializers.ModelSerializer):
+    """
+    Список статуса студента
+    """
+
+    class Meta:
+        model = models.StudentStatus
+        fields = (
+            'uid',
+            'name',
+        )
+
+
+class GenderListSerializer(serializers.ModelSerializer):
+    """
+    Список пола пользователей
+    """
+
+    class Meta:
+        model = models.Gender
+        fields = (
+            'uid',
+            'name',
+        )
+
+
+class CitizenshipListSerializer(serializers.ModelSerializer):
+    """
+    Список национальностей полбзователей
+    """
+
+    class Meta:
+        model = common_models.Citizenship
+        fields = (
+            'uid',
+            'name',
+        )

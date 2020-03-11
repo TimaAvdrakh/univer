@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from organizations import models as org_models
-from portal_users.serializers import ProfileShortSerializer, StudentDisciplineStatusSerializer
+from portal_users.serializers import ProfileShortSerializer, StudentDisciplineStatusSerializer, \
+    ProfileForAdviserSerializer
 from portal.curr_settings import student_discipline_info_status, student_discipline_status, not_choosing_load_types2
 from cron_app.models import AdvisorRejectedBidTask
 from . import models
@@ -157,8 +158,10 @@ class CheckStudentBidsSerializer(serializers.Serializer):
         queryset=org_models.StudyPeriod.objects.filter(is_study_year=True,
                                                        is_active=True)
     )
+    status_check = serializers.BooleanField(default=False)
 
     def save(self, **kwargs):
+        status_check = self.validated_data.pop('status_check')
         study_plan = self.validated_data.get('study_plan')
         acad_periods = self.validated_data.get('acad_periods')
         status = self.validated_data.get('status')
@@ -166,7 +169,7 @@ class CheckStudentBidsSerializer(serializers.Serializer):
         study_year = self.validated_data.get('study_year')
 
         if status == 4:  # Утвержден
-            if not self.all_teacher_chosen(study_plan, acad_periods, study_year):
+            if not self.all_teacher_chosen(study_plan, acad_periods, study_year, status_check):
                 raise CustomException(detail='not_all_chosen',
                                       status_code=200)
 
@@ -212,10 +215,12 @@ class CheckStudentBidsSerializer(serializers.Serializer):
                 comment=comment,
             )
 
-    def all_teacher_chosen(self, study_plan, acad_periods, study_year):
+    def all_teacher_chosen(self, study_plan, acad_periods, study_year, status_check):
         """Проверим выбраны ли все преподы в указанных акад периодах"""
-        invalid_statuses = [student_discipline_status['not_chosen'],
-                            student_discipline_status['rejected']]
+        if not status_check:
+            invalid_statuses = [student_discipline_status['not_chosen'], student_discipline_status['rejected']]
+        else:
+            invalid_statuses = [student_discipline_status['not_chosen']]
 
         return not org_models.StudentDiscipline.objects.filter(
             study_plan=study_plan,
@@ -329,11 +334,14 @@ class StudentDisciplineSerializer(serializers.ModelSerializer):
         fields = (
             'uid',
             'discipline',
+            'discipline_id',
             'load_type',
             'hours',
             'language',
             'teacher',
             'student_count',
+            'load_type_id',
+            'language_id',
         )
 
 
@@ -396,3 +404,84 @@ class DeactivateDisciplineSerializer(serializers.ModelSerializer):
         ).update(is_active=False)
 
         return instance
+
+
+class ActivateDisciplineSerializer(serializers.ModelSerializer):
+    """
+    Деактивирует дисциплины студента
+    """
+    class Meta:
+        model = org_models.StudentDiscipline
+        fields = (
+            'uid',
+        )
+
+    def update(self, instance, validated_data):
+        org_models.StudentDiscipline.objects.filter(
+            student=instance.student,
+            discipline=instance.discipline,
+            acad_period=instance.acad_period
+        ).update(is_active=True)
+
+        return instance
+
+
+class StudentProfilesListSerializer(serializers.ModelSerializer):
+    """
+    Страница список всех студентов эдвайзера
+    """
+    student = ProfileForAdviserSerializer()
+
+    class Meta:
+        model = org_models.StudyPlan
+        fields = (
+            'student',
+        )
+
+
+class StudentsByDisciplineIDSerializer(serializers.ModelSerializer):
+    """
+    Список студентов по uid дисциплины
+    """
+    student = ProfileShortSerializer()
+
+    class Meta:
+        model = org_models.StudentDiscipline
+        fields = (
+            'student',
+        )
+
+
+class EntryYearSerializer(serializers.ModelSerializer):
+    """
+    Список вступительных лет эдвайзером
+    """
+    entry_date = serializers.DateField(format='%Y')
+
+    class Meta:
+        model = org_models.StudyPlan
+        fields = (
+            'entry_date',
+        )
+
+
+class PrepartionLevelListSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = org_models.PreparationLevel
+        fields = (
+            'uid',
+            'name',
+        )
+
+
+class StudentsByDisciplineIDSerializer(serializers.ModelSerializer):
+    """
+    Список студентов по uid дисциплины
+    """
+    student = ProfileShortSerializer()
+
+    class Meta:
+        model = org_models.StudentDiscipline
+        fields = (
+            'student',
+        )
