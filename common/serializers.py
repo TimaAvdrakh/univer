@@ -141,3 +141,27 @@ class StudentDisciplineStatusSerializer(serializers.ModelSerializer):
             'name',
             'uid',
         )
+
+
+class NationalitySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.Nationality
+        fields = '__all__'
+
+
+class CitizenshipSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.Citizenship
+        fields = '__all__'
+
+
+class DocumentTypeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.DocumentType
+        fields = '__all__'
+
+
+class GovernmentAgencySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.GovernmentAgency
+        fields = '__all__'

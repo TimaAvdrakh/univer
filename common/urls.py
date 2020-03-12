@@ -1,4 +1,5 @@
 from django.urls import path
+from rest_framework.routers import DefaultRouter
 from . import views
 
 app_name = 'common'
@@ -29,3 +30,9 @@ urlpatterns = [
 ]
 
 #1234544
+router = DefaultRouter()
+router.register(r'nationalities', views.NationalityViewSet)
+router.register(r'citizenship', views.CitizenshipViewSet)
+router.register(r'doc-types', views.DocumentTypeViewSet)
+router.register(r'gov-agencies', views.GovernmentAgencySerializer)
+urlpatterns += router.urls

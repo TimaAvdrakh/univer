@@ -1,9 +1,14 @@
+import datetime as dt
 from django_cron import CronJobBase, Schedule
 from . import models
 import requests
-from portal.curr_settings import PASSWORD_RESET_ENDPOINT, student_discipline_status \
-    , component_by_choose_uid, CONTENT_TYPES, SEND_STUD_DISC_1C_URL, BOT_DEV_CHAT_IDS
-from django.utils import timezone
+from portal.curr_settings import (
+    student_discipline_status,
+    component_by_choose_uid,
+    CONTENT_TYPES,
+    SEND_STUD_DISC_1C_URL,
+    BOT_DEV_CHAT_IDS
+)
 from django.core.mail import send_mail
 from django.template.loader import render_to_string
 from portal.curr_settings import current_site
@@ -14,10 +19,10 @@ from datetime import datetime, timedelta
 from integration.models import DocumentChangeLog
 from requests.auth import HTTPBasicAuth
 from bot import bot
-import json
 from reports import views as report_views
 from advisors import views as advisor_views
 from common import models as common_models
+from applicant.models import Applicant
 
 
 class EmailCronJob(CronJobBase):
@@ -461,3 +466,14 @@ class NotifyStudentToRegisterJob(CronJobBase):
         ).values('study_year')
 
         # org_models.StudentDiscipline.objects.filter(study)
+
+
+class ApplicantVerificationJob(CronJobBase):
+    """Работает раз в день. Проверяет """
+    RUN_DAILY = 24 * 60
+    schedule = Schedule(run_every_mins=RUN_DAILY)
+    code = 'cron_app.applicant_verification_job'
+
+    def do(self):
+        time = dt.date.today() + dt.timedelta(days=1)
+        Applicant.objects.filter(created__gte=time, user__is_active=False).delete()

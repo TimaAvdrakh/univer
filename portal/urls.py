@@ -14,9 +14,11 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-from django.urls import path, include
+from django.urls import path, include, re_path
 from rest_framework_swagger.views import get_swagger_view
+from applicant.viewsets import activate
 from django.conf.urls.i18n import i18n_patterns
+
 
 schema_view = get_swagger_view(title='Univer API')
 
@@ -31,10 +33,19 @@ urlpatterns = [
     path('api/v1/schedules/', include('schedules.urls', namespace='schedules')),
     path('api/v1/c1/', include('c1.urls', namespace='c1')),
     path('api/v1/admin/', include('univer_admin.urls', namespace='univer_admin')),
-
     path('api/v1/stud_jour/', include('student_journal.urls', namespace='student_journal')),
     path('api/v1/integration/', include('integration.urls', namespace='integration')),
-    path('api/v1/abiturient/', include('abiturient.urls', namespace='abiturient')),
+    path('api/v1/applicant/', include('applicant.urls', namespace='applicant')),
+    path('api/v1/organizations/', include('organizations.urls', namespace='organizations')),
+
+]
+
+urlpatterns += [
+    re_path(
+        "activate/(?P<uidb64>[0-9A-Za-z_\-]+)/(?P<token>[0-9A-Za-z]{1,13}-[0-9A-Za-z]{1,20})/",
+        activate,
+        name='activate'
+    )
 ]
 
 # urlpatterns += i18n_patterns(
