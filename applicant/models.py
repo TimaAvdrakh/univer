@@ -547,7 +547,7 @@ class ApplicationStatus(BaseCatalog):
 
 # Анкета поступающего
 class Questionnaire(BaseModel):
-    applicant = models.ForeignKey(
+    applicant = models.OneToOneField(
         User,
         blank=True,
         on_delete=models.DO_NOTHING,
@@ -616,6 +616,10 @@ class Questionnaire(BaseModel):
         on_delete=models.DO_NOTHING,
         verbose_name=_("Identity document"),
     )
+    iin = models.CharField(
+        max_length=12,
+        null=True
+    )
     id_doc_scan = models.ForeignKey(
         DocScan,
         on_delete=models.DO_NOTHING,
@@ -632,19 +636,19 @@ class Questionnaire(BaseModel):
         max_length=100,
         verbose_name=_("Email")
     )
-    address_of_registration = models.ForeignKey(
+    address_of_registration = models.OneToOneField(
         Address,
         on_delete=models.DO_NOTHING,
         verbose_name=_("Address of registration"),
         related_name="registration_addresses",
     )
-    address_of_residence = models.ForeignKey(
+    address_of_residence = models.OneToOneField(
         Address,
         on_delete=models.DO_NOTHING,
         verbose_name=_("Address of residence"),
         related_name="residence_addresses",
     )
-    address_of_temp_reg = models.ForeignKey(
+    address_of_temp_reg = models.OneToOneField(
         Address,
         on_delete=models.DO_NOTHING,
         verbose_name=_("Temporary registration address"),
@@ -652,7 +656,7 @@ class Questionnaire(BaseModel):
         null=True,
         related_name="temporary_addresses",
     )
-    family = models.ForeignKey(
+    family = models.OneToOneField(
         Family,
         on_delete=models.DO_NOTHING,
         verbose_name=_("Family"),
@@ -662,6 +666,17 @@ class Questionnaire(BaseModel):
     class Meta:
         verbose_name = _("Questionnaire")
         verbose_name_plural = _("Questionnaires")
+
+
+class UserPrivilegeList(BaseModel):
+    need_dormitory = models.BooleanField(
+        default=False, verbose_name=_("Need dormitory to live")
+    )
+    questionnaire = models.OneToOneField(
+        Questionnaire,
+        on_delete=models.DO_NOTHING,
+        verbose_name=_("Questionnaire"),
+    )
 
 
 # Льготы пользователей
@@ -707,14 +722,13 @@ class Privilege(BaseModel):
         null=True,
         verbose_name=_("Document return method"),
     )
-    need_dormitory = models.BooleanField(
-        default=False, verbose_name=_("Need dormitory to live")
-    )
-    questionnaire = models.ForeignKey(
-        Questionnaire,
+    list = models.ForeignKey(
+        UserPrivilegeList,
+        blank=True,
+        null=True,
         on_delete=models.DO_NOTHING,
-        related_name="questionnaires",
-        verbose_name=_("Questionnaire link"),
+        verbose_name=_("User privilege"),
+        related_name='privileges'
     )
 
     class Meta:

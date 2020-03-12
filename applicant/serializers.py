@@ -27,6 +27,14 @@ class PrivilegeSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
+class UserPrivilegeListSerializer(serializers.ModelSerializer):
+    privileges = PrivilegeSerializer(many=True, required=True)
+
+    class Meta:
+        model = UserPrivilegeList
+        fields = "__all__"
+
+
 class DocumentReturnMethodSerializer(serializers.ModelSerializer):
     class Meta:
         model = DocumentReturnMethod
