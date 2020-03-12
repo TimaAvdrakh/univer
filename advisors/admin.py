@@ -10,3 +10,18 @@ class AdvisorCheckAdmin(admin.ModelAdmin):
         'status',
         'acad_period',
     )
+
+
+@admin.register(models.ThemesOfTheses)
+class InterestAdmin(admin.ModelAdmin):
+    autocomplete_fields = (
+        'supervisors',
+        'student',
+        'acad_period',
+        'study_plan'
+    )
+    search_fields = (
+        'uid',
+        'profile__first_name',
+        'profile__last_name',
+    )
