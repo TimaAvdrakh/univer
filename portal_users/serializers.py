@@ -1459,7 +1459,7 @@ class ChooseControlFormSerializer(serializers.ModelSerializer):
             'uid',
             'chosen_control_forms',
             'status',
-            'teacher',
+            # 'teacher',
         )
 
     def to_representation(self, instance):
