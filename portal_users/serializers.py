@@ -1462,6 +1462,12 @@ class ChooseControlFormSerializer(serializers.ModelSerializer):
             'teacher',
         )
 
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        status = org_models.StudentDisciplineStatus(uid=data['status'])
+        data['status'] = {'uid': status.uid, 'number': status.number, 'name': status.name}
+        return data
+
     def update(self, instance, validated_data):
         chosen_control_forms = validated_data.get('chosen_control_forms')
         instance.chosen_control_forms.set(chosen_control_forms)
