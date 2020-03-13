@@ -241,7 +241,27 @@ class EvaluateSerializer(serializers.Serializer):
         reason = self.validated_data.get('reason')
 
         try:
-            if missed and not mark:
+
+            sp = models.StudentPerformance.objects.get(
+                lesson=lesson,
+                student=student,
+                is_active=True,
+            )
+
+            old_mark = sp.mark
+            if mark:
+                sp.mark = mark
+                sp.save()
+
+                if old_mark is not None and mark != old_mark:
+                    """Создаем задачу для уведомления админов об изменени оценки"""
+                    StudPerformanceChangedTask.objects.create(
+                        author=request.user.profile,
+                        stud_perf=sp,
+                        old_mark=old_mark,
+                        new_mark=mark,
+                    )
+            else:
                 if missed:
                     """Пропустил урок"""
                     sp = models.StudentPerformance.objects.create(
@@ -257,27 +277,6 @@ class EvaluateSerializer(serializers.Serializer):
                         mark=mark,
                         # missed=False,
                     )
-
-            else:
-                sp = models.StudentPerformance.objects.get(
-                    lesson=lesson,
-                    student=student,
-                    is_active=True,
-                )
-
-                old_mark = sp.mark
-                if mark:
-                    sp.mark = mark
-                    sp.save()
-
-                    if old_mark is not None and mark != old_mark:
-                        """Создаем задачу для уведомления админов об изменени оценки"""
-                        StudPerformanceChangedTask.objects.create(
-                            author=request.user.profile,
-                            stud_perf=sp,
-                            old_mark=old_mark,
-                            new_mark=mark,
-                        )
 
         except models.StudentPerformance.DoesNotExist:
             if missed:
