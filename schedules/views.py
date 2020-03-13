@@ -797,8 +797,7 @@ class EvaluateView(generics.CreateAPIView):
         lesson_id = request.data.get('lesson')
         lesson = models.Lesson.objects.get(pk=lesson_id)
 
-        self.check_object_permissions(request,
-                                      lesson)
+        self.check_object_permissions(request, lesson)
 
         serializer = self.serializer_class(data=request.data,
                                            context={'request': request})
