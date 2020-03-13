@@ -241,7 +241,7 @@ class EvaluateSerializer(serializers.Serializer):
         reason = self.validated_data.get('reason')
 
         try:
-            if not mark and missed:
+            if missed and not mark:
                 if missed:
                     """Пропустил урок"""
                     sp = models.StudentPerformance.objects.create(
