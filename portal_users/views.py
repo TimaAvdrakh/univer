@@ -896,13 +896,17 @@ class ChooseFormControlView(generics.UpdateAPIView):
     def update(self, request, *args, **kwargs):
         data = request.data
         partial = kwargs.pop('partial', False)
+        instance = self.get_object()
         try:
             if request.user.profile.role.is_student:
                 data['status'] = org_models.StudentDisciplineStatus.objects.get(number=2).uid
+                instance.status_id = data['status']
             elif request.user.profile.role.is_supervisor:
                 data['status'] = org_models.StudentDisciplineStatus.objects.get(number=5).uid
+                instance.status_id = data['status']
                 data['teacher'] = request.user.profile.uid
-            instance = self.get_object()
+                instance.teacher_id = data['teacher']
+            instance.save()
             serializer = self.get_serializer(instance, data=data, partial=partial)
             serializer.is_valid(raise_exception=True)
             self.perform_update(serializer)
