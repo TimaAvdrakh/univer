@@ -899,10 +899,12 @@ class ChooseFormControlView(generics.UpdateAPIView):
         instance = self.get_object()
         try:
             if request.user.profile.role.is_student:
-                data['status'] = org_models.StudentDisciplineStatus.objects.get(number=2).uid
+                status_s = org_models.StudentDisciplineStatus.objects.get(number=2)
+                data['status'] = status_s.uid
                 instance.status_id = data['status']
             elif request.user.profile.role.is_supervisor:
-                data['status'] = org_models.StudentDisciplineStatus.objects.get(number=5).uid
+                status_s = org_models.StudentDisciplineStatus.objects.get(number=5)
+                data['status'] = status_s.uid
                 instance.status_id = data['status']
                 data['teacher'] = request.user.profile.uid
                 instance.teacher_id = data['teacher']
