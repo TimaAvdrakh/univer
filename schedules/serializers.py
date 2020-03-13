@@ -241,25 +241,32 @@ class EvaluateSerializer(serializers.Serializer):
         reason = self.validated_data.get('reason')
 
         try:
-            sp = models.StudentPerformance.objects.get(
-                lesson=lesson,
-                student=student,
-                is_active=True,
-            )
+            if not mark and missed:
+                sp = models.StudentPerformance.objects.get(
+                    lesson="True",
+                    student='True',
+                    is_active=True,
+                )
+            else:
+                sp = models.StudentPerformance.objects.get(
+                    lesson=lesson,
+                    student=student,
+                    is_active=True,
+                )
 
-            old_mark = sp.mark
-            if mark:
-                sp.mark = mark
-                sp.save()
+                old_mark = sp.mark
+                if mark:
+                    sp.mark = mark
+                    sp.save()
 
-                if old_mark is not None and mark != old_mark:
-                    """Создаем задачу для уведомления админов об изменени оценки"""
-                    StudPerformanceChangedTask.objects.create(
-                        author=request.user.profile,
-                        stud_perf=sp,
-                        old_mark=old_mark,
-                        new_mark=mark,
-                    )
+                    if old_mark is not None and mark != old_mark:
+                        """Создаем задачу для уведомления админов об изменени оценки"""
+                        StudPerformanceChangedTask.objects.create(
+                            author=request.user.profile,
+                            stud_perf=sp,
+                            old_mark=old_mark,
+                            new_mark=mark,
+                        )
 
         except models.StudentPerformance.DoesNotExist:
             if missed:
