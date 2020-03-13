@@ -242,11 +242,22 @@ class EvaluateSerializer(serializers.Serializer):
 
         try:
             if not mark and missed:
-                sp = models.StudentPerformance.objects.get(
-                    lesson="True",
-                    student='True',
-                    is_active=True,
-                )
+                if missed:
+                    """Пропустил урок"""
+                    sp = models.StudentPerformance.objects.create(
+                        student=student,
+                        lesson=lesson,
+                        missed=True,
+                        reason=reason,
+                    )
+                else:
+                    sp = models.StudentPerformance.objects.create(
+                        lesson=lesson,
+                        student=student,
+                        mark=mark,
+                        # missed=False,
+                    )
+
             else:
                 sp = models.StudentPerformance.objects.get(
                     lesson=lesson,
