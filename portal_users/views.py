@@ -911,6 +911,8 @@ class ChooseFormControlView(generics.UpdateAPIView):
             if serializer.is_valid(raise_exception=True)
                 self.perform_update(serializer)
                 return Response(serializer.data)
+            else:
+                return Response(serializer.error_messages, status=status.HTTP_400_BAD_REQUEST)
         except:
             return Response(status=status.HTTP_400_BAD_REQUEST)
 
