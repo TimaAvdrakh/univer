@@ -908,7 +908,7 @@ class ChooseFormControlView(generics.UpdateAPIView):
                 instance.teacher_id = data['teacher']
             instance.save()
             serializer = self.get_serializer(instance, data=data, partial=partial)
-            if serializer.is_valid(raise_exception=True)
+            if serializer.is_valid(raise_exception=True):
                 self.perform_update(serializer)
                 return Response(serializer.data)
             else:
