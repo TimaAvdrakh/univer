@@ -1425,7 +1425,11 @@ class StudentDisciplineControlFormSerializer(serializers.ModelSerializer):
                 acad_period=instance.acad_period,
                 student=instance.student,
             ).first()
-            data['status_d'] = StudentDisciplineStatusSerializer(discipline_credit.status).data
+            if discipline_credit.status:
+                data['status_d'] = StudentDisciplineStatusSerializer(discipline_credit.status).data
+            else:
+                data['status_d'] = StudentDisciplineStatusSerializer(
+                    org_models.StudentDisciplineStatus.objects.get(number=1))
 
         control_form_pks = org_models.DisciplineCreditControlForm.objects.filter(
             discipline_credit=discipline_credit,
