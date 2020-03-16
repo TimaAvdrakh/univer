@@ -1431,7 +1431,7 @@ class StudentDisciplineControlFormSerializer(serializers.ModelSerializer):
 
         if not data['status_d']:
             data['status_d'] = StudentDisciplineStatusSerializer(
-                org_models.StudentDisciplineStatus.objects.get(number=1))
+                org_models.StudentDisciplineStatus.objects.get(number=1)).data
         control_form_pks = org_models.DisciplineCreditControlForm.objects.filter(
             discipline_credit=discipline_credit,
         ).values('control_form')
