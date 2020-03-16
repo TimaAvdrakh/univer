@@ -897,7 +897,7 @@ class ChooseFormControlView(generics.UpdateAPIView):
         data = request.data
         partial = kwargs.pop('partial', False)
         instance = self.get_object()
-        if data.get('chosen_control_forms'):
+        if len(data.get('chosen_control_forms')) == 0:
             try:
                 if request.user.profile.role.is_student:
                     status_s = org_models.StudentDisciplineStatus.objects.get(number=2)
