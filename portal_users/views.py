@@ -897,28 +897,29 @@ class ChooseFormControlView(generics.UpdateAPIView):
         data = request.data
         partial = kwargs.pop('partial', False)
         instance = self.get_object()
-        if data.get('chosen_control_forms'):
-            try:
-                if request.user.profile.role.is_student:
-                    status_s = org_models.StudentDisciplineStatus.objects.get(number=2)
-                    data['status'] = status_s.uid
-                    instance.status_id = status_s.uid
-                elif request.user.profile.role.is_supervisor:
-                    status_s = org_models.StudentDisciplineStatus.objects.get(number=5)
-                    data['status'] = status_s.uid
-                    instance.status_id = data['status']
-                    # data['teacher'] = request.user.profile.uid
-                    # instance.teacher = request.user.profile
-                instance.save()
-                serializer = self.get_serializer(instance, data=data, partial=partial)
-                if serializer.is_valid(raise_exception=True):
-                    self.perform_update(serializer)
-                    return Response(serializer.data)
-                else:
-                    return Response(serializer.error_messages, status=status.HTTP_400_BAD_REQUEST)
-            except:
-                return Response(status=status.HTTP_400_BAD_REQUEST)
-        else:
-            return Response({'status': 1}, status=status.HTTP_200_OK)
+
+        try:
+            if request.user.profile.role.is_student:
+                status_s = org_models.StudentDisciplineStatus.objects.get(number=2)
+                if data.get('chosen_control_forms'):
+                    status_s = org_models.StudentDisciplineStatus.objects.get(number=1)
+                data['status'] = status_s.uid
+                instance.status_id = status_s.uid
+            elif request.user.profile.role.is_supervisor:
+                status_s = org_models.StudentDisciplineStatus.objects.get(number=5)
+                data['status'] = status_s.uid
+                instance.status_id = data['status']
+                # data['teacher'] = request.user.profile.uid
+                # instance.teacher = request.user.profile
+            instance.save()
+            serializer = self.get_serializer(instance, data=data, partial=partial)
+            if serializer.is_valid(raise_exception=True):
+                self.perform_update(serializer)
+                return Response(serializer.data)
+            else:
+                return Response(serializer.error_messages, status=status.HTTP_400_BAD_REQUEST)
+        except:
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+
 
 
