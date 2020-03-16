@@ -1414,6 +1414,7 @@ class StudentDisciplineControlFormSerializer(serializers.ModelSerializer):
                 acad_period=instance.acad_period,
                 student=instance.student,
             )
+            data['status_d'] = StudentDisciplineStatusSerializer(discipline_credit.status).data
         except org_models.DisciplineCredit.DoesNotExist:
             raise CustomException(detail='not_found')
         except org_models.DisciplineCredit.MultipleObjectsReturned:
@@ -1424,6 +1425,7 @@ class StudentDisciplineControlFormSerializer(serializers.ModelSerializer):
                 acad_period=instance.acad_period,
                 student=instance.student,
             ).first()
+            data['status_d'] = StudentDisciplineStatusSerializer(discipline_credit.status).data
 
         control_form_pks = org_models.DisciplineCreditControlForm.objects.filter(
             discipline_credit=discipline_credit,
