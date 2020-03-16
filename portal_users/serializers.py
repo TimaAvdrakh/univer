@@ -1405,7 +1405,7 @@ class StudentDisciplineControlFormSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         data = super().to_representation(instance)
-
+        status = None
         try:
             discipline_credit = org_models.DisciplineCredit.objects.get(
                 study_plan=instance.study_plan,
@@ -1414,7 +1414,8 @@ class StudentDisciplineControlFormSerializer(serializers.ModelSerializer):
                 acad_period=instance.acad_period,
                 student=instance.student,
             )
-            status = discipline_credit.status
+            if discipline_credit.status:
+                status = discipline_credit.status
 
         except org_models.DisciplineCredit.DoesNotExist:
             raise CustomException(detail='not_found')
@@ -1426,7 +1427,8 @@ class StudentDisciplineControlFormSerializer(serializers.ModelSerializer):
                 acad_period=instance.acad_period,
                 student=instance.student,
             ).first()
-            status = discipline_credit.status
+            if discipline_credit.status:
+                status = discipline_credit.status
 
         if status:
             data['status_d'] = StudentDisciplineStatusSerializer(status).data
