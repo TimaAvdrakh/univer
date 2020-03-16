@@ -51,7 +51,9 @@ class ThemesOfTheses(BaseCatalog):
         null=True,
         on_delete=models.SET_NULL,
         related_name='student_themes_theses',
-        verbose_name='Обучающийся')
+        verbose_name='Обучающийся',
+        blank=True
+    )
     supervisors = models.ManyToManyField(
         user_models.Profile,
         related_name='supervisors_themes_theses',
