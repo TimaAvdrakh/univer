@@ -22,6 +22,7 @@ from django.shortcuts import HttpResponse
 from uuid import uuid4
 from portal_users.utils import get_current_study_year
 from openpyxl.styles import Border, Side, Font, Alignment
+from rest_framework.views import APIView
 from django.db import connection
 from portal.curr_settings import current_site
 from cron_app.models import ExcelTask
@@ -2207,3 +2208,24 @@ class StudentsByDisplinesIDListView(generics.ListAPIView):
         if page is not None:
             serializer = self.serializer_class(page, many=True)
             return self.get_paginated_response(serializer.data)
+
+
+class ThesisTopic(APIView):
+
+    def get(self, request, format=None):
+        if request.GET.get('get_status'):
+            result = {'status': False}
+            disciplinecredits = org_models.DisciplineCredit.objects.filter(
+                student=request.user.profile, chosen_control_forms__is_diploma=True).count()
+            if disciplinecredits > 0:
+                result['status'] = True
+            return Response(result, status=status.HTTP_200_OK)
+
+        return Response({'ok': True})
+
+    # def post(self, request, format=None):
+    #     serializer = SnippetSerializer(data=request.data)
+    #     if serializer.is_valid():
+    #         serializer.save()
+    #         return Response(serializer.data, status=status.HTTP_201_CREATED)
+    #     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

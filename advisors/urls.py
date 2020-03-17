@@ -59,4 +59,7 @@ urlpatterns = [
     path('students/all/', views.StudentProfilesList.as_view(),
          name='student_profiles'),
 
+    # Дипломная работа
+    path('thesis_topic/', views.ThesisTopic.as_view(), name='thesis_topic')
+
 ]
