@@ -2222,7 +2222,7 @@ class ThesisTopic(APIView):
              ).values_list('uuid1c', flat=True)
             if len(disciplinecredits) > 0:
                 result['themes'] = serializers.ThemesOfThesesSerializer(
-                    models.ThemesOfTheses.objects.filter(uid_1c__in=disciplinecredits, student__isnull=True),
+                    models.ThemesOfTheses.objects.filter(uid_1c__in=disciplinecredits),
                     many=True
                 ).data
                 result['status'] = True
