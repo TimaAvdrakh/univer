@@ -66,7 +66,7 @@ class ThemesOfTheses(BaseCatalog):
         blank=True)
 
     def __str__(self):
-        return '{} - {} - {}'.format(self.student, self.study_plan, self.acad_period)
+        return '{} - {}'.format(self.student, self.acad_period)
 
     class Meta:
         verbose_name = 'Тема дипломной работы'
