@@ -2213,22 +2213,22 @@ class StudentsByDisplinesIDListView(generics.ListAPIView):
 class ThesisTopic(APIView):
 
     def get(self, request, format=None):
-        if request.GET.get('get_status'):
-            result = {'status': False}
-            disciplinecredits = org_models.DisciplineCredit.objects.filter(
-                chosen_control_forms__is_diploma=True,
-                student=request.user.profile,
-                is_active=True
-             ).values_list('uuid1c', flat=True)
-            if len(disciplinecredits) > 0:
-                result['themes'] = serializers.ThemesOfThesesSerializer(
-                    models.ThemesOfTheses.objects.filter(uid_1c__in=disciplinecredits, student__isnull=True),
-                    many=True
-                ).data
-                result['status'] = True
-            return Response(result, status=status.HTTP_200_OK)
+        # if request.GET.get('get_status'):
+        result = {'status': False}
+        disciplinecredits = org_models.DisciplineCredit.objects.filter(
+            chosen_control_forms__is_diploma=True,
+            student=request.user.profile,
+            is_active=True
+         ).values_list('uuid1c', flat=True)
+        if len(disciplinecredits) > 0:
+            result['themes'] = serializers.ThemesOfThesesSerializer(
+                models.ThemesOfTheses.objects.filter(uid_1c__in=disciplinecredits, student__isnull=True),
+                many=True
+            ).data
+            result['status'] = True
+        return Response(result, status=status.HTTP_200_OK)
 
-        return Response(status=status.HTTP_400_BAD_REQUEST)
+        # return Response(status=status.HTTP_400_BAD_REQUEST)
 
     # def post(self, request, format=None):
     #     serializer = SnippetSerializer(data=request.data)
