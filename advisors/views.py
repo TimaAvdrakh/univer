@@ -2224,7 +2224,8 @@ class ThesisTopic(APIView):
                 result['status'] = True
             return Response(result, status=status.HTTP_200_OK)
 
-        return Response({'ok': True})
+
+        return Response(status=status.HTTP_400_BAD_REQUEST)
 
     # def post(self, request, format=None):
     #     serializer = SnippetSerializer(data=request.data)

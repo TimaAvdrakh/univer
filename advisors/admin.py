@@ -13,12 +13,11 @@ class AdvisorCheckAdmin(admin.ModelAdmin):
 
 
 @admin.register(models.ThemesOfTheses)
-class InterestAdmin(admin.ModelAdmin):
+class ThemesOfThesesAdmin(admin.ModelAdmin):
     autocomplete_fields = (
         'supervisors',
         'student',
         'acad_period',
-        'study_plan'
     )
     search_fields = (
         'uid',

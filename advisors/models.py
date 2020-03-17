@@ -38,10 +38,11 @@ class AdvisorCheck(BaseIdModel):
 
 
 class ThemesOfTheses(BaseCatalog):
-    study_plan = models.ForeignKey(
-        org_models.StudyPlan,
-        on_delete=models.CASCADE,
-        verbose_name='Учебный план')
+    uid_1c = models.CharField(
+        max_length=100,
+        null=True,
+        verbose_name='uid 1C',
+    )
     acad_period = models.ForeignKey(
         'organizations.AcadPeriod',
         on_delete=models.CASCADE,
