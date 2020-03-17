@@ -2227,8 +2227,11 @@ class ThesisTopic(APIView):
                 student=request.user.profile,
                 is_active=True
             ).values_list('uuid1c', flat=True)
+            result['disciplinecredits'] = disciplinecredits
             result['themes'] = serializers.ThemesOfThesesSerializer(
-                models.ThemesOfTheses.objects.filter(uid_1c__in=disciplinecredits, student__isnull=True),
+                models.ThemesOfTheses.objects.filter(
+                    uid_1c__in=disciplinecredits,
+                    student__isnull=True),
                 many=True
             ).data
             return Response(result, status=status.HTTP_200_OK)
