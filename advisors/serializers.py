@@ -450,3 +450,9 @@ class StudentsByDisciplineIDSerializer(serializers.ModelSerializer):
         fields = (
             'student',
         )
+
+
+class ThemesOfThesesSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.ThemesOfTheses
+        fields = '__all__'
