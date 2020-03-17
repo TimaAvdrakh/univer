@@ -2216,7 +2216,10 @@ class ThesisTopic(APIView):
         if request.GET.get('get_status'):
             result = {'status': False}
             disciplinecredits = org_models.DisciplineCredit.objects.filter(
-                student=request.user.profile, chosen_control_forms__is_diploma=True).count()
+                chosen_control_forms__is_diploma=True,
+                student=request.user.profile,
+                is_active=True
+             ).count()
             if disciplinecredits > 0:
                 result['status'] = True
             return Response(result, status=status.HTTP_200_OK)
