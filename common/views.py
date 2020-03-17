@@ -270,7 +270,7 @@ class DocumentTypeViewSet(ModelViewSet):
     permission_classes = (permissions.AllowAny,)
 
 
-class GovernmentAgencySerializer(ModelViewSet):
+class GovernmentAgencyViewSet(ModelViewSet):
     queryset = models.GovernmentAgency.objects.all()
     serializer_class = serializers.GovernmentAgencySerializer
     permission_classes = (permissions.AllowAny,)

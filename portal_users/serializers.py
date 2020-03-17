@@ -25,8 +25,6 @@ from common import models as common_models
 from django.utils.translation import ugettext as _
 
 
-
-
 class LoginSerializer(serializers.Serializer):
     username = serializers.CharField(required=True,)
     password = serializers.CharField(required=True,)
@@ -42,6 +40,7 @@ class RoleSerializer(serializers.ModelSerializer):
             "is_org_admin",
             "is_supervisor",
             "is_selection_committer",
+            "is_applicant"
         )
 
 

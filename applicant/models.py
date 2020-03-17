@@ -4,7 +4,7 @@ from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
 from django.template import Context
 from django.template.loader import get_template
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import ugettext as _
 from common.models import (
     BaseModel,
     BaseCatalog,
@@ -27,6 +27,34 @@ from organizations.models import (
 )
 from organizations.models import DocumentType
 
+
+__all__ = [
+    'PrivilegeType',
+    'DocumentReturnMethod',
+    'FamilyMembership',
+    'AddressType',
+    'BudgetLevel',
+    'AddressClassifier',
+    'Address',
+    'Family',
+    'FamilyMember',
+    'AdmissionCampaignType',
+    'AdmissionCampaign',
+    'Applicant',
+    'DocScan',
+    'ApplicationStatus',
+    'Questionnaire',
+    'UserPrivilegeList',
+    'AdmissionApplication',
+    'CampaignStage',
+    'RecruitmentPlan',
+    'Privilege',
+    'APPROVED',
+    'REJECTED',
+    'WAITING_VERIFY',
+    'ALL',
+    'NO_STATEMENT',
+]
 
 APPROVED = "APPROVED"
 REJECTED = "REJECTED"
@@ -342,7 +370,8 @@ class AdmissionCampaign(BaseCatalog):
     end_date = models.DateField(_("Admission campaign ending date"))
 
     def __str__(self):
-        return f"{self.campaign_type.name} - {self.prep_level.shifr}"
+        print("STR")
+        return f"{self.uid}"
 
     class Meta:
         verbose_name = _("Admission campaign")
@@ -625,6 +654,11 @@ class Questionnaire(BaseModel):
         on_delete=models.DO_NOTHING,
         verbose_name=_("Identification document"),
         related_name="application_id_doc",
+    )
+    iin = models.PositiveSmallIntegerField(
+        max_length=100,
+        verbose_name=_("IIN"),
+        null=True,
     )
     phone = models.ForeignKey(
         ProfilePhone,

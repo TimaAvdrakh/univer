@@ -1,4 +1,5 @@
 from django.core.mail import EmailMessage
+from django.contrib.auth.models import User
 from django.contrib.auth.hashers import make_password
 from django.contrib.sites.shortcuts import get_current_site
 from django.db.models import Max
@@ -7,12 +8,35 @@ from django.utils.http import urlsafe_base64_encode
 from django.utils.encoding import force_bytes
 from rest_framework import serializers
 from rest_framework.validators import ValidationError
-from common.models import IdentityDocument, GovernmentAgency
+from common.models import IdentityDocument, GovernmentAgency, DocumentType
 from common.serializers import IdentityDocumentSerializer
 from portal_users.serializers import ProfilePhoneSerializer
-from portal_users.models import Profile, Role
+from portal_users.models import Profile, Role, ProfilePhone
 from .models import *
 from .token import token_generator
+
+
+__all__ = [
+    'PrivilegeTypeSerializer',
+    'PrivilegeSerializer',
+    'UserPrivilegeListSerializer',
+    'DocumentReturnMethodSerializer',
+    'FamilyMemberSerializer',
+    'FamilyMembershipSerializer',
+    'FamilySerializer',
+    'AddressClassifierSerializer',
+    'AddressSerializer',
+    'AddressTypeSerializer',
+    'ApplicantSerializer',
+    'ApplicationStatusSerializer',
+    'AdmissionApplicationSerializer',
+    'AdmissionCampaignSerializer',
+    'AdmissionCampaignTypeSerializer',
+    'QuestionnaireSerializer',
+    'CampaignStageSerializer',
+    'DocScanSerializer',
+
+]
 
 
 class PrivilegeTypeSerializer(serializers.ModelSerializer):
@@ -186,7 +210,7 @@ class QuestionnaireSerializer(serializers.ModelSerializer):
     address_of_registration = AddressSerializer(required=False)
     address_of_temp_reg = AddressSerializer(required=False)
     address_of_residence = AddressSerializer(required=True)
-    privileges = PrivilegeSerializer(required=False, many=True)
+    list_of_privileges = UserPrivilegeListSerializer(required=False, many=False)
     phone = ProfilePhoneSerializer(required=True)
 
     class Meta:

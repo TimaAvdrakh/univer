@@ -1,6 +1,7 @@
 from django import forms
 from django.conf import settings
 from django.contrib.auth import login
+from django.contrib.auth.models import User
 from django.http import JsonResponse, HttpResponseBadRequest, HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.encoding import force_text
@@ -8,7 +9,9 @@ from django.utils.http import urlsafe_base64_decode
 from rest_framework.viewsets import ModelViewSet
 from rest_framework.views import APIView
 from rest_framework import permissions
+from .models import *
 from .serializers import *
+from .token import token_generator
 
 
 # Спец форма для того, чтобы парсить файлы
@@ -104,5 +107,16 @@ class AdmissionApplicationViewSet(ModelViewSet):
     serializer_class = AdmissionApplicationSerializer
 
 
-class ApplicantLogin(APIView):
-    pass
+class FamilyMembershipViewSet(ModelViewSet):
+    queryset = FamilyMembership.objects.all()
+    serializer_class = FamilyMembershipSerializer
+
+
+class PrivilegeTypeViewSet(ModelViewSet):
+    queryset = PrivilegeType.objects.all()
+    serializer_class = PrivilegeTypeSerializer
+
+
+class DocumentReturnMethodViewSet(ModelViewSet):
+    queryset = DocumentReturnMethod.objects.all()
+    serializer_class = DocumentReturnMethodSerializer

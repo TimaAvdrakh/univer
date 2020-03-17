@@ -34,5 +34,5 @@ router = DefaultRouter()
 router.register(r'nationalities', views.NationalityViewSet)
 router.register(r'citizenship', views.CitizenshipViewSet)
 router.register(r'doc-types', views.DocumentTypeViewSet)
-router.register(r'gov-agencies', views.GovernmentAgencySerializer)
+router.register(r'gov-agencies', views.GovernmentAgencyViewSet)
 urlpatterns += router.urls
