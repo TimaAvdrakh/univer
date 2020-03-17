@@ -2221,17 +2221,21 @@ class ThesisTopic(APIView):
          )
         if disciplinecredits.count() > 0:
             result['status'] = True
-        if request.GET.get('get_themes'):
-            disciplinecredits = org_models.DisciplineCredit.objects.filter(
-                chosen_control_forms__is_diploma=True,
-                student=request.user.profile,
-                is_active=True
-            ).values_list('uuid1c', flat=True)
+        if request.GET.get('get_themes') or request.GET.get('stud_plan'):
+            query = {
+                'chosen_control_forms__is_diploma': True,
+                'student': request.user.profile,
+                'is_active': True,
+            }
+            if request.GET.get('stud_plan'):
+                query['uid_1c'] = request.GET.get('stud_plan')
+            disciplinecredits = org_models.DisciplineCredit.objects.filter(**query).values_list('uuid1c', flat=True)
             result['disciplinecredits'] = disciplinecredits
             result['themes'] = serializers.ThemesOfThesesSerializer(
                 models.ThemesOfTheses.objects.filter(
                     uid_1c__in=disciplinecredits,
-                    student__isnull=True),
+                    student__isnull=True
+                ),
                 many=True
             ).data
             return Response(result, status=status.HTTP_200_OK)
