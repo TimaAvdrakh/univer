@@ -901,7 +901,7 @@ class ChooseFormControlView(generics.UpdateAPIView):
         try:
             if request.user.profile.role.is_student:
                 status_s = org_models.StudentDisciplineStatus.objects.get(number=2)
-                if data.get('chosen_control_forms'):
+                if len(data.get('chosen_control_forms')) == 0:
                     status_s = org_models.StudentDisciplineStatus.objects.get(number=1)
                 data['status'] = status_s.uid
                 instance.status_id = status_s.uid
