@@ -2230,7 +2230,6 @@ class ThesisTopic(APIView):
             if request.GET.get('stud_plan'):
                 query['uid_1c'] = request.GET.get('stud_plan')
             disciplinecredits = org_models.DisciplineCredit.objects.filter(**query).values_list('uuid1c', flat=True)
-            result['disciplinecredits'] = disciplinecredits
             result['themes'] = serializers.ThemesOfThesesSerializer(
                 models.ThemesOfTheses.objects.filter(
                     uid_1c__in=disciplinecredits,
