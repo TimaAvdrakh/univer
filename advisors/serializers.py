@@ -5,6 +5,7 @@ from portal_users.serializers import ProfileShortSerializer, StudentDisciplineSt
 from portal.curr_settings import student_discipline_info_status, student_discipline_status, not_choosing_load_types2
 from cron_app.models import AdvisorRejectedBidTask
 from . import models
+from portal_users import serializers as user_serializers
 from portal_users.utils import get_current_study_year
 from common.exceptions import CustomException
 
@@ -453,6 +454,7 @@ class StudentsByDisciplineIDSerializer(serializers.ModelSerializer):
 
 
 class ThemesOfThesesSerializer(serializers.ModelSerializer):
+    supervisors = user_serializers.ProfileDetailSerializer(many=True)
 
     class Meta:
         model = models.ThemesOfTheses
