@@ -2240,7 +2240,7 @@ class ThesisTopic(APIView):
                 models.ThemesOfTheses.objects.filter(
                     uid_1c__in=disciplinecredits,
                     student=request.user.profile
-                ), many=True).data
+                )).data
             return Response(result, status=status.HTTP_200_OK)
         return Response(result, status=status.HTTP_200_OK)
 
