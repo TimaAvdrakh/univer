@@ -496,13 +496,14 @@ class ProfileDetailSerializer(serializers.ModelSerializer):
 
 
 class ThemesOfThesesSerializer(serializers.ModelSerializer):
-    supervisors = ProfileDetailSerializer(many=True)
+    supervisors = ProfileDetailSerializer(many=True, read_only=True)
 
     class Meta:
         model = models.ThemesOfTheses
-        fields = ['name', 'uid_1c', 'acad_period', 'student', 'supervisors', 'supervisor_leader', 'supervisors_text']
+        fields = '__all__'
 
     def to_representation(self, instance):
         data = super().to_representation(instance=instance)
+        data['supervisors_text'] = instance.supervisors_text
         data['more_info'] = data['supervisors']
         return data
