@@ -2244,10 +2244,10 @@ class ThesisTopic(APIView):
         if request.data.get('theme_uid'):
             try:
                 tem = models.ThemesOfTheses.objects.get(uid=request.data.get('theme_uid'))
-                tem.student_id = request.user.profile.id
+                tem.student = request.user.profile
                 tem.save()
-                themes = serializers.ThemesOfThesesSerializer(tem).data
-                return Response(themes, status=status.HTTP_200_OK)
+                theme = serializers.ThemesOfThesesSerializer(tem).data
+                return Response(theme, status=status.HTTP_200_OK)
             except:
                 return Response({'error': 'Not check'}, status=status.HTTP_400_BAD_REQUEST)
         return Response({'error': 'Not theme_uid'}, status=status.HTTP_400_BAD_REQUEST)
