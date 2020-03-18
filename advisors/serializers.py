@@ -473,7 +473,6 @@ class ProfileDetailSerializer(serializers.ModelSerializer):
         source='last_name',
         required=True,
     )
-    teacher = user_serializers.TeacherSerializer(read_only=True)
 
     class Meta:
         model = user_model.Profile
@@ -485,8 +484,6 @@ class ProfileDetailSerializer(serializers.ModelSerializer):
             'phone',
             'email',
             'avatar'
-            'teacher',
-
         )
 
     def to_representation(self, instance):
@@ -494,10 +491,12 @@ class ProfileDetailSerializer(serializers.ModelSerializer):
         role = user_model.Role.objects.filter(profile=instance).first()
         role_serializer = user_serializers.RoleSerializer(instance=role)
         data['role'] = role_serializer.data
-
+        teacher = user_model.Teacher.objects.get(profile=instance)
+        data['full_info'] = user_serializers.TeacherSerializer(teacher).data
+        teacher_positions = user_model.TeacherPosition.objects.filter(profile=instance, is_active=True)
+        data['full_info']['positions'] = user_serializers.TeacherPositionSerializer(teacher_positions, many=True).data
         if data['avatar'] is not None:
             data['avatar'] = user_serializers.current_site + data['avatar']
-
         return data
 
 

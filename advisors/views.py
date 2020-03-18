@@ -2232,7 +2232,7 @@ class ThesisTopic(APIView):
             disciplinecredits = org_models.DisciplineCredit.objects.filter(**query).values_list('uuid1c', flat=True)
             result['themes'] = serializers.ThemesOfThesesSerializer(
                 models.ThemesOfTheses.objects.filter(
-                    uid_1c__in=disciplinecredits,
+                    # uid_1c__in=disciplinecredits,
                     student__isnull=True
                 ),
                 many=True
