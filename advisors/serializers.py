@@ -5,7 +5,7 @@ from portal_users.serializers import ProfileShortSerializer, StudentDisciplineSt
 from portal.curr_settings import student_discipline_info_status, student_discipline_status, not_choosing_load_types2
 from cron_app.models import AdvisorRejectedBidTask
 from . import models
-from portal_users import serializers as user_serializers
+from portal_users import serializers as user_serializers, models as user_model
 from portal_users.utils import get_current_study_year
 from common.exceptions import CustomException
 
@@ -453,14 +453,129 @@ class StudentsByDisciplineIDSerializer(serializers.ModelSerializer):
         )
 
 
+class ProfileFullSerializer(serializers.ModelSerializer):
+    """Используется для получения и редактирования профиля"""
+    profileId = serializers.CharField(
+        source='uid',
+        read_only=True,
+    )
+    firstName = serializers.CharField(
+        max_length=100,
+        source='first_name',
+        read_only=True,
+    )
+    lastName = serializers.CharField(
+        max_length=100,
+        source='last_name',
+        read_only=True,
+    )
+    middleName = serializers.CharField(
+        max_length=100,
+        source='middle_name',
+        read_only=True,
+    )
+    gender = serializers.CharField(
+        read_only=True,
+    )
+    marital_status = serializers.CharField(
+        read_only=True,
+    )
+    interests = user_serializers.InterestSerializer(
+        many=True,
+        required=False,
+    )
+    interests_for_del = serializers.ListField(
+        child=serializers.CharField(),
+        required=False,
+    )
+    achievements = user_serializers.AchievementFullSerializer(
+        many=True,
+        required=False,
+    )
+    achievements_for_del = serializers.ListField(
+        child=serializers.CharField(),
+        required=False,
+    )
+    identity_documents = user_serializers.common_serializers.IdentityDocumentSerializer(
+        many=True,
+        required=False,
+    )
+    educations = user_serializers.common_serializers.EducationSerializer(
+        many=True,
+        required=False,
+    )
+    nationality = serializers.CharField()
+    citizenship = serializers.CharField()
+
+    class Meta:
+        model = models.Profile
+        fields = (
+            'profileId',
+            'student_id',
+            'firstName',
+            'lastName',
+            'middleName',
+            'first_name_en',
+            'last_name_en',
+            'birth_date',
+            'birth_place',
+            'nationality',
+            'citizenship',
+            'gender',
+            'marital_status',
+            'address',
+            'phone',
+            'email',
+            'skype',
+            'avatar',
+            'interests',
+            'interests_for_del',
+            'achievements',
+            'achievements_for_del',
+            'extra_data',
+            'iin',
+            'identity_documents',
+            'educations',
+        )
+        read_only_fields = (
+            'iin',
+        )
+
+    def to_representation(self, instance):
+        request = self.context.get('request')
+        data = super().to_representation(instance=instance)
+
+        role = user_model.Role.objects.filter(profile=instance).first()
+        is_employee = False
+
+        if role.is_teacher or role.is_supervisor or role.is_org_admin:
+            is_employee = True
+            teacher = user_model.Teacher.objects.get(profile=instance)
+            # data['employee'] = TeacherSerializer(teacher).data
+            data.update(user_serializers.TeacherSerializer(teacher).data)
+            teacher_positions = user_model.TeacherPosition.objects.filter(profile=instance,
+                                                                      is_active=True)
+            data['positions'] = user_serializers.TeacherPositionSerializer(teacher_positions,
+                                                          many=True).data
+
+        role_serializer = user_serializers.RoleSerializer(instance=role)
+        data['role'] = role_serializer.data
+
+        data['is_employee'] = is_employee
+
+        if request.user.profile != instance:
+            data['iin'] = ''
+
+        if request.user.profile != instance:
+            data['identity_documents'] = []
+        data['more_info'] = data
+
+        return data
+
+
 class ThemesOfThesesSerializer(serializers.ModelSerializer):
-    supervisors = user_serializers.ProfileDetailSerializer(many=True)
+    supervisors = ProfileFullSerializer(many=True)
 
     class Meta:
         model = models.ThemesOfTheses
         fields = ['name', 'uid_1c', 'acad_period', 'student', 'supervisors', 'supervisor_leader', 'supervisors_text']
-
-    def to_representation(self, instance):
-        data = super().to_representation(instance=instance)
-        data['more_info'] = data['supervisors']
-        return data
