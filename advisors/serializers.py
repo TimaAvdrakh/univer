@@ -459,3 +459,8 @@ class ThemesOfThesesSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.ThemesOfTheses
         fields = ['name', 'uid_1c', 'acad_period', 'student', 'supervisors', 'supervisor_leader', 'supervisors_text']
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance=instance)
+        data['more_info'] = data['supervisors']
+        return data
