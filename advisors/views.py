@@ -2240,9 +2240,14 @@ class ThesisTopic(APIView):
             return Response(result, status=status.HTTP_200_OK)
         return Response(result, status=status.HTTP_200_OK)
 
-    # def post(self, request, format=None):
-    #     serializer = SnippetSerializer(data=request.data)
-    #     if serializer.is_valid():
-    #         serializer.save()
-    #         return Response(serializer.data, status=status.HTTP_201_CREATED)
-    #     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    def post(self, request, format=None):
+        if request.data.get('theme_uid'):
+            try:
+                tem = models.ThemesOfTheses.objects.get(uid=request.data.get('theme_uid'))
+                tem.student_id = request.user.profile.id
+                tem.save()
+                themes = serializers.ThemesOfThesesSerializer(tem).data
+                return Response(themes, status=status.HTTP_200_OK)
+            except:
+                return Response({'error': 'Not check'}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({'error': 'Not theme_uid'}, status=status.HTTP_400_BAD_REQUEST)
