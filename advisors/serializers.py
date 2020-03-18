@@ -7,6 +7,7 @@ from cron_app.models import AdvisorRejectedBidTask
 from . import models
 from portal_users import serializers as user_serializers, models as user_model
 from portal_users.utils import get_current_study_year
+from common import serializers as common_serializers
 from common.exceptions import CustomException
 
 
@@ -496,11 +497,11 @@ class ProfileFullSerializer(serializers.ModelSerializer):
         child=serializers.CharField(),
         required=False,
     )
-    identity_documents = user_serializers.common_serializers.IdentityDocumentSerializer(
+    identity_documents = common_serializers.IdentityDocumentSerializer(
         many=True,
         required=False,
     )
-    educations = user_serializers.common_serializers.EducationSerializer(
+    educations = common_serializers.EducationSerializer(
         many=True,
         required=False,
     )
@@ -551,16 +552,12 @@ class ProfileFullSerializer(serializers.ModelSerializer):
         if role.is_teacher or role.is_supervisor or role.is_org_admin:
             is_employee = True
             teacher = user_model.Teacher.objects.get(profile=instance)
-            # data['employee'] = TeacherSerializer(teacher).data
             data.update(user_serializers.TeacherSerializer(teacher).data)
-            teacher_positions = user_model.TeacherPosition.objects.filter(profile=instance,
-                                                                      is_active=True)
-            data['positions'] = user_serializers.TeacherPositionSerializer(teacher_positions,
-                                                          many=True).data
+            teacher_positions = user_model.TeacherPosition.objects.filter(profile=instance, is_active=True)
+            data['positions'] = user_serializers.TeacherPositionSerializer(teacher_positions, many=True).data
 
         role_serializer = user_serializers.RoleSerializer(instance=role)
         data['role'] = role_serializer.data
-
         data['is_employee'] = is_employee
 
         if request.user.profile != instance:
@@ -574,7 +571,7 @@ class ProfileFullSerializer(serializers.ModelSerializer):
 
 
 class ThemesOfThesesSerializer(serializers.ModelSerializer):
-    supervisors = ProfileFullSerializer(many=True)
+    supervisors = ProfileFullSerializer(many=True, read_only=True)
 
     class Meta:
         model = models.ThemesOfTheses
