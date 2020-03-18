@@ -72,7 +72,7 @@ class ThemesOfTheses(BaseCatalog):
         text = ""
         for x in self.supervisors.all():
             text += '{} {} {}, '.format(x.last_name, x.first_name, x.middle_name)
-        return text
+        return text[0:-2]
 
     class Meta:
         verbose_name = 'Тема дипломной работы'
