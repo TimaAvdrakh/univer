@@ -505,5 +505,4 @@ class ThemesOfThesesSerializer(serializers.ModelSerializer):
     def to_representation(self, instance):
         data = super().to_representation(instance=instance)
         data['supervisors_text'] = instance.supervisors_text
-        data['more_info'] = data['supervisors']
         return data
