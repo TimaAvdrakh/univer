@@ -75,5 +75,6 @@ class ThemesOfTheses(BaseCatalog):
         return text[0:-2]
 
     class Meta:
+        unique_together = [['uid_1c', 'student']]
         verbose_name = 'Тема дипломной работы'
         verbose_name_plural = 'Темы дипломных работ'
