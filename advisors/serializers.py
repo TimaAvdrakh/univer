@@ -454,6 +454,10 @@ class StudentsByDisciplineIDSerializer(serializers.ModelSerializer):
 
 
 class ProfileDetailSerializer(serializers.ModelSerializer):
+    profileId = serializers.CharField(
+        source='uid',
+        read_only=True,
+    )
     middleName = serializers.CharField(
         max_length=100,
         source='middle_name',
@@ -473,6 +477,7 @@ class ProfileDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = user_model.Profile
         fields = (
+            'profileId',
             'firstName',
             'lastName',
             'middleName',
