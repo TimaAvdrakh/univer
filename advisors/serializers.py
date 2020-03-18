@@ -543,9 +543,7 @@ class ProfileFullSerializer(serializers.ModelSerializer):
         )
 
     def to_representation(self, instance):
-        request = self.context.get('request')
         data = super().to_representation(instance=instance)
-
         role = user_model.Role.objects.filter(profile=instance).first()
         is_employee = False
 
@@ -559,14 +557,7 @@ class ProfileFullSerializer(serializers.ModelSerializer):
         role_serializer = user_serializers.RoleSerializer(instance=role)
         data['role'] = role_serializer.data
         data['is_employee'] = is_employee
-
-        if request.user.profile != instance:
-            data['iin'] = ''
-
-        if request.user.profile != instance:
-            data['identity_documents'] = []
         data['more_info'] = data
-
         return data
 
 
