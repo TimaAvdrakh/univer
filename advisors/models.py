@@ -71,7 +71,7 @@ class ThemesOfTheses(BaseCatalog):
     def supervisors_text(self):
         text = ""
         for x in self.supervisors.all():
-            text += '{} {} {},'.format(x.last_name, x.first_name, x.middle_name)
+            text += '{} {} {}, '.format(x.last_name, x.first_name, x.middle_name)
         return text
 
     class Meta:
