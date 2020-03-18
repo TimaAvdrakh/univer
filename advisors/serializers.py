@@ -538,25 +538,22 @@ class ProfileFullSerializer(serializers.ModelSerializer):
             'identity_documents',
             'educations',
         )
-        read_only_fields = (
-            'iin',
-        )
 
     def to_representation(self, instance):
         data = super().to_representation(instance=instance)
-        role = user_model.Role.objects.filter(profile=instance).first()
-        is_employee = False
-
-        if role.is_teacher or role.is_supervisor or role.is_org_admin:
-            is_employee = True
-            teacher = user_model.Teacher.objects.get(profile=instance)
-            data.update(user_serializers.TeacherSerializer(teacher).data)
-            teacher_positions = user_model.TeacherPosition.objects.filter(profile=instance, is_active=True)
-            data['positions'] = user_serializers.TeacherPositionSerializer(teacher_positions, many=True).data
-
-        role_serializer = user_serializers.RoleSerializer(instance=role)
-        data['role'] = role_serializer.data
-        data['is_employee'] = is_employee
+        # role = user_model.Role.objects.filter(profile=instance).first()
+        # is_employee = False
+        #
+        # if role.is_teacher or role.is_supervisor or role.is_org_admin:
+        #     is_employee = True
+        #     teacher = user_model.Teacher.objects.get(profile=instance)
+        #     data.update(user_serializers.TeacherSerializer(teacher).data)
+        #     teacher_positions = user_model.TeacherPosition.objects.filter(profile=instance, is_active=True)
+        #     data['positions'] = user_serializers.TeacherPositionSerializer(teacher_positions, many=True).data
+        #
+        # role_serializer = user_serializers.RoleSerializer(instance=role)
+        # data['role'] = role_serializer.data
+        # data['is_employee'] = is_employee
         data['more_info'] = data
         return data
 
