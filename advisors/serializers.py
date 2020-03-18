@@ -454,8 +454,6 @@ class StudentsByDisciplineIDSerializer(serializers.ModelSerializer):
 
 
 class ThemesOfThesesSerializer(serializers.ModelSerializer):
-    supervisors = user_serializers.ProfileDetailSerializer(many=True)
-
     class Meta:
         model = models.ThemesOfTheses
-        fields = '__all__'
+        fields = ['name', 'uid_1c', 'acad_period', 'student', 'supervisors', 'supervisor_leader', 'supervisors_text']
