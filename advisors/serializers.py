@@ -455,9 +455,6 @@ class StudentsByDisciplineIDSerializer(serializers.ModelSerializer):
 
 class ProfileDetailSerializer(serializers.ModelSerializer):
     """С префиксом домена в поле аватар"""
-    profileId = serializers.CharField(
-        source='uid',
-    )
     middleName = serializers.CharField(
         max_length=100,
         source='middle_name',
@@ -477,7 +474,6 @@ class ProfileDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = user_model.Profile
         fields = (
-            'profileId',
             'firstName',
             'lastName',
             'middleName',
@@ -493,7 +489,6 @@ class ProfileDetailSerializer(serializers.ModelSerializer):
         data['role'] = role_serializer.data
         teacher = user_model.Teacher.objects.get(profile=instance)
         data['full_info'] = user_serializers.TeacherSerializer(teacher).data
-        teacher_positions = user_model.TeacherPosition.objects.filter(profile=instance, is_active=True)
         data['full_info']['positions'] = user_serializers.TeacherPositionSerializer(teacher_positions, many=True).data
         if data['avatar'] is not None:
             data['avatar'] = user_serializers.current_site + data['avatar']
