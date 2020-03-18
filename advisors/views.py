@@ -2244,7 +2244,6 @@ class ThesisTopic(APIView):
         obj = {"send": "Not theme_uid"}
         if request.data.get('theme_uid'):
             try:
-
                 tem = models.ThemesOfTheses.objects.get(uid=request.data.get('theme_uid'))
                 tem.student = request.user.profile
                 tem.save()
