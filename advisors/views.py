@@ -28,6 +28,7 @@ from portal.curr_settings import current_site
 from cron_app.models import ExcelTask
 from django.core.cache import cache
 import json
+from django.db.models import Q
 
 
 class StudyPlansListView(generics.ListAPIView):
@@ -2232,8 +2233,13 @@ class ThesisTopic(APIView):
             disciplinecredits = org_models.DisciplineCredit.objects.filter(**query).values_list('uuid1c', flat=True)
             result['themes'] = serializers.ThemesOfThesesSerializer(
                 models.ThemesOfTheses.objects.filter(
-                    uid_1c__in=disciplinecredits,
-                    student__isnull=True
+                    Q(
+                        uid_1c__in=disciplinecredits,
+                        student__isnull=True)|
+                    Q(
+                        uid_1c__in=disciplinecredits,
+                        student=request.user.profile
+                    )
                 ),
                 many=True
             ).data
