@@ -2241,13 +2241,19 @@ class ThesisTopic(APIView):
         return Response(result, status=status.HTTP_200_OK)
 
     def post(self, request, format=None):
+        obj = {"send": "Not theme_uid"}
         if request.data.get('theme_uid'):
             try:
+
                 tem = models.ThemesOfTheses.objects.get(uid=request.data.get('theme_uid'))
                 tem.student = request.user.profile
                 tem.save()
-                theme = serializers.ThemesOfThesesSerializer(tem).data
-                return Response(theme, status=status.HTTP_200_OK)
+                obj['theme'] = serializers.ThemesOfThesesSerializer(
+                    models.ThemesOfTheses.objects.get(uid=request.data.get('theme_uid'))
+                ).data
+                obj['send'] = "Ok"
+                return Response(obj, status=status.HTTP_200_OK)
             except:
-                return Response({'error': 'Not check'}, status=status.HTTP_400_BAD_REQUEST)
-        return Response({'error': 'Not theme_uid'}, status=status.HTTP_400_BAD_REQUEST)
+                obj['send'] = 'Not check'
+                return Response(obj, status=status.HTTP_400_BAD_REQUEST)
+        return Response(obj, status=status.HTTP_400_BAD_REQUEST)
