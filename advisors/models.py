@@ -59,14 +59,20 @@ class ThemesOfTheses(BaseCatalog):
         user_models.Profile,
         related_name='supervisors_themes_theses',
         verbose_name='Руководители')
-    supervisor_leader = models.CharField(
+    supervisor_leader = models.TextField(
         verbose_name='Руководитель извне',
-        max_length=1000,
         null=True,
         blank=True)
 
     def __str__(self):
         return '{} - {}'.format(self.student, self.acad_period)
+
+    @property
+    def supervisors_text(self):
+        text = ""
+        for x in self.supervisors.all():
+            text += '{} {} {},'.format(x.last_name, x.first_name, x.middle_name)
+        return text
 
     class Meta:
         verbose_name = 'Тема дипломной работы'
