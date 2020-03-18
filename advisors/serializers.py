@@ -508,7 +508,7 @@ class ProfileFullSerializer(serializers.ModelSerializer):
     citizenship = serializers.CharField()
 
     class Meta:
-        model = models.Profile
+        model = user_model.Profile
         fields = (
             'profileId',
             'student_id',
