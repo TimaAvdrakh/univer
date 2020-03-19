@@ -924,9 +924,6 @@ class ChooseFormControlView(generics.UpdateAPIView):
             return Response(status=status.HTTP_400_BAD_REQUEST)
 
 
-<<<<<<< HEAD
-
-=======
 class StudentStatusListView(generics.ListAPIView):
     """
     Список статуса студентов для эдвайзера
@@ -965,4 +962,3 @@ class CitizenshipListView(generics.ListAPIView):
         queryset = queryset.filter(pk__in=citizenship_pks)
 
         return queryset
->>>>>>> origin/eldar_back
