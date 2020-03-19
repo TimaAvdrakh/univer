@@ -2248,8 +2248,9 @@ class ThesisTopic(APIView):
 
     def get(self, request, format=None):
         result = {'status': False}
-        if request.GET.get('get_themes') or request.GET.get('get_themes') and request.GET.get('stud_plan'):
+        if request.GET.get('stud_plan'):
             result['status'] = True
+            result['themes'] = []
             if request.GET.get('stud_plan'):
                 result['themes'] = serializers.ThemesOfThesesSerializer(
                     models.ThemesOfTheses.objects.filter(
@@ -2264,15 +2265,14 @@ class ThesisTopic(APIView):
                         )).data
                 except:
                     pass
-            return Response(result, status=status.HTTP_200_OK)
-
-        disciplinecredits = org_models.DisciplineCredit.objects.filter(
-            chosen_control_forms__is_diploma=True,
-            student=request.user.profile,
-            is_active=True
-         )
-        if disciplinecredits.count() > 0:
-            result['status'] = True
+        else:
+            disciplinecredits = org_models.DisciplineCredit.objects.filter(
+                chosen_control_forms__is_diploma=True,
+                student=request.user.profile,
+                is_active=True
+             )
+            if disciplinecredits.count() > 0:
+                result['status'] = True
         return Response(result, status=status.HTTP_200_OK)
 
     def post(self, request, format=None):
