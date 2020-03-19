@@ -848,6 +848,7 @@ class EducationProgramGroupSerializer(serializers.ModelSerializer):
 
 
 class StudyPlanSerializer(serializers.ModelSerializer):
+    uid_1c = serializers.CharField()
     study_period = serializers.CharField()
     group = serializers.CharField()
     speciality = serializers.CharField()
@@ -867,6 +868,7 @@ class StudyPlanSerializer(serializers.ModelSerializer):
         model = org_models.StudyPlan
         fields = (
             'uid',
+            'uid_1c',
             'student',
             'study_period',
             'group',
