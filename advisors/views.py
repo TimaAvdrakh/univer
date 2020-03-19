@@ -2248,7 +2248,7 @@ class ThesisTopic(APIView):
 
     def get(self, request, format=None):
         result = {'status': False}
-        if request.GET.get('stud_plan'):
+        if request.GET.get('get_themes') or request.GET.get('get_themes') and request.GET.get('stud_plan'):
             result['status'] = True
             if request.GET.get('stud_plan'):
                 result['themes'] = serializers.ThemesOfThesesSerializer(
@@ -2265,6 +2265,7 @@ class ThesisTopic(APIView):
                 except:
                     pass
             return Response(result, status=status.HTTP_200_OK)
+
         disciplinecredits = org_models.DisciplineCredit.objects.filter(
             chosen_control_forms__is_diploma=True,
             student=request.user.profile,
