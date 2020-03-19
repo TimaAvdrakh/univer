@@ -1348,9 +1348,9 @@ class TeacherPositionSerializer(serializers.ModelSerializer):
         data = super().to_representation(instance)
 
         if instance.is_main:
-            data['work'] = _('Основное место работы')
+            data['work'] = _('Primary place of work')
         else:
-            data['work'] = _('Совместительство')
+            data['work'] = _('Part-time job')
 
         return data
 

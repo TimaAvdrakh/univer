@@ -1,4 +1,3 @@
-# -*- coding: utf8 -*-
 from __future__ import unicode_literals
 from django.db import models
 
@@ -7,7 +6,7 @@ from common.models import BaseCatalog
 
 class C1Object(BaseCatalog):
     model = models.CharField(
-        verbose_name='Модель django',
+        verbose_name='Модель Джанго',
         default='',
         max_length=100,
     )
