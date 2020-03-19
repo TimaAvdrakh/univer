@@ -2248,9 +2248,9 @@ class ThesisTopic(APIView):
 
     def get(self, request, format=None):
         result = {'status': False}
-        if request.GET.get('study_plan'):
+        if request.GET.get('uid_1c'):
             theme = models.ThemesOfTheses.objects.filter(
-                    uid_1c=request.GET.get('study_plan'),
+                    uid_1c=request.GET.get('uid_1c'),
                     student__isnull=True
                 )
             result['themes_count'] = theme.count()
@@ -2259,7 +2259,7 @@ class ThesisTopic(APIView):
             try:
                 result['check_themes'] = serializers.ThemesOfThesesSerializer(
                     models.ThemesOfTheses.objects.get(
-                        uid_1c=request.GET.get('stud_plan'),
+                        uid_1c=request.GET.get('uid_1c'),
                         student=request.user.profile
                     )).data
             except:
