@@ -2229,21 +2229,19 @@ class ThesisTopic(APIView):
                 'is_active': True,
             }
             if request.GET.get('stud_plan'):
-                query['uid_1c'] = request.GET.get('stud_plan')
-            disciplinecredits = org_models.DisciplineCredit.objects.filter(**query).values_list('uuid1c', flat=True)
-            result['themes'] = serializers.ThemesOfThesesSerializer(
-                models.ThemesOfTheses.objects.filter(
-                    uid_1c__in=disciplinecredits,
-                    student__isnull=True
-                ), many=True).data
-            try:
-                result['check_themes'] = serializers.ThemesOfThesesSerializer(
-                    models.ThemesOfTheses.objects.get(
-                        uid_1c__in=disciplinecredits,
-                        student=request.user.profile
-                    )).data
-            except:
-                pass
+                result['themes'] = serializers.ThemesOfThesesSerializer(
+                    models.ThemesOfTheses.objects.filter(
+                        uid_1c__in=[request.GET.get('stud_plan')],
+                        student__isnull=True
+                    ), many=True).data
+                try:
+                    result['check_themes'] = serializers.ThemesOfThesesSerializer(
+                        models.ThemesOfTheses.objects.get(
+                            uid_1c__in=[request.GET.get('stud_plan')],
+                            student=request.user.profile
+                        )).data
+                except:
+                    pass
             return Response(result, status=status.HTTP_200_OK)
         return Response(result, status=status.HTTP_200_OK)
 
