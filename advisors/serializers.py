@@ -534,3 +534,14 @@ class StudentsByDisciplineIDSerializer(serializers.ModelSerializer):
             'student',
         )
 
+    def to_representation(self, instance):
+        data = super().to_representation(instance=instance)
+        data['faculty'] = instance.study_plan.faculty.name
+        data['cathedra'] = instance.study_plan.cathedra.name
+        data['education_program'] = instance.study_plan.education_program.name
+        if instance.study_plan.education_program.group:
+            data['education_program_group'] = instance.study_plan.education_program.group.name
+        else:
+            data['education_program_group'] = None
+        data['group'] = instance.study_plan.group.name
+        return data
