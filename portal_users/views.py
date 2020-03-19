@@ -1,3 +1,5 @@
+from django.shortcuts import render
+from rest_framework.views import APIView
 from rest_framework import generics
 from rest_framework import status
 from rest_framework.response import Response
@@ -922,4 +924,45 @@ class ChooseFormControlView(generics.UpdateAPIView):
             return Response(status=status.HTTP_400_BAD_REQUEST)
 
 
+<<<<<<< HEAD
 
+=======
+class StudentStatusListView(generics.ListAPIView):
+    """
+    Список статуса студентов для эдвайзера
+    """
+    queryset = models.StudentStatus.objects
+    serializer_class = serializers.StudentStatusListSerializer
+
+    def get_queryset(self):
+        queryset = self.queryset.filter(is_active=True).order_by('name')
+        return queryset
+
+
+class GenderListView(generics.ListAPIView):
+    """
+    Список пола пользователей
+    """
+    queryset = models.Gender.objects
+    serializer_class = serializers.GenderListSerializer
+
+    def get_queryset(self):
+        queryset = self.queryset.filter(is_active=True).order_by('name')
+        return queryset
+
+
+class CitizenshipListView(generics.ListAPIView):
+    """
+    Список национальностей пользователей
+    """
+    queryset = common_models.Citizenship.objects
+    serializer_class = serializers.CitizenshipListSerializer
+
+    def get_queryset(self):
+        queryset = self.queryset.filter(is_active=True).order_by('name')
+        student_pks = org_models.StudyPlan.objects.filter(advisor=self.request.user.profile).values('student')
+        citizenship_pks = models.Profile.objects.filter(pk__in=student_pks).values('citizenship')
+        queryset = queryset.filter(pk__in=citizenship_pks)
+
+        return queryset
+>>>>>>> origin/eldar_back

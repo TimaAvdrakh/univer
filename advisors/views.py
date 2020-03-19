@@ -568,12 +568,16 @@ class SpecialityListView(generics.ListAPIView):
 
         study_year = self.request.query_params.get('study_year')
         faculty = self.request.query_params.get('faculty')
+        cathedra = self.request.query_params.get('cathedra')
 
         study_plans = org_models.StudyPlan.objects.filter(advisor=profile,
                                                           is_active=True)
 
         if faculty:
             study_plans = study_plans.filter(faculty_id=faculty)
+
+        if cathedra:
+            study_plans = study_plans.filter(cathedra_id=cathedra)
 
         if study_year:
             study_year_obj = org_models.StudyPeriod.objects.get(pk=study_year)
@@ -709,7 +713,7 @@ class RegisterResultView(generics.ListAPIView):
     pagination_class = CustomPagination
 
     def list(self, request, *args, **kwargs):
-
+        query = dict()
         queryset = self.queryset
         my = request.query_params.get('my')
 
@@ -2117,12 +2121,11 @@ class StudentProfilesList(generics.ListAPIView):
     pagination_class = AdvisorBidPagination  # CustomPagination
 
     def list(self, request, *args, **kwargs):
-        queryset = self.queryset.filter(advisor=self.request.user.profile).exclude(
-            student__status_id=STUDENT_STATUSES['expelled'])
+        queryset = self.queryset.filter(advisor=self.request.user.profile)
 
-        entry_year = request.query_params.get('start_year')
+        entry_year = request.query_params.get('entry_year')
         study_form = request.query_params.get('study_form')
-        preperation_level = request.query_params.get('preperation_level')
+        preparation_level = request.query_params.get('preparation_level')
         faculty = request.query_params.get('faculty')
         cathedra = request.query_params.get('cathedra')
         speciality = request.query_params.get('speciality')
@@ -2134,7 +2137,37 @@ class StudentProfilesList(generics.ListAPIView):
         gender = request.query_params.get('gender')
         citizenship = request.query_params.get('citizenship')
 
-        status_id = request.query_params.get('status')
+        lookup = Q()
+
+        if entry_year:
+            lookup = lookup & Q(entry_date__year=entry_year)
+        if study_form:
+            lookup = lookup & Q(study_form_id=study_form)
+        if faculty:
+            lookup = lookup & Q(faculty_id=faculty)
+        if cathedra:
+            lookup = lookup & Q(cathedra_id=cathedra)
+        if edu_prog:
+            lookup = lookup & Q(education_program_id=edu_prog)
+        if edu_prog_group:
+            lookup = lookup & Q(education_program__group_id=edu_prog_group)
+        if group:
+            lookup = lookup & Q(group_id=group)
+        if preparation_level:
+            lookup = lookup & Q(preparation_level_id=preparation_level)
+        if speciality:
+            lookup = lookup & Q(speciality_id=speciality)
+        if course:
+            study_plan_pks = org_models.StudyYearCourse.objects.filter(course=course).values('study_plan')
+            lookup = lookup & Q(pk__in=study_plan_pks)
+        if student_status:
+            lookup = lookup & Q(student__status_id=student_status)
+        if gender:
+            lookup = lookup & Q(student__gender=gender)
+        if citizenship:
+            lookup = lookup & Q(student__citizenship=citizenship)
+
+        queryset = queryset.filter(lookup)
 
         page = self.paginate_queryset(queryset)
         if page is not None:
@@ -2261,3 +2294,23 @@ class ThesisTopic(APIView):
                 obj['send'] = 'Not check'
                 return Response(obj, status=status.HTTP_400_BAD_REQUEST)
         return Response(obj, status=status.HTTP_400_BAD_REQUEST)
+
+
+class EntryYearListView(generics.ListAPIView):
+    queryset = org_models.StudyPlan.objects.filter(is_active=True).order_by('entry_date__year')
+    serializer_class = serializers.EntryYearSerializer
+
+    def get_queryset(self):
+        queryset = self.queryset.filter(advisor=self.request.user.profile).distinct('entry_date__year')
+        return queryset
+
+
+class PreparationsLevelListView(generics.ListAPIView):
+    queryset = org_models.PreparationLevel.objects.filter(is_active=True).order_by('name')
+    serializer_class = serializers.PrepartionLevelListSerializer
+
+    def get_queryset(self):
+        study_plans = org_models.StudyPlan.objects.filter(advisor=self.request.user.profile,
+                                                          is_active=True).values('preparation_level')
+        queryset = self.queryset.filter(pk__in=study_plans)
+        return queryset

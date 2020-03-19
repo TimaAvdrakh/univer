@@ -58,6 +58,10 @@ urlpatterns = [
     # 4 стр Список учащихся
     path('students/all/', views.StudentProfilesList.as_view(),
          name='student_profiles'),
+    path('entry_year/', views.EntryYearListView.as_view(),
+         name='entry_year'),
+    path('preparation_level/', views.PreparationsLevelListView.as_view(),
+         name='preparation_level'),
 
     # Дипломная работа
     path('thesis_topic/', views.ThesisTopic.as_view(), name='thesis_topic')

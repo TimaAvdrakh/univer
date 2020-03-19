@@ -440,19 +440,6 @@ class StudentProfilesListSerializer(serializers.ModelSerializer):
         )
 
 
-class StudentsByDisciplineIDSerializer(serializers.ModelSerializer):
-    """
-    Список студентов по uid дисциплины
-    """
-    student = ProfileShortSerializer()
-
-    class Meta:
-        model = org_models.StudentDiscipline
-        fields = (
-            'student',
-        )
-
-
 class ProfileDetailSerializer(serializers.ModelSerializer):
     profileId = serializers.CharField(
         source='uid',
@@ -511,3 +498,39 @@ class ThemesOfThesesSerializer(serializers.ModelSerializer):
         data = super().to_representation(instance=instance)
         data['supervisors_text'] = instance.supervisors_text
         return data
+
+
+class EntryYearSerializer(serializers.ModelSerializer):
+    """
+    Список вступительных лет эдвайзером
+    """
+    entry_date = serializers.DateField(format='%Y')
+
+    class Meta:
+        model = org_models.StudyPlan
+        fields = (
+            'entry_date',
+        )
+
+
+class PrepartionLevelListSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = org_models.PreparationLevel
+        fields = (
+            'uid',
+            'name',
+        )
+
+
+class StudentsByDisciplineIDSerializer(serializers.ModelSerializer):
+    """
+    Список студентов по uid дисциплины
+    """
+    student = ProfileShortSerializer()
+
+    class Meta:
+        model = org_models.StudentDiscipline
+        fields = (
+            'student',
+        )
+
