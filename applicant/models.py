@@ -655,10 +655,9 @@ class Questionnaire(BaseModel):
         verbose_name=_("Identification document"),
         related_name="application_id_doc",
     )
-    iin = models.PositiveSmallIntegerField(
+    iin = models.CharField(
         max_length=100,
         verbose_name=_("IIN"),
-        null=True,
     )
     phone = models.ForeignKey(
         ProfilePhone,
@@ -710,7 +709,19 @@ class UserPrivilegeList(BaseModel):
         Questionnaire,
         on_delete=models.DO_NOTHING,
         verbose_name=_("Questionnaire"),
+        null=True,
     )
+    doc_return_method = models.ForeignKey(
+        DocumentReturnMethod,
+        on_delete=models.DO_NOTHING,
+        blank=True,
+        null=True,
+        verbose_name=_("Document return method"),
+    )
+
+    class Meta:
+        verbose_name = _("User's privilege")
+        verbose_name_plural = _("User's privileges")
 
 
 # Льготы пользователей
@@ -748,13 +759,6 @@ class Privilege(BaseModel):
         DocScan,
         on_delete=models.DO_NOTHING,
         verbose_name=_("Document scan")
-    )
-    doc_return_method = models.ForeignKey(
-        DocumentReturnMethod,
-        on_delete=models.DO_NOTHING,
-        blank=True,
-        null=True,
-        verbose_name=_("Document return method"),
     )
     list = models.ForeignKey(
         UserPrivilegeList,

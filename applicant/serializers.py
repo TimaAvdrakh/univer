@@ -56,7 +56,7 @@ class UserPrivilegeListSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = UserPrivilegeList
-        fields = "__all__"
+        exclude = ['questionnaire']
 
 
 class DocumentReturnMethodSerializer(serializers.ModelSerializer):
@@ -90,6 +90,8 @@ class AddressSerializer(serializers.ModelSerializer):
 
 
 class FamilyMemberSerializer(serializers.ModelSerializer):
+    address = AddressSerializer(required=True)
+
     class Meta:
         model = FamilyMember
         fields = "__all__"
@@ -179,7 +181,13 @@ class ApplicantSerializer(serializers.ModelSerializer):
             applicant.user = user
             applicant.save()
             # Создаем профиль т.к. под него завязана авторизация
-            profile = Profile.objects.create(user=user)
+            profile = Profile.objects.create(
+                user=user,
+                first_name=applicant.first_name,
+                last_name=applicant.last_name,
+                middle_name=applicant.middle_name,
+                email=applicant.email
+            )
             Role.objects.create(is_applicant=True, profile=profile)
             # Отправить письмо с верификацией
             try:
@@ -210,7 +218,7 @@ class QuestionnaireSerializer(serializers.ModelSerializer):
     address_of_registration = AddressSerializer(required=False)
     address_of_temp_reg = AddressSerializer(required=False)
     address_of_residence = AddressSerializer(required=True)
-    list_of_privileges = UserPrivilegeListSerializer(required=False, many=False)
+    userprivilegelist = UserPrivilegeListSerializer(required=False, many=False)
     phone = ProfilePhoneSerializer(required=True)
 
     class Meta:
@@ -226,21 +234,8 @@ class QuestionnaireSerializer(serializers.ModelSerializer):
         user = self.context["request"].user
         if user and user.is_authenticated:
             family = validated_data.pop('family')
-            id_doc = validated_data.pop('id_doc')
-            address_of_registration = validated_data.pop('address_of_registration')
             address_of_temp_reg = validated_data.pop('address_of_temp_reg', None)
-            address_of_residence = validated_data.pop('address_of_residence')
-            privileges = validated_data.pop('privileges', None)
-            phone = validated_data.pop('phone')
-            document_type = DocumentType.objects.get(uid=id_doc.pop('document_type'))
-            issued_by = GovernmentAgency.objects.get(uid=id_doc.pop('issued_by'))
-            id_doc = IdentityDocument.objects.create(
-                **id_doc,
-                document_type=document_type,
-                issued_by=issued_by
-            )
-            address_of_registration = Address.objects.create(**address_of_registration)
-            address_of_residence = Address.objects.create(**address_of_residence)
+            userprivilegelist = validated_data.pop('userprivilegelist', None)
             members = family.pop('members')
             family = Family.objects.create(**family)
             for member in members:
@@ -248,40 +243,42 @@ class QuestionnaireSerializer(serializers.ModelSerializer):
                     username=member['email'],
                     password=member['phone']
                 )
+                address = Address.objects.create(**member.pop('address'))
                 member_profile = Profile.objects.create(
                     user=member_user,
                     first_name=member['first_name'],
                     last_name=member['last_name'],
                     middle_name=member['middle_name'],
                     phone=member['phone'],
-                    email=member['email']
+                    email=member['email'],
                 )
                 member['profile'] = member_profile
                 member['family'] = family
-                FamilyMember.objects.create(**member)
-            validated_data['address_of_registration'] = address_of_registration
-            validated_data['address_of_residence'] = address_of_residence
-            validated_data['id_doc'] = id_doc
-            validated_data['phone'] = ProfilePhone.objects.create(**phone)
-            validated_data['family'] = family
-            full_questionnaire = super().create(validated_data)
-            if address_of_temp_reg:
-                full_questionnaire.address_of_temp_reg = Address.objects.create(**address_of_temp_reg)
-                if privileges:
-                    full_questionnaire.privileges.add(
-                        *Privilege.objects.bulk_create(
-                            [Privilege(**privilege) for privilege in privileges])
-                        )
-                    full_questionnaire.save()
-                full_questionnaire.save()
-            profile = Profile.objects.create(
-                user=user,
-                first_name=user.applicant.first().first_name,
-                last_name=user.applicant.first().last_name,
-                middle_name=user.applicant.first().middle_name,
-                email=user.applicant.first().email,
+                FamilyMember.objects.create(**member, address=address)
+            validated_data['address_of_registration'] = Address.objects.create(
+                **validated_data.pop('address_of_registration')
             )
-            Role.objects.create(profile=profile, is_student=True)
+            validated_data['address_of_residence'] = Address.objects.create(
+                **validated_data.pop('address_of_residence')
+            )
+            id_doc = validated_data.pop('id_doc')
+            validated_data['id_doc'] = IdentityDocument.objects.create(
+                **id_doc,
+                document_type=DocumentType.objects.get(uid=id_doc.pop('document_type')),
+                issued_by=GovernmentAgency.objects.get(uid=id_doc.pop('issued_by'))
+            )
+            validated_data['phone'] = ProfilePhone.objects.create(**validated_data.pop('phone'))
+            validated_data['family'] = family
+            if address_of_temp_reg:
+                validated_data['address_of_temp_reg'] = Address.objects.create(**address_of_temp_reg)
+            if userprivilegelist and len(userprivilegelist['privileges']) > 0:
+                privileges = userprivilegelist.pop('privileges')
+                user_privilege_list = UserPrivilegeList.objects.create(**userprivilegelist)
+                for privilege in privileges:
+                    Privilege.objects.create(**privilege, list=user_privilege_list)
+                validated_data['userprivilegelist'] = user_privilege_list
+            full_questionnaire = super().create(validated_data)
+            # Role.objects.create(profile=profile, is_student=True)
             return full_questionnaire
         else:
             raise ValidationError({"error": f"user undefined"})

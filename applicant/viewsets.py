@@ -30,9 +30,6 @@ def handle_uploaded_file(f):
             destination.write(chunk)
 
 
-# dbg
-# отдельный ендпоинт для выгрузки файла
-@csrf_exempt
 def file_upload(request):
     # TODO add path
     if request.method == "POST":
@@ -69,8 +66,10 @@ def file_upload(request):
             return JsonResponse({"ids": doc_scan_ids})
         else:
             return HttpResponseBadRequest(
-                content_type=b"application/pdf", content="Отправьте файлы"
+                content_type=b"application/pdf", content="Send files"
             )
+    else:
+        return HttpResponse(content_type=b"text/html", content="Method GET not allowed")
 
 
 # Активация аккаунта
@@ -120,3 +119,8 @@ class PrivilegeTypeViewSet(ModelViewSet):
 class DocumentReturnMethodViewSet(ModelViewSet):
     queryset = DocumentReturnMethod.objects.all()
     serializer_class = DocumentReturnMethodSerializer
+
+
+class AddressTypeViewSet(ModelViewSet):
+    queryset = AddressType.objects.all()
+    serializer_class = AddressTypeSerializer
