@@ -713,10 +713,8 @@ class RegisterResultView(generics.ListAPIView):
     pagination_class = CustomPagination
 
     def list(self, request, *args, **kwargs):
-        query = dict()
         queryset = self.queryset
         my = request.query_params.get('my')
-
         query = dict()
 
         profile = request.user.profile
