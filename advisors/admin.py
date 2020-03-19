@@ -14,6 +14,8 @@ class AdvisorCheckAdmin(admin.ModelAdmin):
 
 @admin.register(models.ThemesOfTheses)
 class ThemesOfThesesAdmin(admin.ModelAdmin):
+    list_display = ['__str__', 'uid_1c']
+    list_editable = ['uid_1c']
     autocomplete_fields = (
         'supervisors',
         'student',
