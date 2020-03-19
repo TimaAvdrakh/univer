@@ -2250,21 +2250,19 @@ class ThesisTopic(APIView):
         result = {'status': False}
         if request.GET.get('stud_plan'):
             result['status'] = True
-            result['themes'] = []
-            if request.GET.get('stud_plan'):
-                result['themes'] = serializers.ThemesOfThesesSerializer(
-                    models.ThemesOfTheses.objects.filter(
+            result['themes'] = serializers.ThemesOfThesesSerializer(
+                models.ThemesOfTheses.objects.filter(
+                    uid_1c=request.GET.get('stud_plan'),
+                    student__isnull=True
+                ), many=True).data
+            try:
+                result['check_themes'] = serializers.ThemesOfThesesSerializer(
+                    models.ThemesOfTheses.objects.get(
                         uid_1c=request.GET.get('stud_plan'),
-                        student__isnull=True
-                    ), many=True).data
-                try:
-                    result['check_themes'] = serializers.ThemesOfThesesSerializer(
-                        models.ThemesOfTheses.objects.get(
-                            uid_1c=request.GET.get('stud_plan'),
-                            student=request.user.profile
-                        )).data
-                except:
-                    pass
+                        student=request.user.profile
+                    )).data
+            except:
+                pass
         else:
             disciplinecredits = org_models.DisciplineCredit.objects.filter(
                 chosen_control_forms__is_diploma=True,
