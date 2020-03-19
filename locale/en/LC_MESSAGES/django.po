@@ -20,19 +20,19 @@ msgstr ""
 
 #: common/views.py:95
 msgid "all period"
-msgstr ""
+msgstr "All periods"
 
 #: portal/settings.py:109
 msgid "Russian"
-msgstr ""
+msgstr "Russian"
 
 #: portal/settings.py:110
 msgid "Kazakh"
-msgstr ""
+msgstr "Kazakh"
 
 #: portal/settings.py:111
 msgid "English"
-msgstr ""
+msgstr "English"
 
 #: portal_users/serializers.py:1351
 msgid "Primary place of work"
@@ -44,12 +44,12 @@ msgstr ""
 
 #: reports/views.py:839
 msgid "Registration result"
-msgstr ""
+msgstr "Registration result"
 
 #: reports/views.py:843
 msgid "Registration statistics"
-msgstr ""
+msgstr "Registration statistics"
 
 #: reports/views.py:847
 msgid "Unregistered List"
-msgstr ""
+msgstr "Unregistered list"
