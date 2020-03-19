@@ -2248,9 +2248,9 @@ class ThesisTopic(APIView):
 
     def get(self, request, format=None):
         result = {'status': False}
-        if request.GET.get('stud_plan'):
+        if request.GET.get('study_plan'):
             theme = models.ThemesOfTheses.objects.filter(
-                    uid_1c=request.GET.get('stud_plan'),
+                    uid_1c=request.GET.get('study_plan'),
                     student__isnull=True
                 )
             result['themes_count'] = theme.count()
