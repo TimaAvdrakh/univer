@@ -469,7 +469,7 @@ class EntryYearSerializer(serializers.ModelSerializer):
         if not instance.entry_date:
             data['entry_date'] = "Ow, nothing!"
         else:
-            data['entry_date'] = instance.entry_date
+            data['entry_date'] = instance.entry_date.year
         return data
 
 
