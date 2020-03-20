@@ -15,6 +15,7 @@ from cron_app.models import ExcelTask
 from rest_framework.permissions import IsAuthenticated
 from . import permissions
 from django.utils.translation import gettext as _
+from advisors import views as advisor_views
 
 
 class RegisterResultExcelView(generics.RetrieveAPIView):
@@ -47,12 +48,25 @@ class RegisterResultExcelView(generics.RetrieveAPIView):
         }
         token = uuid4()
         fields_json = json.dumps(fields)
-        ExcelTask.objects.create(
+        task = ExcelTask.objects.create(
             doc_type=1,
             profile=profile,
             token=token,
             fields=fields_json,
         )
+        doc_type = task.doc_type
+        handler = {
+            1: make_register_result_rxcel,
+            2: make_register_statistics_excel,
+            3: make_not_registered_student_excel,
+            4: advisor_views.make_iup_bid_excel,
+            5: advisor_views.make_iup_excel,
+        }
+        handler[doc_type](task)
+        with open(task.file_path, 'rb') as f:
+            response = HttpResponse(f, content_type='application/ms-excel')
+            response['Content-Disposition'] = 'attachment; filename="regresult' + str(uuid4()) + '.xls"'
+            return response
         return Response(
             {
                 'token': str(token)
