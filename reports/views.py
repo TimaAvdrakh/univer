@@ -25,7 +25,7 @@ class RegisterResultExcelView(generics.RetrieveAPIView):
     queryset = org_models.StudentDiscipline.objects.filter(is_active=True)
 
     def get(self, request, *args, **kwargs):
-        if request.GET.get('uid') or request.query_params.get('uid'):
+        if request.query_params.get('uid'):
             task = ExcelTask.objects.get(uid=request.GET.get('uid'))
             doc_type = task.doc_type
             handler = {
@@ -40,44 +40,43 @@ class RegisterResultExcelView(generics.RetrieveAPIView):
                 response = HttpResponse(f, content_type='application/ms-excel')
                 response['Content-Disposition'] = 'attachment; filename="regresult' + str(uuid4()) + '.xls"'
                 return response
+        else:
+            profile = request.user.profile
+            study_year = request.query_params.get('study_year')
+            reg_period = request.query_params.get('reg_period')
+            acad_period = self.request.query_params.get('acad_period')
+            faculty = request.query_params.get('faculty')
+            speciality = request.query_params.get('speciality')
+            edu_prog = request.query_params.get('edu_prog')
+            course = request.query_params.get('course')
+            group = request.query_params.get('group')
 
+            fields = {
+                'study_year':  study_year,
+                'reg_period': reg_period,
+                'acad_period': acad_period,
+                'faculty': faculty,
+                'speciality': speciality,
+                'edu_prog': edu_prog,
+                'course': course,
+                'group': group,
+            }
+            token = uuid4()
+            fields_json = json.dumps(fields)
+            task = ExcelTask.objects.create(
+                doc_type=1,
+                profile=profile,
+                token=token,
+                fields=fields_json,
+            )
 
-        profile = request.user.profile
-        study_year = request.query_params.get('study_year')
-        reg_period = request.query_params.get('reg_period')
-        acad_period = self.request.query_params.get('acad_period')
-        faculty = request.query_params.get('faculty')
-        speciality = request.query_params.get('speciality')
-        edu_prog = request.query_params.get('edu_prog')
-        course = request.query_params.get('course')
-        group = request.query_params.get('group')
-
-        fields = {
-            'study_year':  study_year,
-            'reg_period': reg_period,
-            'acad_period': acad_period,
-            'faculty': faculty,
-            'speciality': speciality,
-            'edu_prog': edu_prog,
-            'course': course,
-            'group': group,
-        }
-        token = uuid4()
-        fields_json = json.dumps(fields)
-        task = ExcelTask.objects.create(
-            doc_type=1,
-            profile=profile,
-            token=token,
-            fields=fields_json,
-        )
-
-        return Response(
-            {
-                'uid': str(task.uid),
-                'token': str(token)
-            },
-            status=status.HTTP_200_OK
-        )
+            return Response(
+                {
+                    'uid': str(task.uid),
+                    'token': str(token)
+                },
+                status=status.HTTP_200_OK
+            )
 
 
 def make_register_result_rxcel(task):
