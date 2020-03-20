@@ -464,6 +464,14 @@ class EntryYearSerializer(serializers.ModelSerializer):
             'entry_date',
         )
 
+    def to_representation(self, instance):
+        data = super().to_representation(instance=instance)
+        if not instance.entry_date:
+            data['entry_date'] = "Ow, nothing!"
+        else:
+            data['entry_date'] = instance.entry_date
+        return data
+
 
 class PrepartionLevelListSerializer(serializers.ModelSerializer):
     class Meta:
