@@ -25,8 +25,24 @@ class RegisterResultExcelView(generics.RetrieveAPIView):
     queryset = org_models.StudentDiscipline.objects.filter(is_active=True)
 
     def get(self, request, *args, **kwargs):
-        profile = request.user.profile
+        if request.GET.get('uid') or request.query_params.get('uid'):
+            task = ExcelTask.objects.get(uid=request.GET.get('uid'))
+            doc_type = task.doc_type
+            handler = {
+                1: make_register_result_rxcel,
+                2: make_register_statistics_excel,
+                3: make_not_registered_student_excel,
+                4: advisor_views.make_iup_bid_excel,
+                5: advisor_views.make_iup_excel,
+            }
+            handler[doc_type](task)
+            with open(task.file_path, 'rb') as f:
+                response = HttpResponse(f, content_type='application/ms-excel')
+                response['Content-Disposition'] = 'attachment; filename="regresult' + str(uuid4()) + '.xls"'
+                return response
 
+
+        profile = request.user.profile
         study_year = request.query_params.get('study_year')
         reg_period = request.query_params.get('reg_period')
         acad_period = self.request.query_params.get('acad_period')
@@ -54,21 +70,10 @@ class RegisterResultExcelView(generics.RetrieveAPIView):
             token=token,
             fields=fields_json,
         )
-        doc_type = task.doc_type
-        handler = {
-            1: make_register_result_rxcel,
-            2: make_register_statistics_excel,
-            3: make_not_registered_student_excel,
-            4: advisor_views.make_iup_bid_excel,
-            5: advisor_views.make_iup_excel,
-        }
-        handler[doc_type](task)
-        with open(task.file_path, 'rb') as f:
-            response = HttpResponse(f, content_type='application/ms-excel')
-            response['Content-Disposition'] = 'attachment; filename="regresult' + str(uuid4()) + '.xls"'
-            return response
+
         return Response(
             {
+                'uid': str(task.uid),
                 'token': str(token)
             },
             status=status.HTTP_200_OK
