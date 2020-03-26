@@ -19,7 +19,6 @@ from advisors import views as advisor_views
 from django.http import JsonResponse
 
 
-
 class RegisterResultExcelView(generics.RetrieveAPIView):
     """Cоздать запрос на Результат регистрации Excel
         study_year(!), reg_period(!), acad_period, faculty, speciality, edu_prog, course, group
@@ -95,8 +94,6 @@ def make_register_result_rxcel(task):
     #     status_id=student_discipline_status['confirmed'],
     #     study_plan__advisor=profile,
     # )
-    if task.ordering:
-        queryset = queryset.order_by(*task.ordering)
 
     wb = load_workbook('advisors/excel/register_result.xlsx')
     ws = wb.active
@@ -214,6 +211,9 @@ def make_register_result_rxcel(task):
         # queryset = queryset.filter(study_plan__in=study_plan_pks)
 
     distincted_queryset = queryset.filter(**query).distinct('discipline', 'load_type', 'hours', 'language', 'teacher')
+    if task.ordering:
+        distincted_queryset.order_by(*task.ordering)
+
 
     student_discipline_list = []
     for item in distincted_queryset:
@@ -458,6 +458,8 @@ def make_register_statistics_excel(task):
         queryset = queryset.filter(study_plan__in=study_plan_pks)
 
     distincted_queryset = queryset.distinct('discipline', 'study_plan__group')
+    if task.ordering:
+        distincted_queryset = distincted_queryset.order_by(*task.ordering)
 
     student_discipline_list = []
     for student_discipline in distincted_queryset:
@@ -732,6 +734,9 @@ def make_not_registered_student_excel(task):
         'study_plan__group',
         'discipline',
     )
+
+    if task.ordering:
+        distincted_queryset = distincted_queryset.order_by(*task.ordering)
     student_discipline_list = []
     for item in distincted_queryset:
         sds = queryset.filter(
