@@ -1309,6 +1309,9 @@ class NotRegisteredStudentListView(generics.ListAPIView):
               specties.name,
               groupss.name,
               disciplines.name
+              
+              order by %(order_field)s 
+              
             LIMIT %(limit)s OFFSET %(offset)s;
         '''
 
