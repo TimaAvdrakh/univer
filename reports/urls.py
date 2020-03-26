@@ -18,4 +18,5 @@ urlpatterns = [
 
     path('report_list/', views.ReportListView.as_view(),
          name='report_list'),
+    path('get_exel/', views.get_exel, name='get_exel')
 ]
