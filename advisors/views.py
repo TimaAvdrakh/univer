@@ -907,6 +907,7 @@ class RegisterStatisticsView(generics.ListAPIView):
         course = request.query_params.get('course')
         group = request.query_params.get('group')
         page = request.query_params.get('page')
+        order_field = request.query_params.getlist('ordering[]')
 
         count = 0
         link_tmp = '{domain}/{path}/?page={page}&study_year={study_year}&reg_period={reg_period}' \
@@ -996,7 +997,7 @@ class RegisterStatisticsView(generics.ListAPIView):
                                                      FROM organizations_studyyearcourse syc
                                                      WHERE syc.study_year_id = %(study_year)s
                                                      AND syc.course = %(course)s))
-            GROUP BY sp.group_id, sd.discipline_id
+            GROUP BY sp.group_id, sd.discipline_id order by %(order_field)s 
             LIMIT %(limit)s OFFSET %(offset)s;
         '''
 
@@ -1174,7 +1175,6 @@ class NotRegisteredStudentListView(generics.ListAPIView):
         course = request.query_params.get('course')
         group = request.query_params.get('group')
         page = request.query_params.get('page')
-        order_field = request.query_params.getlist('ordering[]')
 
         if not page:
             page = 0
@@ -1309,8 +1309,6 @@ class NotRegisteredStudentListView(generics.ListAPIView):
               specties.name,
               groupss.name,
               disciplines.name
-              
-              order by %(order_field)s 
               
             LIMIT %(limit)s OFFSET %(offset)s;
         '''
