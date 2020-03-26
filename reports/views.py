@@ -874,10 +874,11 @@ class GetExelView(generics.RetrieveAPIView):
     )
 
     def get(self, request, *args, **kwargs):
-        uid = request.query_params.get('uid')
+        token = request.query_params.get('token')
+        get = request.query_params.get('get')
 
         try:
-            task = ExcelTask.objects.get(uid=uid, is_success=True, is_active=True)
+            task = ExcelTask.objects.get(token=token, is_active=True)
             doc_type = task.doc_type
             handler = {
                 1: make_register_result_rxcel,
