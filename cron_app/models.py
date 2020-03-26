@@ -153,6 +153,10 @@ class ExcelTask(BaseTask):
         default='',
         max_length=1000,
     )
+    ordering = models.CharField(
+        default='-uid',
+        max_length=1000
+    )
 
     class Meta:
         verbose_name = 'Ексель файлы'
