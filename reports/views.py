@@ -31,7 +31,7 @@ class RegisterResultExcelView(generics.RetrieveAPIView):
 
             with open(task.file_path, 'rb') as f:
                 response = HttpResponse(f, content_type='application/ms-excel')
-                response['Content-Disposition'] = 'attachment; filename="regresult' + str(task.uid) + '.xls"'
+                response['Content-Disposition'] = 'attachment; filename="' + str(task.file_name) + '"'
                 return response
         else:
             profile = request.user.profile
@@ -268,7 +268,7 @@ def make_register_result_rxcel(task):
         ws[f].border = border
         ws[f].alignment = wrap_left_alignment
 
-    file_name = 'temp_files/regresult{}.xlsx'.format(str(task.uid))
+    file_name = 'temp_files/regresult{}.xlsx'.format(str(uuid4()))
     wb.save(file_name)
 
     task.file_path = file_name
@@ -546,41 +546,52 @@ class NotRegisteredStudentListExcelView(generics.RetrieveAPIView):
     """
 
     def get(self, request, *args, **kwargs):
-        profile = self.request.user.profile
+        if request.query_params.get('uid'):
+            task = ExcelTask.objects.get(uid=request.GET.get('uid'))
+            make_register_result_rxcel(task)
 
-        study_year = self.request.query_params.get('study_year')
-        reg_period = self.request.query_params.get('reg_period')
-        acad_period = self.request.query_params.get('acad_period')
-        faculty = self.request.query_params.get('faculty')
-        speciality = self.request.query_params.get('speciality')
-        edu_prog = self.request.query_params.get('edu_prog')
-        course = self.request.query_params.get('course')
-        group = self.request.query_params.get('group')
+            with open(task.file_path, 'rb') as f:
+                response = HttpResponse(f, content_type='application/ms-excel')
+                response['Content-Disposition'] = 'attachment; filename="' + str(task.file_name) + '"'
+                return response
+        else:
+            profile = self.request.user.profile
+            study_year = self.request.query_params.get('study_year')
+            reg_period = self.request.query_params.get('reg_period')
+            acad_period = self.request.query_params.get('acad_period')
+            faculty = self.request.query_params.get('faculty')
+            speciality = self.request.query_params.get('speciality')
+            edu_prog = self.request.query_params.get('edu_prog')
+            course = self.request.query_params.get('course')
+            group = self.request.query_params.get('group')
+            ordering = request.query_params.getlist('ordering[]')
 
-        fields = {
-            'study_year': study_year,
-            'reg_period': reg_period,
-            'acad_period': acad_period,
-            'faculty': faculty,
-            'speciality': speciality,
-            'edu_prog': edu_prog,
-            'course': course,
-            'group': group,
-        }
-        token = uuid4()
-        fields_json = json.dumps(fields)
-        ExcelTask.objects.create(
-            doc_type=3,
-            profile=profile,
-            token=token,
-            fields=fields_json,
-        )
-        return Response(
-            {
-                'token': str(token)
-            },
-            status=status.HTTP_200_OK
-        )
+            fields = {
+                'study_year': study_year,
+                'reg_period': reg_period,
+                'acad_period': acad_period,
+                'faculty': faculty,
+                'speciality': speciality,
+                'edu_prog': edu_prog,
+                'course': course,
+                'group': group,
+            }
+            token = uuid4()
+            fields_json = json.dumps(fields)
+            task = ExcelTask.objects.create(
+                doc_type=3,
+                profile=profile,
+                token=token,
+                fields=fields_json,
+                ordering=ordering
+            )
+            return Response(
+                {
+                    'uid': str(task.uid),
+                    'token': str(token)
+                },
+                status=status.HTTP_200_OK
+            )
 
 
 def make_not_registered_student_excel(task):
@@ -813,7 +824,7 @@ class GetFileView(generics.RetrieveAPIView):
             elif get == 'file':
                 with open(task.file_path, 'rb') as f:
                     response = HttpResponse(f, content_type='application/ms-excel')
-                    response['Content-Disposition'] = 'attachment; filename="regresult' + str(task.uid) + '.xls"'
+                    response['Content-Disposition'] = 'attachment; filename="regresult' + str(uuid4()) + '.xls"'
                     return response
             else:
                 return Response(
