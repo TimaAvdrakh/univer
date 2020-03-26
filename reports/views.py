@@ -87,10 +87,14 @@ def make_register_result_rxcel(task):
     course = fields.get('course')
     group = fields.get('group')
 
-    queryset = queryset.filter(
-        status_id=student_discipline_status['confirmed'],
-        study_plan__advisor=profile,
-    )
+    query = dict()
+    query['status_id'] = student_discipline_status['confirmed']
+    query['study_plan__advisor_id'] = profile.id
+
+    # queryset = queryset.filter(
+    #     status_id=student_discipline_status['confirmed'],
+    #     study_plan__advisor=profile,
+    # )
     if task.ordering:
         queryset = queryset.order_by(*task.ordering)
 
@@ -141,7 +145,8 @@ def make_register_result_rxcel(task):
     ws['B7'].font = font_small
 
     if faculty:
-        queryset = queryset.filter(study_plan__faculty_id=faculty)
+        query['study_plan__faculty_id'] = faculty
+        # queryset = queryset.filter(study_plan__faculty_id=faculty)
         faculty_obj = org_models.Faculty.objects.get(pk=faculty)
         ws['B8'] = faculty_obj.name
         ws['B8'].alignment = wrap_left_alignment
@@ -150,7 +155,8 @@ def make_register_result_rxcel(task):
     ws['B8'].font = font_small
 
     if speciality:
-        queryset = queryset.filter(study_plan__speciality_id=speciality)
+        query['study_plan__speciality_id'] = speciality
+        # queryset = queryset.filter(study_plan__speciality_id=speciality)
         speciality_obj = org_models.Speciality.objects.get(pk=speciality)
         ws['B9'] = speciality_obj.name
         ws['B9'].alignment = wrap_left_alignment
@@ -159,7 +165,8 @@ def make_register_result_rxcel(task):
     ws['B9'].font = font_small
 
     if edu_prog:
-        queryset = queryset.filter(study_plan__education_program_id=edu_prog)
+        query['study_plan__education_program_id'] = edu_prog
+        # queryset = queryset.filter(study_plan__education_program_id=edu_prog)
         edu_prog_obj = org_models.EducationProgram.objects.get(pk=edu_prog)
         ws['B10'] = edu_prog_obj.name
         ws['B10'].alignment = wrap_left_alignment
@@ -174,7 +181,8 @@ def make_register_result_rxcel(task):
     ws['B11'].font = font_small
 
     if group:
-        queryset = queryset.filter(study_plan__group_id=group)
+        query['study_plan__group_id'] = group
+        # queryset = queryset.filter(study_plan__group_id=group)
         group_obj = org_models.Group.objects.get(pk=group)
         ws['B12'] = group_obj.name
         ws['B12'].alignment = wrap_left_alignment
@@ -193,16 +201,19 @@ def make_register_result_rxcel(task):
         ws['B5'].font = font_small
         ws['B5'].alignment = wrap_left_alignment
 
-        queryset = queryset.filter(study_year_id=study_year)
+        query['study_year_id'] = study_year
+        # queryset = queryset.filter(study_year_id=study_year)
 
     if course and study_year:
         study_plan_pks = org_models.StudyYearCourse.objects.filter(
             study_year_id=study_year,
             course=course
         ).values('study_plan')
-        queryset = queryset.filter(study_plan__in=study_plan_pks)
 
-    distincted_queryset = queryset.distinct('discipline', 'load_type', 'hours', 'language', 'teacher')
+        query['study_plan__in'] = study_plan_pks
+        # queryset = queryset.filter(study_plan__in=study_plan_pks)
+
+    distincted_queryset = queryset.filter(**query).distinct('discipline', 'load_type', 'hours', 'language', 'teacher')
 
     student_discipline_list = []
     for item in distincted_queryset:
