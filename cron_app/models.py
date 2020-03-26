@@ -1,5 +1,6 @@
 from django.db import models
 from common.models import BaseModel
+from django.contrib.postgres.fields import ArrayField
 
 
 class BaseTask(BaseModel):
@@ -153,13 +154,11 @@ class ExcelTask(BaseTask):
         default='',
         max_length=1000,
     )
-    ordering = models.CharField(
-        default='-uid',
-        max_length=1000
+    ordering = ArrayField(
+        models.CharField(max_length=12, blank=True),
+        size=12, default=None, null=True, blank=True
     )
 
     class Meta:
         verbose_name = 'Ексель файлы'
         verbose_name_plural = 'Ексель файлов'
-
-

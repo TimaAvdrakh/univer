@@ -50,7 +50,7 @@ class RegisterResultExcelView(generics.RetrieveAPIView):
             edu_prog = request.query_params.get('edu_prog')
             course = request.query_params.get('course')
             group = request.query_params.get('group')
-            ordering = request.query_params.get('ordering')
+            ordering = request.query_params.getlist('ordering[]')
 
             fields = {
                 'study_year':  study_year,
@@ -104,7 +104,9 @@ def make_register_result_rxcel(task):
     queryset = queryset.filter(
         status_id=student_discipline_status['confirmed'],
         study_plan__advisor=profile,
-    ).order_by(task.ordering)
+    )
+    if task.ordering:
+        queryset = queryset.order_by(*task.ordering)
 
     wb = load_workbook('advisors/excel/register_result.xlsx')
     ws = wb.active
