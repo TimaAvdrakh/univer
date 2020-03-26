@@ -866,6 +866,37 @@ class ReportListView(generics.ListAPIView):
         )
 
 
+class GetExelView(generics.RetrieveAPIView):
+    """Получить готовый файл"""
+    permission_classes = (
+        IsAuthenticated,
+        permissions.ExcelAuthorPermission,
+    )
+
+    def get(self, request, *args, **kwargs):
+        uid = request.query_params.get('uid')
+
+        try:
+            task = ExcelTask.objects.get(uid=uid, is_success=True, is_active=True)
+            doc_type = task.doc_type
+            handler = {
+                1: make_register_result_rxcel,
+                2: make_register_statistics_excel,
+                3: make_not_registered_student_excel,
+                4: advisor_views.make_iup_bid_excel,
+                5: advisor_views.make_iup_excel,
+            }
+            handler[doc_type](task)
+            with open(task.file_path, 'rb') as f:
+                response = HttpResponse(f, content_type='application/ms-excel')
+                response['Content-Disposition'] = 'attachment; filename="' + str(task.file_name) + '"'
+                return response
+        except:
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+
+
+
+
 def get_exel(request):
     if request.GET.get('uid'):
         task = ExcelTask.objects.get(uid=request.GET.get('uid'))
