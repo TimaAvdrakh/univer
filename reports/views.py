@@ -27,18 +27,11 @@ class RegisterResultExcelView(generics.RetrieveAPIView):
     def get(self, request, *args, **kwargs):
         if request.query_params.get('uid'):
             task = ExcelTask.objects.get(uid=request.GET.get('uid'))
-            doc_type = task.doc_type
-            handler = {
-                1: make_register_result_rxcel,
-                2: make_register_statistics_excel,
-                3: make_not_registered_student_excel,
-                4: advisor_views.make_iup_bid_excel,
-                5: advisor_views.make_iup_excel,
-            }
-            handler[doc_type](task)
+            make_register_result_rxcel(task)
+
             with open(task.file_path, 'rb') as f:
                 response = HttpResponse(f, content_type='application/ms-excel')
-                response['Content-Disposition'] = 'attachment; filename="regresult' + str(uuid4()) + '.xls"'
+                response['Content-Disposition'] = 'attachment; filename="regresult' + str(task.uid) + '.xls"'
                 return response
         else:
             profile = request.user.profile
@@ -275,7 +268,7 @@ def make_register_result_rxcel(task):
         ws[f].border = border
         ws[f].alignment = wrap_left_alignment
 
-    file_name = 'temp_files/regresult{}.xlsx'.format(str(uuid4()))
+    file_name = 'temp_files/regresult{}.xlsx'.format(str(task.uid))
     wb.save(file_name)
 
     task.file_path = file_name
@@ -820,7 +813,7 @@ class GetFileView(generics.RetrieveAPIView):
             elif get == 'file':
                 with open(task.file_path, 'rb') as f:
                     response = HttpResponse(f, content_type='application/ms-excel')
-                    response['Content-Disposition'] = 'attachment; filename="regresult' + str(uuid4()) + '.xls"'
+                    response['Content-Disposition'] = 'attachment; filename="regresult' + str(task.uid) + '.xls"'
                     return response
             else:
                 return Response(
