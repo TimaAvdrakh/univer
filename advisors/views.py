@@ -752,6 +752,7 @@ class RegisterResultView(generics.ListAPIView):
         study_year = request.query_params.get('study_year')
         course = request.query_params.get('course')
 
+
         if course and study_year:
             query['study_plan__in'] = org_models.StudyYearCourse.objects.filter(
                 study_year_id=study_year,
@@ -759,7 +760,10 @@ class RegisterResultView(generics.ListAPIView):
             ).values('study_plan')
 
         distincted_queryset = queryset.filter(**query).distinct(
-            'discipline', 'load_type', 'hours', 'language', 'teacher', )
+            'discipline', 'load_type', 'hours', 'language', 'teacher')
+
+        if request.query_params.getlist('ordering[]'):
+            distincted_queryset = distincted_queryset.order_by(*request.query_params.getlist('ordering[]'))
         # print(distincted_queryset)
         page = self.paginate_queryset(distincted_queryset)
         # print(page, 'page')
@@ -1170,6 +1174,8 @@ class NotRegisteredStudentListView(generics.ListAPIView):
         course = request.query_params.get('course')
         group = request.query_params.get('group')
         page = request.query_params.get('page')
+        ordering = request.query_params.getlist('ordering[]')
+
         if not page:
             page = 0
 
@@ -1266,44 +1272,45 @@ class NotRegisteredStudentListView(generics.ListAPIView):
         #     '''
         query = '''
             SELECT sp.faculty_id, faks.name,
-                   sp.cathedra_id,          cathedras.name,
-                   sp.speciality_id,        specties.name,
-                   sp.group_id,             groupss.name,
-                   sd.discipline_id,        disciplines.name,
-                   string_agg(CONCAT(p.last_name, ' ', p.first_name, ' ', p.middle_name), ',') 
-                FROM organizations_studentdiscipline sd
-                INNER JOIN organizations_studyplan sp on sd.study_plan_id = sp.uid
-                INNER JOIN portal_users_profile p on sp.student_id = p.uid
-                INNER JOIN organizations_discipline d on sd.discipline_id = d.uid
-                inner join organizations_faculty  as faks  on sp.faculty_id = faks.uid
-                inner join organizations_cathedra  as cathedras  on sp.cathedra_id = cathedras.uid
-                inner join organizations_speciality as specties on sp.speciality_id = specties.uid
-                inner join organizations_group as groupss on sp.group_id = groupss.uid
-                inner join organizations_discipline as disciplines on sd.discipline_id = disciplines.uid
-                INNER JOIN portal_users_studentstatus ss on p.status_id = ss.uid
-                WHERE sp.advisor_id=%(advisor_id)s
-                AND sd.status_id=%(status_id)s
-                AND ss.uid != %(student_status_id)s
-                AND (%(reg_period)s is null or sd.acad_period_id IN (SELECT coursperm.acad_period_id
-                                                                     FROM common_courseacadperiodpermission coursperm
-                                                                     WHERE coursperm.registration_period_id=%(reg_period)s))
-                AND (%(acad_per)s is null or sd.acad_period_id=%(acad_per)s)
-                AND (%(faculty)s is null or sp.faculty_id=%(faculty)s)
-                AND (%(speciality)s is null or sp.speciality_id=%(speciality)s)
-                AND (%(edu_prog)s is null or sp.education_program_id=%(edu_prog)s)
-                AND (%(group1)s is null or sp.group_id=%(group1)s)
-                AND (%(study_year)s is null or sd.study_year_id=%(study_year)s)
-                AND (%(is_course)s is null or sp.uid IN (SELECT syc.study_plan_id
-                                                         FROM organizations_studyyearcourse syc
-                                                         WHERE syc.study_year_id = %(study_year)s
-                                                         AND syc.course = %(course)s))
-                GROUP BY sp.faculty_id, sp.cathedra_id, sp.speciality_id, sp.group_id, sd.discipline_id,
-                  faks.name,
-                  cathedras.name,
-                  specties.name,
-                  groupss.name,
-                  disciplines.name
-                LIMIT %(limit)s OFFSET %(offset)s;'''
+               sp.cathedra_id,          cathedras.name,
+               sp.speciality_id,        specties.name,
+               sp.group_id,             groupss.name,
+               sd.discipline_id,        disciplines.name,
+               string_agg(CONCAT(p.last_name, ' ', p.first_name, ' ', p.middle_name), ',') 
+            FROM organizations_studentdiscipline sd
+            INNER JOIN organizations_studyplan sp on sd.study_plan_id = sp.uid
+            INNER JOIN portal_users_profile p on sp.student_id = p.uid
+            INNER JOIN organizations_discipline d on sd.discipline_id = d.uid
+            inner join organizations_faculty  as faks  on sp.faculty_id = faks.uid
+            inner join organizations_cathedra  as cathedras  on sp.cathedra_id = cathedras.uid
+            inner join organizations_speciality as specties on sp.speciality_id = specties.uid
+            inner join organizations_group as groupss on sp.group_id = groupss.uid
+            inner join organizations_discipline as disciplines on sd.discipline_id = disciplines.uid
+            INNER JOIN portal_users_studentstatus ss on p.status_id = ss.uid
+            WHERE sp.advisor_id=%(advisor_id)s
+            AND sd.status_id=%(status_id)s
+            AND ss.uid != %(student_status_id)s
+            AND (%(reg_period)s is null or sd.acad_period_id IN (SELECT coursperm.acad_period_id
+                                                                 FROM common_courseacadperiodpermission coursperm
+                                                                 WHERE coursperm.registration_period_id=%(reg_period)s))
+            AND (%(acad_per)s is null or sd.acad_period_id=%(acad_per)s)
+            AND (%(faculty)s is null or sp.faculty_id=%(faculty)s)
+            AND (%(speciality)s is null or sp.speciality_id=%(speciality)s)
+            AND (%(edu_prog)s is null or sp.education_program_id=%(edu_prog)s)
+            AND (%(group1)s is null or sp.group_id=%(group1)s)
+            AND (%(study_year)s is null or sd.study_year_id=%(study_year)s)
+            AND (%(is_course)s is null or sp.uid IN (SELECT syc.study_plan_id
+                                                     FROM organizations_studyyearcourse syc
+                                                     WHERE syc.study_year_id = %(study_year)s
+                                                     AND syc.course = %(course)s))
+            GROUP BY sp.faculty_id, sp.cathedra_id, sp.speciality_id, sp.group_id, sd.discipline_id,
+              faks.name,
+              cathedras.name,
+              specties.name,
+              groupss.name,
+              disciplines.name
+            LIMIT %(limit)s OFFSET %(offset)s;
+        '''
 
         with connection.cursor() as cursor:
             cursor.execute(query,
