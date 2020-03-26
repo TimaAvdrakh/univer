@@ -1174,7 +1174,7 @@ class NotRegisteredStudentListView(generics.ListAPIView):
         course = request.query_params.get('course')
         group = request.query_params.get('group')
         page = request.query_params.get('page')
-        ordering = request.query_params.getlist('ordering[]')
+        order_field = request.query_params.getlist('ordering[]')
 
         if not page:
             page = 0
