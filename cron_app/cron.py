@@ -302,7 +302,6 @@ class SendStudentDisciplinesTo1CJob(CronJobBase):
         sds = sds.filter(
             student__in=sds[:1].values('student'),
         )
-        print("Working", sds.count())
         disciplines = []
         for sd in sds:
             item = {
@@ -327,7 +326,6 @@ class SendStudentDisciplinesTo1CJob(CronJobBase):
             auth=HTTPBasicAuth('Администратор'.encode(), 'qwe123rty'),
             timeout=30,
         )
-        print(resp.status_code)
         if resp.status_code == 200:
             print("Connected")
             resp_data = resp.json()
@@ -337,7 +335,6 @@ class SendStudentDisciplinesTo1CJob(CronJobBase):
                 #     sent_data_json = json.dumps(sent_data)
                 # except IndexError:
                 #     sent_data_json = ''
-                print(item)
                 log = DocumentChangeLog(
                     content_type_id=CONTENT_TYPES['studentdiscipline'],
                     object_id=item['uid_site'],
