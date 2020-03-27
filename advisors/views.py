@@ -891,9 +891,6 @@ class RegisterStatisticsView(views.APIView):
     """Статистика регистрации
     study_year(!), reg_period(!), acad_period, faculty, speciality, edu_prog, course, group
     """
-    # serializer_class = serializers.RegisterStatisticsSerializer
-    # queryset = org_models.StudentDiscipline.objects.filter(is_active=True)
-    # pagination_class = CustomPagination
 
     def get(self, request, *args, **kwargs):
         profile = request.user.profile
@@ -1020,9 +1017,6 @@ class RegisterStatisticsView(views.APIView):
                 is_active=True,
             ).distinct('student').count()
 
-            # d = cache.get("getstudentdisciplinedetaildata" + str(first_sd))
-
-            # if d is None:
             d = {
                 'faculty': org_models.StudentDiscipline.objects.get(pk=first_sd).study_plan.faculty.name,
                 'cathedra': org_models.StudentDiscipline.objects.get(pk=first_sd).study_plan.cathedra.name,
@@ -1033,19 +1027,7 @@ class RegisterStatisticsView(views.APIView):
                 'not_chosen_student_count': not_chosen_student_count,
                 'percent_of_non_chosen_student': (not_chosen_student_count / group_student_count) * 100,
             }
-                # cache.set("getstudentdisciplinedetaildata" + str(first_sd), d)
             student_discipline_list.append(d)
-
-        # for student_discipline in distincted_queryset:
-        #     group_student_count = org_models.StudyPlan.objects.filter(
-        #         group=student_discipline.study_plan.group,
-        #         is_active=True,
-        #     ).distinct('student').count()
-        #
-        #     not_chosen_student_count = queryset.filter(
-        #         study_plan__group=student_discipline.study_plan.group,
-        #         discipline=student_discipline.discipline
-        #     ).distinct('student').count()
 
         resp = {
             "count": count,

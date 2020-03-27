@@ -839,14 +839,6 @@ class StudentDiscipline(BaseModel):
 
         super(StudentDiscipline, self).save(*args, **kwargs)
 
-    # @property
-    # def credit(self):
-    #     """Возвращает кредит дисциплины""" Note: старое свойство
-    #     return calculate_credit(self.discipline,
-    #                             self.student,
-    #                             self.acad_period,
-    #                             self.cycle)
-
     @property
     def control_form(self):
         try:
@@ -906,7 +898,6 @@ class StudentDiscipline(BaseModel):
                 'control_form': list(
                     discipline_credit.disciplinecreditcontrolform_set.filter(is_active=True).values('control_form__name', 'uid'))
             }
-
 
     @property
     def credit(self):
