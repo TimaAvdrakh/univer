@@ -18,6 +18,8 @@ import json
 from reports import views as report_views
 from advisors import views as advisor_views
 from common import models as common_models
+import urllib3
+import certifi
 
 
 class EmailCronJob(CronJobBase):
@@ -296,8 +298,11 @@ class SendStudentDisciplinesTo1CJob(CronJobBase):
             status_id=status,
             teacher__isnull=False,
             sent=False,
-        )[:5]
-
+        )
+        sds = sds.filter(
+            student__in=sds[:1].values('student'),
+        )
+        print("Working", sds.count())
         disciplines = []
         for sd in sds:
             item = {
@@ -314,7 +319,7 @@ class SendStudentDisciplinesTo1CJob(CronJobBase):
                 'isopt': str(sd.component.uid) == component_by_choose_uid if sd.component else False,
             }
             disciplines.append(item)
-
+        urllib3.disable_warnings()
         resp = requests.post(
             url,
             json=disciplines,
@@ -322,8 +327,9 @@ class SendStudentDisciplinesTo1CJob(CronJobBase):
             auth=HTTPBasicAuth('Администратор'.encode(), 'qwe123rty'),
             timeout=30,
         )
-
+        print(resp.status_code)
         if resp.status_code == 200:
+            print("Connected")
             resp_data = resp.json()
             for item in resp_data:
                 # try:
@@ -331,12 +337,12 @@ class SendStudentDisciplinesTo1CJob(CronJobBase):
                 #     sent_data_json = json.dumps(sent_data)
                 # except IndexError:
                 #     sent_data_json = ''
-
+                print(item)
                 log = DocumentChangeLog(
                     content_type_id=CONTENT_TYPES['studentdiscipline'],
                     object_id=item['uid_site'],
                     status=item['code'],
-                    # sent_data=sent_data_json,
+                    # sent_data=item['json'],
                 )
                 error_text = ''
                 for error in item['errors']:
@@ -357,6 +363,7 @@ class SendStudentDisciplinesTo1CJob(CronJobBase):
         else:
             message = '{}\n{}'.format(resp.status_code,
                                       resp.content.decode())
+            print(message)
             for chat_id in BOT_DEV_CHAT_IDS:
                 bot.send_message(chat_id,
                                  message)
