@@ -907,7 +907,7 @@ class RegisterStatisticsView(generics.ListAPIView):
         course = request.query_params.get('course')
         group = request.query_params.get('group')
         page = request.query_params.get('page')
-        order_field = request.query_params.getlist('ordering')
+        ordering = request.query_params.getlist('ordering')
         # for x in request.query_params.getlist('ordering[]'):
         #     val = ''
         #     if x[0] == '-':
@@ -922,7 +922,7 @@ class RegisterStatisticsView(generics.ListAPIView):
         count = 0
         link_tmp = '{domain}/{path}/?page={page}&study_year={study_year}&reg_period={reg_period}' \
                    '&acad_period={acad_period}&faculty={faculty}&speciality={speciality}' \
-                   '&edu_prog={edu_prog}&course={course}&group={group}&'
+                   '&edu_prog={edu_prog}&course={course}&group={group}&ordering={}'
 
         next_link = link_tmp.format(domain=current_site,
                                     path='api/v1/advisors/registration/statistics',
@@ -934,7 +934,9 @@ class RegisterStatisticsView(generics.ListAPIView):
                                     speciality=speciality,
                                     edu_prog=edu_prog,
                                     course=course,
-                                    group=group, )
+                                    group=group,
+                                    ordering=ordering
+                                    )
 
         prev_link = link_tmp.format(domain=current_site,
                                     path='api/v1/advisors/registration/statistics',
@@ -946,7 +948,8 @@ class RegisterStatisticsView(generics.ListAPIView):
                                     speciality=speciality,
                                     edu_prog=edu_prog,
                                     course=course,
-                                    group=group, )
+                                    group=group,
+                                    ordering=ordering)
 
         limit = 10
         offset = 0
@@ -980,9 +983,10 @@ class RegisterStatisticsView(generics.ListAPIView):
             'course': course,
             'reg_period': reg_period,
             'offset': offset,
+            'order_field': ordering,
             'limit': limit,
             'student_status_id': STUDENT_STATUSES['expelled'],
-            'order_field': order_field
+
         }
 
         query = '''
