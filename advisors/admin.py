@@ -13,12 +13,13 @@ class AdvisorCheckAdmin(admin.ModelAdmin):
 
 
 @admin.register(models.ThemesOfTheses)
-class InterestAdmin(admin.ModelAdmin):
+class ThemesOfThesesAdmin(admin.ModelAdmin):
+    list_display = ['__str__', 'uid_1c']
+    list_editable = ['uid_1c']
     autocomplete_fields = (
         'supervisors',
         'student',
         'acad_period',
-        'study_plan'
     )
     search_fields = (
         'uid',

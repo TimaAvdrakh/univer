@@ -38,10 +38,11 @@ class AdvisorCheck(BaseIdModel):
 
 
 class ThemesOfTheses(BaseCatalog):
-    study_plan = models.ForeignKey(
-        org_models.StudyPlan,
-        on_delete=models.CASCADE,
-        verbose_name='Учебный план')
+    uid_1c = models.CharField(
+        max_length=100,
+        null=True,
+        verbose_name='uid 1C',
+    )
     acad_period = models.ForeignKey(
         'organizations.AcadPeriod',
         on_delete=models.CASCADE,
@@ -51,20 +52,29 @@ class ThemesOfTheses(BaseCatalog):
         null=True,
         on_delete=models.SET_NULL,
         related_name='student_themes_theses',
-        verbose_name='Обучающийся')
+        verbose_name='Обучающийся',
+        blank=True
+    )
     supervisors = models.ManyToManyField(
         user_models.Profile,
         related_name='supervisors_themes_theses',
         verbose_name='Руководители')
-    supervisor_leader = models.CharField(
+    supervisor_leader = models.TextField(
         verbose_name='Руководитель извне',
-        max_length=1000,
         null=True,
         blank=True)
 
     def __str__(self):
-        return '{} - {} - {}'.format(self.student, self.study_plan, self.acad_period)
+        return '{} - {}'.format(self.student, self.acad_period)
+
+    @property
+    def supervisors_text(self):
+        text = ""
+        for x in self.supervisors.all():
+            text += '{} {} {}, '.format(x.last_name, x.first_name, x.middle_name)
+        return text[0:-2]
 
     class Meta:
+        unique_together = [['uid_1c', 'student']]
         verbose_name = 'Тема дипломной работы'
         verbose_name_plural = 'Темы дипломных работ'
