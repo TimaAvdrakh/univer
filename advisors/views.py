@@ -891,9 +891,9 @@ class RegisterStatisticsView(generics.ListAPIView):
     """Статистика регистрации
     study_year(!), reg_period(!), acad_period, faculty, speciality, edu_prog, course, group
     """
-    serializer_class = serializers.RegisterStatisticsSerializer
-    queryset = org_models.StudentDiscipline.objects.filter(is_active=True)
-    pagination_class = CustomPagination
+    # serializer_class = serializers.RegisterStatisticsSerializer
+    # queryset = org_models.StudentDiscipline.objects.filter(is_active=True)
+    # pagination_class = CustomPagination
 
     def list(self, request, *args, **kwargs):
         profile = request.user.profile
@@ -907,7 +907,6 @@ class RegisterStatisticsView(generics.ListAPIView):
         course = request.query_params.get('course')
         group = request.query_params.get('group')
         page = request.query_params.get('page')
-        ordering = request.query_params.get('ordering')
 
         count = 0
         link_tmp = '{domain}/{path}/?page={page}&study_year={study_year}&reg_period={reg_period}' \
@@ -972,7 +971,6 @@ class RegisterStatisticsView(generics.ListAPIView):
             'course': course,
             'reg_period': reg_period,
             'offset': offset,
-            # 'order_field': ordering,
             'limit': limit,
             'student_status_id': STUDENT_STATUSES['expelled'],
 
@@ -1008,8 +1006,6 @@ class RegisterStatisticsView(generics.ListAPIView):
         with connection.cursor() as cursor:
             cursor.execute(query, params)
             rows = cursor.fetchall()
-
-        # distincted_queryset = queryset.distinct('discipline', 'study_plan__group')
 
         student_discipline_list = []
         for row in rows:
