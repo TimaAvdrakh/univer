@@ -1012,7 +1012,8 @@ class RegisterStatisticsView(generics.ListAPIView):
                                                      FROM organizations_studyyearcourse syc
                                                      WHERE syc.study_year_id = %(study_year)s
                                                      AND syc.course = %(course)s))
-            GROUP BY sp.group_id, sd.discipline_id order by %(order_field)s 
+            GROUP BY sp.group_id, sd.discipline_id 
+            order by %(order_field)s 
             LIMIT %(limit)s OFFSET %(offset)s;
         '''
 
