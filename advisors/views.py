@@ -907,14 +907,14 @@ class RegisterStatisticsView(generics.ListAPIView):
         course = request.query_params.get('course')
         group = request.query_params.get('group')
         page = request.query_params.get('page')
-        order_field = ''
-        for x in request.query_params.getlist('ordering[]'):
-            val = ''
-            if x[0] == '-':
-                val += x + ' ASC, '
-            else:
-                val += x + ' DESC, '
-            order_field += val
+        order_field = request.query_params.getlist('ordering')
+        # for x in request.query_params.getlist('ordering[]'):
+        #     val = ''
+        #     if x[0] == '-':
+        #         val += x + ' ASC, '
+        #     else:
+        #         val += x + ' DESC, '
+        #     order_field += val
 
 
 
@@ -982,6 +982,7 @@ class RegisterStatisticsView(generics.ListAPIView):
             'offset': offset,
             'limit': limit,
             'student_status_id': STUDENT_STATUSES['expelled'],
+            'order_field': order_field
         }
 
         query = '''
