@@ -887,15 +887,15 @@ class RegisterResultView(generics.ListAPIView):
 #             return self.get_paginated_response(serializer.data)
 
 
-class RegisterStatisticsView(generics.ListAPIView):
+class RegisterStatisticsView(views.APIView):
     """Статистика регистрации
     study_year(!), reg_period(!), acad_period, faculty, speciality, edu_prog, course, group
     """
     # serializer_class = serializers.RegisterStatisticsSerializer
     # queryset = org_models.StudentDiscipline.objects.filter(is_active=True)
-    pagination_class = CustomPagination
+    # pagination_class = CustomPagination
 
-    def list(self, request, *args, **kwargs):
+    def get(self, request, *args, **kwargs):
         profile = request.user.profile
 
         study_year = request.query_params.get('study_year')
