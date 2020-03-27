@@ -893,7 +893,7 @@ class RegisterStatisticsView(generics.ListAPIView):
     """
     # serializer_class = serializers.RegisterStatisticsSerializer
     # queryset = org_models.StudentDiscipline.objects.filter(is_active=True)
-    # pagination_class = CustomPagination
+    pagination_class = CustomPagination
 
     def list(self, request, *args, **kwargs):
         profile = request.user.profile
