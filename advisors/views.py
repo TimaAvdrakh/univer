@@ -1017,9 +1017,7 @@ class RegisterStatisticsView(generics.ListAPIView):
         '''
 
         with connection.cursor() as cursor:
-            cursor.execute(query,
-                           params)
-
+            cursor.execute(query, params)
             rows = cursor.fetchall()
 
         # distincted_queryset = queryset.distinct('discipline', 'study_plan__group')
