@@ -907,7 +907,17 @@ class RegisterStatisticsView(generics.ListAPIView):
         course = request.query_params.get('course')
         group = request.query_params.get('group')
         page = request.query_params.get('page')
-        order_field = request.query_params.getlist('ordering[]')
+        order_field = ''
+        for x in request.query_params.getlist('ordering[]'):
+            val = ''
+            if x[0] == '-':
+                val += x + ' ASC, '
+            else:
+                val += x + ' DESC, '
+            order_field += val
+
+
+
 
         count = 0
         link_tmp = '{domain}/{path}/?page={page}&study_year={study_year}&reg_period={reg_period}' \
@@ -1309,7 +1319,6 @@ class NotRegisteredStudentListView(generics.ListAPIView):
               specties.name,
               groupss.name,
               disciplines.name
-              
             LIMIT %(limit)s OFFSET %(offset)s;
         '''
 
