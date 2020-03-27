@@ -907,7 +907,7 @@ class RegisterStatisticsView(generics.ListAPIView):
         course = request.query_params.get('course')
         group = request.query_params.get('group')
         page = request.query_params.get('page')
-        ordering = request.query_params.getlist('ordering')
+        ordering = request.query_params.get('ordering')
         # for x in request.query_params.getlist('ordering[]'):
         #     val = ''
         #     if x[0] == '-':
