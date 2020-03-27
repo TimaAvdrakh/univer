@@ -922,7 +922,7 @@ class RegisterStatisticsView(generics.ListAPIView):
         count = 0
         link_tmp = '{domain}/{path}/?page={page}&study_year={study_year}&reg_period={reg_period}' \
                    '&acad_period={acad_period}&faculty={faculty}&speciality={speciality}' \
-                   '&edu_prog={edu_prog}&course={course}&group={group}&ordering={}'
+                   '&edu_prog={edu_prog}&course={course}&group={group}&ordering={ordering}'
 
         next_link = link_tmp.format(domain=current_site,
                                     path='api/v1/advisors/registration/statistics',
