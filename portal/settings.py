@@ -20,6 +20,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'rest_framework',
     'common',
     'portal_users',
     'rest_framework_swagger',
@@ -37,7 +38,7 @@ INSTALLED_APPS = [
     'univer_admin',
     'student_journal',
     'integration',
-    'abiturient'
+    'applicant'
 ]
 
 MIDDLEWARE = [
@@ -96,7 +97,8 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'ru-ru'
 
-TIME_ZONE = 'UTC'
+# TIME_ZONE = 'UTC'
+TIME_ZONE = 'Asia/Almaty'
 
 USE_I18N = True
 
@@ -133,7 +135,10 @@ REST_FRAMEWORK = {
         'rest_framework.parsers.MultiPartParser',
         # 'rest_framework.parsers.FileUploadParser',
     ),
-    'DEFAULT_SCHEMA_CLASS': 'rest_framework.schemas.coreapi.AutoSchema'
+    'DEFAULT_SCHEMA_CLASS': 'rest_framework.schemas.coreapi.AutoSchema',
+    'DATE_INPUT_FORMATS': ['%d.%m.%Y'],
+    'DATE_FORMAT': '%d.%m.%Y',
+    'DATETIME_FORMAT': '%d.%m.%Y %H:%I:%S'
 }
 
 CORS_ORIGIN_ALLOW_ALL = True
