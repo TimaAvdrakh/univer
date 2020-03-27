@@ -908,21 +908,11 @@ class RegisterStatisticsView(generics.ListAPIView):
         group = request.query_params.get('group')
         page = request.query_params.get('page')
         ordering = request.query_params.get('ordering')
-        # for x in request.query_params.getlist('ordering[]'):
-        #     val = ''
-        #     if x[0] == '-':
-        #         val += x + ' ASC, '
-        #     else:
-        #         val += x + ' DESC, '
-        #     order_field += val
-
-
-
 
         count = 0
         link_tmp = '{domain}/{path}/?page={page}&study_year={study_year}&reg_period={reg_period}' \
                    '&acad_period={acad_period}&faculty={faculty}&speciality={speciality}' \
-                   '&edu_prog={edu_prog}&course={course}&group={group}&ordering={ordering}'
+                   '&edu_prog={edu_prog}&course={course}&group={group}'
 
         next_link = link_tmp.format(domain=current_site,
                                     path='api/v1/advisors/registration/statistics',
@@ -935,7 +925,6 @@ class RegisterStatisticsView(generics.ListAPIView):
                                     edu_prog=edu_prog,
                                     course=course,
                                     group=group,
-                                    ordering=ordering
                                     )
 
         prev_link = link_tmp.format(domain=current_site,
@@ -949,7 +938,7 @@ class RegisterStatisticsView(generics.ListAPIView):
                                     edu_prog=edu_prog,
                                     course=course,
                                     group=group,
-                                    ordering=ordering)
+                                    )
 
         limit = 10
         offset = 0
@@ -983,7 +972,7 @@ class RegisterStatisticsView(generics.ListAPIView):
             'course': course,
             'reg_period': reg_period,
             'offset': offset,
-            'order_field': ordering,
+            # 'order_field': ordering,
             'limit': limit,
             'student_status_id': STUDENT_STATUSES['expelled'],
 
@@ -1013,7 +1002,6 @@ class RegisterStatisticsView(generics.ListAPIView):
                                                      WHERE syc.study_year_id = %(study_year)s
                                                      AND syc.course = %(course)s))
             GROUP BY sp.group_id, sd.discipline_id 
-            order by %(order_field)s 
             LIMIT %(limit)s OFFSET %(offset)s;
         '''
 
@@ -1036,20 +1024,20 @@ class RegisterStatisticsView(generics.ListAPIView):
                 is_active=True,
             ).distinct('student').count()
 
-            d = cache.get("getstudentdisciplinedetaildata" + str(first_sd))
+            # d = cache.get("getstudentdisciplinedetaildata" + str(first_sd))
 
-            if d is None:
-                d = {
-                    'faculty': org_models.StudentDiscipline.objects.get(pk=first_sd).study_plan.faculty.name,
-                    'cathedra': org_models.StudentDiscipline.objects.get(pk=first_sd).study_plan.cathedra.name,
-                    'speciality': org_models.StudentDiscipline.objects.get(pk=first_sd).study_plan.speciality.name,
-                    'group': org_models.Group.objects.get(pk=group_id).name,
-                    'student_count': group_student_count,
-                    'discipline': org_models.Discipline.objects.get(pk=discipline_id).name,
-                    'not_chosen_student_count': not_chosen_student_count,
-                    'percent_of_non_chosen_student': (not_chosen_student_count / group_student_count) * 100,
-                }
-                cache.set("getstudentdisciplinedetaildata" + str(first_sd), d)
+            # if d is None:
+            d = {
+                'faculty': org_models.StudentDiscipline.objects.get(pk=first_sd).study_plan.faculty.name,
+                'cathedra': org_models.StudentDiscipline.objects.get(pk=first_sd).study_plan.cathedra.name,
+                'speciality': org_models.StudentDiscipline.objects.get(pk=first_sd).study_plan.speciality.name,
+                'group': org_models.Group.objects.get(pk=group_id).name,
+                'student_count': group_student_count,
+                'discipline': org_models.Discipline.objects.get(pk=discipline_id).name,
+                'not_chosen_student_count': not_chosen_student_count,
+                'percent_of_non_chosen_student': (not_chosen_student_count / group_student_count) * 100,
+            }
+                # cache.set("getstudentdisciplinedetaildata" + str(first_sd), d)
             student_discipline_list.append(d)
 
         # for student_discipline in distincted_queryset:
