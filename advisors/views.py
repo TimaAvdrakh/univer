@@ -852,10 +852,10 @@ class RegisterStatisticsView(generics.ListAPIView):
             ).values('study_plan')
             query['study_plan__in'] = study_plan_pks
         # filter(**query)
-        queryset = queryset.filter(**query).distinct('discipline', 'study_plan__group')
+        queryset = queryset.filter(**query)
         if request.query_params.getlist('ordering[]'):
             queryset = queryset.order_by(*request.query_params.getlist('ordering[]'))
-
+        queryset = queryset.distinct('discipline', 'study_plan__group')
         distincted_queryset = queryset.values(
             'uid',
             'study_plan__group_id',
@@ -869,32 +869,28 @@ class RegisterStatisticsView(generics.ListAPIView):
         student_discipline_list = []
         page = self.paginate_queryset(distincted_queryset)
         for student_discipline in page:
-            try:
-                group_student_count = org_models.StudyPlan.objects.filter(
-                    group_id=student_discipline['study_plan__group_id'],
-                    is_active=True,
-                ).distinct('student').count()
+            group_student_count = org_models.StudyPlan.objects.filter(
+                group_id=student_discipline['study_plan__group_id'],
+                is_active=True,
+            ).distinct('student').count()
 
-                not_chosen_student_count = queryset.filter(
-                    study_plan__group_id=student_discipline['study_plan__group_id'],
-                    discipline_id=student_discipline['discipline_id']
-                ).distinct('student').count()
+            not_chosen_student_count = queryset.filter(
+                study_plan__group_id=student_discipline['study_plan__group_id'],
+                discipline_id=student_discipline['discipline_id']
+            ).distinct('student').count()
 
-                d = {
-                    'uid': student_discipline['uid'],
-                    'faculty': student_discipline['study_plan__faculty__name'],
-                    'cathedra': student_discipline['study_plan__cathedra__name'],
-                    'speciality': student_discipline['study_plan__speciality__name'],
-                    'group': student_discipline['study_plan__group__name'],
-                    'student_count': group_student_count,
-                    'discipline': student_discipline['discipline__name'],
-                    'not_chosen_student_count': not_chosen_student_count,
-                    'percent_of_non_chosen_student': (not_chosen_student_count / group_student_count) * 100,
+            d = {
+                'uid': student_discipline['uid'],
+                'faculty': student_discipline['study_plan__faculty__name'],
+                'cathedra': student_discipline['study_plan__cathedra__name'],
+                'speciality': student_discipline['study_plan__speciality__name'],
+                'group': student_discipline['study_plan__group__name'],
+                'student_count': group_student_count,
+                'discipline': student_discipline['discipline__name'],
+                'not_chosen_student_count': not_chosen_student_count,
+                'percent_of_non_chosen_student': (not_chosen_student_count / group_student_count) * 100,
                 }
-            except:
-                d = {
-                    'uid': student_discipline['uid']
-                }
+
             student_discipline_list.append(d)
 
         # page = self.paginate_queryset(student_discipline_list)
