@@ -800,90 +800,100 @@ class RegisterResultView(generics.ListAPIView):
             return self.get_paginated_response(serializer.data)
 
 
-# class RegisterStatisticsView(generics.ListAPIView):
-#     """Статистика регистрации
-#     study_year(!), reg_period(!), acad_period, faculty, speciality, edu_prog, course, group
-#     """
-#     serializer_class = serializers.RegisterStatisticsSerializer
-#     queryset = org_models.StudentDiscipline.objects.filter(is_active=True)
-#     pagination_class = CustomPagination
-#
-#     def list(self, request, *args, **kwargs):
-#         profile = request.user.profile
-#
-#         study_year = request.query_params.get('study_year')
-#         reg_period = request.query_params.get('reg_period')
-#         acad_period = request.query_params.get('acad_period')
-#         faculty = request.query_params.get('faculty')
-#         speciality = request.query_params.get('speciality')
-#         edu_prog = request.query_params.get('edu_prog')
-#         course = request.query_params.get('course')
-#         group = request.query_params.get('group')
-#
-#         queryset = self.queryset.all()
-#         queryset = queryset.filter(
-#             status_id=student_discipline_status['not_chosen'],
-#             study_plan__advisor=profile,
-#         )
-#
-#         if acad_period:
-#             queryset = queryset.filter(acad_period_id=acad_period)
-#         elif reg_period:
-#             acad_period_pks = common_models.CourseAcadPeriodPermission.objects.filter(
-#                 registration_period_id=reg_period,
-#                 # course=course
-#             ).values('acad_period')
-#             queryset = queryset.filter(acad_period__in=acad_period_pks)
-#
-#         if faculty:
-#             queryset = queryset.filter(study_plan__faculty_id=faculty)
-#         if speciality:
-#             queryset = queryset.filter(study_plan__speciality_id=speciality)
-#         if edu_prog:
-#             queryset = queryset.filter(study_plan__education_program_id=edu_prog)
-#         if group:
-#             queryset = queryset.filter(study_plan__group_id=group)
-#         if study_year:
-#             queryset = queryset.filter(study_year_id=study_year)
-#
-#         if course and study_year:
-#             study_plan_pks = org_models.StudyYearCourse.objects.filter(
-#                 study_year_id=study_year,
-#                 course=course
-#             ).values('study_plan')
-#             queryset = queryset.filter(study_plan__in=study_plan_pks)
-#
-#         distincted_queryset = queryset.distinct('discipline', 'study_plan__group')
-#
-#         student_discipline_list = []
-#         for student_discipline in distincted_queryset:
-#             group_student_count = org_models.StudyPlan.objects.filter(
-#                 group=student_discipline.study_plan.group,
-#                 is_active=True,
-#             ).distinct('student').count()
-#
-#             not_chosen_student_count = queryset.filter(
-#                 study_plan__group=student_discipline.study_plan.group,
-#                 discipline=student_discipline.discipline
-#             ).distinct('student').count()
-#
-#             d = {
-#                 'faculty': student_discipline.study_plan.faculty.name,
-#                 'cathedra': student_discipline.study_plan.cathedra.name,
-#                 'speciality': student_discipline.study_plan.speciality.name,
-#                 'group': student_discipline.study_plan.group.name,
-#                 'student_count': group_student_count,
-#                 'discipline': student_discipline.discipline.name,
-#                 'not_chosen_student_count': not_chosen_student_count,
-#                 'percent_of_non_chosen_student': (not_chosen_student_count / group_student_count) * 100,
-#             }
-#             student_discipline_list.append(d)
-#
-#         page = self.paginate_queryset(student_discipline_list)
-#         if page is not None:
-#             serializer = self.serializer_class(page,
-#                                                many=True)
-#             return self.get_paginated_response(serializer.data)
+class RegisterStatisticsView(generics.ListAPIView):
+    """Статистика регистрации
+    study_year(!), reg_period(!), acad_period, faculty, speciality, edu_prog, course, group
+    """
+    serializer_class = serializers.RegisterStatisticsSerializer
+    queryset = org_models.StudentDiscipline.objects.filter(is_active=True)
+    pagination_class = CustomPagination
+
+    def list(self, request, *args, **kwargs):
+        profile = request.user.profile
+
+        study_year = request.query_params.get('study_year')
+        reg_period = request.query_params.get('reg_period')
+        acad_period = request.query_params.get('acad_period')
+        faculty = request.query_params.get('faculty')
+        speciality = request.query_params.get('speciality')
+        edu_prog = request.query_params.get('edu_prog')
+        course = request.query_params.get('course')
+        group = request.query_params.get('group')
+        queryset = self.queryset.all()
+        query = {
+            'status_id': student_discipline_status['not_chosen'],
+            'study_plan__advisor': profile,
+        }
+
+        if acad_period:
+            query['acad_period_id'] = acad_period
+        elif reg_period:
+            acad_period_pks = common_models.CourseAcadPeriodPermission.objects.filter(
+                registration_period_id=reg_period,
+                # course=course
+            ).values('acad_period')
+            query['acad_period__in'] = acad_period_pks
+
+        if faculty:
+            query['study_plan__faculty_id'] = faculty
+        if speciality:
+            query['study_plan__speciality_id'] = speciality
+        if edu_prog:
+            query['study_plan__education_program_id'] = edu_prog
+        if group:
+            query['study_plan__group_id'] = group
+        if study_year:
+            query['study_year_id'] = study_year
+
+        if course and study_year:
+            study_plan_pks = org_models.StudyYearCourse.objects.filter(
+                study_year_id=study_year,
+                course=course
+            ).values('study_plan')
+            query['study_plan__in'] = study_plan_pks
+
+        distincted_queryset = queryset.filter(**query).distinct('discipline', 'study_plan__group').values(
+            'study_plan__group_id',
+            'study_plan__faculty__name',
+            'study_plan__cathedra__name',
+            'study_plan__speciality__name',
+            'study_plan__group__name',
+            'study_plan__study_plan__name',
+            'study_plan__faculty__speciality__name',
+            'study_plan__study_plan__group__name',
+            'study_plan__discipline__name',
+            'discipline_id',
+
+        )
+        student_discipline_list = []
+        for student_discipline in distincted_queryset:
+            group_student_count = org_models.StudyPlan.objects.filter(
+                group_id=student_discipline.study_plan__group_id,
+                is_active=True,
+            ).distinct('student').count()
+
+            not_chosen_student_count = queryset.filter(
+                study_plan__group_id=student_discipline.study_plan__group_id,
+                discipline_id=student_discipline.discipline_id
+            ).distinct('student').count()
+
+            d = {
+                'faculty': student_discipline.study_plan__faculty__name,
+                'cathedra': student_discipline.study_plan__cathedra__name,
+                'speciality': student_discipline.study_plan__speciality__name,
+                'group': student_discipline.study_plan__group__name,
+                'student_count': group_student_count,
+                'discipline': student_discipline.study_plan__discipline__name,
+                'not_chosen_student_count': not_chosen_student_count,
+                'percent_of_non_chosen_student': (not_chosen_student_count / group_student_count) * 100,
+            }
+            student_discipline_list.append(d)
+
+        page = self.paginate_queryset(student_discipline_list)
+        if page is not None:
+            serializer = self.serializer_class(page,
+                                               many=True)
+            return self.get_paginated_response(serializer.data)
 
 
 class RegisterStatisticsView(views.APIView):
