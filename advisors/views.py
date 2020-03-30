@@ -852,7 +852,11 @@ class RegisterStatisticsView(generics.ListAPIView):
             ).values('study_plan')
             query['study_plan__in'] = study_plan_pks
         # filter(**query)
-        distincted_queryset = queryset.filter(**query).distinct('discipline', 'study_plan__group').values(
+        queryset = queryset.filter(**query).distinct('discipline', 'study_plan__group')
+        if request.query_params.getlist('ordering[]'):
+            queryset = queryset.order_by(*request.query_params.getlist('ordering[]'))
+
+        distincted_queryset = queryset.values(
             'study_plan__group_id',
             'study_plan__faculty__name',
             'study_plan__cathedra__name',
@@ -863,8 +867,7 @@ class RegisterStatisticsView(generics.ListAPIView):
         )
         student_discipline_list = []
 
-        if request.query_params.getlist('ordering[]'):
-            distincted_queryset = distincted_queryset.order_by(*request.query_params.getlist('ordering[]'))
+
 
         page = self.paginate_queryset(distincted_queryset)
         for student_discipline in page:
