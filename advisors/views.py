@@ -868,15 +868,20 @@ class RegisterStatisticsView(generics.ListAPIView):
         student_discipline_list = []
         page = self.paginate_queryset(distincted_queryset)
         for student_discipline in page:
-            group_student_count = org_models.StudyPlan.objects.filter(
-                group_id=student_discipline.get('study_plan__group_id'),
-                is_active=True,
-            ).distinct('student').count()
+            query2 = {
+                'is_active': True
+            }
+            query3 = dict()
+            if student_discipline.get('study_plan__group_id'):
+                query2['group_id'] = student_discipline.get('study_plan__group_id')
+                query3['study_plan__group_id'] = student_discipline.get('study_plan__group_id')
 
-            not_chosen_student_count = queryset.filter(
-                study_plan__group_id=student_discipline.get('study_plan__group_id'),
-                discipline_id=student_discipline.get('discipline_id')
-            ).distinct('student').count()
+            group_student_count = org_models.StudyPlan.objects.filter(**query2).distinct('student').count()
+
+            if student_discipline.get('discipline_id'):
+                query3['discipline_id'] = student_discipline.get('discipline_id')
+
+            not_chosen_student_count = queryset.filter(**query3).distinct('student').count()
 
             d = {
                 'uid': student_discipline.get('uid'),
