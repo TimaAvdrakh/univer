@@ -866,22 +866,22 @@ class RegisterStatisticsView(generics.ListAPIView):
         page = self.paginate_queryset(distincted_queryset)
         for student_discipline in page:
             group_student_count = org_models.StudyPlan.objects.filter(
-                group_id=student_discipline.study_plan__group_id,
+                group_id=student_discipline['study_plan__group_id'],
                 is_active=True,
             ).distinct('student').count()
 
             not_chosen_student_count = queryset.filter(
-                study_plan__group_id=student_discipline.study_plan__group_id,
-                discipline_id=student_discipline.discipline_id
+                study_plan__group_id=student_discipline['study_plan__group_id'],
+                discipline_id=student_discipline['discipline_id']
             ).distinct('student').count()
 
             d = {
-                'faculty': student_discipline.study_plan__faculty__name,
-                'cathedra': student_discipline.study_plan__cathedra__name,
-                'speciality': student_discipline.study_plan__speciality__name,
-                'group': student_discipline.study_plan__group__name,
+                'faculty': student_discipline['study_plan__faculty__name'],
+                'cathedra': student_discipline['study_plan__cathedra__name'],
+                'speciality': student_discipline['study_plan__speciality__name'],
+                'group': student_discipline['study_plan__group__name'],
                 'student_count': group_student_count,
-                'discipline': student_discipline.study_plan__discipline__name,
+                'discipline': student_discipline['study_plan__discipline__name'],
                 'not_chosen_student_count': not_chosen_student_count,
                 'percent_of_non_chosen_student': (not_chosen_student_count / group_student_count) * 100,
             }
