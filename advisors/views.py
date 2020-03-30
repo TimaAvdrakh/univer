@@ -973,31 +973,31 @@ class RegisterStatisticsView(views.APIView):
         }
 
         query = '''
-                                SELECT sp.group_id, sd.discipline_id, COUNT (DISTINCT sd.student_id), count(sd.uid), array_agg(sd.uid)
-                                FROM organizations_studentdiscipline sd
-                                INNER JOIN organizations_studyplan sp on sd.study_plan_id = sp.uid
-                                INNER JOIN portal_users_profile p on sp.student_id = p.uid
-                                INNER JOIN organizations_discipline d on sd.discipline_id = d.uid
-                                INNER JOIN portal_users_studentstatus ss on p.status_id = ss.uid
-                                WHERE sp.advisor_id=%(advisor_id)s 
-                                    AND sd.status_id=%(status_id)s
-                                    AND ss.uid != %(student_status_id)s
-                                    AND (%(reg_period)s is null or sd.acad_period_id IN (SELECT coursperm.acad_period_id
-                                                                                     FROM common_courseacadperiodpermission coursperm
-                                                                                     WHERE coursperm.registration_period_id=%(reg_period)s))
-                                    AND (%(acad_per)s is null or sd.acad_period_id=%(acad_per)s)
-                                    AND (%(faculty)s is null or sp.faculty_id=%(faculty)s)
-                                    AND (%(speciality)s is null or sp.speciality_id=%(speciality)s)
-                                    AND (%(edu_prog)s is null or sp.education_program_id=%(edu_prog)s)
-                                    AND (%(group1)s is null or sp.group_id=%(group1)s)
-                                    AND (%(study_year)s is null or sd.study_year_id=%(study_year)s)
-                                    AND (%(is_course)s is null or sp.uid IN (SELECT syc.study_plan_id
-                                                                         FROM organizations_studyyearcourse syc
-                                                                         WHERE syc.study_year_id = %(study_year)s
-                                                                         AND syc.course = %(course)s))
-                                GROUP BY sp.group_id, sd.discipline_id
-                                LIMIT %(limit)s OFFSET %(offset)s;
-                            '''
+            SELECT sp.group_id, sd.discipline_id, COUNT (DISTINCT sd.student_id), count(sd.uid), array_agg(sd.uid)
+            FROM organizations_studentdiscipline sd
+            INNER JOIN organizations_studyplan sp on sd.study_plan_id = sp.uid
+            INNER JOIN portal_users_profile p on sp.student_id = p.uid
+            INNER JOIN organizations_discipline d on sd.discipline_id = d.uid
+            INNER JOIN portal_users_studentstatus ss on p.status_id = ss.uid
+            WHERE sp.advisor_id=%(advisor_id)s 
+                AND sd.status_id=%(status_id)s
+                AND ss.uid != %(student_status_id)s
+                AND (%(reg_period)s is null or sd.acad_period_id IN (SELECT coursperm.acad_period_id
+                                                                 FROM common_courseacadperiodpermission coursperm
+                                                                 WHERE coursperm.registration_period_id=%(reg_period)s))
+                AND (%(acad_per)s is null or sd.acad_period_id=%(acad_per)s)
+                AND (%(faculty)s is null or sp.faculty_id=%(faculty)s)
+                AND (%(speciality)s is null or sp.speciality_id=%(speciality)s)
+                AND (%(edu_prog)s is null or sp.education_program_id=%(edu_prog)s)
+                AND (%(group1)s is null or sp.group_id=%(group1)s)
+                AND (%(study_year)s is null or sd.study_year_id=%(study_year)s)
+                AND (%(is_course)s is null or sp.uid IN (SELECT syc.study_plan_id
+                                                     FROM organizations_studyyearcourse syc
+                                                     WHERE syc.study_year_id = %(study_year)s
+                                                     AND syc.course = %(course)s))
+            GROUP BY sp.group_id, sd.discipline_id
+            LIMIT %(limit)s OFFSET %(offset)s;
+        '''
 
         with connection.cursor() as cursor:
             cursor.execute(query,
@@ -1032,8 +1032,8 @@ class RegisterStatisticsView(views.APIView):
                 'percent_of_non_chosen_student': (not_chosen_student_count / group_student_count) * 100,
             }
             student_discipline_list.append(d)
-            count = len(student_discipline_list)
 
+        count = len(student_discipline_list)
         resp = {
             "count": count,
             "next": next_link,
