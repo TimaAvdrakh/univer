@@ -853,7 +853,7 @@ class RegisterStatisticsView(generics.ListAPIView):
             query['study_plan__in'] = study_plan_pks
 
         distincted_queryset = queryset.filter(**query).distinct('discipline', 'study_plan__group').values(
-            'study_plan__group_id',
+            'study_plan__group_uid',
             'study_plan__faculty__name',
             'study_plan__cathedra__name',
             'study_plan__speciality__name',
@@ -862,19 +862,18 @@ class RegisterStatisticsView(generics.ListAPIView):
             'study_plan__faculty__speciality__name',
             'study_plan__study_plan__group__name',
             'study_plan__discipline__name',
-            'discipline_id',
-
+            'discipline__uid'
         )
         student_discipline_list = []
         for student_discipline in distincted_queryset:
             group_student_count = org_models.StudyPlan.objects.filter(
-                group_id=student_discipline.study_plan__group_id,
+                group__uid=student_discipline.study_plan__group__uid,
                 is_active=True,
             ).distinct('student').count()
 
             not_chosen_student_count = queryset.filter(
-                study_plan__group_id=student_discipline.study_plan__group_id,
-                discipline_id=student_discipline.discipline_id
+                study_plan__group__uid=student_discipline.study_plan__group__uid,
+                discipline__uid=student_discipline.discipline__uid
             ).distinct('student').count()
 
             d = {
