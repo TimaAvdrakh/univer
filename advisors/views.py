@@ -853,7 +853,7 @@ class RegisterStatisticsView(generics.ListAPIView):
             query['study_plan__in'] = study_plan_pks
 
         distincted_queryset = queryset.filter(**query).distinct('discipline', 'study_plan__group').values(
-            'study_plan__group_uid',
+            'study_plan__group__uid',
             'study_plan__faculty__name',
             'study_plan__cathedra__name',
             'study_plan__speciality__name',
@@ -865,6 +865,8 @@ class RegisterStatisticsView(generics.ListAPIView):
             'discipline__uid'
         )
         student_discipline_list = []
+
+        page = self.paginate_queryset(distincted_queryset)
         for student_discipline in distincted_queryset:
             group_student_count = org_models.StudyPlan.objects.filter(
                 group__uid=student_discipline.study_plan__group__uid,
@@ -888,11 +890,11 @@ class RegisterStatisticsView(generics.ListAPIView):
             }
             student_discipline_list.append(d)
 
-        page = self.paginate_queryset(student_discipline_list)
+        # page = self.paginate_queryset(student_discipline_list)
         if page is not None:
-            serializer = self.serializer_class(page,
-                                               many=True)
-            return self.get_paginated_response(serializer.data)
+            # serializer = self.serializer_class(page,
+            #                                    many=True)
+            return self.get_paginated_response(student_discipline_list)
 
 
 # class RegisterStatisticsView(views.APIView):
