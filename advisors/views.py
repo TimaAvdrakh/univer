@@ -819,6 +819,7 @@ class RegisterStatisticsView(generics.ListAPIView):
         edu_prog = request.query_params.get('edu_prog')
         course = request.query_params.get('course')
         group = request.query_params.get('group')
+        ordering = request.query_params.getlist('ordering[]')
         queryset = self.queryset.all()
         query = {
             'status_id': student_discipline_status['not_chosen'],
@@ -851,11 +852,9 @@ class RegisterStatisticsView(generics.ListAPIView):
                 course=course
             ).values('study_plan')
             query['study_plan__in'] = study_plan_pks
-        # filter(**query)
-        queryset = queryset.filter(**query)
-        if request.query_params.getlist('ordering[]'):
-            queryset = queryset.order_by(*request.query_params.getlist('ordering[]'))
-        # queryset = queryset.distinct('discipline', 'study_plan__group')
+        queryset = queryset.filter(**query).distinct('discipline', 'study_plan__group')
+        if ordering:
+            queryset = queryset.order_by(*ordering)
         distincted_queryset = queryset.values(
             'uid',
             'study_plan__group_id',
