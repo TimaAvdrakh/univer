@@ -863,6 +863,9 @@ class RegisterStatisticsView(generics.ListAPIView):
         )
         student_discipline_list = []
 
+        if request.query_params.getlist('ordering[]'):
+            distincted_queryset = distincted_queryset.order_by(*request.query_params.getlist('ordering[]'))
+
         page = self.paginate_queryset(distincted_queryset)
         for student_discipline in page:
             group_student_count = org_models.StudyPlan.objects.filter(
