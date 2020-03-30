@@ -881,7 +881,7 @@ class RegisterStatisticsView(generics.ListAPIView):
                 'speciality': student_discipline['study_plan__speciality__name'],
                 'group': student_discipline['study_plan__group__name'],
                 'student_count': group_student_count,
-                'discipline': student_discipline['study_plan__discipline__name'],
+                'discipline': student_discipline['discipline__name'],
                 'not_chosen_student_count': not_chosen_student_count,
                 'percent_of_non_chosen_student': (not_chosen_student_count / group_student_count) * 100,
             }
