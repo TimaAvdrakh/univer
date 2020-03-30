@@ -855,7 +855,7 @@ class RegisterStatisticsView(generics.ListAPIView):
         queryset = queryset.filter(**query)
         if request.query_params.getlist('ordering[]'):
             queryset = queryset.order_by(*request.query_params.getlist('ordering[]'))
-        queryset = queryset.distinct('discipline', 'study_plan__group')
+        # queryset = queryset.distinct('discipline', 'study_plan__group')
         distincted_queryset = queryset.values(
             'uid',
             'study_plan__group_id',
