@@ -169,8 +169,13 @@ class CheckStudentBidsSerializer(serializers.Serializer):
         comment = self.validated_data.get('comment')
         study_year = self.validated_data.get('study_year')
 
+        discipline_credits = org_models.DisciplineCredit.objects.filter(study_plan_id=study_plan, acad_period_id__in=acad_periods)
+
         if status == 4:  # Утвержден
             if not self.all_teacher_chosen(study_plan, acad_periods, study_year, status_check):
+                for discipline_credit in discipline_credits:
+                    discipline_credit.status = org_models.StudentDisciplineStatus.objects.get(number=4)
+                    discipline_credit.save()
 
                 raise CustomException(detail='not_all_chosen',
                                       status_code=200)
@@ -180,6 +185,9 @@ class CheckStudentBidsSerializer(serializers.Serializer):
         elif status == 3:  # Отклонен
             info_status_id = student_discipline_info_status['rejected']
             status_id = student_discipline_status['rejected']
+            for discipline_credit in discipline_credits:
+                discipline_credit.status = org_models.StudentDisciplineStatus.objects.get(number=3)
+                discipline_credit.save()
         else:
             raise CustomException(detail='not_valid_status')
 

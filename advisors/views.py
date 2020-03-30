@@ -864,7 +864,7 @@ class RegisterStatisticsView(generics.ListAPIView):
         student_discipline_list = []
 
         page = self.paginate_queryset(distincted_queryset)
-        for student_discipline in distincted_queryset:
+        for student_discipline in page:
             group_student_count = org_models.StudyPlan.objects.filter(
                 group_id=student_discipline.study_plan__group_id,
                 is_active=True,
