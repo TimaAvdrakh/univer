@@ -796,8 +796,8 @@ class RegisterResultView(generics.ListAPIView):
 
         # page = self.paginate_queryset(student_discipline_list)
         if student_discipline_list is not None:
-            serializer = self.serializer_class(student_discipline_list, many=True)
-            return self.get_paginated_response(serializer.data)
+            # serializer = self.serializer_class(student_discipline_list, many=True)
+            return self.get_paginated_response(student_discipline_list)
 
 
 class RegisterStatisticsView(generics.ListAPIView):
