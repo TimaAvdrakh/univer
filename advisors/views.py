@@ -27,7 +27,7 @@ from django.db import connection
 from portal.curr_settings import current_site
 from cron_app.models import ExcelTask
 from django.core.cache import cache
-from django.db.models import Value, F
+from django.db.models import Value, F, Subquery
 from django.db.models.functions import Concat
 import json
 from django.db.models import Q
@@ -798,8 +798,8 @@ class RegisterResultView(generics.ListAPIView):
 
         # page = self.paginate_queryset(student_discipline_list)
         if student_discipline_list is not None:
-            serializer = self.serializer_class(student_discipline_list, many=True)
-            return self.get_paginated_response(serializer.data)
+            # serializer = self.serializer_class(student_discipline_list, many=True)
+            return self.get_paginated_response(student_discipline_list)
 
 
 class RegisterStatisticsView(generics.ListAPIView):
@@ -1147,6 +1147,9 @@ class NotRegisteredStudentListView(generics.ListAPIView):
             'study_plan__group',
             'discipline'
         )
+
+        if ordering:
+            distincted_queryset = self.queryset.filter(uid__in=Subquery(distincted_queryset.values_list('uid', flat=True))).order_by(*ordering)
 
         student_discipline_list = []
         page = self.paginate_queryset(distincted_queryset)
