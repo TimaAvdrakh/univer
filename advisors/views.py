@@ -27,6 +27,8 @@ from django.db import connection
 from portal.curr_settings import current_site
 from cron_app.models import ExcelTask
 from django.core.cache import cache
+from django.db.models import Value, F
+from django.db.models.functions import Concat
 import json
 from django.db.models import Q
 
@@ -1079,92 +1081,100 @@ class RegisterStatisticsView(generics.ListAPIView):
         #     return self.get_paginated_response(serializer.data)
 
 
-# class NotRegisteredStudentListView(generics.ListAPIView):
-#     """Список незарегистрированных
-#     study_year(!), reg_period(!), acad_period, faculty, speciality, edu_prog, course, group
-#     """
-#     queryset = org_models.StudentDiscipline.objects.filter(is_active=True)
-#     serializer_class = serializers.NotRegisteredStudentSerializer
-#     pagination_class = CustomPagination
-#
-#     def list(self, request, *args, **kwargs):
-#         profile = request.user.profile
-#         study_year = request.query_params.get('study_year')
-#         reg_period = request.query_params.get('reg_period')
-#         acad_period = request.query_params.get('acad_period')
-#         faculty = request.query_params.get('faculty')
-#         speciality = request.query_params.get('speciality')
-#         edu_prog = request.query_params.get('edu_prog')
-#         course = request.query_params.get('course')
-#         group = request.query_params.get('group')
-#
-#         queryset = self.queryset.all()
-#         queryset = queryset.filter(
-#             status_id=student_discipline_status['not_chosen'],
-#             study_plan__advisor=profile,
-#         ).distinct('student')
-#
-#         if acad_period:
-#             queryset = queryset.filter(acad_period_id=acad_period)
-#         elif reg_period:
-#             acad_period_pks = common_models.CourseAcadPeriodPermission.objects.filter(
-#                 registration_period_id=reg_period,
-#                 # course=course
-#             ).values('acad_period')
-#             queryset = queryset.filter(acad_period__in=acad_period_pks)
-#
-#         if faculty:
-#             queryset = queryset.filter(study_plan__faculty_id=faculty)
-#         if speciality:
-#             queryset = queryset.filter(study_plan__speciality_id=speciality)
-#         if edu_prog:
-#             queryset = queryset.filter(study_plan__education_program_id=edu_prog)
-#         if group:
-#             queryset = queryset.filter(study_plan__group_id=group)
-#         if study_year:
-#             queryset = queryset.filter(study_year_id=study_year)
-#
-#         if course and study_year:
-#             study_plan_pks = org_models.StudyYearCourse.objects.filter(
-#                 study_year_id=study_year,
-#                 course=course
-#             ).values('study_plan')
-#             queryset = queryset.filter(study_plan__in=study_plan_pks)
-#
-#         distincted_queryset = queryset.distinct(
-#             'study_plan__faculty',
-#             'study_plan__cathedra',
-#             'study_plan__speciality',
-#             'study_plan__group',
-#             'discipline',
-#         )
-#         student_discipline_list = []
-#         for item in distincted_queryset:
-#             sds = queryset.filter(
-#                 study_plan__faculty=item.study_plan.faculty,
-#                 study_plan__cathedra=item.study_plan.cathedra,
-#                 study_plan__speciality=item.study_plan.speciality,
-#                 study_plan__group=item.study_plan.group,
-#                 discipline=item.discipline
-#             )
-#             student_name_list = [sd.study_plan.student.full_name.strip() for sd in sds]
-#             student_names = ', '.join(student_name_list)
-#
-#             d = {
-#                 'faculty': item.study_plan.faculty.name,
-#                 'cathedra': item.study_plan.cathedra.name,
-#                 'speciality': item.study_plan.speciality.name,
-#                 'group': item.study_plan.group.name,
-#                 'discipline': item.discipline.name,
-#                 'student': student_names,
-#             }
-#             student_discipline_list.append(d)
-#
-#         page = self.paginate_queryset(student_discipline_list)
-#         if page is not None:
-#             serializer = self.serializer_class(page,
-#                                                many=True)
-#             return self.get_paginated_response(serializer.data)
+class NotRegisteredStudentListView(generics.ListAPIView):
+    """Список незарегистрированных
+    study_year(!), reg_period(!), acad_period, faculty, speciality, edu_prog, course, group
+    """
+    queryset = org_models.StudentDiscipline.objects.filter(is_active=True)
+    serializer_class = serializers.NotRegisteredStudentSerializer
+    pagination_class = CustomPagination
+
+    def list(self, request, *args, **kwargs):
+        profile = request.user.profile
+        study_year = request.query_params.get('study_year')
+        reg_period = request.query_params.get('reg_period')
+        acad_period = request.query_params.get('acad_period')
+        faculty = request.query_params.get('faculty')
+        speciality = request.query_params.get('speciality')
+        edu_prog = request.query_params.get('edu_prog')
+        course = request.query_params.get('course')
+        group = request.query_params.get('group')
+
+        queryset = self.queryset.all()
+        query = {
+            'status_id': student_discipline_status['not_chosen'],
+            'study_plan__advisor': profile
+        }
+        # queryset = queryset.filter(
+        #     status_id=student_discipline_status['not_chosen'],
+        #     study_plan__advisor=profile,
+        # ).distinct('student')
+
+        if acad_period:
+            query['acad_period_id'] = acad_period
+        elif reg_period:
+            acad_period_pks = common_models.CourseAcadPeriodPermission.objects.filter(
+                registration_period_id=reg_period,
+                # course=course
+            ).values('acad_period')
+            query['acad_period__in'] = acad_period_pks
+
+        if faculty:
+            query['study_plan__faculty_id'] = faculty
+        if speciality:
+            query['study_plan__speciality_id'] = speciality
+        if edu_prog:
+            query['study_plan__education_program_id'] = edu_prog
+        if group:
+            query['study_plan__group_id'] = group
+        if study_year:
+            query['study_year_id'] = study_year
+
+        if course and study_year:
+            study_plan_pks = org_models.StudyYearCourse.objects.filter(
+                study_year_id=study_year,
+                course=course
+            ).values('study_plan')
+            query['study_plan__in'] = study_plan_pks
+
+        distincted_queryset = queryset.filter(**query).distinct(
+            'study_plan__faculty',
+            'study_plan__cathedra',
+            'study_plan__speciality',
+            'study_plan__group',
+            'discipline',
+            'student'
+        )
+        student_discipline_list = []
+        for item in distincted_queryset:
+            student_name_list = queryset.filter(
+                study_plan__faculty=item.study_plan.faculty,
+                study_plan__cathedra=item.study_plan.cathedra,
+                study_plan__speciality=item.study_plan.speciality,
+                study_plan__group=item.study_plan.group,
+                discipline=item.discipline
+            ).annotate(
+                fio=Concat(F('study_plan__student__last_name'),
+                           Value(' '), F('study_plan__student__first_name'),
+                           Value(' '), F('study_plan__student__middle_name'))).values_list('fio', flat=True)
+            # student_name_list = [sd.study_plan.student.full_name.strip() for sd in sds]
+            # student_names = ', '.join(student_name_list)
+
+            d = {
+                'faculty': item.study_plan.faculty.name,
+                'cathedra': item.study_plan.cathedra.name,
+                'speciality': item.study_plan.speciality.name,
+                'group': item.study_plan.group.name,
+                'discipline': item.discipline.name,
+                'student': str(student_name_list)[1:-1],
+            }
+            student_discipline_list.append(d)
+
+        page = self.paginate_queryset(student_discipline_list)
+        if page is not None:
+            serializer = self.serializer_class(page,
+                                               many=True)
+            return self.get_paginated_response(serializer.data)
 
 
 class NotRegisteredStudentListView(generics.ListAPIView):
