@@ -1149,7 +1149,8 @@ class NotRegisteredStudentListView(generics.ListAPIView):
             distincted_queryset = distincted_queryset.order_by(*request.query_params.getlist('ordering[]'))
 
         student_discipline_list = []
-        for item in distincted_queryset:
+        page = self.paginate_queryset(distincted_queryset)
+        for item in page:
             student_name_list = queryset.filter(
                 study_plan__faculty=item.study_plan.faculty,
                 study_plan__cathedra=item.study_plan.cathedra,
@@ -1172,11 +1173,11 @@ class NotRegisteredStudentListView(generics.ListAPIView):
             }
             student_discipline_list.append(d)
 
-        page = self.paginate_queryset(student_discipline_list)
+
         if page is not None:
-            serializer = self.serializer_class(page,
-                                               many=True)
-            return self.get_paginated_response(serializer.data)
+            # serializer = self.serializer_class(page,
+            #                                    many=True)
+            return self.get_paginated_response(student_discipline_list)
 
 
 class NotRegisteredStudentListView(generics.ListAPIView):
