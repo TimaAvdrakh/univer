@@ -852,17 +852,17 @@ class RegisterStatisticsView(generics.ListAPIView):
                 course=course
             ).values('study_plan')
             query['study_plan__in'] = study_plan_pks
-        queryset = queryset.filter(**query).distinct('discipline', 'study_plan__group')
-        if ordering:
-            queryset = queryset.order_by(*ordering)
-        distincted_queryset = queryset.select_related().values(
+        queryset = queryset.filter(**query).distinct('discipline', 'study_plan__group').order_by(*ordering)
+        distincted_queryset = queryset.values(
             'uid',
+            'study_plan__group',
             'study_plan__group_id',
             'study_plan__faculty__name',
             'study_plan__cathedra__name',
             'study_plan__speciality__name',
             'study_plan__group__name',
             'discipline__name',
+            'discipline',
             'discipline_id'
         )
         student_discipline_list = []
@@ -871,7 +871,10 @@ class RegisterStatisticsView(generics.ListAPIView):
             query2 = {
                 'is_active': True
             }
-            query3 = dict()
+            query3 = {
+                'status__number': 1
+            }
+            query3.update(query)
             if student_discipline.get('study_plan__group_id'):
                 query2['group_id'] = student_discipline.get('study_plan__group_id')
                 query3['study_plan__group_id'] = student_discipline.get('study_plan__group_id')
@@ -880,9 +883,7 @@ class RegisterStatisticsView(generics.ListAPIView):
 
             if student_discipline.get('discipline_id'):
                 query3['discipline_id'] = student_discipline.get('discipline_id')
-                query3['status__number'] = 1
-
-            not_chosen_student_count = queryset.filter(**query3).distinct('student').count()
+            not_chosen_student_count = self.queryset.filter(**query3).distinct('student').count()
 
             d = {
                 'uid': student_discipline.get('uid'),
