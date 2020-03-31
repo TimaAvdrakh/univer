@@ -764,7 +764,10 @@ class RegisterResultView(generics.ListAPIView):
             'discipline', 'load_type', 'hours', 'language', 'teacher')
 
         if request.query_params.getlist('ordering[]'):
-            distincted_queryset = distincted_queryset.order_by(*request.query_params.getlist('ordering[]'))
+            distincted_queryset = queryset.filter(
+                **query,
+                uid__in=distincted_queryset.values_list('uid', flat=True)
+            ).order_by(*request.query_params.getlist('ordering[]'))
         # print(distincted_queryset)
         page = self.paginate_queryset(distincted_queryset)
         # print(page, 'page')
