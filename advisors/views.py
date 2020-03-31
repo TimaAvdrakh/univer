@@ -1171,7 +1171,7 @@ class NotRegisteredStudentListView(generics.ListAPIView):
                 'speciality': item.study_plan.speciality.name,
                 'group': item.study_plan.group.name,
                 'discipline': item.discipline.name,
-                'student': str(student_name_list)[1:-1],
+                'student': str(list(student_name_list))[1:-1],
             }
             student_discipline_list.append(d)
 
