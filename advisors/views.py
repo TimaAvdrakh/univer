@@ -1099,6 +1099,7 @@ class NotRegisteredStudentListView(generics.ListAPIView):
         edu_prog = request.query_params.get('edu_prog')
         course = request.query_params.get('course')
         group = request.query_params.get('group')
+        ordering = request.query_params.getlist('ordering[]')
 
         queryset = self.queryset.all()
         query = {
@@ -1138,8 +1139,8 @@ class NotRegisteredStudentListView(generics.ListAPIView):
             query['study_plan__in'] = study_plan_pks
 
         distincted_queryset = queryset.filter(**query)
-        if request.query_params.getlist('ordering[]'):
-            distincted_queryset = distincted_queryset.order_by(*request.query_params.getlist('ordering[]'))
+        if ordering:
+            distincted_queryset = distincted_queryset.order_by(*ordering)
         distincted_queryset = distincted_queryset.distinct(
             'study_plan__faculty',
             'study_plan__cathedra',
