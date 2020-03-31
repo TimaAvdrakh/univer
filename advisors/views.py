@@ -886,19 +886,23 @@ class RegisterStatisticsView(generics.ListAPIView):
                 query3['discipline_id'] = student_discipline.get('discipline_id')
             not_chosen_student_count = self.queryset.filter(**query3).distinct('student').count()
 
-            d = {
-                'uid': student_discipline.get('uid'),
-                'faculty': student_discipline.get('study_plan__faculty__name'),
-                'cathedra': student_discipline.get('study_plan__cathedra__name'),
-                'speciality': student_discipline.get('study_plan__speciality__name'),
-                'group': student_discipline.get('study_plan__group__name'),
-                'student_count': group_student_count,
-                'discipline': student_discipline.get('discipline__name'),
-                'not_chosen_student_count': not_chosen_student_count,
-                'percent_of_non_chosen_student': (not_chosen_student_count / group_student_count) * 100,
-                }
+            student_discipline['student_count'] = group_student_count
+            student_discipline['not_chosen_student_count'] = not_chosen_student_count
+            student_discipline['percent_of_non_chosen_student'] = (not_chosen_student_count / group_student_count) * 100
 
-            student_discipline_list.append(d)
+            # d = {
+            #     'uid': student_discipline.get('uid'),
+            #     'faculty': student_discipline.get('study_plan__faculty__name'),
+            #     'cathedra': student_discipline.get('study_plan__cathedra__name'),
+            #     'speciality': student_discipline.get('study_plan__speciality__name'),
+            #     'group': student_discipline.get('study_plan__group__name'),
+            #     'student_count': group_student_count,
+            #     'discipline': student_discipline.get('discipline__name'),
+            #     'not_chosen_student_count': not_chosen_student_count,
+            #     'percent_of_non_chosen_student': (not_chosen_student_count / group_student_count) * 100,
+            #     }
+
+            student_discipline_list.append(student_discipline)
 
         # page = self.paginate_queryset(student_discipline_list)
         if page is not None:
