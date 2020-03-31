@@ -1141,14 +1141,14 @@ class NotRegisteredStudentListView(generics.ListAPIView):
         distincted_queryset = queryset.filter(**query)
         if ordering:
             distincted_queryset = distincted_queryset.order_by(*ordering)
-        distincted_queryset = distincted_queryset.distinct(
-            'study_plan__faculty',
-            'study_plan__cathedra',
-            'study_plan__speciality',
-            'study_plan__group',
-            'discipline',
-            'student'
-        )
+        # distincted_queryset = distincted_queryset.distinct(
+        #     'study_plan__faculty',
+        #     'study_plan__cathedra',
+        #     'study_plan__speciality',
+        #     'study_plan__group',
+        #     'discipline',
+        #     'student'
+        # )
 
         student_discipline_list = []
         page = self.paginate_queryset(distincted_queryset)
