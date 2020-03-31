@@ -1086,7 +1086,7 @@ class NotRegisteredStudentListView(generics.ListAPIView):
     study_year(!), reg_period(!), acad_period, faculty, speciality, edu_prog, course, group
     """
     queryset = org_models.StudentDiscipline.objects.filter(is_active=True)
-    serializer_class = serializers.NotRegisteredStudentSerializer
+    # serializer_class = serializers.NotRegisteredStudentSerializer
     pagination_class = CustomPagination
 
     def list(self, request, *args, **kwargs):
@@ -1100,8 +1100,6 @@ class NotRegisteredStudentListView(generics.ListAPIView):
         course = request.query_params.get('course')
         group = request.query_params.get('group')
         ordering = request.query_params.getlist('ordering[]')
-
-        ordering.insert(0, 'student')
 
         queryset = self.queryset.all()
         # if ordering:
@@ -1154,7 +1152,7 @@ class NotRegisteredStudentListView(generics.ListAPIView):
         student_discipline_list = []
         page = self.paginate_queryset(distincted_queryset)
         for item in page:
-            student_name_list = queryset.filter(
+            student_name_list = queryset.exclude(load_type__load_type2_id='303e48f0-7b1a-431a-aac0-53843479e58e').filter(
                 study_plan__faculty=item.study_plan.faculty,
                 study_plan__cathedra=item.study_plan.cathedra,
                 study_plan__speciality=item.study_plan.speciality,
