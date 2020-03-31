@@ -1109,7 +1109,7 @@ class NotRegisteredStudentListView(generics.ListAPIView):
 
         query = dict()
         queryset = queryset.filter(
-            status_number=1,
+            status__number=1,
             study_plan__advisor=profile,
         ).distinct('student')
 
