@@ -875,7 +875,6 @@ class RegisterStatisticsView(generics.ListAPIView):
             query3 = {
                 'status__number': 1
             }
-            query3.update(query)
             if student_discipline.get('study_plan__group_id'):
                 query2['group_id'] = student_discipline.get('study_plan__group_id')
                 query3['study_plan__group_id'] = student_discipline.get('study_plan__group_id')
@@ -884,7 +883,7 @@ class RegisterStatisticsView(generics.ListAPIView):
 
             if student_discipline.get('discipline_id'):
                 query3['discipline_id'] = student_discipline.get('discipline_id')
-            not_chosen_student_count = self.queryset.filter(**query3).distinct('student').count()
+            not_chosen_student_count = queryset.filter(**query3).distinct('student').count()
 
             d = {
                 'uid': student_discipline.get('uid'),
