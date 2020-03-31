@@ -1145,6 +1145,9 @@ class NotRegisteredStudentListView(generics.ListAPIView):
             'discipline',
             'student'
         )
+        if request.query_params.getlist('ordering[]'):
+            distincted_queryset = distincted_queryset.order_by(*request.query_params.getlist('ordering[]'))
+
         student_discipline_list = []
         for item in distincted_queryset:
             student_name_list = queryset.filter(
@@ -1157,8 +1160,7 @@ class NotRegisteredStudentListView(generics.ListAPIView):
                 fio=Concat(F('study_plan__student__last_name'),
                            Value(' '), F('study_plan__student__first_name'),
                            Value(' '), F('study_plan__student__middle_name'))).values_list('fio', flat=True)
-            # student_name_list = [sd.study_plan.student.full_name.strip() for sd in sds]
-            # student_names = ', '.join(student_name_list)
+
 
             d = {
                 'faculty': item.study_plan.faculty.name,
