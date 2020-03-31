@@ -785,11 +785,11 @@ class RegisterResultView(generics.ListAPIView):
 
             d = {
                 'discipline_id': item.discipline_id,
-                'discipline': item.discipline,
-                'load_type': item.load_type,
+                'discipline': item.discipline.name,
+                'load_type': item.load_type.name,
                 'hours': item.hours,
-                'language': item.language,
-                'teacher': item.teacher,
+                'language': item.language.name,
+                'teacher': item.teacher.full_name,
                 'student_count': student_count,
                 'load_type_id': item.load_type_id,
                 'language_id': item.language_id,
