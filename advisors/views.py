@@ -1102,10 +1102,11 @@ class NotRegisteredStudentListView(generics.ListAPIView):
         ordering = request.query_params.getlist('ordering[]')
 
         queryset = self.queryset.all()
-        query = {
-            'status_id': student_discipline_status['not_chosen'],
-            'study_plan__advisor': profile
-        }
+        queryset = queryset.filter(
+            status_id=student_discipline_status['not_chosen'],
+            study_plan__advisor=profile,
+        ).distinct('student')
+        query = dict()
         # queryset = queryset.filter(
         #     status_id=student_discipline_status['not_chosen'],
         #     study_plan__advisor=profile,
@@ -1138,7 +1139,7 @@ class NotRegisteredStudentListView(generics.ListAPIView):
             ).values('study_plan')
             query['study_plan__in'] = study_plan_pks
 
-        distincted_uids = queryset.filter(**query).distinct('student').distinct(
+        distincted_uids = queryset.filter(**query).distinct(
             'study_plan__faculty',
             'study_plan__cathedra',
             'study_plan__speciality',
