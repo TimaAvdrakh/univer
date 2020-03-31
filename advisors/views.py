@@ -1157,7 +1157,7 @@ class NotRegisteredStudentListView(generics.ListAPIView):
                 study_plan__speciality=item.study_plan.speciality,
                 study_plan__group=item.study_plan.group,
                 discipline=item.discipline
-            ).annotate(
+            ).order_by('study_plan__student__last_name').annotate(
                 fio=Concat(F('study_plan__student__last_name'),
                            Value(' '), F('study_plan__student__first_name'),
                            Value(' '), F('study_plan__student__middle_name'))).values_list('fio', flat=True)
