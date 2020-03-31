@@ -1154,13 +1154,12 @@ class NotRegisteredStudentListView(generics.ListAPIView):
         student_discipline_list = []
         page = self.paginate_queryset(distincted_queryset)
         for item in page:
-            student_name_list = queryset.filter(
+            student_name_list = queryset.exclude(status__number__lt=1).filter(
                 study_plan__faculty=item.study_plan.faculty,
                 study_plan__cathedra=item.study_plan.cathedra,
                 study_plan__speciality=item.study_plan.speciality,
                 study_plan__group=item.study_plan.group,
                 discipline=item.discipline,
-                status__number=1,
                 is_active=True
             ).annotate(
                 fio=Concat(F('study_plan__student__last_name'),
