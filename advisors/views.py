@@ -852,7 +852,7 @@ class RegisterStatisticsView(generics.ListAPIView):
                 course=course
             ).values('study_plan')
             query['study_plan__in'] = study_plan_pks
-        queryset_uids = queryset.filter(**query).distinct('discipline', 'study_plan__group').values_list('uid')
+        queryset_uids = queryset.filter(**query).distinct('discipline', 'study_plan__group').values_list('uid', flat=True)
         queryset = queryset.filter(uid__in=queryset_uids).order_by(*ordering)
         distincted_queryset = queryset.values(
             'uid',
