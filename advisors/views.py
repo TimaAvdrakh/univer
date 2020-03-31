@@ -1101,17 +1101,17 @@ class NotRegisteredStudentListView(generics.ListAPIView):
         group = request.query_params.get('group')
         ordering = request.query_params.getlist('ordering[]')
 
+        ordering.insert(0, 'student')
+
         queryset = self.queryset.all()
-        queryset_ids = queryset.filter(
+        # if ordering:
+        #     queryset = queryset.order_by(*ordering)
+
+        query = dict()
+        queryset = queryset.filter(
             status_id=student_discipline_status['not_chosen'],
             study_plan__advisor=profile,
-        ).distinct('student').values_list('uid', flat=True)
-        queryset = queryset.filter(uid__in=queryset_ids)
-        query = dict()
-        # queryset = queryset.filter(
-        #     status_id=student_discipline_status['not_chosen'],
-        #     study_plan__advisor=profile,
-        # ).distinct('student')
+        ).distinct('student')
 
         if acad_period:
             query['acad_period_id'] = acad_period
@@ -1140,28 +1140,24 @@ class NotRegisteredStudentListView(generics.ListAPIView):
             ).values('study_plan')
             query['study_plan__in'] = study_plan_pks
 
-        distincted_uids = queryset.filter(**query).distinct(
+        distincted_queryset = queryset.filter(**query).distinct(
             'study_plan__faculty',
             'study_plan__cathedra',
             'study_plan__speciality',
             'study_plan__group',
             'discipline'
-        ).values_list('uid', flat=True)
-        distincted_queryset = queryset.filter(uid__in=distincted_uids)
-        if ordering:
-            distincted_queryset = distincted_queryset.order_by(*ordering)
+        )
 
         student_discipline_list = []
         page = self.paginate_queryset(distincted_queryset)
         for item in page:
-            student_name_list = self.queryset.filter(
-                status_id=student_discipline_status['not_chosen'],
+            student_name_list = queryset.filter(
                 study_plan__faculty=item.study_plan.faculty,
                 study_plan__cathedra=item.study_plan.cathedra,
                 study_plan__speciality=item.study_plan.speciality,
                 study_plan__group=item.study_plan.group,
                 discipline=item.discipline
-            ).distinct('student').annotate(
+            ).annotate(
                 fio=Concat(F('study_plan__student__last_name'),
                            Value(' '), F('study_plan__student__first_name'),
                            Value(' '), F('study_plan__student__middle_name'))).values_list('fio', flat=True)
@@ -1175,7 +1171,6 @@ class NotRegisteredStudentListView(generics.ListAPIView):
                 'student': student_name_list,
             }
             student_discipline_list.append(d)
-
 
         if page is not None:
             return self.get_paginated_response(student_discipline_list)
