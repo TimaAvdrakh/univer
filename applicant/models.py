@@ -215,25 +215,25 @@ class Address(BaseModel):
         verbose_name=_("Index")
     )
 
-    def save(self, *args, **kwargs):
-        if not self.name:
-            # В инглише однако порядок наоборот
-            self.name_en = f"{self.region} region, {self.city}, st. {self.street}, house number {self.home_number}"
-            self.name_ru = f"{self.region}, г. {self.city}, ул. {self.street}, дом №{self.home_number}"
-            self.name_kk = (
-                f"{self.region}, {self.city} қ. {self.street}, № {self.home_number} үй"
-            )
-
-            if self.corpus:
-                self.name_en += f", building {self.corpus}"
-                self.name_ru += f", корпус {self.corpus}"
-                self.name_kk += f", {self.corpus} ғимарат"
-            if self.apartment:
-                self.name_en += f", apartment {self.apartment}"
-                self.name_ru += f", квартира {self.apartment}"
-                self.name_kk += f", {self.apartment} пәтер"
-            self.name = self.name_kk
-        super().save(*args, **kwargs)
+    # def save(self, *args, **kwargs):
+    #     if not self.name:
+    #         # В инглише однако порядок наоборот
+    #         self.name_en = f"{self.region} region, {self.city}, st. {self.street}, house number {self.home_number}"
+    #         self.name_ru = f"{self.region}, г. {self.city}, ул. {self.street}, дом №{self.home_number}"
+    #         self.name_kk = (
+    #             f"{self.region}, {self.city} қ. {self.street}, № {self.home_number} үй"
+    #         )
+    #
+    #         if self.corpus:
+    #             self.name_en += f", building {self.corpus}"
+    #             self.name_ru += f", корпус {self.corpus}"
+    #             self.name_kk += f", {self.corpus} ғимарат"
+    #         if self.apartment:
+    #             self.name_en += f", apartment {self.apartment}"
+    #             self.name_ru += f", квартира {self.apartment}"
+    #             self.name_kk += f", {self.apartment} пәтер"
+    #         self.name = self.name_kk
+    #     super().save(*args, **kwargs)
 
 
 # Состав семьи
