@@ -63,6 +63,18 @@ class ThemesOfTheses(BaseCatalog):
         verbose_name='Руководитель извне',
         null=True,
         blank=True)
+    uid_1c = models.CharField(
+        max_length=100,
+        null=True,
+        default='',
+        blank=True,
+        verbose_name='УИД документа-аналога в 1С',
+        help_text='придет, после выгрузки в 1С',
+    )
+    sent = models.NullBooleanField(
+        default=False,
+        verbose_name='Отправлен в 1С',
+    )
 
     def __str__(self):
         return '{} - {}'.format(self.student, self.acad_period)

@@ -882,11 +882,11 @@ class StudentDiscipline(BaseModel):
                 discipline=self.discipline,
                 acad_period=self.acad_period,
                 student=self.student,
+                disciplinecreditcontrolform__isnull=False,
             )
-
             return {
                 'credit': discipline_credit.credit,
-                'control_form': list(
+                'control_forms': list(
                     discipline_credit.disciplinecreditcontrolform_set.filter(is_active=True).values('control_form__name', 'uid'))
             }
 
@@ -1163,6 +1163,18 @@ class DisciplineCredit(BaseModel):
         null=True,
         verbose_name='Статус диспцилины',
         related_name='discipline_credit_status'
+    )
+    uid_1c = models.CharField(
+        max_length=100,
+        null=True,
+        default='',
+        blank=True,
+        verbose_name='УИД документа-аналога в 1С',
+        help_text='придет, после выгрузки в 1С',
+    )
+    sent = models.NullBooleanField(
+        default=False,
+        verbose_name='Отправлен в 1С',
     )
 
     # teacher = models.ForeignKey(
