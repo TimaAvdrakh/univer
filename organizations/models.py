@@ -891,7 +891,7 @@ class StudentDiscipline(BaseModel):
             }
 
         except DisciplineCredit.DoesNotExist:
-            return 0
+            return {'error': 'DoesNotExist'}
         except DisciplineCredit.MultipleObjectsReturned:
             discipline_credit = DisciplineCredit.objects.filter(
                 study_plan=self.study_plan,
