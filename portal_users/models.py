@@ -289,6 +289,7 @@ class Profile(BaseModel):
             self.middle_name
         )
 
+
     @property
     def name_initial(self):
         """Фамилия инициалы"""

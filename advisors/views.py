@@ -783,13 +783,17 @@ class RegisterResultView(generics.ListAPIView):
             query2['hours'] = item.hours
             student_count = queryset.filter(**query2).distinct('student').count()
 
+            teacher = ''
+            if item.teacher:
+                teacher = item.teacher.full_name
+
             d = {
                 'discipline_id': item.discipline_id,
                 'discipline': item.discipline.name,
                 'load_type': item.load_type.name,
                 'hours': item.hours,
                 'language': item.language.name,
-                'teacher': item.teacher.full_name,
+                'teacher': teacher,
                 'student_count': student_count,
                 'load_type_id': item.load_type_id,
                 'language_id': item.language_id,
