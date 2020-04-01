@@ -4,7 +4,11 @@ from rest_framework_recaptcha.fields import ReCaptchaField
 from django.contrib.auth.models import User
 from common.exceptions import CustomException
 from django.contrib.auth import password_validation
-from cron_app.models import ResetPasswordUrlSendTask, CredentialsEmailTask, NotifyAdvisorTask
+from cron_app.models import (
+    ResetPasswordUrlSendTask,
+    CredentialsEmailTask,
+    NotifyAdvisorTask,
+)
 from common.utils import password_generator
 from organizations import models as org_models
 from organizations import serializers as org_serializers
@@ -21,15 +25,9 @@ from common import models as common_models
 from django.utils.translation import ugettext as _
 
 
-
-
 class LoginSerializer(serializers.Serializer):
-    username = serializers.CharField(
-        required=True,
-    )
-    password = serializers.CharField(
-        required=True,
-    )
+    username = serializers.CharField(required=True,)
+    password = serializers.CharField(required=True,)
     # recaptcha = ReCaptchaField()
 
 
@@ -37,26 +35,25 @@ class RoleSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Role
         fields = (
-            'is_student',
-            'is_teacher',
-            'is_org_admin',
-            'is_supervisor',
-            'is_selection_committer',
+            "is_student",
+            "is_teacher",
+            "is_org_admin",
+            "is_supervisor",
+            "is_selection_committer",
+            "is_applicant"
         )
 
 
 class InterestSerializer(serializers.ModelSerializer):
-    content = serializers.CharField(
-        source='name',
-    )
+    content = serializers.CharField(source="name",)
 
     class Meta:
         model = models.Interest
         list_serializer_class = common_serializers.FilteredListSerializer
         fields = (
-            'uid',
-            'content',
-            'is_active',
+            "uid",
+            "content",
+            "is_active",
         )
 
 
@@ -68,10 +65,10 @@ class AchievementSerializer(serializers.ModelSerializer):
         model = models.Achievement
         list_serializer_class = common_serializers.FilteredListSerializer
         fields = (
-            'uid',
-            'achievement_type',
-            'level',
-            'content',
+            "uid",
+            "achievement_type",
+            "level",
+            "content",
         )
 
     def to_representation(self, instance):
@@ -90,10 +87,10 @@ class AchievementFullSerializer(serializers.ModelSerializer):
         model = models.Achievement
         list_serializer_class = common_serializers.FilteredListSerializer
         fields = (
-            'uid',
-            'achievement_type',
-            'level',
-            'content',
+            "uid",
+            "achievement_type",
+            "level",
+            "content",
         )
 
     def to_representation(self, instance):
@@ -106,128 +103,102 @@ class AchievementFullSerializer(serializers.ModelSerializer):
 
 class ProfileFullSerializer(serializers.ModelSerializer):
     """Используется для получения и редактирования профиля"""
-    profileId = serializers.CharField(
-        source='uid',
-        read_only=True,
-    )
+
+    profileId = serializers.CharField(source="uid", read_only=True,)
     firstName = serializers.CharField(
-        max_length=100,
-        source='first_name',
-        read_only=True,
+        max_length=100, source="first_name", read_only=True,
     )
     lastName = serializers.CharField(
-        max_length=100,
-        source='last_name',
-        read_only=True,
+        max_length=100, source="last_name", read_only=True,
     )
     middleName = serializers.CharField(
-        max_length=100,
-        source='middle_name',
-        read_only=True,
+        max_length=100, source="middle_name", read_only=True,
     )
-    gender = serializers.CharField(
-        read_only=True,
-    )
-    marital_status = serializers.CharField(
-        read_only=True,
-    )
-    interests = InterestSerializer(
-        many=True,
-        required=False,
-    )
+    gender = serializers.CharField(read_only=True,)
+    marital_status = serializers.CharField(read_only=True,)
+    interests = InterestSerializer(many=True, required=False,)
     interests_for_del = serializers.ListField(
-        child=serializers.CharField(),
-        required=False,
+        child=serializers.CharField(), required=False,
     )
-    achievements = AchievementFullSerializer(
-        many=True,
-        required=False,
-    )
+    achievements = AchievementFullSerializer(many=True, required=False,)
     achievements_for_del = serializers.ListField(
-        child=serializers.CharField(),
-        required=False,
+        child=serializers.CharField(), required=False,
     )
     identity_documents = common_serializers.IdentityDocumentSerializer(
-        many=True,
-        required=False,
+        many=True, required=False,
     )
-    educations = common_serializers.EducationSerializer(
-        many=True,
-        required=False,
-    )
+    educations = common_serializers.EducationSerializer(many=True, required=False,)
     nationality = serializers.CharField()
     citizenship = serializers.CharField()
 
     class Meta:
         model = models.Profile
         fields = (
-            'profileId',
-            'student_id',
-            'firstName',
-            'lastName',
-            'middleName',
-            'first_name_en',
-            'last_name_en',
-            'birth_date',
-            'birth_place',
-            'nationality',
-            'citizenship',
-            'gender',
-            'marital_status',
-            'address',
-            'phone',
-            'email',
-            'skype',
-            'avatar',
-            'interests',
-            'interests_for_del',
-            'achievements',
-            'achievements_for_del',
-            'extra_data',
-            'iin',
-            'identity_documents',
-            'educations',
+            "profileId",
+            "student_id",
+            "firstName",
+            "lastName",
+            "middleName",
+            "first_name_en",
+            "last_name_en",
+            "birth_date",
+            "birth_place",
+            "nationality",
+            "citizenship",
+            "gender",
+            "marital_status",
+            "address",
+            "phone",
+            "email",
+            "skype",
+            "avatar",
+            "interests",
+            "interests_for_del",
+            "achievements",
+            "achievements_for_del",
+            "extra_data",
+            "iin",
+            "identity_documents",
+            "educations",
         )
-        read_only_fields = (
-            'iin',
-        )
+        read_only_fields = ("iin",)
 
     def update(self, instance, validated_data):
-        instance.address = validated_data.get('address', instance.address)
-        instance.phone = validated_data.get('phone', instance.phone)
-        instance.email = validated_data.get('email', instance.email)
-        instance.skype = validated_data.get('skype', instance.skype)
-        instance.extra_data = validated_data.get('extra_data', instance.extra_data)
+        instance.address = validated_data.get("address", instance.address)
+        instance.phone = validated_data.get("phone", instance.phone)
+        instance.email = validated_data.get("email", instance.email)
+        instance.skype = validated_data.get("skype", instance.skype)
+        instance.extra_data = validated_data.get("extra_data", instance.extra_data)
         instance.save()
 
-        interests = validated_data.get('interests')
+        interests = validated_data.get("interests")
         for interest in interests:
             models.Interest.objects.get_or_create(
-                profile=instance,
-                name=interest['name'],
-                is_active=True,
+                profile=instance, name=interest["name"], is_active=True,
             )
 
-        interests_for_del = validated_data.get('interests_for_del')
+        interests_for_del = validated_data.get("interests_for_del")
         models.Interest.objects.filter(pk__in=interests_for_del).update(is_active=False)
 
-        achievements = validated_data.get('achievements')
+        achievements = validated_data.get("achievements")
         for achievement in achievements:
             models.Achievement.objects.get_or_create(
                 profile=instance,
-                level_id=achievement['level'],
-                achievement_type_id=achievement['achievement_type'],
-                content=achievement['content'],
+                level_id=achievement["level"],
+                achievement_type_id=achievement["achievement_type"],
+                content=achievement["content"],
                 is_active=True,
             )
 
-        achievements_for_del = validated_data.get('achievements_for_del')
-        models.Achievement.objects.filter(pk__in=achievements_for_del).update(is_active=False)
+        achievements_for_del = validated_data.get("achievements_for_del")
+        models.Achievement.objects.filter(pk__in=achievements_for_del).update(
+            is_active=False
+        )
 
         return instance
 
     def to_representation(self, instance):
-        request = self.context.get('request')
+        request = self.context.get("request")
         data = super().to_representation(instance=instance)
 
         role = models.Role.objects.filter(profile=instance).first()
@@ -244,15 +215,15 @@ class ProfileFullSerializer(serializers.ModelSerializer):
                                                           many=True).data
 
         role_serializer = RoleSerializer(instance=role)
-        data['role'] = role_serializer.data
+        data["role"] = role_serializer.data
 
-        data['is_employee'] = is_employee
-
-        if request.user.profile != instance:
-            data['iin'] = ''
+        data["is_employee"] = is_employee
 
         if request.user.profile != instance:
-            data['identity_documents'] = []
+            data["iin"] = ""
+
+        if request.user.profile != instance:
+            data["identity_documents"] = []
 
         return data
 
@@ -848,7 +819,6 @@ class EducationProgramGroupSerializer(serializers.ModelSerializer):
 
 
 class StudyPlanSerializer(serializers.ModelSerializer):
-    uid_1c = serializers.CharField()
     study_period = serializers.CharField()
     group = serializers.CharField()
     speciality = serializers.CharField()
@@ -1349,9 +1319,9 @@ class TeacherPositionSerializer(serializers.ModelSerializer):
         data = super().to_representation(instance)
 
         if instance.is_main:
-            data['work'] = _('Primary place of work')
+            data['work'] = _('Основное место работы')
         else:
-            data['work'] = _('Part-time job')
+            data['work'] = _('Совместительство')
 
         return data
 
@@ -1377,6 +1347,30 @@ class TeacherShortSerializer(serializers.ModelSerializer):
             pass
 
         return data
+
+
+class GenderSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.Gender
+        fields = "__all__"
+
+
+class MaritalStatusSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.MaritalStatus
+        fields = "__all__"
+
+
+class ProfilePhoneSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.ProfilePhone
+        fields = ["phone_type", "value"]
+
+
+class PhoneTypeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.PhoneType
+        fields = "__all__"
 
 
 class ControlFormSerializer(serializers.ModelSerializer):

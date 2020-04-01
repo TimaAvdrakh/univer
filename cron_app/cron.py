@@ -1,9 +1,14 @@
+import datetime as dt
 from django_cron import CronJobBase, Schedule
 from . import models
 import requests
-from portal.curr_settings import PASSWORD_RESET_ENDPOINT, student_discipline_status \
-    , component_by_choose_uid, CONTENT_TYPES, SEND_STUD_DISC_1C_URL, BOT_DEV_CHAT_IDS
-from django.utils import timezone
+from portal.curr_settings import (
+    student_discipline_status,
+    component_by_choose_uid,
+    CONTENT_TYPES,
+    SEND_STUD_DISC_1C_URL,
+    BOT_DEV_CHAT_IDS
+)
 from django.core.mail import send_mail
 from django.template.loader import render_to_string
 from portal.curr_settings import current_site
@@ -18,6 +23,9 @@ import json
 from reports import views as report_views
 from advisors import views as advisor_views
 from common import models as common_models
+import urllib3
+import certifi
+from applicant.models import Applicant
 
 
 class EmailCronJob(CronJobBase):
@@ -296,8 +304,10 @@ class SendStudentDisciplinesTo1CJob(CronJobBase):
             status_id=status,
             teacher__isnull=False,
             sent=False,
-        )[:5]
-
+        )
+        sds = sds.filter(
+            student__in=sds[:1].values('student'),
+        )
         disciplines = []
         for sd in sds:
             item = {
@@ -314,7 +324,7 @@ class SendStudentDisciplinesTo1CJob(CronJobBase):
                 'isopt': str(sd.component.uid) == component_by_choose_uid if sd.component else False,
             }
             disciplines.append(item)
-
+        urllib3.disable_warnings()
         resp = requests.post(
             url,
             json=disciplines,
@@ -324,6 +334,7 @@ class SendStudentDisciplinesTo1CJob(CronJobBase):
         )
 
         if resp.status_code == 200:
+            print("Connected")
             resp_data = resp.json()
             for item in resp_data:
                 # try:
@@ -336,7 +347,7 @@ class SendStudentDisciplinesTo1CJob(CronJobBase):
                     content_type_id=CONTENT_TYPES['studentdiscipline'],
                     object_id=item['uid_site'],
                     status=item['code'],
-                    # sent_data=sent_data_json,
+                    # sent_data=item['json'],
                 )
                 error_text = ''
                 for error in item['errors']:
@@ -461,3 +472,14 @@ class NotifyStudentToRegisterJob(CronJobBase):
         ).values('study_year')
 
         # org_models.StudentDiscipline.objects.filter(study)
+
+
+class ApplicantVerificationJob(CronJobBase):
+    """Работает раз в день. Проверяет """
+    RUN_DAILY = 24 * 60
+    schedule = Schedule(run_every_mins=RUN_DAILY)
+    code = 'cron_app.applicant_verification_job'
+
+    def do(self):
+        time = dt.date.today() + dt.timedelta(days=1)
+        Applicant.objects.filter(created__gte=time, user__is_active=False).delete()

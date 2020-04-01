@@ -4,13 +4,36 @@ from . import serializers
 from rest_framework.response import Response
 from rest_framework import status
 from . import permissions
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly
 from schedules import serializers as sh_serializers
 from datetime import datetime
 from portal_users.utils import get_current_study_year
 from common.paginators import CustomPagination
 from organizations import models as org_models
 from advisors.serializers import CathedraSerializer
+from rest_framework.viewsets import ModelViewSet
+from applicant.models import (
+    AddressClassifier,
+    AddressType,
+    ApplicationStatus,
+    AdmissionCampaignType,
+    AdmissionCampaign,
+    CampaignStage,
+    DocumentReturnMethod,
+    PrivilegeType,
+    FamilyMembership,
+)
+from applicant.serializers import (
+    AddressTypeSerializer,
+    AddressClassifierSerializer,
+    ApplicationStatusSerializer,
+    AdmissionCampaignTypeSerializer,
+    AdmissionCampaignSerializer,
+    CampaignStageSerializer,
+    DocumentReturnMethodSerializer,
+    PrivilegeTypeSerializer,
+    FamilyMembershipSerializer
+)
 
 
 class HandleLessonView(generics.CreateAPIView):
@@ -134,3 +157,55 @@ class CancelPlanBlockView(generics.CreateAPIView):  # TODO
         )
 
 
+class ApplicationStatusViewSet(ModelViewSet):
+    queryset = ApplicationStatus.objects.all()
+    serializer_class = ApplicationStatusSerializer
+    permission_classes = (permissions.IsAdminOrReadOnly,)
+
+
+class AdmissionCampaignTypeViewSet(ModelViewSet):
+    queryset = AdmissionCampaignType.objects.all()
+    serializer_class = AdmissionCampaignTypeSerializer
+    permission_classes = (permissions.IsAdminOrReadOnly,)
+
+
+class AdmissionCampaignViewSet(ModelViewSet):
+    queryset = AdmissionCampaign.objects.filter(is_active=True)
+    serializer_class = AdmissionCampaignSerializer
+    permission_classes = (permissions.IsAdminOrReadOnly,)
+
+
+class CampaignStageViewSet(ModelViewSet):
+    queryset = CampaignStage.objects.all()
+    serializer_class = CampaignStageSerializer
+    permission_classes = (permissions.IsAdminOrReadOnly,)
+
+
+class DocumentReturnMethodViewSet(ModelViewSet):
+    queryset = DocumentReturnMethod.objects.all()
+    serializer_class = DocumentReturnMethodSerializer
+    permission_classes = (permissions.IsAdminOrReadOnly,)
+
+
+class PrivilegeTypeViewSet(ModelViewSet):
+    queryset = PrivilegeType.objects.all()
+    serializer_class = PrivilegeTypeSerializer
+    permission_classes = (permissions.IsAdminOrReadOnly,)
+
+
+class FamilyMembershipViewSet(ModelViewSet):
+    queryset = FamilyMembership.objects.all()
+    serializer_class = FamilyMembershipSerializer
+    permission_classes = (permissions.IsAdminOrReadOnly,)
+
+
+class AddressClassifierViewSet(ModelViewSet):
+    queryset = AddressClassifier.objects.all()
+    serializer_class = AddressClassifierSerializer
+    permission_classes = (permissions.IsAdminOrReadOnly,)
+
+
+class AddressTypeViewSet(ModelViewSet):
+    queryset = AddressType.objects.all()
+    serializer_class = AddressTypeSerializer
+    permission_classes = (permissions.IsAdminOrReadOnly,)

@@ -191,6 +191,7 @@ class StudentDisciplineAdmin(admin.ModelAdmin):
         'student__first_name',
         'student__last_name',
         'student__user__username',
+        'student__pk',
         'uuid1c',
     )
 

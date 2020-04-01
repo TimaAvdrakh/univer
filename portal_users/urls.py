@@ -1,7 +1,8 @@
 from django.urls import path
+from rest_framework.routers import DefaultRouter
 from . import views
 
-app_name = 'portal_users'
+app_name = "portal_users"
 
 urlpatterns = [
     path('authenticate/', views.LoginView.as_view(), name='auth'),
@@ -50,5 +51,10 @@ urlpatterns = [
          name='gender'),
     path('citizenship/', views.CitizenshipListView.as_view(),
          name='citizenship')
-
 ]
+
+router = DefaultRouter()
+router.register(r"genders", views.GenderViewSet)
+router.register(r"marital-statuses", views.MaritalStatusViewSet)
+router.register(r"phone-types", views.PhoneTypeViewSet)
+urlpatterns += router.urls

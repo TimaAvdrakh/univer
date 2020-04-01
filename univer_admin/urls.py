@@ -1,4 +1,5 @@
 from django.urls import path
+from rest_framework.routers import DefaultRouter
 from . import views
 
 app_name = 'univer_admin'
@@ -29,3 +30,12 @@ urlpatterns = [
          name='cancel_plan_block'),
 ]
 
+router = DefaultRouter()
+router.register(r"campaign-types", views.AdmissionCampaignTypeViewSet, "admission_campaign_types")
+router.register(r"admission-campaigns", views.AdmissionCampaignViewSet, "admission_campaigns")
+router.register(r"application-status", views.ApplicationStatusViewSet, "application_statuses")
+router.register(r"campaign-stages", views.CampaignStageViewSet, "campaign_stages")
+router.register(r"doc-return-methods", views.DocumentReturnMethodViewSet, "doc_return_methods")
+router.register(r"privilege-types", views.PrivilegeTypeViewSet, "privilege_types")
+router.register(r"membership", views.FamilyMembershipViewSet, "family_membership")
+urlpatterns += router.urls

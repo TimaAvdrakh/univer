@@ -453,6 +453,10 @@ class Role(BaseModel):
         default=False,
         verbose_name='Специалист приемной комиссии',
     )
+    is_applicant = models.BooleanField(
+        default=False,
+        verbose_name='Абитуриент'
+    )
 
     def __str__(self):
         return '{}'.format(self.profile.user.username)
@@ -568,6 +572,8 @@ class PhoneType(BaseCatalog):
 class ProfilePhone(BaseModel):
     profile = models.ForeignKey(
         Profile,
+        blank=True,
+        null=True,
         on_delete=models.CASCADE,
         verbose_name='Профиль',
         related_name='phones',
@@ -601,5 +607,3 @@ class ProfilePhone(BaseModel):
             'phone_type',
             'value',
         )
-
-
