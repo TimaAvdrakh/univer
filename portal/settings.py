@@ -154,6 +154,8 @@ CRON_CLASSES = [
     "cron_app.cron.ControlNotifyJob",
     "cron_app.cron.CloseLessonsJob",
     # "cron_app.cron.SendStudentDisciplinesTo1CJob",
+    # "cron_app.cron.SendConfirmedDisciplineCreditTo1CJob",
+    # "cron_app.cron.SendConfirmedThemesOfTheses",
     "cron_app.cron.ClosePlannedJournalJob",
     "cron_app.cron.GenerateExcelJob",
     # "cron_app.cron.DeleteDuplicateJob",

@@ -5,6 +5,7 @@ from portal_users.serializers import ProfileShortSerializer, StudentDisciplineSt
 from portal.curr_settings import student_discipline_info_status, student_discipline_status, not_choosing_load_types2
 from cron_app.models import AdvisorRejectedBidTask
 from . import models
+from portal_users import serializers as user_serializers, models as user_model
 from portal_users.utils import get_current_study_year
 from common.exceptions import CustomException
 
@@ -439,17 +440,64 @@ class StudentProfilesListSerializer(serializers.ModelSerializer):
         )
 
 
-class StudentsByDisciplineIDSerializer(serializers.ModelSerializer):
-    """
-    Список студентов по uid дисциплины
-    """
-    student = ProfileShortSerializer()
+class ProfileDetailSerializer(serializers.ModelSerializer):
+    profileId = serializers.CharField(
+        source='uid',
+        read_only=True,
+    )
+    middleName = serializers.CharField(
+        max_length=100,
+        source='middle_name',
+        allow_blank=True,
+    )
+    firstName = serializers.CharField(
+        max_length=100,
+        source='first_name',
+        required=True,
+    )
+    lastName = serializers.CharField(
+        max_length=100,
+        source='last_name',
+        required=True,
+    )
 
     class Meta:
-        model = org_models.StudentDiscipline
+        model = user_model.Profile
         fields = (
-            'student',
+            'profileId',
+            'firstName',
+            'lastName',
+            'middleName',
+            'phone',
+            'email',
+            'avatar'
         )
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance=instance)
+        role = user_model.Role.objects.filter(profile=instance).first()
+        role_serializer = user_serializers.RoleSerializer(instance=role)
+        data['role'] = role_serializer.data
+        teacher = user_model.Teacher.objects.get(profile=instance)
+        data['full_info'] = user_serializers.TeacherSerializer(teacher).data
+        teacher_positions = user_model.TeacherPosition.objects.filter(profile=instance, is_active=True)
+        data['full_info']['positions'] = user_serializers.TeacherPositionSerializer(teacher_positions, many=True).data
+        if data['avatar'] is not None:
+            data['avatar'] = user_serializers.current_site + data['avatar']
+        return data
+
+
+class ThemesOfThesesSerializer(serializers.ModelSerializer):
+    supervisors = ProfileDetailSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = models.ThemesOfTheses
+        fields = '__all__'
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance=instance)
+        data['supervisors_text'] = instance.supervisors_text
+        return data
 
 
 class EntryYearSerializer(serializers.ModelSerializer):
@@ -463,6 +511,14 @@ class EntryYearSerializer(serializers.ModelSerializer):
         fields = (
             'entry_date',
         )
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance=instance)
+        if not instance.entry_date:
+            data['entry_date'] = "Ow, nothing!"
+        else:
+            data['entry_date'] = instance.entry_date.year
+        return data
 
 
 class PrepartionLevelListSerializer(serializers.ModelSerializer):
@@ -485,3 +541,15 @@ class StudentsByDisciplineIDSerializer(serializers.ModelSerializer):
         fields = (
             'student',
         )
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance=instance)
+        data['faculty'] = instance.study_plan.faculty.name
+        data['cathedra'] = instance.study_plan.cathedra.name
+        data['education_program'] = instance.study_plan.education_program.name
+        if instance.study_plan.education_program.group:
+            data['education_program_group'] = instance.study_plan.education_program.group.name
+        else:
+            data['education_program_group'] = None
+        data['group'] = instance.study_plan.group.name
+        return data

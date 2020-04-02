@@ -241,6 +241,7 @@ class EvaluateSerializer(serializers.Serializer):
         reason = self.validated_data.get('reason')
 
         try:
+
             sp = models.StudentPerformance.objects.get(
                 lesson=lesson,
                 student=student,
@@ -259,6 +260,22 @@ class EvaluateSerializer(serializers.Serializer):
                         stud_perf=sp,
                         old_mark=old_mark,
                         new_mark=mark,
+                    )
+            else:
+                if missed:
+                    """Пропустил урок"""
+                    sp = models.StudentPerformance.objects.create(
+                        student=student,
+                        lesson=lesson,
+                        missed=True,
+                        reason=reason,
+                    )
+                else:
+                    sp = models.StudentPerformance.objects.create(
+                        lesson=lesson,
+                        student=student,
+                        mark=mark,
+                        # missed=False,
                     )
 
         except models.StudentPerformance.DoesNotExist:
