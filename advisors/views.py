@@ -765,7 +765,7 @@ class RegisterResultView(generics.ListAPIView):
 
         if request.query_params.getlist('ordering[]'):
             distincted_queryset = queryset.filter(
-                uid__in=distincted_queryset.values_list('uid', flat=True)
+                uid__in=Subquery(distincted_queryset.values_list('uid', flat=True))
             ).order_by(*request.query_params.getlist('ordering[]'))
 
         page = self.paginate_queryset(distincted_queryset)
