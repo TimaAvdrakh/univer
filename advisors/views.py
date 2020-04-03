@@ -773,17 +773,7 @@ class RegisterResultView(generics.ListAPIView):
 
         student_discipline_list = []
         for item in page:
-            query2 = dict()
-            query2.update(query)
-            query2['discipline_id'] = item.discipline_id
-            query2['load_type_id'] = item.load_type_id
-            query2['language_id'] = item.language_id
-            query2['discipline'] = item.discipline
-            query2['load_type'] = item.load_type
-            query2['language'] = item.language
-            query2['teacher'] = item.teacher
-            query2['hours'] = item.hours
-            student_count = queryset.filter(**query2).distinct('student').count()
+            student_count = queryset.filter(**query).distinct('student').count()
 
             teacher = ''
             if item.teacher:
