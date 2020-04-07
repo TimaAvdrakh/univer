@@ -63,4 +63,7 @@ urlpatterns = [
     path('preparation_level/', views.PreparationsLevelListView.as_view(),
          name='preparation_level'),
 
+    # Дипломная работа
+    path('thesis_topic/', views.ThesisTopic.as_view(), name='thesis_topic')
+
 ]

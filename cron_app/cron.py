@@ -15,13 +15,17 @@ from portal.curr_settings import current_site
 from portal_users import models as user_models
 from organizations import models as org_models
 from schedules import models as sh_models
+from advisors import models as ad_models
 from datetime import datetime, timedelta
 from integration.models import DocumentChangeLog
 from requests.auth import HTTPBasicAuth
 from bot import bot
+import json
 from reports import views as report_views
 from advisors import views as advisor_views
 from common import models as common_models
+import urllib3
+import certifi
 from applicant.models import Applicant
 
 
@@ -301,10 +305,16 @@ class SendStudentDisciplinesTo1CJob(CronJobBase):
             status_id=status,
             teacher__isnull=False,
             sent=False,
-        )[:5]
-
+        )[0]
+        sds = org_models.StudentDiscipline.objects.filter(
+            status_id=status,
+            teacher__isnull=False,
+            sent=False,
+            student=sds.student
+        )
         disciplines = []
         for sd in sds:
+            print(sd.study_plan)
             item = {
                 'uid_site': str(sd.uid),  # УИД дисицплины студента на сайте
                 'study_plan': sd.study_plan.uid_1c,
@@ -319,7 +329,7 @@ class SendStudentDisciplinesTo1CJob(CronJobBase):
                 'isopt': str(sd.component.uid) == component_by_choose_uid if sd.component else False,
             }
             disciplines.append(item)
-
+        urllib3.disable_warnings()
         resp = requests.post(
             url,
             json=disciplines,
@@ -329,6 +339,7 @@ class SendStudentDisciplinesTo1CJob(CronJobBase):
         )
 
         if resp.status_code == 200:
+            print("Connected")
             resp_data = resp.json()
             for item in resp_data:
                 # try:
@@ -341,7 +352,7 @@ class SendStudentDisciplinesTo1CJob(CronJobBase):
                     content_type_id=CONTENT_TYPES['studentdiscipline'],
                     object_id=item['uid_site'],
                     status=item['code'],
-                    # sent_data=sent_data_json,
+                    # sent_data=item['json'],
                 )
                 error_text = ''
                 for error in item['errors']:
@@ -354,6 +365,140 @@ class SendStudentDisciplinesTo1CJob(CronJobBase):
                     try:
                         sd = org_models.StudentDiscipline.objects.get(pk=item['uid_site'])
                     except org_models.StudentDiscipline.DoesNotExist:
+                        continue
+
+                    sd.uid_1c = item['uid_1c']
+                    sd.sent = True
+                    sd.save()
+        else:
+            message = '{}\n{}'.format(resp.status_code,
+                                      resp.content.decode())
+            for chat_id in BOT_DEV_CHAT_IDS:
+                bot.send_message(chat_id,
+                                 message)
+
+
+class SendConfirmedDisciplineCreditTo1CJob(CronJobBase):
+    RUN_EVERY_MINS = 1
+
+    schedule = Schedule(run_every_mins=RUN_EVERY_MINS)
+    code = 'cron_app.send_discipline_credit'
+
+    def do(self):
+        print("Working")
+        url = SEND_STUD_DISC_1C_URL
+        status = student_discipline_status['confirmed']
+        dcs = org_models.DisciplineCredit.objects.filter(
+            status_id=status,
+            uuid1c__isnull=False,
+            sent=False,
+            chosen_control_forms__isnull=False,
+            acad_period__isnull=False,
+            student__isnull=False
+        )[:5]
+        print(dcs)
+        discredits = []
+        for dc in dcs:
+            item = {
+                'uid_site': str(dc.uid),
+                'discipline': str(dc.discipline.uid),
+                'cycle': str(dc.cycle.uid),
+                'credit': str(dc.credit),
+                'acad_period': str(dc.acad_period.uid),
+                'chosen_control_forms': str(dc.chosen_control_forms.uid),
+                'student': str(dc.student.uid),
+                'study_plan_uid_1c': str(dc.study_plan_uid_1c),
+                'study_period': str(dc.study_plan.study_period.uid)
+            }
+            discredits.append(item)
+        print(discredits)
+        urllib3.disable_warnings()
+        resp = requests.post(
+            url,
+            json=discredits,
+            verify=False,
+            auth=HTTPBasicAuth('Админимстратор'.encode(), 'qwe123rty'),
+            timeout=30,
+        )
+        if resp.status_code == 200:
+            resp_data = resp.json()
+            for item in resp_data:
+                log = DocumentChangeLog(
+                    content_type_id=CONTENT_TYPES['disciplinecredit'],
+                    object_id=item['uid_site'],
+                    status=item['code'],
+                )
+                error_text = ''
+                for error in item['errors']:
+                    error_text += '{}\n'.format(error)
+
+                log.errors = error_text
+                log.save()
+
+                if item['code'] == 0:
+                    try:
+                        sd = org_models.DisciplineCredit.objects.get(pk=item['uid_site'])
+                    except org_models.DisciplineCredit.DoesNotExist:
+                        continue
+
+                    sd.uid_1c = item['uid_1c']
+                    sd.sent = True
+                    sd.save()
+        else:
+            message = '{}\n{}'.format(resp.status_code,
+                                      resp.content.decode())
+            for chat_id in BOT_DEV_CHAT_IDS:
+                bot.send_message(chat_id,
+                                 message)
+
+
+class SendConfirmedThemesOfTheses(CronJobBase):
+    pass
+    RUN_EVERY_MINS = 1
+    schedule = Schedule(run_every_mins=RUN_EVERY_MINS)
+    code = 'cron_app.send_student_themes_of_thesis'
+
+    def do(self):
+        url = SEND_STUD_DISC_1C_URL
+        tots = ad_models.ThemesOfTheses.objects.filter(
+            student__isnull=False,
+        )[:5]
+        themes = []
+        for tot in tots:
+            item = {
+                'uid_site': str(tot.uid),
+                'student': str(tot.student.uid),
+            }
+            themes.append(item)
+        urllib3.disable_warnings()
+        resp = requests.post(
+            url,
+            json=themes,
+            verify=False,
+            auth=HTTPBasicAuth('Администратор'.encode(), 'qwe123rty'),
+            timeout=30,
+        )
+
+        if resp.status_code == 200:
+            print("Connected")
+            resp_data = resp.json()
+            for item in resp_data:
+                log = DocumentChangeLog(
+                    content_type_id=CONTENT_TYPES['themesofthesis'],
+                    object_id=item['uid_site'],
+                    status=item['code'],
+                )
+                error_text = ''
+                for error in item['errors']:
+                    error_text += '{}\n'.format(error)
+
+                log.errors = error_text
+                log.save()
+
+                if item['code'] == 0:
+                    try:
+                        sd = ad_models.ThemesOfTheses.objects.get(pk=item['uid_site'])
+                    except ad_models.ThemesOfTheses.DoesNotExist:
                         continue
 
                     sd.uid_1c = item['uid_1c']
