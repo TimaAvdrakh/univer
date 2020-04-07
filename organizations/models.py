@@ -882,16 +882,16 @@ class StudentDiscipline(BaseModel):
                 discipline=self.discipline,
                 acad_period=self.acad_period,
                 student=self.student,
+                disciplinecreditcontrolform__isnull=False,
             )
-
             return {
                 'credit': discipline_credit.credit,
-                'control_form': list(
+                'control_forms': list(
                     discipline_credit.disciplinecreditcontrolform_set.filter(is_active=True).values('control_form__name', 'uid'))
             }
 
         except DisciplineCredit.DoesNotExist:
-            return 0
+            return {'error': 'DoesNotExist'}
         except DisciplineCredit.MultipleObjectsReturned:
             discipline_credit = DisciplineCredit.objects.filter(
                 study_plan=self.study_plan,
@@ -1164,14 +1164,26 @@ class DisciplineCredit(BaseModel):
         verbose_name='Статус диспцилины',
         related_name='discipline_credit_status'
     )
-
-    teacher = models.ForeignKey(
-        'portal_users.Profile',
+    uid_1c = models.CharField(
+        max_length=100,
         null=True,
-        on_delete=models.CASCADE,
-        verbose_name='Преподаватель',
-        related_name='discipline_credit_teacher'
+        default='',
+        blank=True,
+        verbose_name='УИД документа-аналога в 1С',
+        help_text='придет, после выгрузки в 1С',
     )
+    sent = models.NullBooleanField(
+        default=False,
+        verbose_name='Отправлен в 1С',
+    )
+
+    # teacher = models.ForeignKey(
+    #     'portal_users.Profile',
+    #     null=True,
+    #     on_delete=models.CASCADE,
+    #     verbose_name='Преподаватель',
+    #     related_name='discipline_credit_teacher'
+    # )
 
 
     def __str__(self):

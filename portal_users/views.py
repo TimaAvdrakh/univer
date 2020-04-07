@@ -835,23 +835,28 @@ class ChooseFormControlView(generics.UpdateAPIView):
     def update(self, request, *args, **kwargs):
         data = request.data
         partial = kwargs.pop('partial', False)
+        instance = self.get_object()
+
         try:
             if request.user.profile.role.is_student:
-                data['status'] = org_models.StudentDisciplineStatus.objects.get(number=2).uid
+                status_s = org_models.StudentDisciplineStatus.objects.get(number=1)
+                if data.get('chosen_control_forms'):
+                    status_s = org_models.StudentDisciplineStatus.objects.get(number=2)
+                data['status'] = status_s.uid
+                instance.status_id = status_s.uid
             elif request.user.profile.role.is_supervisor:
-                data['status'] = org_models.StudentDisciplineStatus.objects.get(number=5).uid
-                data['teacher'] = request.user.profile.uid
-            instance = self.get_object()
+                status_s = org_models.StudentDisciplineStatus.objects.get(number=5)
+                data['status'] = status_s.uid
+                instance.status_id = data['status']
+                # data['teacher'] = request.user.profile.uid
+                # instance.teacher = request.user.profile
+            instance.save()
             serializer = self.get_serializer(instance, data=data, partial=partial)
-            serializer.is_valid(raise_exception=True)
-            self.perform_update(serializer)
-
-            if getattr(instance, '_prefetched_objects_cache', None):
-                # If 'prefetch_related' has been applied to a queryset, we need to
-                # forcibly invalidate the prefetch cache on the instance.
-                instance._prefetched_objects_cache = {}
-
-            return Response(serializer.data)
+            if serializer.is_valid(raise_exception=True):
+                self.perform_update(serializer)
+                return Response(serializer.data)
+            else:
+                return Response(serializer.error_messages, status=status.HTTP_400_BAD_REQUEST)
         except:
             return Response(status=status.HTTP_400_BAD_REQUEST)
 

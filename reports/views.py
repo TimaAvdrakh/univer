@@ -15,6 +15,8 @@ from cron_app.models import ExcelTask
 from rest_framework.permissions import IsAuthenticated
 from . import permissions
 from django.utils.translation import gettext as _
+from advisors import views as advisor_views
+from django.http import JsonResponse
 
 
 class RegisterResultExcelView(generics.RetrieveAPIView):
@@ -25,7 +27,6 @@ class RegisterResultExcelView(generics.RetrieveAPIView):
 
     def get(self, request, *args, **kwargs):
         profile = request.user.profile
-
         study_year = request.query_params.get('study_year')
         reg_period = request.query_params.get('reg_period')
         acad_period = self.request.query_params.get('acad_period')
@@ -34,6 +35,7 @@ class RegisterResultExcelView(generics.RetrieveAPIView):
         edu_prog = request.query_params.get('edu_prog')
         course = request.query_params.get('course')
         group = request.query_params.get('group')
+        ordering = request.query_params.getlist('ordering[]')
 
         fields = {
             'study_year':  study_year,
@@ -47,14 +49,17 @@ class RegisterResultExcelView(generics.RetrieveAPIView):
         }
         token = uuid4()
         fields_json = json.dumps(fields)
-        ExcelTask.objects.create(
+        task = ExcelTask.objects.create(
             doc_type=1,
             profile=profile,
             token=token,
             fields=fields_json,
+            ordering=ordering
         )
+
         return Response(
             {
+                'uid': str(task.uid),
                 'token': str(token)
             },
             status=status.HTTP_200_OK
@@ -81,10 +86,14 @@ def make_register_result_rxcel(task):
     course = fields.get('course')
     group = fields.get('group')
 
-    queryset = queryset.filter(
-        status_id=student_discipline_status['confirmed'],
-        study_plan__advisor=profile,
-    )
+    query = dict()
+    query['status_id'] = student_discipline_status['confirmed']
+    query['study_plan__advisor_id'] = profile.id
+
+    # queryset = queryset.filter(
+    #     status_id=student_discipline_status['confirmed'],
+    #     study_plan__advisor=profile,
+    # )
 
     wb = load_workbook('advisors/excel/register_result.xlsx')
     ws = wb.active
@@ -133,7 +142,8 @@ def make_register_result_rxcel(task):
     ws['B7'].font = font_small
 
     if faculty:
-        queryset = queryset.filter(study_plan__faculty_id=faculty)
+        query['study_plan__faculty_id'] = faculty
+        # queryset = queryset.filter(study_plan__faculty_id=faculty)
         faculty_obj = org_models.Faculty.objects.get(pk=faculty)
         ws['B8'] = faculty_obj.name
         ws['B8'].alignment = wrap_left_alignment
@@ -142,7 +152,8 @@ def make_register_result_rxcel(task):
     ws['B8'].font = font_small
 
     if speciality:
-        queryset = queryset.filter(study_plan__speciality_id=speciality)
+        query['study_plan__speciality_id'] = speciality
+        # queryset = queryset.filter(study_plan__speciality_id=speciality)
         speciality_obj = org_models.Speciality.objects.get(pk=speciality)
         ws['B9'] = speciality_obj.name
         ws['B9'].alignment = wrap_left_alignment
@@ -151,7 +162,8 @@ def make_register_result_rxcel(task):
     ws['B9'].font = font_small
 
     if edu_prog:
-        queryset = queryset.filter(study_plan__education_program_id=edu_prog)
+        query['study_plan__education_program_id'] = edu_prog
+        # queryset = queryset.filter(study_plan__education_program_id=edu_prog)
         edu_prog_obj = org_models.EducationProgram.objects.get(pk=edu_prog)
         ws['B10'] = edu_prog_obj.name
         ws['B10'].alignment = wrap_left_alignment
@@ -166,7 +178,8 @@ def make_register_result_rxcel(task):
     ws['B11'].font = font_small
 
     if group:
-        queryset = queryset.filter(study_plan__group_id=group)
+        query['study_plan__group_id'] = group
+        # queryset = queryset.filter(study_plan__group_id=group)
         group_obj = org_models.Group.objects.get(pk=group)
         ws['B12'] = group_obj.name
         ws['B12'].alignment = wrap_left_alignment
@@ -185,16 +198,22 @@ def make_register_result_rxcel(task):
         ws['B5'].font = font_small
         ws['B5'].alignment = wrap_left_alignment
 
-        queryset = queryset.filter(study_year_id=study_year)
+        query['study_year_id'] = study_year
+        # queryset = queryset.filter(study_year_id=study_year)
 
     if course and study_year:
         study_plan_pks = org_models.StudyYearCourse.objects.filter(
             study_year_id=study_year,
             course=course
         ).values('study_plan')
-        queryset = queryset.filter(study_plan__in=study_plan_pks)
 
-    distincted_queryset = queryset.distinct('discipline', 'load_type', 'hours', 'language', 'teacher')
+        query['study_plan__in'] = study_plan_pks
+        # queryset = queryset.filter(study_plan__in=study_plan_pks)
+
+    distincted_queryset = queryset.filter(**query).distinct('discipline', 'load_type', 'hours', 'language', 'teacher')
+    if task.ordering:
+        distincted_queryset.order_by(*task.ordering)
+
 
     student_discipline_list = []
     for item in distincted_queryset:
@@ -439,6 +458,8 @@ def make_register_statistics_excel(task):
         queryset = queryset.filter(study_plan__in=study_plan_pks)
 
     distincted_queryset = queryset.distinct('discipline', 'study_plan__group')
+    if task.ordering:
+        distincted_queryset = distincted_queryset.order_by(*task.ordering)
 
     student_discipline_list = []
     for student_discipline in distincted_queryset:
@@ -531,8 +552,8 @@ class NotRegisteredStudentListExcelView(generics.RetrieveAPIView):
     """
 
     def get(self, request, *args, **kwargs):
-        profile = self.request.user.profile
 
+        profile = self.request.user.profile
         study_year = self.request.query_params.get('study_year')
         reg_period = self.request.query_params.get('reg_period')
         acad_period = self.request.query_params.get('acad_period')
@@ -541,6 +562,7 @@ class NotRegisteredStudentListExcelView(generics.RetrieveAPIView):
         edu_prog = self.request.query_params.get('edu_prog')
         course = self.request.query_params.get('course')
         group = self.request.query_params.get('group')
+        ordering = request.query_params.getlist('ordering[]')
 
         fields = {
             'study_year': study_year,
@@ -554,14 +576,16 @@ class NotRegisteredStudentListExcelView(generics.RetrieveAPIView):
         }
         token = uuid4()
         fields_json = json.dumps(fields)
-        ExcelTask.objects.create(
+        task = ExcelTask.objects.create(
             doc_type=3,
             profile=profile,
             token=token,
             fields=fields_json,
+            ordering=ordering
         )
         return Response(
             {
+                'uid': str(task.uid),
                 'token': str(token)
             },
             status=status.HTTP_200_OK
@@ -710,6 +734,9 @@ def make_not_registered_student_excel(task):
         'study_plan__group',
         'discipline',
     )
+
+    if task.ordering:
+        distincted_queryset = distincted_queryset.order_by(*task.ordering)
     student_discipline_list = []
     for item in distincted_queryset:
         sds = queryset.filter(
@@ -853,3 +880,55 @@ class ReportListView(generics.ListAPIView):
             resp,
             status=status.HTTP_200_OK
         )
+
+
+class GetExelView(generics.RetrieveAPIView):
+    """Получить готовый файл"""
+    permission_classes = (
+        IsAuthenticated,
+        permissions.ExcelAuthorPermission,
+    )
+
+    def get(self, request, *args, **kwargs):
+        token = request.query_params.get('token')
+        get = request.query_params.get('get')
+
+        try:
+            task = ExcelTask.objects.get(token=token, is_active=True)
+            doc_type = task.doc_type
+            handler = {
+                1: make_register_result_rxcel,
+                2: make_register_statistics_excel,
+                3: make_not_registered_student_excel,
+                4: advisor_views.make_iup_bid_excel,
+                5: advisor_views.make_iup_excel,
+            }
+            handler[doc_type](task)
+            with open(task.file_path, 'rb') as f:
+                response = HttpResponse(f, content_type='application/ms-excel')
+                response['Content-Disposition'] = 'attachment; filename="' + str(task.file_name) + '"'
+                return response
+        except:
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+
+
+
+
+def get_exel(request):
+    if request.GET.get('uid'):
+        task = ExcelTask.objects.get(uid=request.GET.get('uid'))
+        doc_type = task.doc_type
+        handler = {
+            1: make_register_result_rxcel,
+            2: make_register_statistics_excel,
+            3: make_not_registered_student_excel,
+            4: advisor_views.make_iup_bid_excel,
+            5: advisor_views.make_iup_excel,
+        }
+        handler[doc_type](task)
+        with open(task.file_path, 'rb') as f:
+            response = HttpResponse(f, content_type='application/ms-excel')
+            response['Content-Disposition'] = 'attachment; filename="' + str(task.file_name) + '"'
+            return response
+    else:
+        return JsonResponse({'error': _('not Exel')})
