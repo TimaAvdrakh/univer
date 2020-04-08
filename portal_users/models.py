@@ -202,6 +202,10 @@ class Profile(BaseModel):
         default=False,
         verbose_name='Сменил пароль',
     )
+    notify_me_from_email = models.NullBooleanField(
+        default=True,
+        verbose_name='Оповещать по почте',
+    )
 
     def save(self, *args, **kwargs):
         if self.exchange:
