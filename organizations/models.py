@@ -886,7 +886,7 @@ class StudentDiscipline(BaseModel):
             )
             return {
                 'credit': discipline_credit.credit,
-                'control_forms': list(
+                'control_form': list(
                     discipline_credit.disciplinecreditcontrolform_set.filter(is_active=True).values('control_form__name', 'uid'))
             }
 
