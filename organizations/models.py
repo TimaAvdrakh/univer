@@ -921,14 +921,14 @@ class StudentDiscipline(BaseModel):
     @property
     def credit_obj(self):
         try:
-            discipline_credit = DisciplineCredit.objects.get(
+            discipline_credit = DisciplineCredit.objects.filter(
                 study_plan=self.study_plan,
                 cycle=self.cycle,
                 discipline=self.discipline,
                 acad_period=self.acad_period,
                 student=self.student,
-                disciplinecreditcontrolform__isnull=False,
-            )
+            ).first()
+
             return {
                 'credit': discipline_credit.credit,
                 'control_form': list(
