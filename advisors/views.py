@@ -713,8 +713,10 @@ class RegisterResultView(generics.ListAPIView):
     pagination_class = CustomPagination
 
     def list(self, request, *args, **kwargs):
+        query = dict()
         queryset = self.queryset
         my = request.query_params.get('my')
+
         query = dict()
 
         profile = request.user.profile
@@ -752,7 +754,6 @@ class RegisterResultView(generics.ListAPIView):
         study_year = request.query_params.get('study_year')
         course = request.query_params.get('course')
 
-
         if course and study_year:
             query['study_plan__in'] = org_models.StudyYearCourse.objects.filter(
                 study_year_id=study_year,
@@ -760,10 +761,7 @@ class RegisterResultView(generics.ListAPIView):
             ).values('study_plan')
 
         distincted_queryset = queryset.filter(**query).distinct(
-            'discipline', 'load_type', 'hours', 'language', 'teacher')
-
-        if request.query_params.getlist('ordering[]'):
-            distincted_queryset = distincted_queryset.order_by(*request.query_params.getlist('ordering[]'))
+            'discipline', 'load_type', 'hours', 'language', 'teacher', )
         # print(distincted_queryset)
         page = self.paginate_queryset(distincted_queryset)
         # print(page, 'page')
@@ -887,12 +885,15 @@ class RegisterResultView(generics.ListAPIView):
 #             return self.get_paginated_response(serializer.data)
 
 
-class RegisterStatisticsView(views.APIView):
+class RegisterStatisticsView(generics.ListAPIView):
     """Статистика регистрации
     study_year(!), reg_period(!), acad_period, faculty, speciality, edu_prog, course, group
     """
+    serializer_class = serializers.RegisterStatisticsSerializer
+    queryset = org_models.StudentDiscipline.objects.filter(is_active=True)
+    pagination_class = CustomPagination
 
-    def get(self, request, *args, **kwargs):
+    def list(self, request, *args, **kwargs):
         profile = request.user.profile
 
         study_year = request.query_params.get('study_year')
@@ -908,7 +909,7 @@ class RegisterStatisticsView(views.APIView):
         count = 0
         link_tmp = '{domain}/{path}/?page={page}&study_year={study_year}&reg_period={reg_period}' \
                    '&acad_period={acad_period}&faculty={faculty}&speciality={speciality}' \
-                   '&edu_prog={edu_prog}&course={course}&group={group}'
+                   '&edu_prog={edu_prog}&course={course}&group={group}&'
 
         next_link = link_tmp.format(domain=current_site,
                                     path='api/v1/advisors/registration/statistics',
@@ -920,8 +921,7 @@ class RegisterStatisticsView(views.APIView):
                                     speciality=speciality,
                                     edu_prog=edu_prog,
                                     course=course,
-                                    group=group,
-                                    )
+                                    group=group, )
 
         prev_link = link_tmp.format(domain=current_site,
                                     path='api/v1/advisors/registration/statistics',
@@ -933,8 +933,7 @@ class RegisterStatisticsView(views.APIView):
                                     speciality=speciality,
                                     edu_prog=edu_prog,
                                     course=course,
-                                    group=group,
-                                    )
+                                    group=group, )
 
         limit = 10
         offset = 0
@@ -970,7 +969,6 @@ class RegisterStatisticsView(views.APIView):
             'offset': offset,
             'limit': limit,
             'student_status_id': STUDENT_STATUSES['expelled'],
-
         }
 
         query = '''
@@ -996,13 +994,15 @@ class RegisterStatisticsView(views.APIView):
                                                      FROM organizations_studyyearcourse syc
                                                      WHERE syc.study_year_id = %(study_year)s
                                                      AND syc.course = %(course)s))
-            GROUP BY sp.group_id, sd.discipline_id 
+            GROUP BY sp.group_id, sd.discipline_id
             LIMIT %(limit)s OFFSET %(offset)s;
         '''
 
         with connection.cursor() as cursor:
             cursor.execute(query, params)
             rows = cursor.fetchall()
+
+        # distincted_queryset = queryset.distinct('discipline', 'study_plan__group')
 
         student_discipline_list = []
         for row in rows:
@@ -1017,17 +1017,32 @@ class RegisterStatisticsView(views.APIView):
                 is_active=True,
             ).distinct('student').count()
 
-            d = {
-                'faculty': org_models.StudentDiscipline.objects.get(pk=first_sd).study_plan.faculty.name,
-                'cathedra': org_models.StudentDiscipline.objects.get(pk=first_sd).study_plan.cathedra.name,
-                'speciality': org_models.StudentDiscipline.objects.get(pk=first_sd).study_plan.speciality.name,
-                'group': org_models.Group.objects.get(pk=group_id).name,
-                'student_count': group_student_count,
-                'discipline': org_models.Discipline.objects.get(pk=discipline_id).name,
-                'not_chosen_student_count': not_chosen_student_count,
-                'percent_of_non_chosen_student': (not_chosen_student_count / group_student_count) * 100,
-            }
+            d = cache.get("getstudentdisciplinedetaildata" + str(first_sd))
+
+            if d is None:
+                d = {
+                    'faculty': org_models.StudentDiscipline.objects.get(pk=first_sd).study_plan.faculty.name,
+                    'cathedra': org_models.StudentDiscipline.objects.get(pk=first_sd).study_plan.cathedra.name,
+                    'speciality': org_models.StudentDiscipline.objects.get(pk=first_sd).study_plan.speciality.name,
+                    'group': org_models.Group.objects.get(pk=group_id).name,
+                    'student_count': group_student_count,
+                    'discipline': org_models.Discipline.objects.get(pk=discipline_id).name,
+                    'not_chosen_student_count': not_chosen_student_count,
+                    'percent_of_non_chosen_student': (not_chosen_student_count / group_student_count) * 100,
+                }
+                cache.set("getstudentdisciplinedetaildata" + str(first_sd), d)
             student_discipline_list.append(d)
+
+        # for student_discipline in distincted_queryset:
+        #     group_student_count = org_models.StudyPlan.objects.filter(
+        #         group=student_discipline.study_plan.group,
+        #         is_active=True,
+        #     ).distinct('student').count()
+        #
+        #     not_chosen_student_count = queryset.filter(
+        #         study_plan__group=student_discipline.study_plan.group,
+        #         discipline=student_discipline.discipline
+        #     ).distinct('student').count()
 
         resp = {
             "count": count,
@@ -1155,7 +1170,6 @@ class NotRegisteredStudentListView(generics.ListAPIView):
         course = request.query_params.get('course')
         group = request.query_params.get('group')
         page = request.query_params.get('page')
-
         if not page:
             page = 0
 
@@ -1252,45 +1266,44 @@ class NotRegisteredStudentListView(generics.ListAPIView):
         #     '''
         query = '''
             SELECT sp.faculty_id, faks.name,
-               sp.cathedra_id,          cathedras.name,
-               sp.speciality_id,        specties.name,
-               sp.group_id,             groupss.name,
-               sd.discipline_id,        disciplines.name,
-               string_agg(CONCAT(p.last_name, ' ', p.first_name, ' ', p.middle_name), ',') 
-            FROM organizations_studentdiscipline sd
-            INNER JOIN organizations_studyplan sp on sd.study_plan_id = sp.uid
-            INNER JOIN portal_users_profile p on sp.student_id = p.uid
-            INNER JOIN organizations_discipline d on sd.discipline_id = d.uid
-            inner join organizations_faculty  as faks  on sp.faculty_id = faks.uid
-            inner join organizations_cathedra  as cathedras  on sp.cathedra_id = cathedras.uid
-            inner join organizations_speciality as specties on sp.speciality_id = specties.uid
-            inner join organizations_group as groupss on sp.group_id = groupss.uid
-            inner join organizations_discipline as disciplines on sd.discipline_id = disciplines.uid
-            INNER JOIN portal_users_studentstatus ss on p.status_id = ss.uid
-            WHERE sp.advisor_id=%(advisor_id)s
-            AND sd.status_id=%(status_id)s
-            AND ss.uid != %(student_status_id)s
-            AND (%(reg_period)s is null or sd.acad_period_id IN (SELECT coursperm.acad_period_id
-                                                                 FROM common_courseacadperiodpermission coursperm
-                                                                 WHERE coursperm.registration_period_id=%(reg_period)s))
-            AND (%(acad_per)s is null or sd.acad_period_id=%(acad_per)s)
-            AND (%(faculty)s is null or sp.faculty_id=%(faculty)s)
-            AND (%(speciality)s is null or sp.speciality_id=%(speciality)s)
-            AND (%(edu_prog)s is null or sp.education_program_id=%(edu_prog)s)
-            AND (%(group1)s is null or sp.group_id=%(group1)s)
-            AND (%(study_year)s is null or sd.study_year_id=%(study_year)s)
-            AND (%(is_course)s is null or sp.uid IN (SELECT syc.study_plan_id
-                                                     FROM organizations_studyyearcourse syc
-                                                     WHERE syc.study_year_id = %(study_year)s
-                                                     AND syc.course = %(course)s))
-            GROUP BY sp.faculty_id, sp.cathedra_id, sp.speciality_id, sp.group_id, sd.discipline_id,
-              faks.name,
-              cathedras.name,
-              specties.name,
-              groupss.name,
-              disciplines.name
-            LIMIT %(limit)s OFFSET %(offset)s;
-        '''
+                   sp.cathedra_id,          cathedras.name,
+                   sp.speciality_id,        specties.name,
+                   sp.group_id,             groupss.name,
+                   sd.discipline_id,        disciplines.name,
+                   string_agg(CONCAT(p.last_name, ' ', p.first_name, ' ', p.middle_name), ',') 
+                FROM organizations_studentdiscipline sd
+                INNER JOIN organizations_studyplan sp on sd.study_plan_id = sp.uid
+                INNER JOIN portal_users_profile p on sp.student_id = p.uid
+                INNER JOIN organizations_discipline d on sd.discipline_id = d.uid
+                inner join organizations_faculty  as faks  on sp.faculty_id = faks.uid
+                inner join organizations_cathedra  as cathedras  on sp.cathedra_id = cathedras.uid
+                inner join organizations_speciality as specties on sp.speciality_id = specties.uid
+                inner join organizations_group as groupss on sp.group_id = groupss.uid
+                inner join organizations_discipline as disciplines on sd.discipline_id = disciplines.uid
+                INNER JOIN portal_users_studentstatus ss on p.status_id = ss.uid
+                WHERE sp.advisor_id=%(advisor_id)s
+                AND sd.status_id=%(status_id)s
+                AND ss.uid != %(student_status_id)s
+                AND (%(reg_period)s is null or sd.acad_period_id IN (SELECT coursperm.acad_period_id
+                                                                     FROM common_courseacadperiodpermission coursperm
+                                                                     WHERE coursperm.registration_period_id=%(reg_period)s))
+                AND (%(acad_per)s is null or sd.acad_period_id=%(acad_per)s)
+                AND (%(faculty)s is null or sp.faculty_id=%(faculty)s)
+                AND (%(speciality)s is null or sp.speciality_id=%(speciality)s)
+                AND (%(edu_prog)s is null or sp.education_program_id=%(edu_prog)s)
+                AND (%(group1)s is null or sp.group_id=%(group1)s)
+                AND (%(study_year)s is null or sd.study_year_id=%(study_year)s)
+                AND (%(is_course)s is null or sp.uid IN (SELECT syc.study_plan_id
+                                                         FROM organizations_studyyearcourse syc
+                                                         WHERE syc.study_year_id = %(study_year)s
+                                                         AND syc.course = %(course)s))
+                GROUP BY sp.faculty_id, sp.cathedra_id, sp.speciality_id, sp.group_id, sd.discipline_id,
+                  faks.name,
+                  cathedras.name,
+                  specties.name,
+                  groupss.name,
+                  disciplines.name
+                LIMIT %(limit)s OFFSET %(offset)s;'''
 
         with connection.cursor() as cursor:
             cursor.execute(query,

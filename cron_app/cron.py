@@ -314,7 +314,6 @@ class SendStudentDisciplinesTo1CJob(CronJobBase):
         )
         disciplines = []
         for sd in sds:
-            print(sd.study_plan)
             item = {
                 'uid_site': str(sd.uid),  # УИД дисицплины студента на сайте
                 'study_plan': sd.study_plan.uid_1c,
@@ -339,7 +338,6 @@ class SendStudentDisciplinesTo1CJob(CronJobBase):
         )
 
         if resp.status_code == 200:
-            print("Connected")
             resp_data = resp.json()
             for item in resp_data:
                 # try:
@@ -352,7 +350,7 @@ class SendStudentDisciplinesTo1CJob(CronJobBase):
                     content_type_id=CONTENT_TYPES['studentdiscipline'],
                     object_id=item['uid_site'],
                     status=item['code'],
-                    # sent_data=item['json'],
+                    # sent_data=sent_data_json,
                 )
                 error_text = ''
                 for error in item['errors']:

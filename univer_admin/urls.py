@@ -31,7 +31,6 @@ urlpatterns = [
 ]
 
 router = DefaultRouter()
-router.register(r"campaign-types", views.AdmissionCampaignTypeViewSet, "admission_campaign_types")
 router.register(r"admission-campaigns", views.AdmissionCampaignViewSet, "admission_campaigns")
 router.register(r"application-status", views.ApplicationStatusViewSet, "application_statuses")
 router.register(r"campaign-stages", views.CampaignStageViewSet, "campaign_stages")

@@ -50,3 +50,18 @@ class AddressTranslationOptions(TranslationOptions):
 @register(BudgetLevel)
 class BudgetLevelTranslationOptions(TranslationOptions):
     fields = ('name',)
+
+
+@register(AdmissionCampaignType)
+class AdmissionCampaignTypeTranslationOptions(TranslationOptions):
+    fields = ('name',)
+
+
+@register(GrantType)
+class GrantTypeTranslationOptions(TranslationOptions):
+    fields = ('name',)
+
+
+@register(InternationalCertType)
+class InternationalCertTypeTranslationOptions(TranslationOptions):
+    fields = ('name',)

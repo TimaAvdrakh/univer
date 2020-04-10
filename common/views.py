@@ -1,3 +1,4 @@
+from django.db.models import Q
 from rest_framework import generics
 from rest_framework import permissions
 from . import serializers
@@ -6,6 +7,8 @@ from organizations import models as org_models
 from datetime import date
 from rest_framework.response import Response
 from rest_framework import status
+from rest_framework.viewsets import ModelViewSet
+from rest_framework.decorators import action
 from portal_users.models import Level, AchievementType
 from datetime import date
 from organizations import serializers as org_serializers
@@ -181,6 +184,7 @@ class RegistrationPeriodListView(generics.ListAPIView):
             #                       day=1)
             # queryset = queryset.filter(start_date__year__gte=study_year_obj.start,
             #                            end_date__lte=study_year_end)
+
             queryset = queryset.filter(study_year_id=study_year)
         return queryset
 

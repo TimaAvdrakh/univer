@@ -1,7 +1,6 @@
 from rest_framework import serializers
 from organizations import models as org_models
-from portal_users.serializers import ProfileShortSerializer, StudentDisciplineStatusSerializer, \
-    ProfileForAdviserSerializer
+from portal_users.serializers import ProfileShortSerializer, StudentDisciplineStatusSerializer
 from portal.curr_settings import student_discipline_info_status, student_discipline_status, not_choosing_load_types2
 from cron_app.models import AdvisorRejectedBidTask
 from . import models
