@@ -1,5 +1,6 @@
 from rest_framework.permissions import BasePermission
 from portal_users import models as user_models
+from rest_framework import permissions
 
 
 class AdminPermission(BasePermission):
