@@ -1,5 +1,6 @@
 from django.db import models
 from common.models import BaseModel, BaseCatalog, DocumentType
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.contrib.auth.models import User
 from common.utils import get_sentinel_user
 from portal import curr_settings
@@ -209,6 +210,7 @@ class EducationType(BaseCatalog):
 class Education(BaseModel):
     profile = models.ForeignKey(
         'portal_users.Profile',
+        blank=True,
         null=True,
         on_delete=models.SET_NULL,
         related_name='educations',
@@ -239,6 +241,49 @@ class Education(BaseModel):
         Organization,
         on_delete=models.CASCADE,
         verbose_name='Учебное заведение',
+        blank=True,
+        null=True
+    )
+    no_institute = models.BooleanField(
+        default=False,
+        verbose_name='Моего УЗ нет в списке'
+    )
+    institute_text = models.CharField(
+        max_length=800,
+        verbose_name='Учебное заведение (текстовое представление)',
+        blank=True,
+        null=True,
+    )
+    avg_mark = models.FloatField(
+        validators=[MinValueValidator(2), MaxValueValidator(3.7)],
+        null=True,
+        verbose_name='Средняя оценка (не выще 3.7)'
+    )
+    study_form = models.ForeignKey(
+        StudyForm,
+        on_delete=models.SET_NULL,
+        null=True,
+        verbose_name='Форма обучения'
+    )
+    speciality = models.ForeignKey(
+        Speciality,
+        on_delete=models.SET_NULL,
+        null=True,
+        verbose_name='Специальность'
+    )
+    is_altyn_belgi_holder = models.BooleanField(
+        default=False,
+        verbose_name='Держатель знака «Алтын белгі»'
+    )
+    is_nerd = models.BooleanField(
+        default=False,
+        verbose_name='Закончил учебу с отличием'
+    )
+    scan = models.ForeignKey(
+        'applicant.DocScan',
+        on_delete=models.SET_NULL,
+        blank=True,
+        null=True
     )
 
     def __str__(self):
@@ -571,6 +616,10 @@ class Discipline(BaseCatalog):
         #     'name',
         # )
 
+    @property
+    def count_credits(self):
+        self.disciplinecredit_set.all().count()
+
     # def save(self, *args, **kwargs):
     #     if self.exchange:
     #         """При выгрузке деактивируем существующие пре и постреквизити"""
@@ -844,6 +893,67 @@ class StudentDiscipline(BaseModel):
     #                             self.cycle)
 
     @property
+    def control_form(self):
+        try:
+            discipline_credit = DisciplineCredit.objects.get(
+                study_plan=self.study_plan,
+                cycle=self.cycle,
+                discipline=self.discipline,
+                acad_period=self.acad_period,
+                student=self.student,
+            )
+            discipline_credit = list(discipline_credit.chosen_control_forms.all().values('name', 'uid'))
+        except DisciplineCredit.DoesNotExist:
+            discipline_credit = [{'error': 'DoesNotExist'}]
+        except DisciplineCredit.MultipleObjectsReturned:
+            discipline_credit = DisciplineCredit.objects.filter(
+                study_plan=self.study_plan,
+                cycle=self.cycle,
+                discipline=self.discipline,
+                acad_period=self.acad_period,
+                student=self.student,
+            ).first()
+            EroroText.objects.create(
+                text='DisciplineCredit UID = {}'.format(discipline_credit.values_list('uid', flat=True)))
+            discipline_credit = list(discipline_credit.chosen_control_forms.all().values('name', 'uid'))
+        return discipline_credit
+
+    @property
+    def credit_obj(self):
+        try:
+            discipline_credit = DisciplineCredit.objects.get(
+                study_plan=self.study_plan,
+                cycle=self.cycle,
+                discipline=self.discipline,
+                acad_period=self.acad_period,
+                student=self.student,
+            )
+
+            return {
+                'credit': discipline_credit.credit,
+                'control_form': list(
+                    discipline_credit.disciplinecreditcontrolform_set.filter(is_active=True).values('control_form__name', 'uid'))
+            }
+
+        except DisciplineCredit.DoesNotExist:
+            return 0
+        except DisciplineCredit.MultipleObjectsReturned:
+            discipline_credit = DisciplineCredit.objects.filter(
+                study_plan=self.study_plan,
+                cycle=self.cycle,
+                discipline=self.discipline,
+                acad_period=self.acad_period,
+                student=self.student,
+            )
+            EroroText.objects.create(text='DisciplineCredit UID = {}'.format(discipline_credit.values_list('uid', flat=True)))
+            return {
+                'credit': discipline_credit.credit,
+                'control_form': list(
+                    discipline_credit.disciplinecreditcontrolform_set.filter(is_active=True).values('control_form__name', 'uid'))
+            }
+
+
+    @property
     def credit(self):
         """Возвращает кредит дисциплины"""
         try:
@@ -857,6 +967,16 @@ class StudentDiscipline(BaseModel):
             return discipline_credit.credit
         except DisciplineCredit.DoesNotExist:
             return 0
+        except DisciplineCredit.MultipleObjectsReturned:
+            discipline_credit = DisciplineCredit.objects.filter(
+                study_plan=self.study_plan,
+                cycle=self.cycle,
+                discipline=self.discipline,
+                acad_period=self.acad_period,
+                student=self.student,
+            )
+            EroroText.objects.create(text='DisciplineCredit UID = {}'.format(discipline_credit.values_list('uid', flat=True)))
+            return discipline_credit.first().credit
 
     def __str__(self):
         return '{} {}'.format(self.acad_period,
@@ -1082,6 +1202,23 @@ class DisciplineCredit(BaseModel):
         verbose_name='Студент',
     )
 
+    status = models.ForeignKey(
+        StudentDisciplineStatus,
+        on_delete=models.CASCADE,
+        null=True,
+        verbose_name='Статус диспцилины',
+        related_name='discipline_credit_status'
+    )
+
+    teacher = models.ForeignKey(
+        'portal_users.Profile',
+        null=True,
+        on_delete=models.CASCADE,
+        verbose_name='Преподаватель',
+        related_name='discipline_credit_teacher'
+    )
+
+
     def __str__(self):
         return '{} {} {}'.format(self.study_plan,
                                  self.discipline,
@@ -1155,3 +1292,14 @@ class DisciplineCreditControlForm(BaseModel):
             'student',
             'control_form',
         )
+
+
+class EroroText(models.Model):
+    text = models.TextField(verbose_name='текст ошибки')
+
+    def __str__(self):
+        return self.text
+
+    class Meta:
+        verbose_name = 'текст ошибки'
+        verbose_name_plural = 'текста ошибки'

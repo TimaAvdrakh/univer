@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Email Verification</title>
+</head>
+<body>
+<div class="content">
+    <h3 style="text-align: center">Здравствуйте</h3>
+    <strong>Ваш логин:</strong> {{ username }}
+    <strong>Ваш пароль:</strong> {{ password }}
+    <strong>
+        Подтвердите регистрацию, перейдя по
+        <a href="http://{{ domain }}{% url 'activate' uidb64=uid token=token %}">ссылке</a>
+    </strong>
+    <p style="color: red;">
+        ВНИМАНИЕ!!!
+        Подтвердите свою регистрацию в течении 24 часов. По истечению этого срока Ваши данные будут удалены.
+        В этом случае при подаче заявления на поступление необходимо пройти регистрацию повторно.
+    </p>
+</div>
+</body>
+</html>

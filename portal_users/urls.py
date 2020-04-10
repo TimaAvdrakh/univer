@@ -1,7 +1,8 @@
 from django.urls import path
+from rest_framework.routers import DefaultRouter
 from . import views
 
-app_name = 'portal_users'
+app_name = "portal_users"
 
 urlpatterns = [
     path('authenticate/', views.LoginView.as_view(), name='auth'),
@@ -44,4 +45,16 @@ urlpatterns = [
          name='discipline_control_forms'),
     path('control_forms/<pk>/choose/', views.ChooseFormControlView.as_view(),
          name='choose_control_forms'),
+    path('student_status/', views.StudentStatusListView.as_view(),
+         name='student_status'),
+    path('gender/', views.GenderListView.as_view(),
+         name='gender'),
+    path('citizenship/', views.CitizenshipListView.as_view(),
+         name='citizenship')
 ]
+
+router = DefaultRouter()
+router.register(r"genders", views.GenderViewSet)
+router.register(r"marital-statuses", views.MaritalStatusViewSet)
+router.register(r"phone-types", views.PhoneTypeViewSet)
+urlpatterns += router.urls

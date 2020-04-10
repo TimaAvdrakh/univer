@@ -405,10 +405,14 @@ class Interest(BaseCatalog):
         null=True,
         on_delete=models.CASCADE,
         verbose_name='Профиль',
-        related_name='interests',
+        related_name='interests'
     )
 
     class Meta:
+        unique_together = [['profile', 'name']]
+        indexes = [
+            models.Index(fields=['profile']),
+        ]
         verbose_name = 'Увлечение'
         verbose_name_plural = 'Увлечения'
 
@@ -447,6 +451,14 @@ class Role(BaseModel):
     is_selection_committer = models.BooleanField(
         default=False,
         verbose_name='Специалист приемной комиссии',
+    )
+    is_applicant = models.BooleanField(
+        default=False,
+        verbose_name='Абитуриент'
+    )
+    is_mod = models.BooleanField(
+        default=False,
+        verbose_name='Модератор'
     )
 
     def __str__(self):
@@ -563,6 +575,8 @@ class PhoneType(BaseCatalog):
 class ProfilePhone(BaseModel):
     profile = models.ForeignKey(
         Profile,
+        blank=True,
+        null=True,
         on_delete=models.CASCADE,
         verbose_name='Профиль',
         related_name='phones',
@@ -596,5 +610,3 @@ class ProfilePhone(BaseModel):
             'phone_type',
             'value',
         )
-
-

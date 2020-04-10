@@ -1,0 +1,35 @@
+from django.contrib import admin
+from .models import *
+
+models = [
+    PrivilegeType,
+    DocumentReturnMethod,
+    FamilyMembership,
+    AddressType,
+    BudgetLevel,
+    InternationalCertType,
+    GrantType,
+    AddressClassifier,
+    Address,
+    Family,
+    FamilyMember,
+    AdmissionCampaign,
+    Applicant,
+    DocScan,
+    ApplicationStatus,
+    Questionnaire,
+    UserPrivilegeList,
+    Privilege,
+    CampaignStage,
+    RecruitmentPlan,
+    DisciplineMark,
+    TestCert,
+    LanguageProficiency,
+    InternationalCert,
+    Grant,
+    DirectionChoice,
+    TestResult,
+    Application
+]
+
+admin.site.register(models)

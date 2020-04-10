@@ -1,5 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import User
+from django.contrib.contenttypes.fields import GenericForeignKey
+from django.contrib.contenttypes.models import ContentType
 # from .utils import get_sentinel_user
 from django.contrib.postgres.fields import JSONField
 from uuid import uuid4
@@ -32,6 +34,12 @@ class BaseModel(models.Model):
     sort = models.IntegerField(default=500,)
     exchange = False
 
+    def __str__(self):
+        if hasattr(self, 'name'):
+            return self.name
+        else:
+            return super().__str__()
+
 
 class BaseCatalog(BaseModel):
     # univer = models.ForeignKey(
@@ -42,6 +50,12 @@ class BaseCatalog(BaseModel):
     name = models.CharField(
         max_length=800,
         verbose_name='Название',
+    )
+    code = models.CharField(
+        max_length=100,
+        editable=False,
+        blank=True,
+        null=True
     )
 
     def __str__(self):
@@ -83,6 +97,14 @@ class Citizenship(BaseCatalog):
 
 
 class DocumentType(BaseCatalog):
+    # TODO добавить поле group, где будут содержаться следующие значения:
+    #  Документы абитуриентов
+    #  Документы иностранных граждан
+    #  Документы об образовании
+    #  Паспорта
+    #  Регистрация деятельности
+    #  Основания приказов
+    #  Другие
     class Meta:
         verbose_name = 'Тип документа'
         verbose_name_plural = 'Типы документа'
@@ -279,3 +301,23 @@ class Course(BaseCatalog):
     class Meta:
         verbose_name = 'Курс'
         verbose_name_plural = 'Курсы'
+
+
+class Comment(BaseModel):
+    text = models.TextField('Текст комментария')
+    files = models.ManyToManyField('applicant.DocScan', blank=True)
+    creator = models.ForeignKey(
+        'portal_users.Profile',
+        related_name='comments',
+        on_delete=models.CASCADE
+    )
+    content_type = models.ForeignKey(
+        ContentType,
+        on_delete=models.CASCADE
+    )
+    object_id = models.TextField()
+    content_object = GenericForeignKey('content_type', 'object_id')
+
+    class Meta:
+        verbose_name = 'Комментарий'
+        verbose_name_plural = 'Комментарии'

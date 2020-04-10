@@ -20,6 +20,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'rest_framework',
     'common',
     'portal_users',
     'rest_framework_swagger',
@@ -37,10 +38,13 @@ INSTALLED_APPS = [
     'univer_admin',
     'student_journal',
     'integration',
-    'abiturient'
+    'applicant'
 ]
 
 MIDDLEWARE = [
+    # Ало. В доке к corsheaders написано, что его мидлварь должна быть самая первая
+    # я 1.5 часа искал ответ почему мои запросы не проходят
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.locale.LocaleMiddleware',
@@ -49,7 +53,6 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'corsheaders.middleware.CorsMiddleware',
 ]
 
 ROOT_URLCONF = 'portal.urls'
@@ -96,7 +99,8 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'ru-ru'
 
-TIME_ZONE = 'UTC'
+# TIME_ZONE = 'UTC'
+TIME_ZONE = 'Asia/Almaty'
 
 USE_I18N = True
 
@@ -133,7 +137,10 @@ REST_FRAMEWORK = {
         'rest_framework.parsers.MultiPartParser',
         # 'rest_framework.parsers.FileUploadParser',
     ),
-    'DEFAULT_SCHEMA_CLASS': 'rest_framework.schemas.coreapi.AutoSchema'
+    'DEFAULT_SCHEMA_CLASS': 'rest_framework.schemas.coreapi.AutoSchema',
+    # 'DATE_INPUT_FORMATS': ['%d.%m.%Y'],
+    # 'DATE_FORMAT': '%d.%m.%Y',
+    # 'DATETIME_FORMAT': '%d.%m.%Y %H:%I:%S'
 }
 
 CORS_ORIGIN_ALLOW_ALL = True
