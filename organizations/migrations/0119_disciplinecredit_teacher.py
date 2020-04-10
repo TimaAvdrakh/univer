@@ -12,9 +12,10 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.AddField(
-            model_name='disciplinecredit',
-            name='teacher',
-            field=models.ForeignKey(null=True, on_delete=django.db.models.deletion.CASCADE, related_name='discipline_credit_teacher', to='portal_users.Profile', verbose_name='Преподаватель'),
-        ),
+        # django.db.utils.ProgrammingError: column "teacher_id" of relation "organizations_disciplinecredit" already exists
+        # migrations.AddField(
+        #     model_name='disciplinecredit',
+        #     name='teacher',
+        #     field=models.ForeignKey(null=True, on_delete=django.db.models.deletion.CASCADE, related_name='discipline_credit_teacher', to='portal_users.Profile', verbose_name='Преподаватель'),
+        # ),
     ]
