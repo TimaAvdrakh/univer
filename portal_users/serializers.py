@@ -1162,6 +1162,7 @@ class ProfileContactEditSerializer(serializers.ModelSerializer):
         source='uid',
         read_only=True,
     )
+    avatar = serializers.ImageField()
 
     class Meta:
         model = models.Profile
@@ -1171,6 +1172,7 @@ class ProfileContactEditSerializer(serializers.ModelSerializer):
             'phone',
             'email',
             'skype',
+            'avatar',
             'extra_data',
         )
 

@@ -10,6 +10,7 @@ from django.contrib.auth.models import User
 from organizations import models as org_models
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import permissions as rest_permissions
+from rest_framework.parsers import FileUploadParser
 from . import permissions
 from .utils import get_current_study_year
 from portal.curr_settings import student_discipline_info_status, not_choosing_load_types2, CYCLE_DISCIPLINE
@@ -556,8 +557,14 @@ class ContactEditView(generics.UpdateAPIView):
         IsAuthenticated,
         permissions.ProfilePermission,
     )
+    parser_classes = [FileUploadParser]
     queryset = models.Profile.objects.filter(is_active=True)
     serializer_class = serializers.ProfileContactEditSerializer
+
+    def put(self, request, filename, format=None):
+        avatar = request.data['avatar']
+
+
 
 
 class InterestsEditView(generics.UpdateAPIView):
