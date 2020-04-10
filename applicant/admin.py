@@ -2,15 +2,34 @@ from django.contrib import admin
 from .models import *
 
 models = [
-    AdmissionCampaignType,
+    PrivilegeType,
+    DocumentReturnMethod,
+    FamilyMembership,
+    AddressType,
+    BudgetLevel,
+    InternationalCertType,
+    GrantType,
+    AddressClassifier,
+    Address,
+    Family,
+    FamilyMember,
     AdmissionCampaign,
     Applicant,
     DocScan,
     ApplicationStatus,
     Questionnaire,
-    AdmissionApplication,
+    UserPrivilegeList,
+    Privilege,
     CampaignStage,
+    RecruitmentPlan,
+    DisciplineMark,
+    TestCert,
+    LanguageProficiency,
+    InternationalCert,
+    Grant,
+    DirectionChoice,
+    TestResult,
+    Application
 ]
 
-# Пока так зарегаю, если нужно - расширим админку для модели
 admin.site.register(models)

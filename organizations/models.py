@@ -1,5 +1,6 @@
 from django.db import models
 from common.models import BaseModel, BaseCatalog, DocumentType
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.contrib.auth.models import User
 from common.utils import get_sentinel_user
 from portal import curr_settings
@@ -209,6 +210,7 @@ class EducationType(BaseCatalog):
 class Education(BaseModel):
     profile = models.ForeignKey(
         'portal_users.Profile',
+        blank=True,
         null=True,
         on_delete=models.SET_NULL,
         related_name='educations',
@@ -239,6 +241,49 @@ class Education(BaseModel):
         Organization,
         on_delete=models.CASCADE,
         verbose_name='Учебное заведение',
+        blank=True,
+        null=True
+    )
+    no_institute = models.BooleanField(
+        default=False,
+        verbose_name='Моего УЗ нет в списке'
+    )
+    institute_text = models.CharField(
+        max_length=800,
+        verbose_name='Учебное заведение (текстовое представление)',
+        blank=True,
+        null=True,
+    )
+    avg_mark = models.FloatField(
+        validators=[MinValueValidator(2), MaxValueValidator(3.7)],
+        null=True,
+        verbose_name='Средняя оценка (не выще 3.7)'
+    )
+    study_form = models.ForeignKey(
+        StudyForm,
+        on_delete=models.SET_NULL,
+        null=True,
+        verbose_name='Форма обучения'
+    )
+    speciality = models.ForeignKey(
+        Speciality,
+        on_delete=models.SET_NULL,
+        null=True,
+        verbose_name='Специальность'
+    )
+    is_altyn_belgi_holder = models.BooleanField(
+        default=False,
+        verbose_name='Держатель знака «Алтын белгі»'
+    )
+    is_nerd = models.BooleanField(
+        default=False,
+        verbose_name='Закончил учебу с отличием'
+    )
+    scan = models.ForeignKey(
+        'applicant.DocScan',
+        on_delete=models.SET_NULL,
+        blank=True,
+        null=True
     )
 
     def __str__(self):

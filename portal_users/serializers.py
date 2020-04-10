@@ -40,7 +40,8 @@ class RoleSerializer(serializers.ModelSerializer):
             "is_org_admin",
             "is_supervisor",
             "is_selection_committer",
-            "is_applicant"
+            "is_applicant",
+            "is_mod"
         )
 
 
@@ -69,8 +70,7 @@ class AchievementSerializer(serializers.ModelSerializer):
             "achievement_type",
             "level",
             "content",
-        )
-
+      
     def to_representation(self, instance):
         data = super().to_representation(instance=instance)
         if data['achievement_type']:
@@ -572,8 +572,8 @@ class LanguageSerializer(serializers.ModelSerializer):
     class Meta:
         model = org_models.Language
         fields = (
-            # 'uid',
-            'name',
+            'uid',
+            "name",
         )
 
 

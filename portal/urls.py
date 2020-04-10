@@ -19,7 +19,6 @@ from rest_framework_swagger.views import get_swagger_view
 from applicant.viewsets import activate
 from django.conf.urls.i18n import i18n_patterns
 
-
 schema_view = get_swagger_view(title='Univer API')
 
 urlpatterns = [
@@ -47,8 +46,3 @@ urlpatterns += [
         name='activate'
     )
 ]
-
-# urlpatterns += i18n_patterns(
-#
-#     # prefix_default_language=False,
-# )
