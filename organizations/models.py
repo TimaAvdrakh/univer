@@ -1209,23 +1209,13 @@ class DisciplineCredit(BaseModel):
         verbose_name='Статус диспцилины',
         related_name='discipline_credit_status'
     )
-
-    teacher = models.ForeignKey(
-        'portal_users.Profile',
-        null=True,
-        on_delete=models.CASCADE,
-        verbose_name='Преподаватель',
-        related_name='discipline_credit_teacher'
-    )
-
-
-    status = models.ForeignKey(
-        StudentDisciplineStatus,
-        on_delete=models.CASCADE,
-        null=True,
-        verbose_name='Статус диспцилины',
-        related_name='discipline_credit_status'
-    )
+    # teacher = models.ForeignKey(
+    #     'portal_users.Profile',
+    #     null=True,
+    #     on_delete=models.CASCADE,
+    #     verbose_name='Преподаватель',
+    #     related_name='discipline_credit_teacher'
+    # )
     uid_1c = models.CharField(
         max_length=100,
         null=True,

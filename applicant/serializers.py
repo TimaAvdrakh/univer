@@ -17,7 +17,6 @@ from portal_users.models import Profile, Role, ProfilePhone
 from .models import *
 from .token import token_generator
 
-
 __all__ = [
     'PrivilegeTypeSerializer',
     'PrivilegeSerializer',
@@ -39,7 +38,6 @@ __all__ = [
     'DocScanSerializer',
 
 ]
-
 
 from organizations.models import Education
 from .models import (
@@ -356,63 +354,54 @@ class CampaignStageSerializer(serializers.ModelSerializer):
 
 
 class RecruitmentPlanSerializer(serializers.ModelSerializer):
-
     class Meta:
         model = RecruitmentPlan
         fields = "__all__"
 
 
 class DisciplineMarkSerializer(serializers.ModelSerializer):
-
     class Meta:
         model = DisciplineMark
         fields = "__all__"
 
 
 class TestCertSerializer(serializers.ModelSerializer):
-
     class Meta:
         model = TestCert
         fields = "__all__"
 
 
 class LanguageProficiencySerializer(serializers.ModelSerializer):
-
     class Meta:
         model = LanguageProficiency
         fields = "__all__"
 
 
 class InternationalCertTypeSerializer(serializers.ModelSerializer):
-
     class Meta:
         model = InternationalCertType
         fields = "__all__"
 
 
 class InternationalCertSerializer(serializers.ModelSerializer):
-
     class Meta:
         model = InternationalCert
         fields = "__all__"
 
 
 class GrantTypeSerializer(serializers.ModelSerializer):
-
     class Meta:
         model = GrantType
         fields = "__all__"
 
 
 class GrantSerializer(serializers.ModelSerializer):
-
     class Meta:
         model = Grant
         fields = "__all__"
 
 
 class DirectionChoiceSerializer(serializers.ModelSerializer):
-
     class Meta:
         model = DirectionChoice
         fields = "__all__"
@@ -441,19 +430,7 @@ class ApplicationLiteSerializer(serializers.ModelSerializer):
         model = Application
         fields = ['uid', 'status_info', 'applicant', 'created', 'updated']
 
-
-class ApplicationSerializer(ApplicationLiteSerializer):
-    previous_education = EducationSerializer(required=True)
-    test_result = TestResultSerializer(required=True)
-    international_cert = InternationalCertSerializer(required=False)
-    grant = GrantSerializer(required=False)
-    directions = DirectionChoiceSerializer(required=True, many=True)
-
-    class Meta:
-        model = Application
-        fields = '__all__'
-
-    def create(self, validated_data):
+    def create(self, validated_data: dict):
         application = None
         creator: Profile = self.context['request'].user.profile
         try:
@@ -472,10 +449,12 @@ class ApplicationSerializer(ApplicationLiteSerializer):
             status: ApplicationStatus = ApplicationStatus.objects.get(code=status)
             # На основании забитых данных абитуриентом создаем его заявление
             # Предыдущее образование
-            previous_education: Education = Education.objects.create(profile=creator, **validated_data.pop('previous_education'))
+            previous_education: Education = Education.objects.create(profile=creator,
+                                                                     **validated_data.pop('previous_education'))
             # Результаты теста ЕНТ/КТА
             test_result: dict = validated_data.pop('test_result')
-            test_certificate: TestCert = TestCert.objects.create(profile=creator, **test_result.pop('test_certificate'))
+            test_certificate: TestCert = TestCert.objects.create(profile=creator,
+                                                                 **test_result.pop('test_certificate'))
             disciplines: [DisciplineMark] = DisciplineMark.objects.bulk_create([
                 DisciplineMark(profile=creator, **discipline) for discipline in test_result.pop('disciplines')
             ])
@@ -516,3 +495,24 @@ class ApplicationSerializer(ApplicationLiteSerializer):
                 application.delete()
             raise ValidationError({"error": f"an error occurred\n{e}"})
         return application
+
+    def update(self, instance: Application, validated_data: dict):
+        user = self.context['request'].user.profile
+        if user == instance.creator or user.role.is_mod:
+            validated_data['status'] = ApplicationStatus.objects.get(code=AWAITS_VERIFICATION)
+            application: Application = super().update(instance, validated_data)
+            return application
+        else:
+            raise ValidationError({"error": "you don't have rights to edit application"})
+
+
+class ApplicationSerializer(ApplicationLiteSerializer):
+    previous_education = EducationSerializer(required=True)
+    test_result = TestResultSerializer(required=True)
+    international_cert = InternationalCertSerializer(required=False)
+    grant = GrantSerializer(required=False)
+    directions = DirectionChoiceSerializer(required=True, many=True)
+
+    class Meta:
+        model = Application
+        fields = '__all__'

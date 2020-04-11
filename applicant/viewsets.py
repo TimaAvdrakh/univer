@@ -2,6 +2,7 @@ from django import forms
 from django.conf import settings
 from django.contrib.auth import login
 from django.contrib.auth.models import User
+from django.db.models import Q
 from django.http import JsonResponse, HttpResponseBadRequest, HttpResponse
 from django.utils.encoding import force_text
 from django.utils.http import urlsafe_base64_decode
@@ -245,7 +246,7 @@ class ApplicationViewSet(ModelViewSet):
         """
         profile: Profile = self.request.user.profile
         application: Application = self.get_object()
-        if application.can_perform_action(profile=profile):
+        if Application.can_perform_action(profile=profile):
             action_type: str = request.get('action')
             comment = request.get('comment')
             # Одобряем заявление
@@ -264,6 +265,27 @@ class ApplicationViewSet(ModelViewSet):
             return Response(data={'message': f'successfully applied action: {action_type}'})
         else:
             raise ValidationError({'error': f'profile is moderator? {profile.role.is_mod}'})
+
+    @action(methods=['get'], detail=False, url_path='', url_name='')
+    def filter_applications(self, request, pk=None):
+        query_params = request.query_params
+        full_name = query_params.get('fn', None)
+        prep_level = query_params.get('pl', None)
+        edu_program_group = query_params.get('epg', None)
+        apply_date = query_params.get('ad', None)
+        lookup = Q()
+        if full_name:
+            lookup = lookup | Q(creator__first_name__icontains=full_name) | Q(
+                creator__last_name__icontains=full_name) | Q(creator__middle_name__icontains=full_name)
+        if prep_level:
+            lookup = lookup | Q(creator__user__applicant__prep_level=prep_level)
+        if edu_program_group:
+            lookup = lookup | Q(directions__education_program_group=edu_program_group)
+        if apply_date:
+            lookup = lookup | Q(created=apply_date)
+        queryset = self.queryset.filter(lookup).distinct()
+        paginated_queryset = self.paginate_queryset(queryset=queryset)
+        return self.get_paginated_response(paginated_queryset)
 
 
 class AdmissionCampaignTypeViewSet(ModelViewSet):

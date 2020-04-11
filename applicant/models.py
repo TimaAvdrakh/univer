@@ -14,7 +14,7 @@ from common.models import (
     Citizenship,
     Nationality,
 )
-from portal_users.models import Profile, ProfilePhone, Gender, MaritalStatus
+from portal_users.models import Profile, ProfilePhone, Gender, MaritalStatus, Role
 from organizations.models import (
     PreparationLevel,
     Speciality,
@@ -1187,11 +1187,18 @@ class Application(BaseModel):
         verbose_name = "Заявление"
         verbose_name_plural = "Заявления"
 
+    def import_self_to_1c(self):
+        pass
+
     def approve(self, moderator, comment=None):
         if comment:
             self.comments.create(creator=moderator, text=comment)
         self.status = ApplicationStatus.objects.get(code=APPROVED)
         self.save()
+        # TODO на подтверждение заявления модератором импортировать заявление в 1С
+        role = Role.objects.get(profile=self.creator)
+        role.is_applicant, role.is_student = role.is_student, role.is_applicant
+        role.save()
 
     def reject(self, moderator, comment):
         self.comments.create(creator=moderator, text=comment)
@@ -1235,7 +1242,8 @@ class Application(BaseModel):
         if directions.exists():
             [direction.delete() for direction in directions.all()]
 
-    def can_perform_action(self, profile: Profile):
+    @staticmethod
+    def can_perform_action(profile: Profile):
         if profile.role.is_mod:
             return True
         else:
@@ -1270,3 +1278,39 @@ class AdmissionDocument(BaseModel):
     class Meta:
         verbose_name = 'Перечень документов для приема на обучение'
         verbose_name_plural = 'Перечни документов для приема на обучение'
+
+
+# История изменения заявления
+class Changelog(BaseModel):
+    application = models.ForeignKey(
+        Application,
+        on_delete=models.CASCADE,
+        related_name='changelog'
+    )
+    related_model_name = models.CharField(
+        'Название модели, которая была изменена',
+        max_length=300
+    )
+    key = models.CharField(
+        'Ключ',
+        max_length=300
+    )
+    old_value = models.CharField(
+        'Старое значение',
+        max_length=300,
+        blank=True,
+        default=''
+    )
+    new_value = models.CharField(
+        'Новое значение',
+        max_length=300,
+        blank=True,
+        default=''
+    )
+
+    class Meta:
+        verbose_name = 'Изменения заявления'
+        verbose_name_plural = 'Изменения заявлений'
+
+    def __str__(self):
+        return f'Изменена модель {self.related_model_name}.'
