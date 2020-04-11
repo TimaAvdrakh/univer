@@ -12,6 +12,19 @@ class PreparationLevelViewSet(ModelViewSet):
     serializer_class = PreparationLevelSerializer
     permission_classes = (IsAdminOrReadOnly,)
 
+    @action(methods=['get'], detail=False, url_path='search', url_name='prep_level_search')
+    def search(self, request, pk=None):
+        name = request.query_params.get('name')
+        data = self.serializer_class(
+            self.queryset.filter(
+                Q(name_ru__icontains=name)
+                | Q(name_kk__icontains=name)
+                | Q(name_en__icontains=name)
+            ).distinct()[:20],
+            many=True
+        ).data
+        return Response(data=data)
+
 
 class StudyFormViewSet(ModelViewSet):
     queryset = StudyForm.objects.all()
@@ -42,13 +55,26 @@ class EducationProgramGroupViewSet(ModelViewSet):
     serializer_class = EducationProgramGroupSerializer
     permission_classes = (IsAdminOrReadOnly,)
 
+    @action(methods=['get'], detail=False, url_path='search', url_name='epg_search')
+    def search(self, request, pk=None):
+        name = request.query_params.get('name')
+        data = self.serializer_class(
+            self.queryset.filter(
+                Q(name_ru__icontains=name) |
+                Q(name_kk__icontains=name) |
+                Q(name_en__icontains=name)
+            ).distinct()[:20],
+            many=True
+        ).data
+        return Response(data=data)
+
 
 class OrganizationViewSet(ModelViewSet):
     queryset = Organization.objects.all()
     serializer_class = OrganizationSerializer
     permission_classes = (IsAdminOrReadOnly,)
 
-    @action(methods=['get'], detail=False, url_path='search', url_name='search')
+    @action(methods=['get'], detail=False, url_path='search', url_name='organization_search')
     def search(self, request, pk=None):
         search = request.query_params.get('name')
         organizations = self.queryset.filter(
@@ -76,7 +102,7 @@ class DisciplineViewSet(ModelViewSet):
     serializer_class = DisciplineSerializer
     permission_classes = (IsAdminOrReadOnly,)
 
-    @action(methods=['get'], detail=False, url_path='search', url_name='search')
+    @action(methods=['get'], detail=False, url_path='search', url_name='discipline_search')
     def search(self, request, pk=None):
         search = request.query_params.get('name')
         disciplines = self.queryset.filter(

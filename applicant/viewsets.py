@@ -132,12 +132,30 @@ class ApplicantViewSet(ModelViewSet):
     queryset = Applicant.objects.all()
     serializer_class = ApplicantSerializer
     permission_classes = (AllowAny,)
+    pagination_class = CustomPagination
 
     @action(methods=['post'], detail=False, url_path='campaign-types', url_name='campaign_types')
     def get_campaign_types(self, request, pk=None):
         prep_level = request.data.get('prep_level')
         campaign_types = AdmissionCampaignType.objects.filter(prep_levels=prep_level)
         return Response(data=AdmissionCampaignTypeSerializer(campaign_types, many=True).data, status=HTTP_200_OK)
+
+    @action(methods=['get'], detail=False, url_path='search', url_name='search')
+    def search(self, request, pk=None):
+        from portal_users.serializers import ProfileLiteSerializer
+        name = request.query_params.get('name', None)
+        if name:
+            dataset = ProfileLiteSerializer(
+                Profile.objects.filter(user__applicant__isnull=False).filter(
+                    Q(first_name__icontains=name)
+                    | Q(last_name__icontains=name)
+                    | Q(middle_name__icontains=name)
+                ).distinct()[:20],
+                many=True
+            ).data
+            return Response(data=dataset, status=HTTP_200_OK)
+        else:
+            return Response(data=[], status=HTTP_200_OK)
 
 
 class QuestionnaireViewSet(ModelViewSet):
@@ -266,26 +284,34 @@ class ApplicationViewSet(ModelViewSet):
         else:
             raise ValidationError({'error': f'profile is moderator? {profile.role.is_mod}'})
 
-    @action(methods=['get'], detail=False, url_path='', url_name='')
-    def filter_applications(self, request, pk=None):
+    @action(methods=['get'], detail=False, url_path='search', url_name='application_search')
+    def search(self, request, pk=None):
+        """Фильтр по заявлениям
+        Параметры:
+        ap: uid - applicant profile - профиль абитуриента
+        pl: uid - preparation level - уровень подготовки
+        epg: uid - education program group - группа образовательных программ
+        ad: str(date) - apply date - дата подачи заявления
+        """
         query_params = request.query_params
-        full_name = query_params.get('fn', None)
-        prep_level = query_params.get('pl', None)
-        edu_program_group = query_params.get('epg', None)
-        apply_date = query_params.get('ad', None)
+        applicant_profile: str = query_params.get('ap', None)
+        prep_level: str = query_params.get('pl', None)
+        edu_program_group: str = query_params.get('epg', None)
+        apply_date: str = query_params.get('ad', None)
         lookup = Q()
-        if full_name:
-            lookup = lookup | Q(creator__first_name__icontains=full_name) | Q(
-                creator__last_name__icontains=full_name) | Q(creator__middle_name__icontains=full_name)
+        if applicant_profile:
+            lookup = lookup | Q(creator__uid=applicant_profile)
         if prep_level:
             lookup = lookup | Q(creator__user__applicant__prep_level=prep_level)
         if edu_program_group:
             lookup = lookup | Q(directions__education_program_group=edu_program_group)
         if apply_date:
+            if '.' in apply_date:
+                apply_date = '-'.join(apply_date.split('.')[::-1])
             lookup = lookup | Q(created=apply_date)
         queryset = self.queryset.filter(lookup).distinct()
         paginated_queryset = self.paginate_queryset(queryset=queryset)
-        return self.get_paginated_response(paginated_queryset)
+        return self.get_paginated_response(ApplicationLiteSerializer(paginated_queryset, many=True).data)
 
 
 class AdmissionCampaignTypeViewSet(ModelViewSet):

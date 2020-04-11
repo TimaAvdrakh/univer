@@ -297,6 +297,19 @@ class ProfileSerializer(serializers.ModelSerializer):
         return data
 
 
+class ProfileLiteSerializer(serializers.ModelSerializer):
+    # name = serializers.SerializerMethodField()
+
+    # def get_name(self, profile: models.Profile):
+    #     return profile.full_name
+
+    full_name = serializers.ReadOnlyField()
+
+    class Meta:
+        model = models.Profile
+        fields = ['uid', 'full_name']
+
+
 class ProfileShortSerializer(serializers.ModelSerializer):
     profileId = serializers.CharField(source="uid",)
     middleName = serializers.CharField(
