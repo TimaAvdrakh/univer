@@ -175,49 +175,49 @@ class QuestionnaireViewSet(ModelViewSet):
 class FamilyMembershipViewSet(ModelViewSet):
     queryset = FamilyMembership.objects.all()
     serializer_class = FamilyMembershipSerializer
-    permission_classes = (IsAdminOrReadOnly,)
+    # permission_classes = (IsAdminOrReadOnly,)
 
 
 class PrivilegeTypeViewSet(ModelViewSet):
     queryset = PrivilegeType.objects.all()
     serializer_class = PrivilegeTypeSerializer
-    permission_classes = (IsAdminOrReadOnly,)
+    # permission_classes = (IsAdminOrReadOnly,)
 
 
 class DocumentReturnMethodViewSet(ModelViewSet):
     queryset = DocumentReturnMethod.objects.all()
     serializer_class = DocumentReturnMethodSerializer
-    permission_classes = (IsAdminOrReadOnly,)
+    # permission_classes = (IsAdminOrReadOnly,)
 
 
 class AddressTypeViewSet(ModelViewSet):
     queryset = AddressType.objects.all()
     serializer_class = AddressTypeSerializer
-    permission_classes = (IsAdminOrReadOnly,)
+    # permission_classes = (IsAdminOrReadOnly,)
 
 
 class RecruitmentPlanViewSet(ModelViewSet):
     queryset = RecruitmentPlan.objects.all()
     serializer_class = RecruitmentPlanSerializer
-    permission_classes = (IsAdminOrReadOnly,)
+    # permission_classes = (IsAdminOrReadOnly,)
 
 
 class LanguageProficiencyViewSet(ModelViewSet):
     queryset = LanguageProficiency.objects.exclude(parent=None)
     serializer_class = LanguageProficiencySerializer
-    permission_classes = (IsAdminOrReadOnly,)
+    # permission_classes = (IsAdminOrReadOnly,)
 
 
 class InternationalCertTypeViewSet(ModelViewSet):
     queryset = InternationalCertType.objects.all()
     serializer_class = InternationalCertTypeSerializer
-    permission_classes = (IsAdminOrReadOnly,)
+    # permission_classes = (IsAdminOrReadOnly,)
 
 
 class GrantTypeViewSet(ModelViewSet):
     queryset = GrantType.objects.all()
     serializer_class = GrantTypeSerializer
-    permission_classes = (IsAdminOrReadOnly,)
+    # permission_classes = (IsAdminOrReadOnly,)
 
 
 class ApplicationStatusViewSet(ModelViewSet):
@@ -316,10 +316,10 @@ class ApplicationViewSet(ModelViewSet):
 class AdmissionCampaignTypeViewSet(ModelViewSet):
     queryset = AdmissionCampaignType.objects.all()
     serializer_class = AdmissionCampaignTypeSerializer
-    permission_classes = (IsAdminOrReadOnly,)
+    # permission_classes = (IsAdminOrReadOnly,)
 
 
 class AdmissionCampaignViewSet(ModelViewSet):
     queryset = AdmissionCampaign.objects.all()
     serializer_class = AdmissionCampaignSerializer
-    permission_classes = (IsAdminOrReadOnly,)
+    # permission_classes = (IsAdminOrReadOnly,)
