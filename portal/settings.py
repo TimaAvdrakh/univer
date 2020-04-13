@@ -38,7 +38,8 @@ INSTALLED_APPS = [
     'univer_admin',
     'student_journal',
     'integration',
-    'applicant'
+    'applicant',
+    'services'
 ]
 
 MIDDLEWARE = [
