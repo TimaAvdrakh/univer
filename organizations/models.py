@@ -142,7 +142,7 @@ class Group(BaseCatalog):
 #     class Meta:
 #         verbose_name = 'Студент'
 #         verbose_name_plural = 'Студенты'
-
+#
 
 class EducationBase(BaseCatalog):
     class Meta:
