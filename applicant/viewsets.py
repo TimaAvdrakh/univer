@@ -161,7 +161,6 @@ class ApplicantViewSet(ModelViewSet):
 class QuestionnaireViewSet(ModelViewSet):
     queryset = Questionnaire.objects.all()
     serializer_class = QuestionnaireSerializer
-    permission_classes = (IsAdminOrReadOnly,)
 
     @action(methods=['get'], detail=False, url_name='my', url_path='my')
     def get_my_questionnaire(self, request, pk=None):

@@ -1,0 +1,658 @@
+<?xml version="1.0" encoding="utf-8"?>
+<django-objects version="1.0">
+    <object model="applicant.addresstype" pk="3938d9a3-14af-4b93-8bfb-5f2fe9687635">
+        <field name="is_active" type="BooleanField">True</field>
+        <field name="created" type="DateTimeField">2020-04-11T10:25:42.428992+00:00</field>
+        <field name="updated" type="DateTimeField">2020-04-11T10:25:42.429009+00:00</field>
+        <field name="deleted" type="DateTimeField">
+            <None></None>
+        </field>
+        <field name="sort" type="IntegerField">500</field>
+        <field name="name" type="CharField">Адрес проживания</field>
+        <field name="name_ru" type="CharField">Адрес проживания</field>
+        <field name="name_kk" type="CharField">
+            <None></None>
+        </field>
+        <field name="name_en" type="CharField">
+            <None></None>
+        </field>
+        <field name="code" type="CharField">
+            <None></None>
+        </field>
+    </object>
+    <object model="applicant.addresstype" pk="4cfffcad-6014-43d9-8837-3d2c9bea6a88">
+        <field name="is_active" type="BooleanField">True</field>
+        <field name="created" type="DateTimeField">2020-04-11T10:25:42.428806+00:00</field>
+        <field name="updated" type="DateTimeField">2020-04-11T10:25:42.428854+00:00</field>
+        <field name="deleted" type="DateTimeField">
+            <None></None>
+        </field>
+        <field name="sort" type="IntegerField">500</field>
+        <field name="name" type="CharField">Адрес прописки</field>
+        <field name="name_ru" type="CharField">Адрес прописки</field>
+        <field name="name_kk" type="CharField">
+            <None></None>
+        </field>
+        <field name="name_en" type="CharField">
+            <None></None>
+        </field>
+        <field name="code" type="CharField">
+            <None></None>
+        </field>
+    </object>
+    <object model="applicant.addresstype" pk="753896f3-cba5-4262-953f-8957d96753b0">
+        <field name="is_active" type="BooleanField">True</field>
+        <field name="created" type="DateTimeField">2020-04-11T10:25:42.429084+00:00</field>
+        <field name="updated" type="DateTimeField">2020-04-11T10:25:42.429097+00:00</field>
+        <field name="deleted" type="DateTimeField">
+            <None></None>
+        </field>
+        <field name="sort" type="IntegerField">500</field>
+        <field name="name" type="CharField">Адрес временной регистрации</field>
+        <field name="name_ru" type="CharField">Адрес временной регистрации</field>
+        <field name="name_kk" type="CharField">
+            <None></None>
+        </field>
+        <field name="name_en" type="CharField">
+            <None></None>
+        </field>
+        <field name="code" type="CharField">
+            <None></None>
+        </field>
+    </object>
+    <object model="applicant.addresstype" pk="e7e8e538-a979-416a-a99c-dc6978ecfe2e">
+        <field name="is_active" type="BooleanField">True</field>
+        <field name="created" type="DateTimeField">2020-04-11T10:25:42.429163+00:00</field>
+        <field name="updated" type="DateTimeField">2020-04-11T10:25:42.429175+00:00</field>
+        <field name="deleted" type="DateTimeField">
+            <None></None>
+        </field>
+        <field name="sort" type="IntegerField">500</field>
+        <field name="name" type="CharField">Адрес постоянной регистрации</field>
+        <field name="name_ru" type="CharField">Адрес постоянной регистрации</field>
+        <field name="name_kk" type="CharField">
+            <None></None>
+        </field>
+        <field name="name_en" type="CharField">
+            <None></None>
+        </field>
+        <field name="code" type="CharField">
+            <None></None>
+        </field>
+    </object>
+    <object model="applicant.languageproficiency" pk="0ff7d3f3-68fe-4da0-acab-2dcb8dba1a4a">
+        <field name="is_active" type="BooleanField">True</field>
+        <field name="created" type="DateTimeField">2020-04-07T10:15:51.516718+00:00</field>
+        <field name="updated" type="DateTimeField">2020-04-07T10:15:51.516732+00:00</field>
+        <field name="deleted" type="DateTimeField">
+            <None></None>
+        </field>
+        <field name="sort" type="IntegerField">500</field>
+        <field name="code" type="CharField">B</field>
+        <field name="parent" rel="ManyToOneRel" to="applicant.languageproficiency">
+            <None></None>
+        </field>
+    </object>
+    <object model="applicant.languageproficiency" pk="1049b136-5851-4829-ae4d-07805041cc18">
+        <field name="is_active" type="BooleanField">True</field>
+        <field name="created" type="DateTimeField">2020-04-07T10:18:44.406345+00:00</field>
+        <field name="updated" type="DateTimeField">2020-04-07T10:18:44.406372+00:00</field>
+        <field name="deleted" type="DateTimeField">
+            <None></None>
+        </field>
+        <field name="sort" type="IntegerField">500</field>
+        <field name="code" type="CharField">B2</field>
+        <field name="parent" rel="ManyToOneRel" to="applicant.languageproficiency">
+            0ff7d3f3-68fe-4da0-acab-2dcb8dba1a4a
+        </field>
+    </object>
+    <object model="applicant.languageproficiency" pk="356462ef-c491-47f0-92db-41dbabd94e0d">
+        <field name="is_active" type="BooleanField">True</field>
+        <field name="created" type="DateTimeField">2020-04-07T10:18:29.547446+00:00</field>
+        <field name="updated" type="DateTimeField">2020-04-07T10:18:29.547511+00:00</field>
+        <field name="deleted" type="DateTimeField">
+            <None></None>
+        </field>
+        <field name="sort" type="IntegerField">500</field>
+        <field name="code" type="CharField">A1</field>
+        <field name="parent" rel="ManyToOneRel" to="applicant.languageproficiency">
+            5bb9e1c2-7a29-429e-909e-ba6a500cb759
+        </field>
+    </object>
+    <object model="applicant.languageproficiency" pk="5bb9e1c2-7a29-429e-909e-ba6a500cb759">
+        <field name="is_active" type="BooleanField">True</field>
+        <field name="created" type="DateTimeField">2020-04-07T10:15:51.516619+00:00</field>
+        <field name="updated" type="DateTimeField">2020-04-07T10:15:51.516659+00:00</field>
+        <field name="deleted" type="DateTimeField">
+            <None></None>
+        </field>
+        <field name="sort" type="IntegerField">500</field>
+        <field name="code" type="CharField">A</field>
+        <field name="parent" rel="ManyToOneRel" to="applicant.languageproficiency">
+            <None></None>
+        </field>
+    </object>
+    <object model="applicant.languageproficiency" pk="6a20ab99-77eb-4017-84c0-8a1e19d357e2">
+        <field name="is_active" type="BooleanField">True</field>
+        <field name="created" type="DateTimeField">2020-04-07T10:18:29.547637+00:00</field>
+        <field name="updated" type="DateTimeField">2020-04-07T10:18:29.547669+00:00</field>
+        <field name="deleted" type="DateTimeField">
+            <None></None>
+        </field>
+        <field name="sort" type="IntegerField">500</field>
+        <field name="code" type="CharField">A2</field>
+        <field name="parent" rel="ManyToOneRel" to="applicant.languageproficiency">
+            5bb9e1c2-7a29-429e-909e-ba6a500cb759
+        </field>
+    </object>
+    <object model="applicant.languageproficiency" pk="9efccf97-ab09-432a-91fa-43363bc40c48">
+        <field name="is_active" type="BooleanField">True</field>
+        <field name="created" type="DateTimeField">2020-04-07T10:18:57.021685+00:00</field>
+        <field name="updated" type="DateTimeField">2020-04-07T10:18:57.021692+00:00</field>
+        <field name="deleted" type="DateTimeField">
+            <None></None>
+        </field>
+        <field name="sort" type="IntegerField">500</field>
+        <field name="code" type="CharField">C2</field>
+        <field name="parent" rel="ManyToOneRel" to="applicant.languageproficiency">
+            e509ad7f-d7c7-4a78-81ed-251eaa51a30e
+        </field>
+    </object>
+    <object model="applicant.languageproficiency" pk="e509ad7f-d7c7-4a78-81ed-251eaa51a30e">
+        <field name="is_active" type="BooleanField">True</field>
+        <field name="created" type="DateTimeField">2020-04-07T10:15:51.516769+00:00</field>
+        <field name="updated" type="DateTimeField">2020-04-07T10:15:51.516780+00:00</field>
+        <field name="deleted" type="DateTimeField">
+            <None></None>
+        </field>
+        <field name="sort" type="IntegerField">500</field>
+        <field name="code" type="CharField">C</field>
+        <field name="parent" rel="ManyToOneRel" to="applicant.languageproficiency">
+            <None></None>
+        </field>
+    </object>
+    <object model="applicant.languageproficiency" pk="f4d7ea9b-87f5-4366-a946-ea83255bc101">
+        <field name="is_active" type="BooleanField">True</field>
+        <field name="created" type="DateTimeField">2020-04-07T10:18:57.021630+00:00</field>
+        <field name="updated" type="DateTimeField">2020-04-07T10:18:57.021649+00:00</field>
+        <field name="deleted" type="DateTimeField">
+            <None></None>
+        </field>
+        <field name="sort" type="IntegerField">500</field>
+        <field name="code" type="CharField">C1</field>
+        <field name="parent" rel="ManyToOneRel" to="applicant.languageproficiency">
+            e509ad7f-d7c7-4a78-81ed-251eaa51a30e
+        </field>
+    </object>
+    <object model="applicant.languageproficiency" pk="fd74131b-cb46-4f54-90e9-77109699a40e">
+        <field name="is_active" type="BooleanField">True</field>
+        <field name="created" type="DateTimeField">2020-04-07T10:18:44.406197+00:00</field>
+        <field name="updated" type="DateTimeField">2020-04-07T10:18:44.406245+00:00</field>
+        <field name="deleted" type="DateTimeField">
+            <None></None>
+        </field>
+        <field name="sort" type="IntegerField">500</field>
+        <field name="code" type="CharField">B1</field>
+        <field name="parent" rel="ManyToOneRel" to="applicant.languageproficiency">
+            0ff7d3f3-68fe-4da0-acab-2dcb8dba1a4a
+        </field>
+    </object>
+    <object model="applicant.privilegetype" pk="145e52c7-d589-4954-b556-beb15df3603e">
+        <field name="is_active" type="BooleanField">True</field>
+        <field name="created" type="DateTimeField">2020-04-11T10:28:54.229716+00:00</field>
+        <field name="updated" type="DateTimeField">2020-04-11T10:28:54.229727+00:00</field>
+        <field name="deleted" type="DateTimeField">
+            <None></None>
+        </field>
+        <field name="sort" type="IntegerField">500</field>
+        <field name="name" type="CharField">Инвалид 2-ой группы</field>
+        <field name="name_ru" type="CharField">Инвалид 2-ой группы</field>
+        <field name="name_kk" type="CharField">
+            <None></None>
+        </field>
+        <field name="name_en" type="CharField">
+            <None></None>
+        </field>
+        <field name="code" type="CharField">
+            <None></None>
+        </field>
+    </object>
+    <object model="applicant.privilegetype" pk="1af35208-78dd-481b-a0f0-a78d9181b683">
+        <field name="is_active" type="BooleanField">True</field>
+        <field name="created" type="DateTimeField">2020-04-11T10:28:54.230288+00:00</field>
+        <field name="updated" type="DateTimeField">2020-04-11T10:28:54.230298+00:00</field>
+        <field name="deleted" type="DateTimeField">
+            <None></None>
+        </field>
+        <field name="sort" type="IntegerField">500</field>
+        <field name="name" type="CharField">Сирота под опекой</field>
+        <field name="name_ru" type="CharField">Сирота под опекой</field>
+        <field name="name_kk" type="CharField">
+            <None></None>
+        </field>
+        <field name="name_en" type="CharField">
+            <None></None>
+        </field>
+        <field name="code" type="CharField">
+            <None></None>
+        </field>
+    </object>
+    <object model="applicant.privilegetype" pk="2529d5a8-7cc1-47ad-b19c-27e73df4b038">
+        <field name="is_active" type="BooleanField">True</field>
+        <field name="created" type="DateTimeField">2020-04-11T10:28:54.230349+00:00</field>
+        <field name="updated" type="DateTimeField">2020-04-11T10:28:54.230359+00:00</field>
+        <field name="deleted" type="DateTimeField">
+            <None></None>
+        </field>
+        <field name="sort" type="IntegerField">500</field>
+        <field name="name" type="CharField">Дети матерей-одиночек</field>
+        <field name="name_ru" type="CharField">Дети матерей-одиночек</field>
+        <field name="name_kk" type="CharField">
+            <None></None>
+        </field>
+        <field name="name_en" type="CharField">
+            <None></None>
+        </field>
+        <field name="code" type="CharField">
+            <None></None>
+        </field>
+    </object>
+    <object model="applicant.privilegetype" pk="336c75c9-fd82-4d48-a120-33dc8e83d6d9">
+        <field name="is_active" type="BooleanField">True</field>
+        <field name="created" type="DateTimeField">2020-04-11T10:28:54.229781+00:00</field>
+        <field name="updated" type="DateTimeField">2020-04-11T10:28:54.229792+00:00</field>
+        <field name="deleted" type="DateTimeField">
+            <None></None>
+        </field>
+        <field name="sort" type="IntegerField">500</field>
+        <field name="name" type="CharField">Инвалид 3-ей группы</field>
+        <field name="name_ru" type="CharField">Инвалид 3-ей группы</field>
+        <field name="name_kk" type="CharField">
+            <None></None>
+        </field>
+        <field name="name_en" type="CharField">
+            <None></None>
+        </field>
+        <field name="code" type="CharField">
+            <None></None>
+        </field>
+    </object>
+    <object model="applicant.privilegetype" pk="4b2db449-5cc0-4568-bf69-c03cdaf0803e">
+        <field name="is_active" type="BooleanField">True</field>
+        <field name="created" type="DateTimeField">2020-04-11T10:28:54.229907+00:00</field>
+        <field name="updated" type="DateTimeField">2020-04-11T10:28:54.229917+00:00</field>
+        <field name="deleted" type="DateTimeField">
+            <None></None>
+        </field>
+        <field name="sort" type="IntegerField">500</field>
+        <field name="name" type="CharField">Инвалид по слуху</field>
+        <field name="name_ru" type="CharField">Инвалид по слуху</field>
+        <field name="name_kk" type="CharField">
+            <None></None>
+        </field>
+        <field name="name_en" type="CharField">
+            <None></None>
+        </field>
+        <field name="code" type="CharField">
+            <None></None>
+        </field>
+    </object>
+    <object model="applicant.privilegetype" pk="769a8314-1359-42c8-942a-6d07e9e38d55">
+        <field name="is_active" type="BooleanField">True</field>
+        <field name="created" type="DateTimeField">2020-04-11T10:28:54.229515+00:00</field>
+        <field name="updated" type="DateTimeField">2020-04-11T10:28:54.229545+00:00</field>
+        <field name="deleted" type="DateTimeField">
+            <None></None>
+        </field>
+        <field name="sort" type="IntegerField">500</field>
+        <field name="name" type="CharField">Дети-инвалиды</field>
+        <field name="name_ru" type="CharField">Дети-инвалиды</field>
+        <field name="name_kk" type="CharField">
+            <None></None>
+        </field>
+        <field name="name_en" type="CharField">
+            <None></None>
+        </field>
+        <field name="code" type="CharField">
+            <None></None>
+        </field>
+    </object>
+    <object model="applicant.privilegetype" pk="81ba9d49-7681-4929-92a9-9fa85f4c75f6">
+        <field name="is_active" type="BooleanField">True</field>
+        <field name="created" type="DateTimeField">2020-04-11T10:28:54.229640+00:00</field>
+        <field name="updated" type="DateTimeField">2020-04-11T10:28:54.229654+00:00</field>
+        <field name="deleted" type="DateTimeField">
+            <None></None>
+        </field>
+        <field name="sort" type="IntegerField">500</field>
+        <field name="name" type="CharField">Инвалид 1-ой группы</field>
+        <field name="name_ru" type="CharField">Инвалид 1-ой группы</field>
+        <field name="name_kk" type="CharField">
+            <None></None>
+        </field>
+        <field name="name_en" type="CharField">
+            <None></None>
+        </field>
+        <field name="code" type="CharField">
+            <None></None>
+        </field>
+    </object>
+    <object model="applicant.privilegetype" pk="83f5b09b-0159-4c8d-902e-57d72222268a">
+        <field name="is_active" type="BooleanField">True</field>
+        <field name="created" type="DateTimeField">2020-04-11T10:28:54.229969+00:00</field>
+        <field name="updated" type="DateTimeField">2020-04-11T10:28:54.229979+00:00</field>
+        <field name="deleted" type="DateTimeField">
+            <None></None>
+        </field>
+        <field name="sort" type="IntegerField">500</field>
+        <field name="name" type="CharField">Без опекуна</field>
+        <field name="name_ru" type="CharField">Без опекуна</field>
+        <field name="name_kk" type="CharField">
+            <None></None>
+        </field>
+        <field name="name_en" type="CharField">
+            <None></None>
+        </field>
+        <field name="code" type="CharField">
+            <None></None>
+        </field>
+    </object>
+    <object model="applicant.privilegetype" pk="86a97297-8ed6-4076-8f05-84eb7fb51fa2">
+        <field name="is_active" type="BooleanField">True</field>
+        <field name="created" type="DateTimeField">2020-04-11T10:28:54.230030+00:00</field>
+        <field name="updated" type="DateTimeField">2020-04-11T10:28:54.230039+00:00</field>
+        <field name="deleted" type="DateTimeField">
+            <None></None>
+        </field>
+        <field name="sort" type="IntegerField">500</field>
+        <field name="name" type="CharField">Воспитанник детских домов</field>
+        <field name="name_ru" type="CharField">Воспитанник детских домов</field>
+        <field name="name_kk" type="CharField">
+            <None></None>
+        </field>
+        <field name="name_en" type="CharField">
+            <None></None>
+        </field>
+        <field name="code" type="CharField">
+            <None></None>
+        </field>
+    </object>
+    <object model="applicant.privilegetype" pk="8b207652-9e67-4d75-a129-0900afadc6f9">
+        <field name="is_active" type="BooleanField">True</field>
+        <field name="created" type="DateTimeField">2020-04-11T10:28:54.230090+00:00</field>
+        <field name="updated" type="DateTimeField">2020-04-11T10:28:54.230100+00:00</field>
+        <field name="deleted" type="DateTimeField">
+            <None></None>
+        </field>
+        <field name="sort" type="IntegerField">500</field>
+        <field name="name" type="CharField">Лица, приравненные по льготам и гарантиям к участникам Великой Отечественной
+            войны
+        </field>
+        <field name="name_ru" type="CharField">Лица, приравненные по льготам и гарантиям к участникам Великой
+            Отечественной войны
+        </field>
+        <field name="name_kk" type="CharField">
+            <None></None>
+        </field>
+        <field name="name_en" type="CharField">
+            <None></None>
+        </field>
+        <field name="code" type="CharField">
+            <None></None>
+        </field>
+    </object>
+    <object model="applicant.privilegetype" pk="b35e1450-b2dc-4b0e-87ea-d0f12e90fe38">
+        <field name="is_active" type="BooleanField">True</field>
+        <field name="created" type="DateTimeField">2020-04-11T10:28:54.230222+00:00</field>
+        <field name="updated" type="DateTimeField">2020-04-11T10:28:54.230234+00:00</field>
+        <field name="deleted" type="DateTimeField">
+            <None></None>
+        </field>
+        <field name="sort" type="IntegerField">500</field>
+        <field name="name" type="CharField">Многодетные семьи</field>
+        <field name="name_ru" type="CharField">Многодетные семьи</field>
+        <field name="name_kk" type="CharField">
+            <None></None>
+        </field>
+        <field name="name_en" type="CharField">
+            <None></None>
+        </field>
+        <field name="code" type="CharField">
+            <None></None>
+        </field>
+    </object>
+    <object model="applicant.privilegetype" pk="db118d1f-0236-4e07-a869-6ec9885dac50">
+        <field name="is_active" type="BooleanField">True</field>
+        <field name="created" type="DateTimeField">2020-04-11T10:28:54.230151+00:00</field>
+        <field name="updated" type="DateTimeField">2020-04-11T10:28:54.230161+00:00</field>
+        <field name="deleted" type="DateTimeField">
+            <None></None>
+        </field>
+        <field name="sort" type="IntegerField">500</field>
+        <field name="name" type="CharField">Семьи военнослужащих, погибших при прохождении воин.службы в мирное время,
+            семьи сотрудников органов внутр.дел, погибших при исполнении служ.обязаннос
+        </field>
+        <field name="name_ru" type="CharField">Семьи военнослужащих, погибших при прохождении воин.службы в мирное
+            время, семьи сотрудников органов внутр.дел, погибших при исполнении служ.обязаннос
+        </field>
+        <field name="name_kk" type="CharField">
+            <None></None>
+        </field>
+        <field name="name_en" type="CharField">
+            <None></None>
+        </field>
+        <field name="code" type="CharField">
+            <None></None>
+        </field>
+    </object>
+    <object model="applicant.privilegetype" pk="eee04f01-8777-4bc7-8bd0-f852e98e9735">
+        <field name="is_active" type="BooleanField">True</field>
+        <field name="created" type="DateTimeField">2020-04-11T10:28:54.229845+00:00</field>
+        <field name="updated" type="DateTimeField">2020-04-11T10:28:54.229855+00:00</field>
+        <field name="deleted" type="DateTimeField">
+            <None></None>
+        </field>
+        <field name="sort" type="IntegerField">500</field>
+        <field name="name" type="CharField">Инвалид по зрению</field>
+        <field name="name_ru" type="CharField">Инвалид по зрению</field>
+        <field name="name_kk" type="CharField">
+            <None></None>
+        </field>
+        <field name="name_en" type="CharField">
+            <None></None>
+        </field>
+        <field name="code" type="CharField">
+            <None></None>
+        </field>
+    </object>
+    <object model="applicant.documentreturnmethod" pk="0b79831e-601e-459a-9b94-a577c1fb9b9c">
+        <field name="is_active" type="BooleanField">True</field>
+        <field name="created" type="DateTimeField">2020-04-11T10:30:38.588627+00:00</field>
+        <field name="updated" type="DateTimeField">2020-04-11T10:30:38.588663+00:00</field>
+        <field name="deleted" type="DateTimeField">
+            <None></None>
+        </field>
+        <field name="sort" type="IntegerField">500</field>
+        <field name="name" type="CharField">Веб</field>
+        <field name="name_ru" type="CharField">Веб</field>
+        <field name="name_kk" type="CharField">
+            <None></None>
+        </field>
+        <field name="name_en" type="CharField">
+            <None></None>
+        </field>
+        <field name="code" type="CharField">
+            <None></None>
+        </field>
+    </object>
+    <object model="applicant.documentreturnmethod" pk="b491b8e8-9927-4ee2-9924-d20d8368c69f">
+        <field name="is_active" type="BooleanField">True</field>
+        <field name="created" type="DateTimeField">2020-04-11T10:30:38.588771+00:00</field>
+        <field name="updated" type="DateTimeField">2020-04-11T10:30:38.588787+00:00</field>
+        <field name="deleted" type="DateTimeField">
+            <None></None>
+        </field>
+        <field name="sort" type="IntegerField">500</field>
+        <field name="name" type="CharField">Лично</field>
+        <field name="name_ru" type="CharField">Лично</field>
+        <field name="name_kk" type="CharField">
+            <None></None>
+        </field>
+        <field name="name_en" type="CharField">
+            <None></None>
+        </field>
+        <field name="code" type="CharField">
+            <None></None>
+        </field>
+    </object>
+    <object model="applicant.documentreturnmethod" pk="f3dd69d4-697e-43f1-9a45-30c34f06e2bc">
+        <field name="is_active" type="BooleanField">True</field>
+        <field name="created" type="DateTimeField">2020-04-11T10:30:38.588859+00:00</field>
+        <field name="updated" type="DateTimeField">2020-04-11T10:30:38.588872+00:00</field>
+        <field name="deleted" type="DateTimeField">
+            <None></None>
+        </field>
+        <field name="sort" type="IntegerField">500</field>
+        <field name="name" type="CharField">Почта</field>
+        <field name="name_ru" type="CharField">Почта</field>
+        <field name="name_kk" type="CharField">
+            <None></None>
+        </field>
+        <field name="name_en" type="CharField">
+            <None></None>
+        </field>
+        <field name="code" type="CharField">
+            <None></None>
+        </field>
+    </object>
+    <object model="applicant.familymembership" pk="524435ee-f999-423b-aebc-cf99cc1cf06e">
+        <field name="is_active" type="BooleanField">True</field>
+        <field name="created" type="DateTimeField">2020-04-11T10:27:02.984237+00:00</field>
+        <field name="updated" type="DateTimeField">2020-04-11T10:27:02.984252+00:00</field>
+        <field name="deleted" type="DateTimeField">
+            <None></None>
+        </field>
+        <field name="sort" type="IntegerField">500</field>
+        <field name="name" type="CharField">Отец</field>
+        <field name="name_ru" type="CharField">Отец</field>
+        <field name="name_kk" type="CharField">
+            <None></None>
+        </field>
+        <field name="name_en" type="CharField">
+            <None></None>
+        </field>
+        <field name="code" type="CharField">
+            <None></None>
+        </field>
+    </object>
+    <object model="applicant.familymembership" pk="a3d54a09-c0e7-401b-9e75-a0514915a621">
+        <field name="is_active" type="BooleanField">True</field>
+        <field name="created" type="DateTimeField">2020-04-11T10:27:02.984353+00:00</field>
+        <field name="updated" type="DateTimeField">2020-04-11T10:27:02.984369+00:00</field>
+        <field name="deleted" type="DateTimeField">
+            <None></None>
+        </field>
+        <field name="sort" type="IntegerField">500</field>
+        <field name="name" type="CharField">Опекун</field>
+        <field name="name_ru" type="CharField">Опекун</field>
+        <field name="name_kk" type="CharField">
+            <None></None>
+        </field>
+        <field name="name_en" type="CharField">
+            <None></None>
+        </field>
+        <field name="code" type="CharField">
+            <None></None>
+        </field>
+    </object>
+    <object model="applicant.familymembership" pk="d02dbdec-66bd-4ecf-bd30-00a7e71eb72a">
+        <field name="is_active" type="BooleanField">True</field>
+        <field name="created" type="DateTimeField">2020-04-11T10:27:02.984090+00:00</field>
+        <field name="updated" type="DateTimeField">2020-04-11T10:27:02.984126+00:00</field>
+        <field name="deleted" type="DateTimeField">
+            <None></None>
+        </field>
+        <field name="sort" type="IntegerField">500</field>
+        <field name="name" type="CharField">Мать</field>
+        <field name="name_ru" type="CharField">Мать</field>
+        <field name="name_kk" type="CharField">
+            <None></None>
+        </field>
+        <field name="name_en" type="CharField">
+            <None></None>
+        </field>
+        <field name="code" type="CharField">
+            <None></None>
+        </field>
+    </object>
+    <object model="applicant.applicationstatus" pk="226a3b49-a91b-4afe-bb94-dfe445f21f99">
+        <field name="is_active" type="BooleanField">True</field>
+        <field name="created" type="DateTimeField">2020-04-07T09:54:37.084811+00:00</field>
+        <field name="updated" type="DateTimeField">2020-04-07T09:54:37.084843+00:00</field>
+        <field name="deleted" type="DateTimeField">
+            <None></None>
+        </field>
+        <field name="sort" type="IntegerField">500</field>
+        <field name="name" type="CharField">Без анкеты</field>
+        <field name="name_ru" type="CharField">Без анкеты</field>
+        <field name="name_kk" type="CharField">Сауалнамасыз</field>
+        <field name="name_en" type="CharField">No questionnaire</field>
+        <field name="code" type="CharField">NO_QUESTIONNAIRE</field>
+    </object>
+    <object model="applicant.applicationstatus" pk="7046ce64-3dc0-4ba6-87b4-b83413982ca5">
+        <field name="is_active" type="BooleanField">True</field>
+        <field name="created" type="DateTimeField">2020-04-07T09:54:37.109676+00:00</field>
+        <field name="updated" type="DateTimeField">2020-04-07T09:54:37.109710+00:00</field>
+        <field name="deleted" type="DateTimeField">
+            <None></None>
+        </field>
+        <field name="sort" type="IntegerField">500</field>
+        <field name="name" type="CharField">Требует доработки</field>
+        <field name="name_ru" type="CharField">Требует доработки</field>
+        <field name="name_kk" type="CharField">Жақсартуды қажет етеді</field>
+        <field name="name_en" type="CharField">Needs to be improved</field>
+        <field name="code" type="CharField">IMPROVE</field>
+    </object>
+    <object model="applicant.applicationstatus" pk="73bc6519-3807-4ff4-ab6a-6a88e67995bd">
+        <field name="is_active" type="BooleanField">True</field>
+        <field name="created" type="DateTimeField">2020-04-07T09:54:36.868687+00:00</field>
+        <field name="updated" type="DateTimeField">2020-04-07T09:54:36.868700+00:00</field>
+        <field name="deleted" type="DateTimeField">
+            <None></None>
+        </field>
+        <field name="sort" type="IntegerField">500</field>
+        <field name="name" type="CharField">Заявление утверждено</field>
+        <field name="name_ru" type="CharField">Заявление утверждено</field>
+        <field name="name_kk" type="CharField">Өтініш бекітілді</field>
+        <field name="name_en" type="CharField">Application approved</field>
+        <field name="code" type="CharField">APPROVED</field>
+    </object>
+    <object model="applicant.applicationstatus" pk="c89be3cf-a289-414a-8675-2ec9649a6a32">
+        <field name="is_active" type="BooleanField">True</field>
+        <field name="created" type="DateTimeField">2020-04-07T09:54:37.060444+00:00</field>
+        <field name="updated" type="DateTimeField">2020-04-07T09:54:37.060478+00:00</field>
+        <field name="deleted" type="DateTimeField">
+            <None></None>
+        </field>
+        <field name="sort" type="IntegerField">500</field>
+        <field name="name" type="CharField">Ожидает проверки</field>
+        <field name="name_ru" type="CharField">Ожидает проверки</field>
+        <field name="name_kk" type="CharField">Тексеруді күтеді</field>
+        <field name="name_en" type="CharField">Awaits verification</field>
+        <field name="code" type="CharField">AWAITS_VERIFICATION</field>
+    </object>
+    <object model="applicant.applicationstatus" pk="cbdb63f4-2171-4da0-ac5c-e9b76f7c8d83">
+        <field name="is_active" type="BooleanField">True</field>
+        <field name="created" type="DateTimeField">2020-04-07T09:54:37.011364+00:00</field>
+        <field name="updated" type="DateTimeField">2020-04-07T09:54:37.011398+00:00</field>
+        <field name="deleted" type="DateTimeField">
+            <None></None>
+        </field>
+        <field name="sort" type="IntegerField">500</field>
+        <field name="name" type="CharField">Заявление отклонено</field>
+        <field name="name_ru" type="CharField">Заявление отклонено</field>
+        <field name="name_kk" type="CharField">Өтініш қабылданбады</field>
+        <field name="name_en" type="CharField">Application rejected</field>
+        <field name="code" type="CharField">REJECTED</field>
+    </object>
+</django-objects>

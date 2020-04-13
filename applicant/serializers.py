@@ -281,8 +281,8 @@ class QuestionnaireSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         questionnaire = None
         try:
-            user = self.context["request"].user
-            validated_data["creator"] = user.profile
+            profile = self.context["request"].user.profile
+            validated_data["creator"] = profile
             family = validated_data.pop('family')
             address_of_temp_reg = validated_data.pop('address_of_temp_reg', None)
             userprivilegelist = validated_data.pop('userprivilegelist', None)
@@ -328,7 +328,11 @@ class QuestionnaireSerializer(serializers.ModelSerializer):
                     Privilege.objects.create(**privilege, list=user_privilege_list)
                 validated_data['userprivilegelist'] = user_privilege_list
             questionnaire: Questionnaire = super().create(validated_data)
-            # Role.objects.create(profile=profile, is_student=True)
+            application_set = Application.objects.filter(creator=profile)
+            if application_set.exists:
+                application = application_set.first()
+                application.status = ApplicationStatus.objects.get(code=AWAITS_VERIFICATION)
+                application.save()
         except Exception as e:
             questionnaire.delete()
             raise ValidationError({"error": f"an error occurred\n{e}"})
