@@ -918,6 +918,7 @@ class StudentDiscipline(BaseModel):
             discipline_credit = list(discipline_credit.chosen_control_forms.all().values('name', 'uid'))
         return discipline_credit
 
+    #
     @property
     def credit_obj(self):
         try:
