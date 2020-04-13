@@ -119,6 +119,8 @@ class Group(BaseCatalog):
         verbose_name_plural = 'Группы'
 
 
+#
+
 # class Student(BaseModel):
 #     profile = models.ForeignKey(
 #         'portal_users.Profile',
