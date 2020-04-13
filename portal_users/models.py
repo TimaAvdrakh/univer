@@ -456,6 +456,10 @@ class Role(BaseModel):
         default=False,
         verbose_name='Абитуриент'
     )
+    is_mod = models.BooleanField(
+        default=False,
+        verbose_name='Модератор'
+    )
 
     def __str__(self):
         return '{}'.format(self.profile.user.username)

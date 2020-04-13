@@ -31,3 +31,45 @@ class DisciplineSerializer2(serializers.ModelSerializer):
             'name',
             'count_credits',
         )
+
+
+class EducationTypeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.EducationType
+        fields = '__all__'
+
+
+class EducationBaseSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.EducationBase
+        fields = '__all__'
+
+
+class EducationProgramSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.EducationProgram
+        fields = '__all__'
+
+
+class EducationProgramGroupSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.EducationProgramGroup
+        fields = '__all__'
+
+
+class OrganizationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.Organization
+        fields = '__all__'
+
+
+class SpecialitySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.Speciality
+        fields = '__all__'
+
+
+class LanguageSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.Language
+        fields = '__all__'

@@ -1,3 +1,4 @@
+import datetime as dt
 from django.core.mail import EmailMessage
 from django.contrib.auth.models import User
 from django.contrib.auth.hashers import make_password
@@ -7,36 +8,45 @@ from django.template.loader import render_to_string
 from django.utils.http import urlsafe_base64_encode
 from django.utils.encoding import force_bytes
 from rest_framework import serializers
-from rest_framework.validators import ValidationError
+from rest_framework.exceptions import ValidationError
 from common.models import IdentityDocument, GovernmentAgency, DocumentType
 from common.serializers import IdentityDocumentSerializer
 from portal_users.serializers import ProfilePhoneSerializer
 from portal_users.models import Profile, Role, ProfilePhone
-from .models import *
+from organizations.models import Education
+from .models import (
+    PrivilegeType,
+    Privilege,
+    UserPrivilegeList,
+    DocumentReturnMethod,
+    FamilyMembership,
+    AddressType,
+    AddressClassifier,
+    Address,
+    FamilyMember,
+    Family,
+    AdmissionCampaign,
+    Applicant,
+    Questionnaire,
+    Application,
+    DocScan,
+    ApplicationStatus,
+    CampaignStage,
+    RecruitmentPlan,
+    DisciplineMark,
+    TestCert,
+    LanguageProficiency,
+    InternationalCertType,
+    InternationalCert,
+    GrantType,
+    Grant,
+    DirectionChoice,
+    TestResult,
+    AdmissionCampaignType,
+    AWAITS_VERIFICATION,
+    NO_QUESTIONNAIRE
+)
 from .token import token_generator
-
-
-__all__ = [
-    'PrivilegeTypeSerializer',
-    'PrivilegeSerializer',
-    'UserPrivilegeListSerializer',
-    'DocumentReturnMethodSerializer',
-    'FamilyMemberSerializer',
-    'FamilyMembershipSerializer',
-    'FamilySerializer',
-    'AddressClassifierSerializer',
-    'AddressSerializer',
-    'AddressTypeSerializer',
-    'ApplicantSerializer',
-    'ApplicationStatusSerializer',
-    'AdmissionApplicationSerializer',
-    'AdmissionCampaignSerializer',
-    'AdmissionCampaignTypeSerializer',
-    'QuestionnaireSerializer',
-    'CampaignStageSerializer',
-    'DocScanSerializer',
-
-]
 
 
 class PrivilegeTypeSerializer(serializers.ModelSerializer):
@@ -108,7 +118,7 @@ class FamilySerializer(serializers.ModelSerializer):
 class AdmissionCampaignTypeSerializer(serializers.ModelSerializer):
     class Meta:
         model = AdmissionCampaignType
-        fields = "__all__"
+        fields = '__all__'
 
 
 class AdmissionCampaignSerializer(serializers.ModelSerializer):
@@ -117,7 +127,6 @@ class AdmissionCampaignSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
-# Создает только юзера
 class ApplicantSerializer(serializers.ModelSerializer):
     class Meta:
         model = Applicant
@@ -143,6 +152,7 @@ class ApplicantSerializer(serializers.ModelSerializer):
         return
 
     def validate(self, validated_data):
+
         # Если не дал согласие на обработку - кинуть ошибку
         if not validated_data["consented"]:
             raise ValidationError({"error": "Consent to process personal data required"})
@@ -153,11 +163,27 @@ class ApplicantSerializer(serializers.ModelSerializer):
         else:
             raise ValidationError({"error": "document number is required"})
         # Дальше валидирует сам Django, какие поля указаны в модели
+        campaign_type: AdmissionCampaignType = self.context['request'].data.get('campaign_type')
+        today = dt.date.today()
+        campaigns = AdmissionCampaign.objects.filter(
+            type=campaign_type,
+            is_active=True,
+            year=dt.datetime.now().year,
+            start_date__lte=today,
+            end_date__gte=today
+        )
+        if campaigns.exists():
+            validated_data['campaign'] = campaigns.first()
+        else:
+            raise ValidationError({'error': 'no campaign found'})
         return validated_data
 
     def create(self, validated_data):
         if validated_data['password'] != validated_data['confirm_password']:
             raise ValidationError({"error": "passwords don't match"})
+        # TODO проверку на то, что есть приемные кампании, которые принимают полученный уровень образования
+        #  если он, есть продолжить регистрацию и создать абитуриента с профилем. Если нет вернуть ошибку и сообшение
+        #  о том, что нет приемных кампаний с таким уровнем подготовки
         applicant = super().create(validated_data)
         try:
             raw_password = applicant.password
@@ -211,7 +237,6 @@ class ApplicantSerializer(serializers.ModelSerializer):
             raise ValidationError({"error": e})
 
 
-# Создает профиль и роль
 class QuestionnaireSerializer(serializers.ModelSerializer):
     family = FamilySerializer(required=True)
     id_doc = IdentityDocumentSerializer(required=True)
@@ -225,14 +250,11 @@ class QuestionnaireSerializer(serializers.ModelSerializer):
         model = Questionnaire
         fields = "__all__"
 
-    def validate(self, validated_data):
-        user = self.context["request"].user
-        validated_data["applicant"] = user
-        return validated_data
-
     def create(self, validated_data):
-        user = self.context["request"].user
-        if user and user.is_authenticated:
+        questionnaire = None
+        try:
+            user = self.context["request"].user
+            validated_data["creator"] = user.profile
             family = validated_data.pop('family')
             address_of_temp_reg = validated_data.pop('address_of_temp_reg', None)
             userprivilegelist = validated_data.pop('userprivilegelist', None)
@@ -277,15 +299,14 @@ class QuestionnaireSerializer(serializers.ModelSerializer):
                 for privilege in privileges:
                     Privilege.objects.create(**privilege, list=user_privilege_list)
                 validated_data['userprivilegelist'] = user_privilege_list
-            full_questionnaire = super().create(validated_data)
+            questionnaire: Questionnaire = super().create(validated_data)
             # Role.objects.create(profile=profile, is_student=True)
-            return full_questionnaire
-        else:
-            raise ValidationError({"error": f"user undefined"})
+        except Exception as e:
+            questionnaire.delete()
+            raise ValidationError({"error": f"an error occurred\n{e}"})
+        return questionnaire
 
 
-# Для этой модели нет REST View, там FileField
-# Просто чтобы шло вместе заявкой
 class DocScanSerializer(serializers.ModelSerializer):
     class Meta:
         model = DocScan
@@ -298,24 +319,170 @@ class ApplicationStatusSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
-class AdmissionApplicationSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = AdmissionApplication
-        fields = "__all__"
-
-    def create(self, validated_data):
-        user = self.context["request"].user
-        if user and user.is_authenticated:
-            application: AdmissionApplication = super().create(validated_data)
-            application.form = user.questionnaires.first()
-            application.status = ApplicationStatus.objects.get(code=WAITING_VERIFY)
-            application.form.save()
-            return application
-        else:
-            raise ValidationError({"error": "user undefined"})
-
-
 class CampaignStageSerializer(serializers.ModelSerializer):
     class Meta:
         model = CampaignStage
         fields = "__all__"
+
+
+class RecruitmentPlanSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = RecruitmentPlan
+        fields = "__all__"
+
+
+class DisciplineMarkSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = DisciplineMark
+        fields = "__all__"
+
+
+class TestCertSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = TestCert
+        fields = "__all__"
+
+
+class LanguageProficiencySerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = LanguageProficiency
+        fields = "__all__"
+
+
+class InternationalCertTypeSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = InternationalCertType
+        fields = "__all__"
+
+
+class InternationalCertSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = InternationalCert
+        fields = "__all__"
+
+
+class GrantTypeSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = GrantType
+        fields = "__all__"
+
+
+class GrantSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Grant
+        fields = "__all__"
+
+
+class DirectionChoiceSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = DirectionChoice
+        fields = "__all__"
+
+
+class TestResultSerializer(serializers.ModelSerializer):
+    disciplines = DisciplineMarkSerializer(required=True, many=True)
+    test_certificate = TestCertSerializer(required=True)
+
+    class Meta:
+        model = TestResult
+        fields = "__all__"
+
+
+class EducationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Education
+        exclude = ['profile']
+
+
+class ApplicationLiteSerializer(serializers.ModelSerializer):
+    status_info = serializers.ReadOnlyField()
+    applicant = serializers.ReadOnlyField()
+
+    class Meta:
+        model = Application
+        fields = ['uid', 'status_info', 'applicant', 'created', 'updated']
+
+
+class ApplicationSerializer(ApplicationLiteSerializer):
+    previous_education = EducationSerializer(required=True)
+    test_result = TestResultSerializer(required=True)
+    international_cert = InternationalCertSerializer(required=False)
+    grant = GrantSerializer(required=False)
+    directions = DirectionChoiceSerializer(required=True, many=True)
+
+    class Meta:
+        model = Application
+        fields = '__all__'
+
+    def create(self, validated_data):
+        application = None
+        creator: Profile = self.context['request'].user.profile
+        try:
+            # Ориентируемся на приемную кампанию
+            my_campaign: AdmissionCampaign = creator.user.applicant.campaign
+            # Проверяем если абитуриент выбрал больше направлений, чем задано в приемной кампании
+            directions: dict = validated_data.pop('directions')
+            if my_campaign.chosen_directions_max_count < len(directions):
+                raise ValidationError({"error": "chosen directions maximum count exceeded"})
+            # Если есть заполненная анкета, статус будет "Ожидает проверки", иначе - "Без анкеты"
+            has_questionnaire: bool = Questionnaire.objects.filter(creator=creator).exists()
+            if has_questionnaire:
+                status = AWAITS_VERIFICATION
+            else:
+                status = NO_QUESTIONNAIRE
+            status: ApplicationStatus = ApplicationStatus.objects.get(code=status)
+            # На основании забитых данных абитуриентом создаем его заявление
+            # Предыдущее образование
+            previous_education: Education = Education.objects.create(profile=creator, **validated_data.pop('previous_education'))
+            # Результаты теста ЕНТ/КТА
+            test_result: dict = validated_data.pop('test_result')
+            test_certificate: TestCert = TestCert.objects.create(profile=creator, **test_result.pop('test_certificate'))
+            disciplines: [DisciplineMark] = DisciplineMark.objects.bulk_create([
+                DisciplineMark(profile=creator, **discipline) for discipline in test_result.pop('disciplines')
+            ])
+            test_result: TestResult = TestResult.objects.create(profile=creator, test_certificate=test_certificate)
+            test_result.disciplines.add(*disciplines)
+            test_result.save()
+            # Международный сертификат, только если в кампании указано, что он принимаются сертифиакаты
+            if my_campaign.inter_cert_foreign_lang:
+                international_cert = InternationalCert(profile=creator, **validated_data.pop('international_cert'))
+            else:
+                international_cert = None
+            # Грант
+            grant: dict = validated_data.pop('grant', None)
+            if grant:
+                grant: Grant = Grant.objects.create(profile=creator, **grant)
+            else:
+                grant: None = None
+            # Выбор направлений.
+            # TODO сверять направления и основания для поступления с грантом.
+            #  Если грант дан только на Специальность #1, а в каком-то направлении
+            #  стоит Специальность #X и основа поступления "Бюджет" кинуть ошибку -> удалить заявление
+            directions: [DirectionChoice] = DirectionChoice.objects.bulk_create([
+                DirectionChoice(profile=creator, **direction) for direction in directions
+            ])
+            application: Application = Application.objects.create(
+                status=status,
+                previous_education=previous_education,
+                test_result=test_result,
+                international_cert=international_cert,
+                grant=grant,
+                creator=creator,
+                questionnaire=Questionnaire.objects.filter(creator=creator).first()
+            )
+            application.directions.add(*directions)
+            application.save()
+        except Exception as e:
+            if application and isinstance(application, Application):
+                application.delete()
+            raise ValidationError({"error": f"an error occurred\n{e}"})
+        return application
