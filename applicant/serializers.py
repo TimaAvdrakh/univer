@@ -329,7 +329,7 @@ class QuestionnaireSerializer(serializers.ModelSerializer):
                 validated_data['userprivilegelist'] = user_privilege_list
             questionnaire: Questionnaire = super().create(validated_data)
             application_set = Application.objects.filter(creator=profile)
-            if application_set.exists:
+            if application_set.exists():
                 application = application_set.first()
                 application.status = ApplicationStatus.objects.get(code=AWAITS_VERIFICATION)
                 application.save()
