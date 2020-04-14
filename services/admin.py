@@ -11,3 +11,17 @@ class TypeAdmin(admin.ModelAdmin):
         'uid',
         'name',
     ]
+
+@admin.register(models.SubType)
+class TypeAdmin(admin.ModelAdmin):
+    search_fields = (
+        'name',
+    )
+    list_display = [
+        'uid',
+        'name',
+        'type',
+        'example',
+    ]
+
+admin.site.register(models.Example)

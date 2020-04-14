@@ -10,3 +10,12 @@ class TypeSerializer(serializers.ModelSerializer):
             'uid',
             'name',
         )
+
+class SubTypeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.SubType
+        fields = (
+            'uid',
+            'name',
+            'type'
+        )

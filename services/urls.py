@@ -5,6 +5,6 @@ app_name = 'services'
 
 urlpatterns = [
     # Дипломная работа
-    path('type/', views.TypeView.as_view(), name='thesis_topic')
-
+    path('type/', views.TypeView.as_view(), name='type'),
+    path('subtype/', views.SubTypeView.as_view(), name='subtype')
 ]
