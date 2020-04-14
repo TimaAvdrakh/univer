@@ -560,14 +560,8 @@ class ContactEditView(generics.UpdateAPIView):
         IsAuthenticated,
         permissions.ProfilePermission,
     )
-    parser_classes = [FileUploadParser]
     queryset = models.Profile.objects.filter(is_active=True)
     serializer_class = serializers.ProfileContactEditSerializer
-
-    def put(self, request, filename, format=None):
-        avatar = request.data['avatar']
-
-
 
 
 class InterestsEditView(generics.UpdateAPIView):
