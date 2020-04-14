@@ -1230,15 +1230,6 @@ class DisciplineCredit(BaseModel):
         verbose_name='Отправлен в 1С',
     )
 
-    # teacher = models.ForeignKey(
-    #     'portal_users.Profile',
-    #     null=True,
-    #     on_delete=models.CASCADE,
-    #     verbose_name='Преподаватель',
-    #     related_name='discipline_credit_teacher'
-    # )
-
-
     def __str__(self):
         return '{} {} {}'.format(self.study_plan,
                                  self.discipline,
