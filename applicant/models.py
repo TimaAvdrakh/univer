@@ -246,6 +246,16 @@ class Address(BaseCatalog):
         verbose_name = "Адрес"
         verbose_name_plural = "Адреса"
 
+    @staticmethod
+    def get_by(code: int, name: str):
+        lookup = Q(name_ru__icontains=name) | Q(name_en__icontains=name) | Q(name_kk__icontains=name)
+        if code == 1:
+            pass
+        if code == 2:
+            pass
+        if code == 3:
+            pass
+
 
 # Состав семьи
 class Family(BaseModel):

@@ -312,6 +312,16 @@ class ApplicationViewSet(ModelViewSet):
         paginated_queryset = self.paginate_queryset(queryset=queryset)
         return self.get_paginated_response(ApplicationLiteSerializer(paginated_queryset, many=True).data)
 
+    @action(methods=['get'], detail=False, url_path='current-campaign', url_name='current_campaign')
+    def get_current_campaign(self, request, pk=None):
+        campaign: AdmissionCampaign = self.request.user.applicant.campaign
+        return Response(data={
+            # cdmc - максимум направлений, которые может выбрать абитуриент в этой кампании
+            'cdmc': campaign.chosen_directions_max_count,
+            # icfl - кампания принимает международные сертификаты
+            'icfl': campaign.inter_cert_foreign_lang
+        }, status=HTTP_200_OK)
+
 
 class AdmissionCampaignTypeViewSet(ModelViewSet):
     queryset = AdmissionCampaignType.objects.all()
