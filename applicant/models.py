@@ -247,14 +247,20 @@ class Address(BaseCatalog):
         verbose_name_plural = "Адреса"
 
     @staticmethod
-    def get_by(code: int, name: str):
-        lookup = Q(name_ru__icontains=name) | Q(name_en__icontains=name) | Q(name_kk__icontains=name)
+    def get_by(name: str, code: int = None):
+        lookup = (Q(name_ru__icontains=name) | Q(name_en__icontains=name) | Q(name_kk__icontains=name))
         if code == 1:
+            lookup = lookup & Q(region__address_element_type=code)
+        elif code == 2:
+            lookup = lookup & Q(district__address_element_type=code)
+        elif code == 3:
+            lookup = lookup & Q(city__address_element_type=code)
+        elif code == 4:
+            lookup = lookup & Q(locality__address_element_type=code)
+        else:
             pass
-        if code == 2:
-            pass
-        if code == 3:
-            pass
+        addresses = Address.objects.filter(lookup)
+        return addresses
 
 
 # Состав семьи
