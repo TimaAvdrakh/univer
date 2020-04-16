@@ -32,7 +32,6 @@ from organizations.models import (
 )
 from organizations.models import DocumentType
 
-
 APPROVED = "APPROVED"
 REJECTED = "REJECTED"
 AWAITS_VERIFICATION = "AWAITS_VERIFICATION"
@@ -52,7 +51,6 @@ COND_ORDER = Case(
 
 # Вид льготы
 class PrivilegeType(BaseCatalog):
-
     class Meta:
         verbose_name = "Тип льготы"
         verbose_name_plural = "Типы льготы"
@@ -60,7 +58,6 @@ class PrivilegeType(BaseCatalog):
 
 # Способ возврата документа
 class DocumentReturnMethod(BaseCatalog):
-
     class Meta:
         verbose_name = "Метод возврата документа"
         verbose_name_plural = "Методы возврата документов"
@@ -68,7 +65,6 @@ class DocumentReturnMethod(BaseCatalog):
 
 # Членство в семье
 class FamilyMembership(BaseCatalog):
-
     class Meta:
         verbose_name = "Степень родства"
         verbose_name_plural = "Степени родства"
@@ -76,7 +72,6 @@ class FamilyMembership(BaseCatalog):
 
 # Тип адреса
 class AddressType(BaseCatalog):
-
     class Meta:
         verbose_name = "Тип адреса"
         verbose_name_plural = "Типы адресов"
@@ -84,7 +79,6 @@ class AddressType(BaseCatalog):
 
 # Уровни бюджета
 class BudgetLevel(BaseCatalog):
-
     class Meta:
         verbose_name = "Уровень бюджета"
         verbose_name_plural = "Уровни бюджета"
@@ -92,7 +86,6 @@ class BudgetLevel(BaseCatalog):
 
 # Тип международного сертификата
 class InternationalCertType(BaseCatalog):
-
     class Meta:
         verbose_name = "Тип международного сертификата"
         verbose_name_plural = "Типы международных сертификатов"
@@ -100,7 +93,6 @@ class InternationalCertType(BaseCatalog):
 
 # Тип гранта
 class GrantType(BaseCatalog):
-
     class Meta:
         verbose_name = "Вид гранта"
         verbose_name_plural = "Виды грантов"
