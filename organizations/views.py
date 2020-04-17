@@ -10,7 +10,7 @@ from .serializers import *
 class PreparationLevelViewSet(ModelViewSet):
     queryset = PreparationLevel.objects.all()
     serializer_class = PreparationLevelSerializer
-    # permission_classes = (IsAdminOrReadOnly,)
+    permission_classes = (IsAdminOrReadOnly,)
 
     @action(methods=['get'], detail=False, url_path='search', url_name='prep_level_search')
     def search(self, request, pk=None):
@@ -29,31 +29,31 @@ class PreparationLevelViewSet(ModelViewSet):
 class StudyFormViewSet(ModelViewSet):
     queryset = StudyForm.objects.all()
     serializer_class = StudyFormSerializer
-    # permission_classes = (IsAdminOrReadOnly,)
+    permission_classes = (IsAdminOrReadOnly,)
 
 
 class EducationTypeViewSet(ModelViewSet):
     queryset = EducationType.objects.all()
     serializer_class = EducationTypeSerializer
-    # permission_classes = (IsAdminOrReadOnly,)
+    permission_classes = (IsAdminOrReadOnly,)
 
 
 class EducationModelViewSet(ModelViewSet):
     queryset = EducationBase.objects.all()
     serializer_class = EducationBaseSerializer
-    # permission_classes = (IsAdminOrReadOnly,)
+    permission_classes = (IsAdminOrReadOnly,)
 
 
 class EducationProgramViewSet(ModelViewSet):
     queryset = EducationProgram.objects.all()
     serializer_class = EducationProgramSerializer
-    # permission_classes = (IsAdminOrReadOnly,)
+    permission_classes = (IsAdminOrReadOnly,)
 
 
 class EducationProgramGroupViewSet(ModelViewSet):
     queryset = EducationProgramGroup.objects.all()
     serializer_class = EducationProgramGroupSerializer
-    # permission_classes = (IsAdminOrReadOnly,)
+    permission_classes = (IsAdminOrReadOnly,)
 
     @action(methods=['get'], detail=False, url_path='search', url_name='epg_search')
     def search(self, request, pk=None):
@@ -72,7 +72,7 @@ class EducationProgramGroupViewSet(ModelViewSet):
 class OrganizationViewSet(ModelViewSet):
     queryset = Organization.objects.all()
     serializer_class = OrganizationSerializer
-    # permission_classes = (IsAdminOrReadOnly,)
+    permission_classes = (IsAdminOrReadOnly,)
 
     @action(methods=['get'], detail=False, url_path='search', url_name='organization_search')
     def search(self, request, pk=None):
@@ -88,19 +88,19 @@ class OrganizationViewSet(ModelViewSet):
 class SpecialityViewSet(ModelViewSet):
     queryset = Speciality.objects.all()
     serializer_class = SpecialitySerializer
-    # permission_classes = (IsAdminOrReadOnly,)
+    permission_classes = (IsAdminOrReadOnly,)
 
 
 class LanguageViewSet(ModelViewSet):
     queryset = Language.objects.all()
     serializer_class = LanguageSerializer
-    # permission_classes = (IsAdminOrReadOnly,)
+    permission_classes = (IsAdminOrReadOnly,)
 
 
 class DisciplineViewSet(ModelViewSet):
     queryset = Discipline.objects.all()
     serializer_class = DisciplineSerializer
-    # permission_classes = (IsAdminOrReadOnly,)
+    permission_classes = (IsAdminOrReadOnly,)
 
     @action(methods=['get'], detail=False, url_path='search', url_name='discipline_search')
     def search(self, request, pk=None):

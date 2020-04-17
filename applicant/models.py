@@ -569,13 +569,6 @@ class ApplicationStatus(BaseCatalog):
                 "name_en": "No questionnaire",
                 "code": NO_QUESTIONNAIRE,
             },
-            {
-                "name": IMPROVE,
-                "name_ru": "Требует доработки",
-                "name_kk": "Жақсартуды қажет етеді",
-                "name_en": "Needs to be improved",
-                "code": IMPROVE
-            }
         ]
         for status in statuses:
             match: [ApplicationStatus] = ApplicationStatus.objects.filter(code=status["code"])

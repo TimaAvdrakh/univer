@@ -276,8 +276,8 @@ class ApplicationViewSet(ModelViewSet):
             if '.' in apply_date:
                 apply_date = '-'.join(apply_date.split('.')[::-1])
             lookup = lookup | Q(created=apply_date)
-        queryset = models.self.queryset.filter(lookup).distinct()
-        paginated_queryset = models.self.paginate_queryset(queryset=queryset)
+        queryset = self.queryset.filter(lookup).distinct()
+        paginated_queryset = self.paginate_queryset(queryset=queryset)
         return self.get_paginated_response(serializers.ApplicationLiteSerializer(paginated_queryset, many=True).data)
 
     @action(methods=['get'], detail=False, url_path='current-campaign', url_name='current_campaign')
