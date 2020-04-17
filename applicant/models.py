@@ -100,25 +100,25 @@ class GrantType(BaseCatalog):
 
 # Адресный классификатор
 class AddressClassifier(BaseCatalog):
-    address_element_type = models.PositiveSmallIntegerField(
+    address_element_type = models.PositiveIntegerField(
         verbose_name="Тип адресного элемента"
     )
-    district_code = models.PositiveSmallIntegerField(
+    district_code = models.PositiveIntegerField(
         verbose_name="Код района",
         blank=True,
         null=True
     )
-    region_code = models.PositiveSmallIntegerField(
+    region_code = models.PositiveIntegerField(
         verbose_name="Код региона",
         blank=True,
         null=True
     )
-    locality_code = models.PositiveSmallIntegerField(
+    locality_code = models.PositiveIntegerField(
         verbose_name="Код населенного пункта",
         blank=True,
         null=True  # Населенный пункт
     )
-    code = models.PositiveSmallIntegerField(
+    code = models.PositiveIntegerField(
         verbose_name="Код",
     )
 
