@@ -253,19 +253,39 @@ class StudentDisciplineStatusListView(generics.ListAPIView):
     queryset = org_models.StudentDisciplineStatus.objects.filter(is_active=True)
     serializer_class = serializers.StudentDisciplineStatusSerializer
 
-from rest_framework.viewsets import ModelViewSet
-
 
 class NationalityViewSet(ModelViewSet):
     queryset = models.Nationality.objects.all()
     serializer_class = serializers.NationalitySerializer
     permission_classes = (permissions.AllowAny,)
 
+    @action(methods=['get'], detail=False, url_path='search', url_name='search_nationality')
+    def search(self, request, pk=None):
+        name = request.query_params.get('name')
+        data = self.queryset.filter(
+            Q(name_en__icontains=name) |
+            Q(name_ru__icontains=name) |
+            Q(name_ru__icontains=name)
+        )
+        data = self.serializer_class(data, many=True).data
+        return Response(data=data, status=status.HTTP_200_OK)
+
 
 class CitizenshipViewSet(ModelViewSet):
     queryset = models.Citizenship.objects.all()
     serializer_class = serializers.CitizenshipSerializer
     permission_classes = (permissions.AllowAny,)
+
+    @action(methods=['get'], detail=False, url_path='search', url_name='search_country')
+    def search(self, request, pk=None):
+        name = request.query_params.get('name')
+        data = self.queryset.filter(
+            Q(name_en__icontains=name) |
+            Q(name_ru__icontains=name) |
+            Q(name_ru__icontains=name)
+        )
+        data = self.serializer_class(data, many=True).data
+        return Response(data=data, status=status.HTTP_200_OK)
 
 
 class DocumentTypeViewSet(ModelViewSet):

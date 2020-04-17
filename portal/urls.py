@@ -40,11 +40,3 @@ urlpatterns = [
     path('api/v1/organizations/', include('organizations.urls', namespace='organizations')),
 
 ]
-
-urlpatterns += [
-    re_path(
-        "activate/(?P<uidb64>[0-9A-Za-z_\-]+)/(?P<token>[0-9A-Za-z]{1,13}-[0-9A-Za-z]{1,20})/",
-        activate,
-        name='activate'
-    )
-]
