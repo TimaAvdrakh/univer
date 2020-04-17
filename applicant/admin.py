@@ -13,6 +13,7 @@ models = [
     Address,
     Family,
     FamilyMember,
+    AdmissionCampaignType,
     AdmissionCampaign,
     Applicant,
     DocScan,
@@ -29,7 +30,9 @@ models = [
     Grant,
     DirectionChoice,
     TestResult,
-    Application
+    Application,
+    AdmissionDocument,
+    Changelog,
 ]
 
 admin.site.register(models)
