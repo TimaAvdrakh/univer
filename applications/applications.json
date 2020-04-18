@@ -1,0 +1,16 @@
+[{
+    "model": "applications.status",
+    "pk": 1,
+    "fields": {
+      "name": "John",
+      "code": "funny"
+    }
+  },
+  {
+    "model": "applications.status",
+    "pk": 2,
+    "fields": {
+      "first_name": "Paul",
+      "last_name": "McCartney"
+    }
+  }]
