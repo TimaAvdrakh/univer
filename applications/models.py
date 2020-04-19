@@ -48,18 +48,22 @@ class Example(models.Model):
     class Meta:
         verbose_name = _("Example")
 
+
 class IdentityDoc(Example):
     class Meta:
         verbose_name = _("Identity document")
+
 
 class ServiceDoc(Example):
     class Meta:
         verbose_name = _("Service virtual document")
 
+
 class Type(BaseCatalog):
     class Meta:
         verbose_name = 'Тип заявки'
         verbose_name_plural = 'Типы заявок'
+
 
 class Status(BaseCatalog):
     c1_id = models.CharField(
@@ -68,118 +72,139 @@ class Status(BaseCatalog):
         blank=True,
         verbose_name='Ид в 1с',
     )
+    name_ru = models.CharField(
+        max_length=100,
+        default='',
+        blank=True,
+        verbose_name='Название статуса на русском',
+    )
+    name_kk = models.CharField(
+        max_length=100,
+        default='',
+        blank=True,
+        verbose_name='Название статуса на казахском',
+    )
+    name_en = models.CharField(
+        max_length=100,
+        default='',
+        blank=True,
+        verbose_name='Название статуса на английском',
+    )
 
     class Meta:
         verbose_name = 'Статус заявки'
         verbose_name_plural = 'Статусы заявок'
 
+
 class SubType(BaseCatalog):
-        type = models.ForeignKey(
-            Type,
-            on_delete=models.CASCADE,
-            verbose_name=_("Type"),
-            blank=True,
-            null=True,
-        )
+    type = models.ForeignKey(
+        Type,
+        on_delete=models.CASCADE,
+        verbose_name=_("Type"),
+        blank=True,
+        null=True,
+    )
 
-        example = models.ForeignKey(
-            Example,
-            on_delete=models.DO_NOTHING,
-            verbose_name=_("Document example")
-        )
+    example = models.ForeignKey(
+        Example,
+        on_delete=models.DO_NOTHING,
+        verbose_name=_("Document example")
+    )
 
-        class Meta:
-            verbose_name = 'Вид справки'
-            verbose_name_plural = 'Виды справок'
+    class Meta:
+        verbose_name = 'Вид справки'
+        verbose_name_plural = 'Виды справок'
+
 
 class Application(BaseIdModel):
-        profile = models.ForeignKey(
-            'portal_users.Profile',
-            on_delete=models.CASCADE,
-            verbose_name='Профиль',
-            related_name='student_profile'
-        )
+    profile = models.ForeignKey(
+        'portal_users.Profile',
+        on_delete=models.CASCADE,
+        verbose_name='Профиль',
+        related_name='student_profile'
+    )
 
-        type = models.ForeignKey(
-            Type,
-            on_delete=models.SET_NULL,
-            blank=True,
-            null=True,
-        )
+    type = models.ForeignKey(
+        Type,
+        on_delete=models.SET_NULL,
+        blank=True,
+        null=True,
+    )
 
-        status = models.ForeignKey(
-            Status,
-            on_delete=models.DO_NOTHING,
-            verbose_name=_("Status")
-        )
+    status = models.ForeignKey(
+        Status,
+        on_delete=models.DO_NOTHING,
+        verbose_name=_("Status")
+    )
 
-        comment = models.TextField(
-            default='',
-            null=True,
-        )
+    comment = models.TextField(
+        default='',
+        null=True,
+    )
 
-        responsible = models.CharField(
-            max_length=200,
-            default='',
-            blank=True,
-            verbose_name='Ответственный специалист',
-        )
+    responsible = models.CharField(
+        max_length=200,
+        default='',
+        blank=True,
+        verbose_name='Ответственный специалист',
+    )
 
-        identity_doc = models.ForeignKey(
-            IdentityDoc,
-            on_delete=models.DO_NOTHING,
-            verbose_name=_("Identity document")
-        )
+    identity_doc = models.ForeignKey(
+        IdentityDoc,
+        on_delete=models.DO_NOTHING,
+        verbose_name=_("Identity document")
+    )
 
-        result_doc = models.ForeignKey(
-            ServiceDoc,
-            on_delete=models.DO_NOTHING,
-            verbose_name=_("Result document")
-        )
+    result_doc = models.ForeignKey(
+        ServiceDoc,
+        on_delete=models.DO_NOTHING,
+        verbose_name=_("Result document")
+    )
 
-        class Meta:
-            verbose_name = 'Заявка'
-            verbose_name_plural = 'Заявки'
+    class Meta:
+        verbose_name = 'Заявка'
+        verbose_name_plural = 'Заявки'
+
 
 class SubApplication(BaseIdModel):
-        subtype = models.ForeignKey(
-            SubType,
-            on_delete=models.SET_NULL,
-            blank=True,
-            null=True,
-        )
+    subtype = models.ForeignKey(
+        SubType,
+        on_delete=models.SET_NULL,
+        blank=True,
+        null=True,
+    )
 
-        application = models.ForeignKey(
-            Application,
-            on_delete=models.CASCADE,
-            blank=True,
-            null=True,
-        )
+    application = models.ForeignKey(
+        Application,
+        on_delete=models.CASCADE,
+        blank=True,
+        null=True,
+    )
 
-        organization = models.TextField(
-            default='',
-            null=True,
-        )
+    organization = models.TextField(
+        default='',
+        null=True,
+    )
 
-        lang = models.CharField(
-            max_length=5,
-            default='',
-            blank=True,
-            verbose_name='Язык',
-        )
+    lang = models.CharField(
+        max_length=5,
+        default='',
+        blank=True,
+        verbose_name='Язык',
+    )
 
-        virtual = models.BooleanField(
-            default=False,
-            verbose_name='Электронный вариант',
-        )
+    virtual = models.BooleanField(
+        default=False,
+        verbose_name='Электронный вариант',
+    )
 
-        copies = models.PositiveSmallIntegerField(
-            verbose_name=_("Copies"),
-            blank=True,
-            null=True,
-            default=1,
-        )
+    copies = models.PositiveSmallIntegerField(
+        verbose_name=_("Copies"),
+        blank=True,
+        null=True,
+        default=1,
+    )
 
-        class Meta:
-            verbose_name = 'Справка'
-            verbose_name_plural = 'Справки'
+    class Meta:
+        verbose_name = 'Справка'
+        verbose_name_plural = 'Справки'

@@ -1,16 +1,57 @@
-[{
+[
+  {
     "model": "applications.status",
     "pk": 1,
     "fields": {
-      "name": "John",
-      "code": "funny"
+      "name": "New",
+      "name_ru": "Новая",
+      "name_en": "New",
+      "name_kk": "",
+      "code": "New"
     }
   },
   {
     "model": "applications.status",
     "pk": 2,
     "fields": {
-      "first_name": "Paul",
-      "last_name": "McCartney"
+      "name": "Processed",
+      "name_ru": "В обработке",
+      "name_en": "Processed",
+      "name_kk": "",
+      "code": "New"
     }
-  }]
+  },
+  {
+    "model": "applications.status",
+    "pk": 3,
+    "fields": {
+      "name": "Denied",
+      "name_ru": "Отказано",
+      "name_en": "Denied",
+      "name_kk": "",
+      "code": "New"
+    }
+  },
+  {
+    "model": "applications.status",
+    "pk": 4,
+    "fields": {
+      "name": "Done",
+      "name_ru": "Выполнено",
+      "name_en": "Done",
+      "name_kk": "",
+      "code": "New"
+    }
+  },
+  {
+    "model": "applications.status",
+    "pk": 5,
+    "fields": {
+      "name": "Expired",
+      "name_ru": "Истек срок",
+      "name_en": "Expired",
+      "name_kk": "",
+      "code": "New"
+    }
+  }
+]

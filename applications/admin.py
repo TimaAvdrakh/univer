@@ -2,6 +2,8 @@ from django.contrib import admin
 from . import models
 
 # Register your models here.
+
+
 @admin.register(models.Type)
 class TypeAdmin(admin.ModelAdmin):
     search_fields = (
@@ -11,6 +13,7 @@ class TypeAdmin(admin.ModelAdmin):
         'uid',
         'name',
     ]
+
 
 @admin.register(models.SubType)
 class TypeAdmin(admin.ModelAdmin):
@@ -24,4 +27,6 @@ class TypeAdmin(admin.ModelAdmin):
         'example',
     ]
 
+
 admin.site.register(models.Example)
+admin.site.register(models.Status)
