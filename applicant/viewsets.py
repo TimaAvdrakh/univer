@@ -85,14 +85,14 @@ def activate(request, uidb64, token):
         uid = force_text(urlsafe_base64_decode(uidb64))
         user = User.objects.get(pk=uid)
     except Exception as e:
-        HttpResponseBadRequest(e)
+        return JsonResponse({"message": "error", "status": "ERR_ACTIVATION", "error": str(e)})
     if user and token_generator.check_token(user, token):
         user.is_active = True
         user.save()
         login(request, user)
-        return HttpResponse("Account activated")
+        return JsonResponse({"message": "activated", "status": "ACTIVATED", "error": None})
     else:
-        return HttpResponseBadRequest("No user")
+        return JsonResponse({"message": "noUser", "status": "NOT_FOUND", "error": None})
 
 
 class ApplicantViewSet(ModelViewSet):
@@ -138,6 +138,17 @@ class QuestionnaireViewSet(ModelViewSet):
             return Response(data=serializers.QuestionnaireSerializer(queryset.first()).data, status=HTTP_200_OK)
         else:
             return Response(data={"uid": None}, status=HTTP_200_OK)
+
+    @action(methods=['get'], detail=False, url_path='general-info', url_name='q_general_info')
+    def general_info(self, request, pk=None):
+        profile = self.request.user.profile
+        data = {
+            'first_name': profile.first_name,
+            'last_name': profile.last_name,
+            'middle_name': profile.middle_name,
+            'email': profile.email
+        }
+        return Response(data=data, status=HTTP_200_OK)
 
 
 class FamilyMembershipViewSet(ModelViewSet):

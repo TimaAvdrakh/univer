@@ -7,6 +7,7 @@ from django.db.models import Max
 from django.template.loader import render_to_string
 from django.utils.http import urlsafe_base64_encode
 from django.utils.encoding import force_bytes
+from django.utils.translation import get_language
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 from common.models import IdentityDocument, GovernmentAgency, DocumentType
@@ -110,10 +111,12 @@ class ApplicantSerializer(serializers.ModelSerializer):
     def send_verification_email(self, user: User, to_email: list, password: str):
         subject = 'Verify your email'
         current_site = get_current_site(self.context['request'])
+        current_lang = get_language() or 'ru'
         message = render_to_string('applicant/email/html/verify_email.html', {
             'username': user.username,
             'password': password,
             'domain': current_site.domain,
+            'lang': current_lang,
             'uid': urlsafe_base64_encode(force_bytes(user.pk)),
             'token': token_generator.make_token(user)
         })

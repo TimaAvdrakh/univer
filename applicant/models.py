@@ -594,10 +594,14 @@ class Questionnaire(BaseModel):
     first_name_en = models.CharField(
         "Имя на латинице",
         max_length=255,
+        blank=True,
+        null=True,
     )
     last_name_en = models.CharField(
         "Фамилия на латинице",
         max_length=255,
+        blank=True,
+        null=True,
     )
     gender = models.ForeignKey(
         Gender,
@@ -607,7 +611,9 @@ class Questionnaire(BaseModel):
     marital_status = models.ForeignKey(
         MaritalStatus,
         on_delete=models.DO_NOTHING,
-        verbose_name="Семейное положение"
+        verbose_name="Семейное положение",
+        blank=True,
+        null=True,
     )
     citizenship = models.ForeignKey(
         Citizenship,
@@ -700,6 +706,17 @@ class Questionnaire(BaseModel):
         verbose_name="Семья",
         related_name="questionnaires",
     )
+    need_dormitory = models.BooleanField(
+        default=False,
+        verbose_name="Нуждаюсь в общежитии"
+    )
+    doc_return_method = models.ForeignKey(
+        DocumentReturnMethod,
+        on_delete=models.DO_NOTHING,
+        blank=True,
+        null=True,
+        verbose_name="Метод возврата документов",
+    )
 
     class Meta:
         verbose_name = "Анкета"
@@ -708,22 +725,11 @@ class Questionnaire(BaseModel):
 
 # Список льгот пользователей
 class UserPrivilegeList(BaseModel):
-    need_dormitory = models.BooleanField(
-        default=False,
-        verbose_name="Нуждаюсь в общежитии"
-    )
     questionnaire = models.OneToOneField(
         Questionnaire,
         on_delete=models.DO_NOTHING,
         verbose_name="Анкета",
         null=True,
-    )
-    doc_return_method = models.ForeignKey(
-        DocumentReturnMethod,
-        on_delete=models.DO_NOTHING,
-        blank=True,
-        null=True,
-        verbose_name="Метод возврата документов",
     )
 
     class Meta:
