@@ -394,7 +394,7 @@ def putfrom1c_copy(request):
         return HttpResponse('Forbidden')
 
     if request.method == 'POST':
-        rules = cache.get('rule1c')
+        rules = None  # cache.get('rule1c')
         if rules is None:
             rules = []
             qs = C1Object.objects.filter(is_active=True)
