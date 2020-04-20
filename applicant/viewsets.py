@@ -307,6 +307,11 @@ class AdmissionCampaignTypeViewSet(ModelViewSet):
     serializer_class = serializers.AdmissionCampaignTypeSerializer
     permission_classes = (IsAdminOrReadOnly,)
 
+    @action(methods=['get'], detail=False, url_path='campaign-info', url_name='my_campign_info')
+    def get_my_campaign_info(self, request, pk=None):
+        profile = self.request.user.profile
+
+
 
 class AdmissionCampaignViewSet(ModelViewSet):
     queryset = models.AdmissionCampaign.objects.all()

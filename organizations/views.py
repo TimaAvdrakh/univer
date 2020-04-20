@@ -82,13 +82,25 @@ class OrganizationViewSet(ModelViewSet):
             Q(name_kk__icontains=search) |
             Q(name_en__icontains=search)
         ).distinct()[:20]
-        return Response(self.serializer_class(organizations, many=True).data)
+        data = self.serializer_class(organizations, many=True).data
+        return Response(data=data)
 
 
 class SpecialityViewSet(ModelViewSet):
     queryset = Speciality.objects.all()
     serializer_class = SpecialitySerializer
     permission_classes = (IsAdminOrReadOnly,)
+
+    @action(methods=['get'], detail=False, url_path='search', url_name='speciality_search')
+    def search(self, request, pk=None):
+        name = request.query_params.get('name')
+        specialities = self.queryset.filter(
+            Q(name_ru__icontains=name) |
+            Q(name_kk__icontains=name) |
+            Q(name_en__icontains=name)
+        ).distinct()[:20]
+        specialities = self.serializer_class(specialities, many=True).data
+        return Response(data=specialities)
 
 
 class LanguageViewSet(ModelViewSet):
