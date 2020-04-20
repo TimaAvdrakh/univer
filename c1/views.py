@@ -443,6 +443,7 @@ def putfrom1c_copy(request):
             cnt = 0
             Manager = eval('models_' + current_rule['model'])  # Model
 
+            print(Manager)
             # if current_rule['is_related']:
             # for p in Manager.objects.all():
             #     p.delete()
