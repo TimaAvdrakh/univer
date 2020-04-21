@@ -10,3 +10,8 @@ class TypeTranslationOptions(TranslationOptions):
 @register(SubType)
 class SubTypeTranslationOptions(TranslationOptions):
     fields = ('name',)
+
+
+@register(Status)
+class StatusTranslationOptions(TranslationOptions):
+    fields = ('name',)
