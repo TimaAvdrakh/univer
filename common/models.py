@@ -2,6 +2,7 @@ from django.db import models
 from django.contrib.auth.models import User
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
+from django.forms.models import model_to_dict
 # from .utils import get_sentinel_user
 from django.contrib.postgres.fields import JSONField
 from uuid import uuid4
@@ -39,6 +40,38 @@ class BaseModel(models.Model):
             return self.name
         else:
             return super().__str__()
+
+    def save(self, *args, **kwargs):
+        # snapshot - флажок для того чтобы заюзать generic модель Changelog
+        # т.е. сохранять историю изменений модели, также предотвращает рекурсивный вызов
+        snapshot = kwargs.pop('snapshot', False)
+        if snapshot:
+            if self.pk:
+                # Тащим пока что неизмененную модель и конвертируем ее в словарь
+                original = model_to_dict(self._meta.model.objects.get(pk=self.pk))
+                # Применили изменения
+                super().save(*args, **kwargs)
+                # Берем обновленный объект
+                updated = self._meta.model.objects.get(pk=self.pk)
+                # И тоже конвертируем его в словарь
+                updated_dict = model_to_dict(updated)
+                # Проходимся по ключам
+                for k in original.keys():
+                    # Значения ключей не совпадают, значит сохраняем Changelog
+                    if original[k] != updated_dict[k]:
+                        Changelog.objects.create(
+                            content_object=updated,
+                            key=k,
+                            old_value=original[k],
+                            new_value=updated_dict[k]
+                        )
+        super().save(*args, **kwargs)
+
+    @property
+    def diffs(self):
+        # тащит изменения
+        diffs = Changelog.objects.filter(object_id=self.pk).order_by('-created')
+        return diffs
 
 
 class BaseCatalog(BaseModel):
@@ -321,3 +354,44 @@ class Comment(BaseModel):
     class Meta:
         verbose_name = 'Комментарий'
         verbose_name_plural = 'Комментарии'
+
+
+# История изменений
+class Changelog(BaseModel):
+    key = models.CharField(
+        'Ключ',
+        max_length=300
+    )
+    old_value = models.CharField(
+        'Старое значение',
+        max_length=300,
+        blank=True,
+        default=''
+    )
+    new_value = models.CharField(
+        'Новое значение',
+        max_length=300,
+        blank=True,
+        default=''
+    )
+    content_type = models.ForeignKey(
+        ContentType,
+        on_delete=models.SET_NULL,
+        blank=True,
+        null=True,
+        editable=False
+    )
+    object_id = models.CharField(
+        max_length=50,
+        blank=True,
+        null=True,
+        editable=False,
+    )
+    content_object = GenericForeignKey(
+        'content_type',
+        'object_id'
+    )
+
+    class Meta:
+        verbose_name = 'Изменения заявления'
+        verbose_name_plural = 'Изменения заявлений'

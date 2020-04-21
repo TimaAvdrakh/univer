@@ -1,4 +1,5 @@
 from django.contrib.auth.models import User
+from django.contrib.contenttypes.models import ContentType
 from django.contrib.contenttypes.fields import GenericRelation
 from django.core.mail import EmailMultiAlternatives
 from django.core.validators import MinValueValidator, MaxValueValidator
@@ -13,6 +14,7 @@ from common.models import (
     IdentityDocument,
     Citizenship,
     Nationality,
+    Changelog,
 )
 from portal_users.models import Profile, ProfilePhone, Gender, MaritalStatus, Role
 from organizations.models import (
@@ -1291,39 +1293,3 @@ class AdmissionDocument(BaseModel):
     class Meta:
         verbose_name = 'Перечень документов для приема на обучение'
         verbose_name_plural = 'Перечни документов для приема на обучение'
-
-
-# История изменения заявления
-class Changelog(BaseModel):
-    application = models.ForeignKey(
-        Application,
-        on_delete=models.CASCADE,
-        related_name='changelog'
-    )
-    related_model_name = models.CharField(
-        'Название модели, которая была изменена',
-        max_length=300
-    )
-    key = models.CharField(
-        'Ключ',
-        max_length=300
-    )
-    old_value = models.CharField(
-        'Старое значение',
-        max_length=300,
-        blank=True,
-        default=''
-    )
-    new_value = models.CharField(
-        'Новое значение',
-        max_length=300,
-        blank=True,
-        default=''
-    )
-
-    class Meta:
-        verbose_name = 'Изменения заявления'
-        verbose_name_plural = 'Изменения заявлений'
-
-    def __str__(self):
-        return f'Изменена модель {self.related_model_name}.'

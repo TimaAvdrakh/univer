@@ -32,7 +32,6 @@ models = [
     TestResult,
     Application,
     AdmissionDocument,
-    Changelog,
 ]
 
 admin.site.register(models)
