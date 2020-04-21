@@ -360,8 +360,10 @@ class GrantSerializer(serializers.ModelSerializer):
 
     def get_info(self, grant: models.Grant):
         info = {
-            'type': grant.type.name,
-            'speciality': grant.speciality.name,
+            'speciality': {
+                'uid': grant.speciality.uid,
+                'name': grant.speciality.name
+            },
             'scan': {
                 'name': grant.scan.name,
                 'path': grant.scan.path,
@@ -379,12 +381,30 @@ class DirectionChoiceSerializer(serializers.ModelSerializer):
 
     def get_info(self, direction: models.DirectionChoice):
         info = {
-            'prep_level': direction.prep_level.name,
-            'study_form': direction.study_form.name,
-            'education_program': direction.education_program.name,
-            'education_program_group': direction.education_program_group.name,
-            'education_base': direction.education_base.name,
-            'education_language': direction.education_language.name
+            'prep_level': {
+                'name': direction.prep_level.name,
+                'uid': direction.prep_level.uid
+            },
+            'study_form': {
+                'name': direction.study_form.name,
+                'uid': direction.study_form.uid
+            },
+            'education_program': {
+                'name': direction.education_program.name,
+                'uid': direction.education_program.uid
+            },
+            'education_program_group': {
+                'name': direction.education_program_group.name,
+                'uid': direction.education_program_group.uid
+            },
+            'education_base': {
+                'name': direction.education_base.name,
+                'uid': direction.education_base.uid,
+            },
+            'education_language': {
+                'name': direction.education_language.name,
+                'uid': direction.education_language.uid
+            }
         }
         return info
 
@@ -401,16 +421,12 @@ class TestResultSerializer(serializers.ModelSerializer):
     def get_info(self, result: models.TestResult):
         info = {
             'disciplines': [{
-                'discipline': d.discipline.name,
+                'discipline': {
+                    'name': d.discipline.name,
+                    'uid': d.discipline.uid,
+                },
                 'mark': d.mark
             } for d in result.disciplines.all()],
-            'test_certificate': {
-                'language': result.test_certificate.language.name,
-                'scan': {
-                    'name': result.test_certificate.scan.name,
-                    'path': result.test_certificate.scan.path,
-                }
-            }
         }
         return info
 
@@ -424,11 +440,14 @@ class EducationSerializer(serializers.ModelSerializer):
 
     def get_info(self, edu: models.Education):
         info = {
-            'doc_type': edu.document_type.name,
-            'edu_type': edu.edu_type.name,
-            'institute': edu.institute_text or edu.institute.name,
-            'study_form': edu.study_form.name,
-            'speciality': edu.speciality.name,
+            'institute': {
+                'name': edu.institute_text or edu.institute.name,
+                'uid': edu.institute.uid if edu.institute else None
+            },
+            'speciality': {
+                'name': edu.speciality.name,
+                'uid': edu.speciality.uid,
+            },
             'scan': {
                 'name': edu.scan.name,
                 'path': edu.scan.path,
