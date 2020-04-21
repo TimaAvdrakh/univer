@@ -12,11 +12,11 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.AddField(
-            model_name='disciplinecredit',
-            name='status',
-            field=models.ForeignKey(null=True, on_delete=django.db.models.deletion.CASCADE, related_name='discipline_credit_status', to='organizations.StudentDisciplineStatus', verbose_name='Статус диспцилины'),
-        ),
+        # migrations.AddField(
+        #     model_name='disciplinecredit',
+        #     name='status',
+        #     field=models.ForeignKey(null=True, on_delete=django.db.models.deletion.CASCADE, related_name='discipline_credit_status', to='organizations.StudentDisciplineStatus', verbose_name='Статус диспцилины'),
+        # ),
         migrations.AddField(
             model_name='disciplinecredit',
             name='teacher',

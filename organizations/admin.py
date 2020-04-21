@@ -520,6 +520,11 @@ class ControlFormAdmin(admin.ModelAdmin):
 class DisciplineCreditAdmin(admin.ModelAdmin):
     search_fields = (
         'discipline__name',
+        'student__first_name',
+        'student__last_name',
+        'student__user__username',
+        'student__pk',
+        'uid',
     )
     autocomplete_fields = (
         'study_plan',
