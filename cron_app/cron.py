@@ -251,13 +251,14 @@ class ControlNotifyJob(CronJobBase):
                                         )
 
             for sp in study_plans:
-                send_mail(
-                    mail_subject,
-                    msg_plain,
-                    'avtoexpertastana@gmail.com',
-                    [sp.student.email],
-                    html_message=msg_html,
-                )
+                if sp.student.notify_me_from_email:
+                    send_mail(
+                        mail_subject,
+                        msg_plain,
+                        'avtoexpertastana@gmail.com',
+                        [sp.student.email],
+                        html_message=msg_html,
+                    )
             task.is_success = True
             task.save()
 

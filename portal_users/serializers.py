@@ -161,6 +161,7 @@ class ProfileFullSerializer(serializers.ModelSerializer):
             "iin",
             "identity_documents",
             "educations",
+            "notify_me_from_email",
         )
         read_only_fields = ("iin",)
 
@@ -170,6 +171,7 @@ class ProfileFullSerializer(serializers.ModelSerializer):
         instance.email = validated_data.get("email", instance.email)
         instance.skype = validated_data.get("skype", instance.skype)
         instance.extra_data = validated_data.get("extra_data", instance.extra_data)
+        instance.notify_me_from_email = validated_data.get("notify_me_from_email", instance.notify_me_from_email)
         instance.save()
 
         interests = validated_data.get("interests")
@@ -1132,6 +1134,7 @@ class ProfileContactEditSerializer(serializers.ModelSerializer):
             "email",
             "skype",
             "extra_data",
+            "notify_me_from_email",
         )
 
     def update(self, instance, validated_data):
@@ -1140,6 +1143,7 @@ class ProfileContactEditSerializer(serializers.ModelSerializer):
         instance.email = validated_data.get("email", instance.email)
         instance.skype = validated_data.get("skype", instance.skype)
         instance.extra_data = validated_data.get("extra_data", instance.extra_data)
+        instance.notify_me_from_email = validated_data.get("notify_me_from_email", instance.notify_me_from_email)
         instance.save()
 
         return instance

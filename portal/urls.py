@@ -18,6 +18,8 @@ from django.urls import path, include, re_path
 from rest_framework_swagger.views import get_swagger_view
 from applicant.viewsets import activate
 from django.conf.urls.i18n import i18n_patterns
+from django.conf import settings
+from django.conf.urls.static import static
 
 
 schema_view = get_swagger_view(title='Univer API')
@@ -47,4 +49,4 @@ urlpatterns += [
         activate,
         name='activate'
     )
-]
+               ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
