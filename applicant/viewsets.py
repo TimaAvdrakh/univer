@@ -217,24 +217,63 @@ class ApplicationViewSet(ModelViewSet):
         grant = data.pop('grant', None)
         directions = data.pop('directions')
         # Переписываем объекты на uid
-        previous_education['institute'] = previous_education['institute']['uid']
-        previous_education['speciality'] = previous_education['speciality']['uid']
+        previous_education.update({
+            'institute': previous_education['institute']['uid'],
+            'speciality': previous_education['speciality']['uid'],
+        })
         for discipline in test_result['disciplines']:
             discipline['discipline'] = discipline['discipline']['uid']
         if grant:
             grant['speciality'] = grant['speciality']['uid']
             data['grant'] = grant
         for direction in directions:
-            direction['education_base'] = direction['education_base']['uid']
-            direction['education_program'] = direction['education_program']['uid']
-            direction['education_program_group'] = direction['education_program_group']['uid']
+            direction.update({
+                'education_base': direction['education_base']['uid'],
+                'education_program': direction['education_program']['uid'],
+                'education_program_group': direction['education_program_group']['uid'],
+            })
         # Обратно впихиваем данные
-        data['previous_education'] = previous_education
-        data['test_result'] = test_result
-        data['directions'] = directions
-        print(request.data)
+        data.update({
+            'previous_education': previous_education,
+            'test_result': test_result,
+            'directions': directions,
+        })
         # Отдаем сериализатору как ни в чем не бывало
         return super().create(request, *args, **kwargs)
+
+    def update(self, request, *args, **kwargs):
+        data = request.data
+        previous_education = data.pop('previous_education')
+        education_info = previous_education.pop('info')
+        previous_education.update({
+            'institute': education_info['institute']['uid'],
+            'speciality': education_info['speciality']['uid']
+        })
+        test_result = data.pop('previous_education')
+        result_info = test_result.pop('info')
+        test_result.update({
+                               'discipline': discipline['uid'],
+                               'mark': discipline['mark'],
+                           } for discipline in result_info['disciplines'])
+        grant = data.pop('grant', None)
+        if grant:
+            grant_info = grant.pop('info')
+            grant.update({
+                'speciality': grant_info['speciality']['uid']
+            })
+        directions = data.pop('directions')
+        directions = [{
+            'education_program': direction['education_program']['uid'],
+            'education_program_group': direction['education_program_group']['uid'],
+            'education_base': direction['education_base']['uid']
+        } for direction in directions]
+        data.update({
+            'previous_education': previous_education,
+            'test_result': test_result,
+            'grant': grant,
+            'directions': directions
+        })
+        return super().update(request, *args, **kwargs)
 
     def get_serializer_class(self):
         if self.action == 'list':

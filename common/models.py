@@ -46,7 +46,9 @@ class BaseModel(models.Model):
         # т.е. сохранять историю изменений модели, также предотвращает рекурсивный вызов
         snapshot = kwargs.pop('snapshot', False)
         if snapshot:
+            print("SNAPSHOT")
             if self.pk:
+                print("UPDATING")
                 # Тащим пока что неизмененную модель и конвертируем ее в словарь
                 original = model_to_dict(self._meta.model.objects.get(pk=self.pk))
                 # Применили изменения

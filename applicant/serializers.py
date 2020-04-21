@@ -334,16 +334,6 @@ class InternationalCertTypeSerializer(serializers.ModelSerializer):
 
 
 class InternationalCertSerializer(serializers.ModelSerializer):
-    info = serializers.SerializerMethodField(read_only=True, required=False)
-
-    def get_info(self, cert: models.InternationalCert):
-        info = {
-            'type': cert.type.name,
-            'language_proficiency': cert.language_proficiency.code,
-
-        }
-        return info
-
     class Meta:
         model = models.InternationalCert
         fields = "__all__"
@@ -381,14 +371,6 @@ class DirectionChoiceSerializer(serializers.ModelSerializer):
 
     def get_info(self, direction: models.DirectionChoice):
         info = {
-            'prep_level': {
-                'name': direction.prep_level.name,
-                'uid': direction.prep_level.uid
-            },
-            'study_form': {
-                'name': direction.study_form.name,
-                'uid': direction.study_form.uid
-            },
             'education_program': {
                 'name': direction.education_program.name,
                 'uid': direction.education_program.uid
@@ -401,10 +383,6 @@ class DirectionChoiceSerializer(serializers.ModelSerializer):
                 'name': direction.education_base.name,
                 'uid': direction.education_base.uid,
             },
-            'education_language': {
-                'name': direction.education_language.name,
-                'uid': direction.education_language.uid
-            }
         }
         return info
 
@@ -544,10 +522,62 @@ class ApplicationLiteSerializer(serializers.ModelSerializer):
             raise ValidationError({"error": f"an error occurred\n{e}"})
         return application
 
-    def update(self, instance, validated_data: dict):
-        user = self.context['request'].user.profile
-        if user == instance.creator or user.role.is_mod:
+    def update(self, instance: models.Application, validated_data: dict):
+        profile = self.context['request'].user.profile
+        if profile == instance.creator or profile.role.is_mod:
+            my_campaign = profile.user.applicant.campaign
             validated_data['status'] = models.ApplicationStatus.objects.get(code=models.AWAITS_VERIFICATION)
+            # Обновление предыдущего образования
+            previous_education: dict = validated_data.pop('previous_education')
+            education: Education = Education.objects.get(pk=previous_education['uid'])
+            for key, value in previous_education.items():
+                setattr(education, key, value)
+            education.save(snapshot=True)
+
+            # Обновление тестов ЕНТ/КТ
+            test_result: dict = validated_data.pop('test_result')
+            test_cert: dict = test_result.pop('test_certificate')
+            cert: models.TestCert = models.TestCert.objects.get(pk=test_cert['uid'])
+            for key, value in test_cert.items():
+                setattr(cert, key, value)
+            cert.save(snapshot=True)
+            disciplines = test_result.pop('disciplines')
+            discipline: dict
+            for discipline in disciplines:
+                d: models.DisciplineMark = models.DisciplineMark.objects.get(pk=discipline['uid'])
+                for key, value in discipline.items():
+                    setattr(d, key, value)
+                d.save(snapshot=True)
+
+            # Обновление международного сертификата, если есть
+            international_cert: dict = validated_data.pop('international_cert', None)
+            if international_cert and my_campaign.inter_cert_foreign_lang:
+                inter_cert_model: models.InternationalCert = models.InternationalCert.objects.get(
+                    pk=international_cert['uid']
+                )
+                for key, value in international_cert.items():
+                    setattr(inter_cert_model, key, value)
+                inter_cert_model.save(snapshot=True)
+            # Обновление гранта, если есть
+            grant: dict = validated_data.pop('grant', None)
+            if grant:
+                grant_model: models.Grant = models.Grant.objects.get(pk=grant['uid'])
+                for ket, value in grant.items():
+                    setattr(grant_model, key, value)
+                grant_model.save(snapshot=True)
+            # Обновление направлений
+            directions: dict = validated_data.pop('directions', None)
+            if len(directions) > my_campaign.chosen_directions_max_count:
+                directions = directions[:5]
+            direction: dict
+            for direction in directions:
+                if direction['uid']:
+                    direction_model: models.DirectionChoice = models.DirectionChoice.objects.get(pk=direction['uid'])
+                    for key, value in direction.items():
+                        setattr(direction_model, key, value)
+                    direction_model.save(snapshot=True)
+                else:
+                    models.DirectionChoice.objects.create(**direction)
             application = super().update(instance, validated_data)
             return application
         else:
