@@ -209,6 +209,33 @@ class ApplicationViewSet(ModelViewSet):
     serializer_class = serializers.ApplicationSerializer
     pagination_class = CustomPagination
 
+    def create(self, request, *args, **kwargs):
+        data = request.data
+        # Вытаскиваем данные
+        previous_education = data.pop('previous_education')
+        test_result = data.pop('test_result')
+        grant = data.pop('grant', None)
+        directions = data.pop('directions')
+        # Переписываем объекты на uid
+        previous_education['institute'] = previous_education['institute']['uid']
+        previous_education['speciality'] = previous_education['speciality']['uid']
+        for discipline in test_result['disciplines']:
+            discipline['discipline'] = discipline['discipline']['uid']
+        if grant:
+            grant['speciality'] = grant['speciality']['uid']
+            data['grant'] = grant
+        for direction in directions:
+            direction['education_base'] = direction['education_base']['uid']
+            direction['education_program'] = direction['education_program']['uid']
+            direction['education_program_group'] = direction['education_program_group']['uid']
+        # Обратно впихиваем данные
+        data['previous_education'] = previous_education
+        data['test_result'] = test_result
+        data['directions'] = directions
+        print(request.data)
+        # Отдаем сериализатору как ни в чем не бывало
+        return super().create(request, *args, **kwargs)
+
     def get_serializer_class(self):
         if self.action == 'list':
             return serializers.ApplicationLiteSerializer
@@ -310,7 +337,6 @@ class AdmissionCampaignTypeViewSet(ModelViewSet):
     @action(methods=['get'], detail=False, url_path='campaign-info', url_name='my_campign_info')
     def get_my_campaign_info(self, request, pk=None):
         profile = self.request.user.profile
-
 
 
 class AdmissionCampaignViewSet(ModelViewSet):

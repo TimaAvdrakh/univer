@@ -1189,6 +1189,12 @@ class Application(BaseModel):
         blank=True,
         null=True
     )
+    files = models.ManyToManyField(
+        DocScan,
+        blank=True,
+        related_name='applications',
+        verbose_name='Файлы для поступления'
+    )
 
     class Meta:
         verbose_name = "Заявление"

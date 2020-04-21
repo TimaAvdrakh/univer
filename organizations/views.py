@@ -43,11 +43,33 @@ class EducationModelViewSet(ModelViewSet):
     serializer_class = EducationBaseSerializer
     permission_classes = (IsAdminOrReadOnly,)
 
+    @action(methods=['get'], detail=False, url_path='search', url_name='search')
+    def search(self, request, pk=None):
+        name = request.query_params.get('name')
+        bases = self.queryset.filter(
+                Q(name_ru__icontains=name) |
+                Q(name_en__icontains=name) |
+                Q(name_kk__icontains=name)
+            ).distinct()[:20]
+        data = self.serializer_class(bases, many=True).data
+        return Response(data=data)
+
 
 class EducationProgramViewSet(ModelViewSet):
     queryset = EducationProgram.objects.all()
     serializer_class = EducationProgramSerializer
     permission_classes = (IsAdminOrReadOnly,)
+
+    @action(methods=['get'], detail=False, url_path='search', url_name='program_search')
+    def search(self, request, pk=None):
+        name = request.query_params.get('name')
+        programs = self.queryset.filter(
+                Q(name_ru__icontains=name) |
+                Q(name_en__icontains=name) |
+                Q(name_kk__icontains=name)
+            ).distinct()[:20]
+        data = self.serializer_class(programs, many=True).data
+        return Response(data=data)
 
 
 class EducationProgramGroupViewSet(ModelViewSet):

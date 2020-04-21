@@ -481,13 +481,18 @@ class ApplicationLiteSerializer(serializers.ModelSerializer):
             disciplines = models.DisciplineMark.objects.bulk_create([
                 models.DisciplineMark(profile=creator, **discipline) for discipline in test_result.pop('disciplines')
             ])
-            test_result = models.TestResult.objects.create(profile=creator, test_certificate=test_certificate)
+            test_result = models.TestResult.objects.create(
+                profile=creator,
+                test_certificate=test_certificate
+            )
             test_result.disciplines.add(*disciplines)
             test_result.save()
             # Международный сертификат, только если в кампании указано, что он принимаются сертифиакаты
             if my_campaign.inter_cert_foreign_lang:
-                international_cert = models.InternationalCert(profile=creator,
-                                                              **validated_data.pop('international_cert'))
+                international_cert = models.InternationalCert.objects.create(
+                    profile=creator,
+                    **validated_data.pop('international_cert')
+                )
             else:
                 international_cert = None
             # Грант
