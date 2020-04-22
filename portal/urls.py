@@ -1,5 +1,5 @@
 from django.contrib import admin
-from django.urls import path, include
+from django.urls import path, include, re_path
 from rest_framework_swagger.views import get_swagger_view
 from applicant.viewsets import activate
 from django.conf.urls.i18n import i18n_patterns
