@@ -253,28 +253,48 @@ class StudentDisciplineStatusListView(generics.ListAPIView):
     queryset = org_models.StudentDisciplineStatus.objects.filter(is_active=True)
     serializer_class = serializers.StudentDisciplineStatusSerializer
 
-from rest_framework.viewsets import ModelViewSet
-
 
 class NationalityViewSet(ModelViewSet):
-    queryset = models.Nationality.objects.all()
+    queryset = models.Nationality.objects.order_by('name_ru', 'name_en', 'name_kk')
     serializer_class = serializers.NationalitySerializer
     permission_classes = (permissions.AllowAny,)
 
+    @action(methods=['get'], detail=False, url_path='search', url_name='search_nationality')
+    def search(self, request, pk=None):
+        name = request.query_params.get('name')
+        data = self.queryset.filter(
+            Q(name_en__icontains=name) |
+            Q(name_ru__icontains=name) |
+            Q(name_ru__icontains=name)
+        )
+        data = self.serializer_class(data, many=True).data
+        return Response(data=data, status=status.HTTP_200_OK)
+
 
 class CitizenshipViewSet(ModelViewSet):
-    queryset = models.Citizenship.objects.all()
+    queryset = models.Citizenship.objects.order_by('name_ru', 'name_en', 'name_kk')
     serializer_class = serializers.CitizenshipSerializer
     permission_classes = (permissions.AllowAny,)
 
+    @action(methods=['get'], detail=False, url_path='search', url_name='search_country')
+    def search(self, request, pk=None):
+        name = request.query_params.get('name')
+        data = self.queryset.filter(
+            Q(name_en__icontains=name) |
+            Q(name_ru__icontains=name) |
+            Q(name_ru__icontains=name)
+        )
+        data = self.serializer_class(data, many=True).data
+        return Response(data=data, status=status.HTTP_200_OK)
+
 
 class DocumentTypeViewSet(ModelViewSet):
-    queryset = models.DocumentType.objects.all()
+    queryset = models.DocumentType.objects.order_by('name_ru', 'name_en', 'name_kk')
     serializer_class = serializers.DocumentTypeSerializer
     permission_classes = (permissions.AllowAny,)
 
 
 class GovernmentAgencyViewSet(ModelViewSet):
-    queryset = models.GovernmentAgency.objects.all()
+    queryset = models.GovernmentAgency.objects.order_by('name_ru', 'name_en', 'name_kk')
     serializer_class = serializers.GovernmentAgencySerializer
     permission_classes = (permissions.AllowAny,)

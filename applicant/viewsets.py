@@ -15,48 +15,15 @@ from rest_framework.viewsets import ModelViewSet
 from common.paginators import CustomPagination
 from univer_admin.permissions import IsAdminOrReadOnly
 from portal_users.models import Profile
-from .models import (
-    Applicant,
-    Questionnaire,
-    FamilyMembership,
-    PrivilegeType,
-    DocumentReturnMethod,
-    AddressType,
-    DocScan,
-    RecruitmentPlan,
-    LanguageProficiency,
-    InternationalCertType,
-    GrantType,
-    Application,
-    ApplicationStatus,
-    AdmissionCampaign,
-    AdmissionCampaignType,
-    COND_ORDER
-)
-from .serializers import (
-    ApplicantSerializer,
-    ApplicationLiteSerializer,
-    QuestionnaireSerializer,
-    FamilyMembershipSerializer,
-    PrivilegeTypeSerializer,
-    DocumentReturnMethodSerializer,
-    AddressTypeSerializer,
-    RecruitmentPlanSerializer,
-    LanguageProficiencySerializer,
-    InternationalCertTypeSerializer,
-    GrantTypeSerializer,
-    ApplicationSerializer,
-    ApplicationStatusSerializer,
-    AdmissionCampaignTypeSerializer,
-    AdmissionCampaignSerializer,
-)
+from . import models
+from . import serializers
 from .token import token_generator
 
 
 # Спец форма для того, чтобы парсить файлы
 class DocScanForm(forms.ModelForm):
     class Meta:
-        model = DocScan
+        model = models.DocScan
         fields = "__all__"
 
 
@@ -118,27 +85,28 @@ def activate(request, uidb64, token):
         uid = force_text(urlsafe_base64_decode(uidb64))
         user = User.objects.get(pk=uid)
     except Exception as e:
-        HttpResponseBadRequest(e)
+        return JsonResponse({"message": "error", "status": "ERR_ACTIVATION", "error": str(e)})
     if user and token_generator.check_token(user, token):
         user.is_active = True
         user.save()
         login(request, user)
-        return HttpResponse("Account activated")
+        return JsonResponse({"message": "activated", "status": "ACTIVATED", "error": None})
     else:
-        return HttpResponseBadRequest("No user")
+        return JsonResponse({"message": "noUser", "status": "NOT_FOUND", "error": None})
 
 
 class ApplicantViewSet(ModelViewSet):
-    queryset = Applicant.objects.all()
-    serializer_class = ApplicantSerializer
+    queryset = models.Applicant.objects.all()
+    serializer_class = serializers.ApplicantSerializer
     permission_classes = (AllowAny,)
     pagination_class = CustomPagination
 
     @action(methods=['post'], detail=False, url_path='campaign-types', url_name='campaign_types')
     def get_campaign_types(self, request, pk=None):
         prep_level = request.data.get('prep_level')
-        campaign_types = AdmissionCampaignType.objects.filter(prep_levels=prep_level)
-        return Response(data=AdmissionCampaignTypeSerializer(campaign_types, many=True).data, status=HTTP_200_OK)
+        campaign_types = models.AdmissionCampaignType.objects.filter(prep_levels=prep_level)
+        return Response(data=serializers.AdmissionCampaignTypeSerializer(campaign_types, many=True).data,
+                        status=HTTP_200_OK)
 
     @action(methods=['get'], detail=False, url_path='search', url_name='search')
     def search(self, request, pk=None):
@@ -159,89 +127,166 @@ class ApplicantViewSet(ModelViewSet):
 
 
 class QuestionnaireViewSet(ModelViewSet):
-    queryset = Questionnaire.objects.all()
-    serializer_class = QuestionnaireSerializer
+    queryset = models.Questionnaire.objects.all()
+    serializer_class = serializers.QuestionnaireSerializer
 
     @action(methods=['get'], detail=False, url_name='my', url_path='my')
     def get_my_questionnaire(self, request, pk=None):
         profile = self.request.user.profile
         queryset = self.queryset.filter(creator=profile)
         if queryset.exists():
-            return Response(data=QuestionnaireSerializer(queryset.first()).data, status=HTTP_200_OK)
+            return Response(data=serializers.QuestionnaireSerializer(queryset.first()).data, status=HTTP_200_OK)
         else:
             return Response(data={"uid": None}, status=HTTP_200_OK)
 
+    @action(methods=['get'], detail=False, url_path='general-info', url_name='q_general_info')
+    def general_info(self, request, pk=None):
+        profile = self.request.user.profile
+        data = {
+            'first_name': profile.first_name,
+            'last_name': profile.last_name,
+            'middle_name': profile.middle_name,
+            'email': profile.email
+        }
+        return Response(data=data, status=HTTP_200_OK)
+
 
 class FamilyMembershipViewSet(ModelViewSet):
-    queryset = FamilyMembership.objects.all()
-    serializer_class = FamilyMembershipSerializer
-    # permission_classes = (IsAdminOrReadOnly,)
+    queryset = models.FamilyMembership.objects.all()
+    serializer_class = serializers.FamilyMembershipSerializer
+    permission_classes = (IsAdminOrReadOnly,)
 
 
 class PrivilegeTypeViewSet(ModelViewSet):
-    queryset = PrivilegeType.objects.all()
-    serializer_class = PrivilegeTypeSerializer
-    # permission_classes = (IsAdminOrReadOnly,)
+    queryset = models.PrivilegeType.objects.all()
+    serializer_class = serializers.PrivilegeTypeSerializer
+    permission_classes = (IsAdminOrReadOnly,)
 
 
 class DocumentReturnMethodViewSet(ModelViewSet):
-    queryset = DocumentReturnMethod.objects.all()
-    serializer_class = DocumentReturnMethodSerializer
-    # permission_classes = (IsAdminOrReadOnly,)
+    queryset = models.DocumentReturnMethod.objects.all()
+    serializer_class = serializers.DocumentReturnMethodSerializer
+    permission_classes = (IsAdminOrReadOnly,)
 
 
 class AddressTypeViewSet(ModelViewSet):
-    queryset = AddressType.objects.all()
-    serializer_class = AddressTypeSerializer
-    # permission_classes = (IsAdminOrReadOnly,)
+    queryset = models.AddressType.objects.all()
+    serializer_class = serializers.AddressTypeSerializer
+    permission_classes = (IsAdminOrReadOnly,)
 
 
 class RecruitmentPlanViewSet(ModelViewSet):
-    queryset = RecruitmentPlan.objects.all()
-    serializer_class = RecruitmentPlanSerializer
-    # permission_classes = (IsAdminOrReadOnly,)
+    queryset = models.RecruitmentPlan.objects.all()
+    serializer_class = serializers.RecruitmentPlanSerializer
+    permission_classes = (IsAdminOrReadOnly,)
 
 
 class LanguageProficiencyViewSet(ModelViewSet):
-    queryset = LanguageProficiency.objects.exclude(parent=None)
-    serializer_class = LanguageProficiencySerializer
-    # permission_classes = (IsAdminOrReadOnly,)
+    queryset = models.LanguageProficiency.objects.exclude(parent=None)
+    serializer_class = serializers.LanguageProficiencySerializer
+    permission_classes = (IsAdminOrReadOnly,)
 
 
 class InternationalCertTypeViewSet(ModelViewSet):
-    queryset = InternationalCertType.objects.all()
-    serializer_class = InternationalCertTypeSerializer
-    # permission_classes = (IsAdminOrReadOnly,)
+    queryset = models.InternationalCertType.objects.all()
+    serializer_class = serializers.InternationalCertTypeSerializer
+    permission_classes = (IsAdminOrReadOnly,)
 
 
 class GrantTypeViewSet(ModelViewSet):
-    queryset = GrantType.objects.all()
-    serializer_class = GrantTypeSerializer
-    # permission_classes = (IsAdminOrReadOnly,)
+    queryset = models.GrantType.objects.all()
+    serializer_class = serializers.GrantTypeSerializer
+    permission_classes = (IsAdminOrReadOnly,)
 
 
 class ApplicationStatusViewSet(ModelViewSet):
-    queryset = ApplicationStatus.objects.all()
-    serializer_class = ApplicationStatusSerializer
+    queryset = models.ApplicationStatus.objects.all()
+    serializer_class = serializers.ApplicationStatusSerializer
 
 
 class ApplicationViewSet(ModelViewSet):
-    queryset = Application.objects.annotate(cond_order=COND_ORDER).order_by('cond_order')
-    serializer_class = ApplicationSerializer
+    queryset = models.Application.objects.annotate(cond_order=models.COND_ORDER).order_by('cond_order')
+    serializer_class = serializers.ApplicationSerializer
     pagination_class = CustomPagination
+
+    def create(self, request, *args, **kwargs):
+        data = request.data
+        # Вытаскиваем данные
+        previous_education = data.pop('previous_education')
+        test_result = data.pop('test_result')
+        grant = data.pop('grant', None)
+        directions = data.pop('directions')
+        # Переписываем объекты на uid
+        previous_education.update({
+            'institute': previous_education['institute']['uid'],
+            'speciality': previous_education['speciality']['uid'],
+        })
+        for discipline in test_result['disciplines']:
+            discipline['discipline'] = discipline['discipline']['uid']
+        if grant:
+            grant['speciality'] = grant['speciality']['uid']
+            data['grant'] = grant
+        for direction in directions:
+            direction.update({
+                'education_base': direction['education_base']['uid'],
+                'education_program': direction['education_program']['uid'],
+                'education_program_group': direction['education_program_group']['uid'],
+            })
+        # Обратно впихиваем данные
+        data.update({
+            'previous_education': previous_education,
+            'test_result': test_result,
+            'directions': directions,
+        })
+        # Отдаем сериализатору как ни в чем не бывало
+        return super().create(request, *args, **kwargs)
+
+    def update(self, request, *args, **kwargs):
+        data = request.data
+        previous_education = data.pop('previous_education')
+        education_info = previous_education.pop('info')
+        previous_education.update({
+            'institute': education_info['institute']['uid'],
+            'speciality': education_info['speciality']['uid']
+        })
+        test_result = data.pop('previous_education')
+        result_info = test_result.pop('info')
+        test_result.update({
+                               'discipline': discipline['uid'],
+                               'mark': discipline['mark'],
+                           } for discipline in result_info['disciplines'])
+        grant = data.pop('grant', None)
+        if grant:
+            grant_info = grant.pop('info')
+            grant.update({
+                'speciality': grant_info['speciality']['uid']
+            })
+        directions = data.pop('directions')
+        directions = [{
+            'education_program': direction['education_program']['uid'],
+            'education_program_group': direction['education_program_group']['uid'],
+            'education_base': direction['education_base']['uid']
+        } for direction in directions]
+        data.update({
+            'previous_education': previous_education,
+            'test_result': test_result,
+            'grant': grant,
+            'directions': directions
+        })
+        return super().update(request, *args, **kwargs)
 
     def get_serializer_class(self):
         if self.action == 'list':
-            return ApplicationLiteSerializer
+            return serializers.ApplicationLiteSerializer
         else:
-            return ApplicationSerializer
+            return serializers.ApplicationSerializer
 
     @action(methods=['get'], detail=False, url_name='my', url_path='my')
     def get_my_application(self, request, pk=None):
         profile: Profile = self.request.user.profile
         queryset = self.queryset.filter(creator=profile)
         if queryset.exists():
-            return Response(data=ApplicationLiteSerializer(queryset.first()).data, status=HTTP_200_OK)
+            return Response(data=serializers.ApplicationLiteSerializer(queryset.first()).data, status=HTTP_200_OK)
         else:
             return Response(data={"uid": None}, status=HTTP_200_OK)
 
@@ -262,8 +307,8 @@ class ApplicationViewSet(ModelViewSet):
         какие-то ошибки - опечатки, не та информация
         """
         profile: Profile = self.request.user.profile
-        application: Application = self.get_object()
-        if Application.can_perform_action(profile=profile):
+        application = self.get_object()
+        if models.Application.can_perform_action(profile=profile):
             action_type: str = request.get('action')
             comment = request.get('comment')
             # Одобряем заявление
@@ -310,16 +355,44 @@ class ApplicationViewSet(ModelViewSet):
             lookup = lookup | Q(created=apply_date)
         queryset = self.queryset.filter(lookup).distinct()
         paginated_queryset = self.paginate_queryset(queryset=queryset)
-        return self.get_paginated_response(ApplicationLiteSerializer(paginated_queryset, many=True).data)
+        return self.get_paginated_response(serializers.ApplicationLiteSerializer(paginated_queryset, many=True).data)
+
+    @action(methods=['get'], detail=False, url_path='current-campaign', url_name='current_campaign')
+    def get_current_campaign(self, request, pk=None):
+        campaign = self.request.user.applicant.campaign
+        return Response(data={
+            # cdmc - максимум направлений, которые может выбрать абитуриент в этой кампании
+            'cdmc': campaign.chosen_directions_max_count,
+            # icfl - кампания принимает международные сертификаты
+            'icfl': campaign.inter_cert_foreign_lang
+        }, status=HTTP_200_OK)
 
 
 class AdmissionCampaignTypeViewSet(ModelViewSet):
-    queryset = AdmissionCampaignType.objects.all()
-    serializer_class = AdmissionCampaignTypeSerializer
-    # permission_classes = (IsAdminOrReadOnly,)
+    queryset = models.AdmissionCampaignType.objects.all()
+    serializer_class = serializers.AdmissionCampaignTypeSerializer
+    permission_classes = (IsAdminOrReadOnly,)
+
+    @action(methods=['get'], detail=False, url_path='campaign-info', url_name='my_campign_info')
+    def get_my_campaign_info(self, request, pk=None):
+        profile = self.request.user.profile
 
 
 class AdmissionCampaignViewSet(ModelViewSet):
-    queryset = AdmissionCampaign.objects.all()
-    serializer_class = AdmissionCampaignSerializer
-    # permission_classes = (IsAdminOrReadOnly,)
+    queryset = models.AdmissionCampaign.objects.all()
+    serializer_class = serializers.AdmissionCampaignSerializer
+    permission_classes = (IsAdminOrReadOnly,)
+
+
+class AddressViewSet(ModelViewSet):
+    queryset = models.Address.objects.all()
+    serializer_class = serializers.AddressSerializer
+
+    @action(methods=['get'], detail=False, url_path='search', url_name='address_search')
+    def search(self, request, pk=None):
+        name, code = request.query_params.get('name'), request.query_params.get('code')
+        if not name:
+            raise ValidationError({"error": "pass name"})
+        addresses = models.Address.get_by(name=name, code=code)
+        data = serializers.AddressSerializer(addresses, many=True).data
+        return Response(data=data, status=HTTP_200_OK)

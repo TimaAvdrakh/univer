@@ -25,6 +25,7 @@ from django.views.decorators.csrf import csrf_exempt
 from portal.local_settings import DELETE_RECORDS_API_TOKEN
 from portal.curr_settings import student_discipline_status
 from django.db import connection
+from applicant import models as models_applicant
 
 
 @csrf_exempt
@@ -393,7 +394,7 @@ def putfrom1c_copy(request):
         return HttpResponse('Forbidden')
 
     if request.method == 'POST':
-        rules = cache.get('rule1c')
+        rules = None  # cache.get('rule1c')
         if rules is None:
             rules = []
             qs = C1Object.objects.filter(is_active=True)
@@ -442,6 +443,7 @@ def putfrom1c_copy(request):
             cnt = 0
             Manager = eval('models_' + current_rule['model'])  # Model
 
+            print(Manager)
             # if current_rule['is_related']:
             # for p in Manager.objects.all():
             #     p.delete()

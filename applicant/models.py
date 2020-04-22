@@ -1,4 +1,5 @@
 from django.contrib.auth.models import User
+from django.contrib.contenttypes.models import ContentType
 from django.contrib.contenttypes.fields import GenericRelation
 from django.core.mail import EmailMultiAlternatives
 from django.core.validators import MinValueValidator, MaxValueValidator
@@ -13,6 +14,7 @@ from common.models import (
     IdentityDocument,
     Citizenship,
     Nationality,
+    Changelog,
 )
 from portal_users.models import Profile, ProfilePhone, Gender, MaritalStatus, Role
 from organizations.models import (
@@ -31,7 +33,6 @@ from organizations.models import (
     Language,
 )
 from organizations.models import DocumentType
-
 
 APPROVED = "APPROVED"
 REJECTED = "REJECTED"
@@ -52,7 +53,6 @@ COND_ORDER = Case(
 
 # Вид льготы
 class PrivilegeType(BaseCatalog):
-
     class Meta:
         verbose_name = "Тип льготы"
         verbose_name_plural = "Типы льготы"
@@ -60,7 +60,6 @@ class PrivilegeType(BaseCatalog):
 
 # Способ возврата документа
 class DocumentReturnMethod(BaseCatalog):
-
     class Meta:
         verbose_name = "Метод возврата документа"
         verbose_name_plural = "Методы возврата документов"
@@ -68,7 +67,6 @@ class DocumentReturnMethod(BaseCatalog):
 
 # Членство в семье
 class FamilyMembership(BaseCatalog):
-
     class Meta:
         verbose_name = "Степень родства"
         verbose_name_plural = "Степени родства"
@@ -76,7 +74,6 @@ class FamilyMembership(BaseCatalog):
 
 # Тип адреса
 class AddressType(BaseCatalog):
-
     class Meta:
         verbose_name = "Тип адреса"
         verbose_name_plural = "Типы адресов"
@@ -84,7 +81,6 @@ class AddressType(BaseCatalog):
 
 # Уровни бюджета
 class BudgetLevel(BaseCatalog):
-
     class Meta:
         verbose_name = "Уровень бюджета"
         verbose_name_plural = "Уровни бюджета"
@@ -92,7 +88,6 @@ class BudgetLevel(BaseCatalog):
 
 # Тип международного сертификата
 class InternationalCertType(BaseCatalog):
-
     class Meta:
         verbose_name = "Тип международного сертификата"
         verbose_name_plural = "Типы международных сертификатов"
@@ -100,7 +95,6 @@ class InternationalCertType(BaseCatalog):
 
 # Тип гранта
 class GrantType(BaseCatalog):
-
     class Meta:
         verbose_name = "Вид гранта"
         verbose_name_plural = "Виды грантов"
@@ -108,25 +102,25 @@ class GrantType(BaseCatalog):
 
 # Адресный классификатор
 class AddressClassifier(BaseCatalog):
-    address_element_type = models.PositiveSmallIntegerField(
+    address_element_type = models.PositiveIntegerField(
         verbose_name="Тип адресного элемента"
     )
-    district_code = models.PositiveSmallIntegerField(
+    district_code = models.PositiveIntegerField(
         verbose_name="Код района",
         blank=True,
         null=True
     )
-    region_code = models.PositiveSmallIntegerField(
+    region_code = models.PositiveIntegerField(
         verbose_name="Код региона",
         blank=True,
         null=True
     )
-    locality_code = models.PositiveSmallIntegerField(
+    locality_code = models.PositiveIntegerField(
         verbose_name="Код населенного пункта",
         blank=True,
         null=True  # Населенный пункт
     )
-    code = models.PositiveSmallIntegerField(
+    code = models.PositiveIntegerField(
         verbose_name="Код",
     )
 
@@ -245,6 +239,22 @@ class Address(BaseCatalog):
     class Meta:
         verbose_name = "Адрес"
         verbose_name_plural = "Адреса"
+
+    @staticmethod
+    def get_by(name: str, code: int = None):
+        lookup = (Q(name_ru__icontains=name) | Q(name_en__icontains=name) | Q(name_kk__icontains=name))
+        if code == 1:
+            lookup = lookup & Q(region__address_element_type=code)
+        elif code == 2:
+            lookup = lookup & Q(district__address_element_type=code)
+        elif code == 3:
+            lookup = lookup & Q(city__address_element_type=code)
+        elif code == 4:
+            lookup = lookup & Q(locality__address_element_type=code)
+        else:
+            pass
+        addresses = Address.objects.filter(lookup)
+        return addresses
 
 
 # Состав семьи
@@ -561,13 +571,6 @@ class ApplicationStatus(BaseCatalog):
                 "name_en": "No questionnaire",
                 "code": NO_QUESTIONNAIRE,
             },
-            {
-                "name": IMPROVE,
-                "name_ru": "Требует доработки",
-                "name_kk": "Жақсартуды қажет етеді",
-                "name_en": "Needs to be improved",
-                "code": IMPROVE
-            }
         ]
         for status in statuses:
             match: [ApplicationStatus] = ApplicationStatus.objects.filter(code=status["code"])
@@ -593,10 +596,14 @@ class Questionnaire(BaseModel):
     first_name_en = models.CharField(
         "Имя на латинице",
         max_length=255,
+        blank=True,
+        null=True,
     )
     last_name_en = models.CharField(
         "Фамилия на латинице",
         max_length=255,
+        blank=True,
+        null=True,
     )
     gender = models.ForeignKey(
         Gender,
@@ -606,7 +613,9 @@ class Questionnaire(BaseModel):
     marital_status = models.ForeignKey(
         MaritalStatus,
         on_delete=models.DO_NOTHING,
-        verbose_name="Семейное положение"
+        verbose_name="Семейное положение",
+        blank=True,
+        null=True,
     )
     citizenship = models.ForeignKey(
         Citizenship,
@@ -699,6 +708,17 @@ class Questionnaire(BaseModel):
         verbose_name="Семья",
         related_name="questionnaires",
     )
+    need_dormitory = models.BooleanField(
+        default=False,
+        verbose_name="Нуждаюсь в общежитии"
+    )
+    doc_return_method = models.ForeignKey(
+        DocumentReturnMethod,
+        on_delete=models.DO_NOTHING,
+        blank=True,
+        null=True,
+        verbose_name="Метод возврата документов",
+    )
 
     class Meta:
         verbose_name = "Анкета"
@@ -707,22 +727,11 @@ class Questionnaire(BaseModel):
 
 # Список льгот пользователей
 class UserPrivilegeList(BaseModel):
-    need_dormitory = models.BooleanField(
-        default=False,
-        verbose_name="Нуждаюсь в общежитии"
-    )
     questionnaire = models.OneToOneField(
         Questionnaire,
         on_delete=models.DO_NOTHING,
         verbose_name="Анкета",
         null=True,
-    )
-    doc_return_method = models.ForeignKey(
-        DocumentReturnMethod,
-        on_delete=models.DO_NOTHING,
-        blank=True,
-        null=True,
-        verbose_name="Метод возврата документов",
     )
 
     class Meta:
@@ -1182,6 +1191,12 @@ class Application(BaseModel):
         blank=True,
         null=True
     )
+    files = models.ManyToManyField(
+        DocScan,
+        blank=True,
+        related_name='applications',
+        verbose_name='Файлы для поступления'
+    )
 
     class Meta:
         verbose_name = "Заявление"
@@ -1278,39 +1293,3 @@ class AdmissionDocument(BaseModel):
     class Meta:
         verbose_name = 'Перечень документов для приема на обучение'
         verbose_name_plural = 'Перечни документов для приема на обучение'
-
-
-# История изменения заявления
-class Changelog(BaseModel):
-    application = models.ForeignKey(
-        Application,
-        on_delete=models.CASCADE,
-        related_name='changelog'
-    )
-    related_model_name = models.CharField(
-        'Название модели, которая была изменена',
-        max_length=300
-    )
-    key = models.CharField(
-        'Ключ',
-        max_length=300
-    )
-    old_value = models.CharField(
-        'Старое значение',
-        max_length=300,
-        blank=True,
-        default=''
-    )
-    new_value = models.CharField(
-        'Новое значение',
-        max_length=300,
-        blank=True,
-        default=''
-    )
-
-    class Meta:
-        verbose_name = 'Изменения заявления'
-        verbose_name_plural = 'Изменения заявлений'
-
-    def __str__(self):
-        return f'Изменена модель {self.related_model_name}.'

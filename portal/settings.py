@@ -139,9 +139,6 @@ REST_FRAMEWORK = {
         # 'rest_framework.parsers.FileUploadParser',
     ),
     'DEFAULT_SCHEMA_CLASS': 'rest_framework.schemas.coreapi.AutoSchema',
-    'DATE_INPUT_FORMATS': ['%d.%m.%Y', '%Y-%m-%d'],
-    'DATE_FORMAT': '%d.%m.%Y',
-    'DATETIME_FORMAT': '%d.%m.%Y %H:%I:%S'
 }
 
 CORS_ORIGIN_ALLOW_ALL = True
