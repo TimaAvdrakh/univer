@@ -58,6 +58,35 @@ class InterestSerializer(serializers.ModelSerializer):
         )
 
 
+class InformationUsersCanSeeSerializer(serializers.ModelSerializer):
+    """
+    Список полей который могут видеть другие пользователи
+    """
+
+    class Meta:
+        model = models.InfoShowPermission
+        fields = (
+            'first_name_en',
+            'last_name_en',
+            'birth_date',
+            'birth_place',
+            'nationality',
+            'citizenship',
+            'gender',
+            'marital_status',
+            'address',
+            'phone',
+            'email',
+            'skype',
+            'interests',
+            'extra_data',
+            'identity_documents',
+            'education',
+            'iin',
+        )
+
+
+
 class AchievementSerializer(serializers.ModelSerializer):
     achievement_type = serializers.CharField()
     level = serializers.CharField()
@@ -161,6 +190,7 @@ class ProfileFullSerializer(serializers.ModelSerializer):
             "iin",
             "identity_documents",
             "educations",
+            "notify_me_from_email",
         )
         read_only_fields = ("iin",)
 
@@ -170,6 +200,7 @@ class ProfileFullSerializer(serializers.ModelSerializer):
         instance.email = validated_data.get("email", instance.email)
         instance.skype = validated_data.get("skype", instance.skype)
         instance.extra_data = validated_data.get("extra_data", instance.extra_data)
+        instance.notify_me_from_email = validated_data.get("notify_me_from_email", instance.notify_me_from_email)
         instance.save()
 
         interests = validated_data.get("interests")
@@ -224,6 +255,10 @@ class ProfileFullSerializer(serializers.ModelSerializer):
 
         if request.user.profile != instance:
             data["identity_documents"] = []
+
+        fields_to_show = models.InfoShowPermission.objects.get_or_create(profile=instance)
+        data['fields_to_show'] = InformationUsersCanSeeSerializer(fields_to_show,
+                                                                  many=True).data
 
         return data
 
@@ -1132,6 +1167,7 @@ class ProfileContactEditSerializer(serializers.ModelSerializer):
             "email",
             "skype",
             "extra_data",
+            "notify_me_from_email",
         )
 
     def update(self, instance, validated_data):
@@ -1140,6 +1176,7 @@ class ProfileContactEditSerializer(serializers.ModelSerializer):
         instance.email = validated_data.get("email", instance.email)
         instance.skype = validated_data.get("skype", instance.skype)
         instance.extra_data = validated_data.get("extra_data", instance.extra_data)
+        instance.notify_me_from_email = validated_data.get("notify_me_from_email", instance.notify_me_from_email)
         instance.save()
 
         return instance
@@ -1478,3 +1515,5 @@ class CitizenshipListSerializer(serializers.ModelSerializer):
             'uid',
             'name',
         )
+
+

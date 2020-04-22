@@ -548,7 +548,6 @@ class StudentAllDisciplineListView(generics.ListAPIView):
 
 class ProfileDetailView(generics.RetrieveAPIView):
     """Получить профиль пользователя"""
-
     queryset = models.Profile.objects.filter(is_active=True)
     serializer_class = serializers.ProfileFullSerializer
 
@@ -560,14 +559,8 @@ class ContactEditView(generics.UpdateAPIView):
         IsAuthenticated,
         permissions.ProfilePermission,
     )
-    parser_classes = [FileUploadParser]
     queryset = models.Profile.objects.filter(is_active=True)
     serializer_class = serializers.ProfileContactEditSerializer
-
-    def put(self, request, filename, format=None):
-        avatar = request.data['avatar']
-
-
 
 
 class InterestsEditView(generics.UpdateAPIView):
@@ -590,6 +583,22 @@ class AchievementsEditView(generics.UpdateAPIView):
     )
     queryset = models.Profile.objects.filter(is_active=True)
     serializer_class = serializers.ProfileAchievementsEditSerializer
+
+
+class FieldsToShowUpdateView(generics.UpdateAPIView):
+    """ Редактировать Поля для отображения """
+
+    permission_classes = (
+        IsAuthenticated,
+        permissions.ProfilePermission
+    )
+    queryset = models.InfoShowPermission.objects.filter(is_active=True)
+    serializer_class = serializers.InformationUsersCanSeeSerializer
+
+    def update(self, request, *args, **kwargs):
+        queryset = self.queryset.filter(profile=self.request.user.profile)
+        queryset.update(**request.data)
+        return Response(data="Updated", status=status.HTTP_200_OK)
 
 
 class AvatarUploadView(generics.CreateAPIView):
