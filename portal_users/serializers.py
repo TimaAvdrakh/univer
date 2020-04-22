@@ -58,6 +58,35 @@ class InterestSerializer(serializers.ModelSerializer):
         )
 
 
+class InformationUsersCanSeeSerializer(serializers.ModelSerializer):
+    """
+    Список полей который могут видеть другие пользователи
+    """
+
+    class Meta:
+        model = models.InfoShowPermission
+        fields = (
+            'first_name_en',
+            'last_name_en',
+            'birth_date',
+            'birth_place',
+            'nationality',
+            'citizenship',
+            'gender',
+            'marital_status',
+            'address',
+            'phone',
+            'email',
+            'skype',
+            'interests',
+            'extra_data',
+            'identity_documents',
+            'education',
+            'iin',
+        )
+
+
+
 class AchievementSerializer(serializers.ModelSerializer):
     achievement_type = serializers.CharField()
     level = serializers.CharField()
@@ -226,6 +255,10 @@ class ProfileFullSerializer(serializers.ModelSerializer):
 
         if request.user.profile != instance:
             data["identity_documents"] = []
+
+        fields_to_show = models.InfoShowPermission.objects.get_or_create(profile=instance)
+        data['fields_to_show'] = InformationUsersCanSeeSerializer(fields_to_show,
+                                                                  many=True).data
 
         return data
 
@@ -1482,3 +1515,5 @@ class CitizenshipListSerializer(serializers.ModelSerializer):
             'uid',
             'name',
         )
+
+
