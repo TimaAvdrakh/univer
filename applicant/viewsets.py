@@ -146,7 +146,7 @@ class QuestionnaireViewSet(ModelViewSet):
             'first_name': profile.first_name,
             'last_name': profile.last_name,
             'middle_name': profile.middle_name,
-            'email': profile.email
+            'email': profile.email,
         }
         return Response(data=data, status=HTTP_200_OK)
 
@@ -302,9 +302,6 @@ class ApplicationViewSet(ModelViewSet):
 
         reject - заявление отклоняется, абитуриент должен быть удален к
         завершению приемной кампании и должен ждать следующий год, чтобы по новой подать документы
-
-        improve - заявление отправляется на доработку, только в том случае если заявление валидно, но допущены
-        какие-то ошибки - опечатки, не та информация
         """
         profile: Profile = self.request.user.profile
         application = self.get_object()
@@ -320,10 +317,6 @@ class ApplicationViewSet(ModelViewSet):
                     raise ValidationError({'error': 'comment is required'})
                 application.reject(moderator=profile, comment=comment)
             # Отпаравляем заявление на доработку - не заполнил анкету или неправильно заполлнил заявление
-            elif action_type == 'improve':
-                if not comment:
-                    raise ValidationError({'error': 'comment is required'})
-                application.improve(moderator=profile, comment=comment)
             return Response(data={'message': f'successfully applied action: {action_type}'})
         else:
             raise ValidationError({'error': f'profile is moderator? {profile.role.is_mod}'})

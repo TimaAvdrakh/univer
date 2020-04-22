@@ -109,7 +109,7 @@ class ApplicantSerializer(serializers.ModelSerializer):
         return fields
 
     def send_verification_email(self, user: User, to_email: list, password: str):
-        subject = 'Verify your email'
+        subject = 'Подтвердите регистрацию'
         current_site = get_current_site(self.context['request'])
         current_lang = get_language() or 'ru'
         message = render_to_string('applicant/email/html/verify_email.html', {
@@ -419,9 +419,11 @@ class EducationSerializer(serializers.ModelSerializer):
     def get_info(self, edu: models.Education):
         info = {
             'institute': {
-                'name': edu.institute_text or edu.institute.name,
-                'uid': edu.institute.uid if edu.institute else None
+                'name': edu.institute.name,
+                'uid': edu.institute.uid
             },
+            'no_institute': edu.no_institute,
+            'institute_text': edu.institute_text,
             'speciality': {
                 'name': edu.speciality.name,
                 'uid': edu.speciality.uid,
@@ -590,6 +592,7 @@ class ApplicationSerializer(ApplicationLiteSerializer):
     international_cert = InternationalCertSerializer(required=False)
     grant = GrantSerializer(required=False)
     directions = DirectionChoiceSerializer(required=True, many=True)
+    questionnaire = QuestionnaireSerializer(required=False, many=False, read_only=True)
 
     class Meta:
         model = models.Application
