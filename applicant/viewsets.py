@@ -249,10 +249,10 @@ class ApplicationViewSet(ModelViewSet):
             'institute': education_info['institute']['uid'],
             'speciality': education_info['speciality']['uid']
         })
-        test_result = data.pop('previous_education')
+        test_result = data.pop('test_result')
         result_info = test_result.pop('info')
         test_result.update({
-                               'discipline': discipline['uid'],
+                               'discipline': discipline['discipline']['uid'],
                                'mark': discipline['mark'],
                            } for discipline in result_info['disciplines'])
         grant = data.pop('grant', None)
@@ -262,17 +262,20 @@ class ApplicationViewSet(ModelViewSet):
                 'speciality': grant_info['speciality']['uid']
             })
         directions = data.pop('directions')
-        directions = [{
-            'education_program': direction['education_program']['uid'],
-            'education_program_group': direction['education_program_group']['uid'],
-            'education_base': direction['education_base']['uid']
-        } for direction in directions]
+        for direction in directions:
+            direction_info = direction.pop('info')
+            direction.update({
+                'education_program': direction_info['education_program']['uid'],
+                'education_program_group': direction_info['education_program_group']['uid'],
+                'education_base': direction_info['education_base']['uid']
+            })
         data.update({
             'previous_education': previous_education,
             'test_result': test_result,
             'grant': grant,
             'directions': directions
         })
+        print(data)
         return super().update(request, *args, **kwargs)
 
     def get_serializer_class(self):

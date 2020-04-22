@@ -1,5 +1,5 @@
 import datetime as dt
-from django.core.mail import EmailMessage
+from django.core.mail import EmailMessage, send_mail
 from django.contrib.auth.models import User
 from django.contrib.auth.hashers import make_password
 from django.contrib.sites.shortcuts import get_current_site
@@ -448,6 +448,14 @@ class ApplicationLiteSerializer(serializers.ModelSerializer):
         model = models.Application
         fields = ['uid', 'status_info', 'applicant', 'created', 'updated']
 
+    def send_on_create(self, recipient):
+        today = dt.date.today().strftime("%d.%m.%Y")
+        subject = 'Заявление поступило на проверку'
+        message = f'Ваше заявление на поступление от {today} отправлено на проверку модератору. ' \
+                  f'Ожидайте дальнейших действий'
+        send_mail(subject=subject, message=message, recipient_list=[recipient])
+        return
+
     def create(self, validated_data: dict):
         application = None
         creator: Profile = self.context['request'].user.profile
@@ -518,6 +526,7 @@ class ApplicationLiteSerializer(serializers.ModelSerializer):
             )
             application.directions.add(*directions)
             application.save()
+            self.send_on_create(recipient=creator.email)
         except Exception as e:
             if application and isinstance(application, models.Application):
                 application.delete()
@@ -526,12 +535,13 @@ class ApplicationLiteSerializer(serializers.ModelSerializer):
 
     def update(self, instance: models.Application, validated_data: dict):
         profile = self.context['request'].user.profile
-        if profile == instance.creator or profile.role.is_mod:
+        if profile == instance.creator:
             my_campaign = profile.user.applicant.campaign
             validated_data['status'] = models.ApplicationStatus.objects.get(code=models.AWAITS_VERIFICATION)
+
             # Обновление предыдущего образования
             previous_education: dict = validated_data.pop('previous_education')
-            education: Education = Education.objects.get(pk=previous_education['uid'])
+            education: Education = Education.objects.get(pk=instance.previous_education.uid)
             for key, value in previous_education.items():
                 setattr(education, key, value)
             education.save(snapshot=True)
@@ -539,14 +549,15 @@ class ApplicationLiteSerializer(serializers.ModelSerializer):
             # Обновление тестов ЕНТ/КТ
             test_result: dict = validated_data.pop('test_result')
             test_cert: dict = test_result.pop('test_certificate')
-            cert: models.TestCert = models.TestCert.objects.get(pk=test_cert['uid'])
+            cert: models.TestCert = models.TestCert.objects.get(pk=instance.test_result.test_certificate.uid)
             for key, value in test_cert.items():
                 setattr(cert, key, value)
             cert.save(snapshot=True)
             disciplines = test_result.pop('disciplines')
             discipline: dict
             for discipline in disciplines:
-                d: models.DisciplineMark = models.DisciplineMark.objects.get(pk=discipline['uid'])
+                instance_discipline = instance.test_result.disciplines.get(discipline=discipline['discipline'], profile=profile)
+                d: models.DisciplineMark = models.DisciplineMark.objects.get(pk=instance_discipline.uid)
                 for key, value in discipline.items():
                     setattr(d, key, value)
                 d.save(snapshot=True)
@@ -555,7 +566,7 @@ class ApplicationLiteSerializer(serializers.ModelSerializer):
             international_cert: dict = validated_data.pop('international_cert', None)
             if international_cert and my_campaign.inter_cert_foreign_lang:
                 inter_cert_model: models.InternationalCert = models.InternationalCert.objects.get(
-                    pk=international_cert['uid']
+                    pk=instance.international_cert.uid
                 )
                 for key, value in international_cert.items():
                     setattr(inter_cert_model, key, value)
@@ -563,7 +574,7 @@ class ApplicationLiteSerializer(serializers.ModelSerializer):
             # Обновление гранта, если есть
             grant: dict = validated_data.pop('grant', None)
             if grant:
-                grant_model: models.Grant = models.Grant.objects.get(pk=grant['uid'])
+                grant_model: models.Grant = models.Grant.objects.get(pk=instance.grant.uid)
                 for ket, value in grant.items():
                     setattr(grant_model, key, value)
                 grant_model.save(snapshot=True)
@@ -573,13 +584,20 @@ class ApplicationLiteSerializer(serializers.ModelSerializer):
                 directions = directions[:5]
             direction: dict
             for direction in directions:
-                if direction['uid']:
-                    direction_model: models.DirectionChoice = models.DirectionChoice.objects.get(pk=direction['uid'])
+                instance_direction: models.DirectionChoice = models.DirectionChoice.objects.filter(
+                    profile=profile,
+                    prep_level=direction['prep_level'],
+                    education_program=direction['education_program'],
+                    education_program_group=direction['education_program_group'],
+                    education_base=direction['education_base'],
+                )
+                if instance_direction.exists():
+                    instance_direction = instance_direction.first()
                     for key, value in direction.items():
-                        setattr(direction_model, key, value)
-                    direction_model.save(snapshot=True)
+                        setattr(instance_direction, key, value)
+                    instance_direction.save(snapshot=True)
                 else:
-                    models.DirectionChoice.objects.create(**direction)
+                    models.DirectionChoice.objects.create(**direction, profile=profile)
             application = super().update(instance, validated_data)
             return application
         else:
