@@ -1,12 +1,12 @@
+import datetime as dt
 from django.contrib.auth.models import User
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.contenttypes.fields import GenericRelation
-from django.core.mail import EmailMultiAlternatives
+from django.core.mail import EmailMessage, send_mail
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
 from django.db.models import Case, When, Value, Q
-from django.template import Context
-from django.template.loader import get_template
+from django.template.loader import render_to_string
 from common.models import (
     BaseModel,
     BaseCatalog,
@@ -38,14 +38,12 @@ APPROVED = "APPROVED"
 REJECTED = "REJECTED"
 AWAITS_VERIFICATION = "AWAITS_VERIFICATION"
 NO_QUESTIONNAIRE = "NO_QUESTIONNAIRE"
-IMPROVE = "IMPROVE"
 
 COND_ORDER = Case(
     When(Q(status__code=AWAITS_VERIFICATION), then=Value(0)),
     When(Q(status__code=NO_QUESTIONNAIRE), then=Value(1)),
-    When(Q(status__code=IMPROVE), then=Value(3)),
-    When(Q(status__code=APPROVED), then=Value(4)),
-    When(Q(status__code=REJECTED), then=Value(5)),
+    When(Q(status__code=APPROVED), then=Value(3)),
+    When(Q(status__code=REJECTED), then=Value(4)),
     default=Value(0),
     output_field=models.IntegerField(),
 )
@@ -462,22 +460,6 @@ class Applicant(BaseModel):
         import time
         username = f"{self.prep_level.shifr[:2]}{time.strftime('%y')}{str(order_num).zfill(4)}"
         return username
-
-    @staticmethod
-    def send_credentials(username, email, password):
-        url = "qwerty/asd"
-        context = Context({"username": username, "password": password, "url": url})
-        plain_text = get_template("applicant/email/txt/send_credentials.txt").render(context.dicts[1])
-        html = get_template("applicant/email/html/send_credentials.html").render(context.dicts[1])
-        subject, email_from, to = (
-            "Successfully registered",
-            "alibekkaparov@gmail.com",
-            [email],
-        )
-        message = EmailMultiAlternatives(subject, plain_text, email_from, to)
-        message.attach_alternative(html, "text/html")
-        result = message.send()
-        return result
 
     class Meta:
         verbose_name = "Абитуриент"
@@ -896,6 +878,13 @@ class RecruitmentPlan(BaseModel):
         on_delete=models.DO_NOTHING,
         verbose_name="Форма вступительного испытания"
     )
+    language = models.ForeignKey(
+        Language,
+        on_delete=models.SET_NULL,
+        blank=True,
+        null=True,
+        verbose_name='Язык обучения'
+    )
 
     class Meta:
         verbose_name = "План набора"
@@ -1211,6 +1200,12 @@ class Application(BaseModel):
         self.status = ApplicationStatus.objects.get(code=APPROVED)
         self.save()
         # TODO на подтверждение заявления модератором импортировать заявление в 1С
+        self.import_self_to_1c()
+        send_mail(
+            subject='Ваше заявление подтверждено',
+            message='Ваше заявление подтверждено модератором университета',
+            recipient_list=[self.creator.email]
+        )
         role = Role.objects.get(profile=self.creator)
         role.is_applicant, role.is_student = role.is_student, role.is_applicant
         role.save()
@@ -1219,11 +1214,14 @@ class Application(BaseModel):
         self.comments.create(creator=moderator, text=comment)
         self.status = ApplicationStatus.objects.get(code=REJECTED)
         self.save()
-
-    def improve(self, moderator, comment):
-        self.comments.create(creator=moderator, text=comment)
-        self.status = ApplicationStatus.objects.get(code=IMPROVE)
-        self.save()
+        message = render_to_string('applicant/email/html/application_rejected.html', {
+            'rejected_at': dt.datetime.now().strftime('%d.%m.%Y %H:%I'),
+            'reason': comment
+        })
+        subject = 'Ваше заявление отклонено'
+        email = EmailMessage(subject=subject, body=message, to=self.creator.email)
+        email.send()
+        return
 
     @property
     def status_info(self):
