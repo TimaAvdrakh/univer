@@ -64,6 +64,8 @@ class AddressClassifierSerializer(serializers.ModelSerializer):
 
 
 class AddressSerializer(serializers.ModelSerializer):
+    info = serializers.ReadOnlyField()
+
     class Meta:
         model = models.Address
         fields = "__all__"
@@ -219,6 +221,7 @@ class QuestionnaireSerializer(serializers.ModelSerializer):
     address_of_residence = AddressSerializer(required=True)
     userprivilegelist = UserPrivilegeListSerializer(required=False, many=False)
     phone = ProfilePhoneSerializer(required=True)
+    info = serializers.ReadOnlyField()
 
     class Meta:
         model = models.Questionnaire
