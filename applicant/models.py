@@ -34,6 +34,7 @@ from organizations.models import (
 )
 from organizations.models import DocumentType
 
+
 APPROVED = "APPROVED"
 REJECTED = "REJECTED"
 AWAITS_VERIFICATION = "AWAITS_VERIFICATION"
@@ -42,8 +43,8 @@ NO_QUESTIONNAIRE = "NO_QUESTIONNAIRE"
 COND_ORDER = Case(
     When(Q(status__code=AWAITS_VERIFICATION), then=Value(0)),
     When(Q(status__code=NO_QUESTIONNAIRE), then=Value(1)),
-    When(Q(status__code=APPROVED), then=Value(3)),
-    When(Q(status__code=REJECTED), then=Value(4)),
+    When(Q(status__code=APPROVED), then=Value(2)),
+    When(Q(status__code=REJECTED), then=Value(3)),
     default=Value(0),
     output_field=models.IntegerField(),
 )
@@ -499,10 +500,6 @@ class Applicant(BaseModel):
         import time
         username = f"{self.prep_level.shifr[:2]}{time.strftime('%y')}{str(order_num).zfill(4)}"
         return username
-
-    class Meta:
-        verbose_name = "Абитуриент"
-        verbose_name_plural = "Абитуриенты"
 
 
 # Сканы документов

@@ -108,7 +108,7 @@ class ApplicantTestCase(APITestCase):
         GovernmentAgency.objects.bulk_create([
             GovernmentAgency(**ga) for ga in [{'name': f'Gov agency {obj}'} for obj in self.OBJ_RANGE]
         ])
-    
+
     def setUp(self) -> None:
         super().setUp()
         self._USERNAME = '6B200001'
@@ -126,7 +126,6 @@ class ApplicantTestCase(APITestCase):
             login_sent=True
         )
         self.setup_refs()
-        self.campaign_types = AdmissionCampaignType.objects.all()
         self.education_types = EducationType.objects.all()
         self.statuses = ApplicationStatus.objects.all()
         self.prep_levels = PreparationLevel.objects.all()
@@ -163,14 +162,12 @@ class ApplicantTestCase(APITestCase):
             'consented': True,
         }
         response = self.client.post(
-            path='/api/v1/applicant/applicants/',
+            path='/api/v1/applicant/applications/',
             data=json.dumps(data),
             content_type='application/json'
         )
-        response_data = response.data
-        self.assertEqual(response.status_code, 201, f"Response fails: {response.status_code}")
-        self.assertEqual(response_data["order_number"], 1, f'Order starts from 1, got: {response_data["order_number"]}')
-        self.assertIsNotNone(response_data['user'], f"User didn't created, {response_data['user']}")
+        self.assertEqual(response.status_code, 201, f"Request failed, can't create application")
+        self.assertEqual(data['status'], AWAITS_VERIFICATION, 'Application is not in queue of verification')
 
     def test_create_questionnaire(self):
         data = {

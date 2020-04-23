@@ -99,7 +99,6 @@ class AdmissionCampaignSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
-# Создает только юзера
 class ApplicantSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Applicant
@@ -212,7 +211,6 @@ class ApplicantSerializer(serializers.ModelSerializer):
             raise ValidationError({"error": e})
 
 
-# Создает профиль и роль
 class QuestionnaireSerializer(serializers.ModelSerializer):
     family = FamilySerializer(required=True)
     id_doc = IdentityDocumentSerializer(required=True)

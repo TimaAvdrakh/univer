@@ -2,11 +2,6 @@ from modeltranslation.translator import register, TranslationOptions
 from .models import *
 
 
-@register(AdmissionCampaignType)
-class AdmissionCampaignTypeTranslationOptions(TranslationOptions):
-    fields = ('name',)
-
-
 @register(AdmissionCampaign)
 class AdmissionCampaignTranslationOptions(TranslationOptions):
     fields = ('name',)
@@ -39,11 +34,6 @@ class AddressTypeTranslationOptions(TranslationOptions):
 
 @register(AddressClassifier)
 class AddressClassifierTranslationOptions(TranslationOptions):
-    fields = ('name',)
-
-
-@register(Address)
-class AddressTranslationOptions(TranslationOptions):
     fields = ('name',)
 
 
