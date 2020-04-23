@@ -174,9 +174,9 @@ class SubApplication(BaseIdModel):
             verbose_name='Язык',
         )
 
-        virtual = models.BooleanField(
-            default=False,
-            verbose_name='Электронный вариант',
+        is_paper = models.BooleanField(
+            default=True,
+            verbose_name='Бумажный вариант',
         )
 
         copies = models.PositiveSmallIntegerField(
