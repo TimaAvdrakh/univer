@@ -1,6 +1,9 @@
+import sys
+
 from django.db import models
 from django.utils.translation import ugettext as _
 from common.models import BaseModel, BaseCatalog, BaseIdModel
+from django.utils import timezone
 
 
 # Сканы документов
@@ -72,24 +75,6 @@ class Status(BaseCatalog):
         blank=True,
         verbose_name='Ид в 1с',
     )
-    name_ru = models.CharField(
-        max_length=100,
-        default='',
-        blank=True,
-        verbose_name='Название статуса на русском',
-    )
-    name_kk = models.CharField(
-        max_length=100,
-        default='',
-        blank=True,
-        verbose_name='Название статуса на казахском',
-    )
-    name_en = models.CharField(
-        max_length=100,
-        default='',
-        blank=True,
-        verbose_name='Название статуса на английском',
-    )
 
     class Meta:
         verbose_name = 'Статус заявки'
@@ -121,7 +106,7 @@ class Application(BaseIdModel):
         'portal_users.Profile',
         on_delete=models.CASCADE,
         verbose_name='Профиль',
-        related_name='student_profile'
+        related_name='students_profile'
     )
 
     type = models.ForeignKey(
@@ -140,6 +125,7 @@ class Application(BaseIdModel):
     comment = models.TextField(
         default='',
         null=True,
+        blank=True,
     )
 
     responsible = models.CharField(
@@ -151,15 +137,13 @@ class Application(BaseIdModel):
 
     identity_doc = models.ForeignKey(
         IdentityDoc,
+        blank=True,
+        null=True,
         on_delete=models.DO_NOTHING,
         verbose_name=_("Identity document")
     )
 
-    result_doc = models.ForeignKey(
-        ServiceDoc,
-        on_delete=models.DO_NOTHING,
-        verbose_name=_("Result document")
-    )
+    send = models.BooleanField(default=False)
 
     class Meta:
         verbose_name = 'Заявка'
@@ -193,7 +177,7 @@ class SubApplication(BaseIdModel):
         verbose_name='Язык',
     )
 
-    virtual = models.BooleanField(
+    is_paper = models.BooleanField(
         default=False,
         verbose_name='Электронный вариант',
     )
@@ -203,6 +187,14 @@ class SubApplication(BaseIdModel):
         blank=True,
         null=True,
         default=1,
+    )
+
+    result_doc = models.ForeignKey(
+        ServiceDoc,
+        blank=True,
+        null=True,
+        on_delete=models.DO_NOTHING,
+        verbose_name=_("Result document")
     )
 
     class Meta:
