@@ -245,10 +245,10 @@ class UserCredentialAdmin(admin.ModelAdmin):
 @admin.register(models.InfoShowPermission)
 class InfoShowPermissionAdmin(admin.ModelAdmin):
     search_fields = (
-        'profile__first_name',
-        'profile__last_name',
-        'profile__middle_name',
+        "profile__first_name",
+        "profile__last_name",
+        "profile__middle_name",
     )
     list_display = [
-        'profile'
+        "profile",
     ]
