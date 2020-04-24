@@ -703,4 +703,5 @@ class InfoShowPermission(BaseModel):
         )
 
     class Meta:
-        verbose_name = 'Разрешения для отображения инфо пользователя'
+        verbose_name = 'Разрешение для отображения инфо пользователя'
+        verbose_name_plural = 'Разрешения для отображения инфо пользователя'

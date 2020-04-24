@@ -1013,6 +1013,8 @@ class StudentDisciplineShortSerializer2(serializers.ModelSerializer):
 
     # acad_period = serializers.CharField(read_only=True)
     discipline = serializers.CharField(read_only=True)
+    language = serializers.CharField(read_only=True)
+    teacher = serializers.CharField(read_only=True)
     load_type = serializers.CharField(read_only=True)
 
     class Meta:
@@ -1022,6 +1024,8 @@ class StudentDisciplineShortSerializer2(serializers.ModelSerializer):
             # 'study_plan',
             # 'acad_period',
             'discipline',
+            'language',
+            'teacher',
             'load_type',
             'control_form',
             'credit_obj',
@@ -1456,14 +1460,13 @@ class ChooseControlFormSerializer(serializers.ModelSerializer):
     def update(self, instance, validated_data):
         chosen_control_forms = validated_data.get('chosen_control_forms')
         instance.chosen_control_forms.set(chosen_control_forms)
-
+        instance.status.set(student_discipline_info_status['chosen'])
         return instance
 
 
 class ProfileForAdviserSerializer(serializers.ModelSerializer):
     """Список студентов для полного списка адвайзеру"""
     status = serializers.CharField()
-
 
     class Meta:
         model = models.Profile

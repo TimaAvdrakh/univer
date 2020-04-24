@@ -533,7 +533,7 @@ class StudentAllDisciplineListView(generics.ListAPIView):
                 study_plan_id=study_plan_id,
                 acad_period=acad_period,
                 # is_active=True,
-            ).order_by('discipline')
+            ).order_by('discipline__name')
             serializer = self.serializer_class(student_disciplines,
                                                many=True)
             item_key = acad_period.repr_name
