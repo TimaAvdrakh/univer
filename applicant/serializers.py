@@ -126,16 +126,10 @@ class ApplicantSerializer(serializers.ModelSerializer):
         return
 
     def validate(self, validated_data):
-
-        # Если не дал согласие на обработку - кинуть ошибку
-        if not validated_data["consented"]:
-            raise ValidationError({"error": "Consent to process personal data required"})
         # Если идентификационный документ с таким номер уже есть, также кинуть ошибку
         if validated_data["doc_num"]:
             if IdentityDocument.objects.filter(serial_number=validated_data["doc_num"]).exists():
-                raise ValidationError({"error": "Identity document with this serial number already exists"})
-        else:
-            raise ValidationError({"error": "document number is required"})
+                raise ValidationError({"error": "id_exists"})
         # Дальше валидирует сам Django, какие поля указаны в модели
         campaign_type = self.context['request'].data.get('campaign_type')
         today = dt.date.today()
@@ -149,12 +143,12 @@ class ApplicantSerializer(serializers.ModelSerializer):
         if campaigns.exists():
             validated_data['campaign'] = campaigns.first()
         else:
-            raise ValidationError({'error': 'no campaign found'})
+            raise ValidationError({"error": "no_campaign"})
         return validated_data
 
     def create(self, validated_data):
         if validated_data['password'] != validated_data['confirm_password']:
-            raise ValidationError({"error": "passwords don't match"})
+            raise ValidationError({"error": "pass_no_match"})
         # TODO проверку на то, что есть приемные кампании, которые принимают полученный уровень образования
         #  если он, есть продолжить регистрацию и создать абитуриента с профилем. Если нет вернуть ошибку и сообшение
         #  о том, что нет приемных кампаний с таким уровнем подготовки
@@ -167,7 +161,7 @@ class ApplicantSerializer(serializers.ModelSerializer):
                 order_number = 0
             elif order_number == 9999:
                 # По ТЗ
-                raise ValidationError({"error": "all places are occupied, see ya next year"})
+                raise ValidationError({"error": "places_exceeded"})
             applicant.order_number = order_number + 1
             applicant.password = make_password(raw_password)
             applicant.confirm_password = make_password(validated_data['confirm_password'])
@@ -192,12 +186,6 @@ class ApplicantSerializer(serializers.ModelSerializer):
             # Отправить письмо с верификацией
             try:
                 self.send_verification_email(user, [user.email], raw_password)
-                # applicant.send_credentials(
-                #     uid=user.uid,
-                #     username=username,
-                #     password=raw_password,
-                #     email=applicant.email
-                # )
             except Exception as e:
                 # Почтовый сервер может не работать
                 # applicant.delete()

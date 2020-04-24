@@ -147,6 +147,7 @@ class QuestionnaireViewSet(ModelViewSet):
             'last_name': profile.last_name,
             'middle_name': profile.middle_name,
             'email': profile.email,
+            'serial_number': profile.user.applicant.doc_num
         }
         return Response(data=data, status=HTTP_200_OK)
 

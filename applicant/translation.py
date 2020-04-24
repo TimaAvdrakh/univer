@@ -32,11 +32,6 @@ class AddressTypeTranslationOptions(TranslationOptions):
     fields = ('name',)
 
 
-@register(AddressClassifier)
-class AddressClassifierTranslationOptions(TranslationOptions):
-    fields = ('name',)
-
-
 @register(BudgetLevel)
 class BudgetLevelTranslationOptions(TranslationOptions):
     fields = ('name',)
@@ -49,4 +44,19 @@ class GrantTypeTranslationOptions(TranslationOptions):
 
 @register(InternationalCertType)
 class InternationalCertTypeTranslationOptions(TranslationOptions):
+    fields = ('name',)
+
+
+@register(AddressClassifier)
+class AddressClassifierTranslationOptions(TranslationOptions):
+    fields = ('name',)
+
+
+@register(Address)
+class AddressTranslationOptions(TranslationOptions):
+    fields = ('name',)
+
+
+@register(AdmissionCampaignType)
+class AdmissionCampaignTypeTranslationOptions(TranslationOptions):
     fields = ('name',)
