@@ -34,6 +34,7 @@ from organizations.models import (
 )
 from organizations.models import DocumentType
 
+
 APPROVED = "APPROVED"
 REJECTED = "REJECTED"
 AWAITS_VERIFICATION = "AWAITS_VERIFICATION"
@@ -42,8 +43,8 @@ NO_QUESTIONNAIRE = "NO_QUESTIONNAIRE"
 COND_ORDER = Case(
     When(Q(status__code=AWAITS_VERIFICATION), then=Value(0)),
     When(Q(status__code=NO_QUESTIONNAIRE), then=Value(1)),
-    When(Q(status__code=APPROVED), then=Value(3)),
-    When(Q(status__code=REJECTED), then=Value(4)),
+    When(Q(status__code=APPROVED), then=Value(2)),
+    When(Q(status__code=REJECTED), then=Value(3)),
     default=Value(0),
     output_field=models.IntegerField(),
 )
@@ -254,6 +255,45 @@ class Address(BaseCatalog):
         addresses = Address.objects.filter(lookup)
         return addresses
 
+    @property
+    def info(self):
+        info = {
+            'country': {
+                'uid': self.country.uid,
+                'name': self.country.name
+            }
+        }
+        if self.country.code == 'KZ':
+            if self.region:
+                info.update({
+                    'region': {
+                        'uid': self.region.uid,
+                        'name': self.region.name,
+                    }
+                })
+            if self.district:
+                info.update({
+                    'district': {
+                        'uid': self.district.uid,
+                        'name': self.district.name,
+                    }
+                })
+            if self.city:
+                info.update({
+                    'city': {
+                        'uid': self.city.uid,
+                        'name': self.city.name,
+                    }
+                })
+            if self.locality:
+                info.update({
+                    'locality': {
+                        'uid': self.locality.uid,
+                        'name': self.locality.name,
+                    }
+                })
+        return info
+
 
 # Состав семьи
 class Family(BaseModel):
@@ -460,10 +500,6 @@ class Applicant(BaseModel):
         import time
         username = f"{self.prep_level.shifr[:2]}{time.strftime('%y')}{str(order_num).zfill(4)}"
         return username
-
-    class Meta:
-        verbose_name = "Абитуриент"
-        verbose_name_plural = "Абитуриенты"
 
 
 # Сканы документов
@@ -705,6 +741,22 @@ class Questionnaire(BaseModel):
     class Meta:
         verbose_name = "Анкета"
         verbose_name_plural = "Анкеты"
+
+    def __str__(self):
+        if self.creator:
+            return f"Абитуриент {self.creator}"
+        else:
+            return f"Абитуриент {self.first_name_en} {self.last_name_en}"
+
+    @property
+    def info(self):
+        info = {
+            'nationality': {
+                'uid': self.nationality.uid,
+                'name': self.nationality.name,
+            }
+        }
+        return info
 
 
 # Список льгот пользователей

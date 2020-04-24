@@ -38,7 +38,8 @@ INSTALLED_APPS = [
     'univer_admin',
     'student_journal',
     'integration',
-    'applicant'
+    'applicant',
+    'applications'
 ]
 
 MIDDLEWARE = [
@@ -53,7 +54,6 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'corsheaders.middleware.CorsMiddleware',
 ]
 
 ROOT_URLCONF = 'portal.urls'
