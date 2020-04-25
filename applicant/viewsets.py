@@ -130,6 +130,14 @@ class QuestionnaireViewSet(ModelViewSet):
     queryset = models.Questionnaire.objects.all()
     serializer_class = serializers.QuestionnaireSerializer
 
+    def create(self, request, *args, **kwargs):
+        data = request.data
+        data['nationality'] = data['nationality']['uid']
+        address_match = data['address_matches']
+        if address_match == 'registration':
+            data.pop('address_of_temp_reg')
+        return super().create(request, *args, **kwargs)
+
     @action(methods=['get'], detail=False, url_name='my', url_path='my')
     def get_my_questionnaire(self, request, pk=None):
         profile = self.request.user.profile
@@ -212,6 +220,12 @@ class ApplicationViewSet(ModelViewSet):
 
     def create(self, request, *args, **kwargs):
         data = request.data
+        user = self.request.user
+        campaign = user.applicant.campaign
+        cdmc, icfl = campaign.info['cdmc'], campaign.info['icfl']
+        if not icfl:
+            data.pop('international_cert')
+
         # Вытаскиваем данные
         previous_education = data.pop('previous_education')
         test_result = data.pop('test_result')
@@ -227,6 +241,9 @@ class ApplicationViewSet(ModelViewSet):
         if grant:
             grant['speciality'] = grant['speciality']['uid']
             data['grant'] = grant
+
+        if len(directions) > cdmc:
+            directions = directions[:cdmc]
         for direction in directions:
             direction.update({
                 'education_base': direction['education_base']['uid'],
@@ -357,12 +374,7 @@ class ApplicationViewSet(ModelViewSet):
     @action(methods=['get'], detail=False, url_path='current-campaign', url_name='current_campaign')
     def get_current_campaign(self, request, pk=None):
         campaign = self.request.user.applicant.campaign
-        return Response(data={
-            # cdmc - максимум направлений, которые может выбрать абитуриент в этой кампании
-            'cdmc': campaign.chosen_directions_max_count,
-            # icfl - кампания принимает международные сертификаты
-            'icfl': campaign.inter_cert_foreign_lang
-        }, status=HTTP_200_OK)
+        return Response(data=campaign.info, status=HTTP_200_OK)
 
 
 class AdmissionCampaignTypeViewSet(ModelViewSet):
@@ -391,5 +403,5 @@ class AddressViewSet(ModelViewSet):
         if not name:
             raise ValidationError({"error": "pass name"})
         addresses = models.Address.get_by(name=name, code=code)
-        data = serializers.AddressSerializer(addresses, many=True).data
+        data = serializers.AddressClassifierSerializer(addresses, many=True).data
         return Response(data=data, status=HTTP_200_OK)

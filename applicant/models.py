@@ -154,6 +154,8 @@ class Address(BaseCatalog):
     )
     country = models.ForeignKey(
         Citizenship,
+        blank=True,
+        null=True,
         on_delete=models.DO_NOTHING,
         verbose_name="Страна",
         related_name="addresses",
@@ -192,11 +194,15 @@ class Address(BaseCatalog):
     )
     street = models.CharField(
         max_length=500,
-        verbose_name="Улица"
+        verbose_name="Улица",
+        blank=True,
+        null=True,
     )
     home_number = models.CharField(
         max_length=500,
-        verbose_name="Дом"
+        verbose_name="Дом",
+        blank=True,
+        null=True,
     )
     corpus = models.CharField(
         max_length=500,
@@ -212,7 +218,9 @@ class Address(BaseCatalog):
     )
     index = models.CharField(
         max_length=100,
-        verbose_name="Индекс"
+        verbose_name="Индекс",
+        blank=True,
+        null=True,
     )
 
     def save(self, *args, **kwargs):
@@ -240,20 +248,13 @@ class Address(BaseCatalog):
         verbose_name_plural = "Адреса"
 
     @staticmethod
-    def get_by(name: str, code: int = None):
+    def get_by(name: str, code: str = None):
+        code = int(code)
         lookup = (Q(name_ru__icontains=name) | Q(name_en__icontains=name) | Q(name_kk__icontains=name))
-        if code == 1:
-            lookup = lookup & Q(region__address_element_type=code)
-        elif code == 2:
-            lookup = lookup & Q(district__address_element_type=code)
-        elif code == 3:
-            lookup = lookup & Q(city__address_element_type=code)
-        elif code == 4:
-            lookup = lookup & Q(locality__address_element_type=code)
-        else:
-            pass
-        addresses = Address.objects.filter(lookup)
-        return addresses
+        if code in range(1, 5):
+            lookup = lookup & Q(address_element_type=code)
+        classifiers = AddressClassifier.objects.filter(lookup)
+        return classifiers
 
     @property
     def info(self):
@@ -424,6 +425,15 @@ class AdmissionCampaign(BaseCatalog):
     class Meta:
         verbose_name = "Приемная кампания"
         verbose_name_plural = "Приемные кампании"
+
+    @property
+    def info(self):
+        return {
+            # cdmc - максимум направлений, которые может выбрать абитуриент в этой кампании
+            'cdmc': self.chosen_directions_max_count,
+            # icfl - кампания принимает международные сертификаты
+            'icfl': self.inter_cert_foreign_lang
+        }
 
 
 # Абитуриент

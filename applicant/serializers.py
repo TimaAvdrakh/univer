@@ -73,6 +73,7 @@ class AddressSerializer(serializers.ModelSerializer):
 
 class FamilyMemberSerializer(serializers.ModelSerializer):
     address = AddressSerializer(required=True)
+    address_matches = serializers.CharField(required=False, allow_null=True)
 
     class Meta:
         model = models.FamilyMember
@@ -213,6 +214,37 @@ class QuestionnaireSerializer(serializers.ModelSerializer):
         model = models.Questionnaire
         fields = "__all__"
 
+    def validate(self, validated_data: dict):
+        address_of_registration = validated_data.get('address_of_registration')
+        address_of_temp_reg = validated_data.get('address_of_temp_reg', None)
+        address_of_residence = validated_data.get('address_of_residence')
+
+        family: dict = validated_data.get('family')
+        members: dict = family.pop('members')
+        # Если хоть у одного члена семьи будет стоять временный адрес регистрации,
+        # а абитуриент не указал его - кидать ошибку
+        if any(filter(lambda x: x['address_matches'] == 'm_temp', members)) and not address_of_temp_reg:
+            raise ValidationError({
+                "error": "no_temp_reg_for_member",
+                "message": "Temporary address wasn't provided and set as address of member"
+            })
+        member: dict
+        for member in members:
+            address = member.pop('address')
+            address_match = member.pop('address_matches')
+            if address_match == 'm_reg':
+                address = address_of_registration
+            elif address_match == 'm_temp':
+                address = address_of_temp_reg
+            elif address_match == 'm_res':
+                address = address_of_residence
+            elif address_match == 'no_match':
+                address['name_en'] = address['name_kk'] = address['name_ru']
+            member['address'] = address
+        family['members'] = members
+
+        return validated_data
+
     def create(self, validated_data):
         questionnaire = None
         try:
@@ -269,7 +301,8 @@ class QuestionnaireSerializer(serializers.ModelSerializer):
                 application.status = models.ApplicationStatus.objects.get(code=models.AWAITS_VERIFICATION)
                 application.save()
         except Exception as e:
-            questionnaire.delete()
+            if questionnaire and isinstance(questionnaire, models.Questionnaire):
+                questionnaire.delete()
             raise ValidationError({"error": f"an error occurred\n{e}"})
         return questionnaire
 
@@ -442,7 +475,7 @@ class ApplicationLiteSerializer(serializers.ModelSerializer):
         subject = 'Заявление поступило на проверку'
         message = f'Ваше заявление на поступление от {today} отправлено на проверку модератору. ' \
                   f'Ожидайте дальнейших действий'
-        send_mail(subject=subject, message=message, recipient_list=[recipient])
+        send_mail(subject=subject, message=message, from_email='', recipient_list=[recipient])
         return
 
     def create(self, validated_data: dict):
@@ -515,7 +548,10 @@ class ApplicationLiteSerializer(serializers.ModelSerializer):
             )
             application.directions.add(*directions)
             application.save()
-            self.send_on_create(recipient=creator.email)
+            try:
+                self.send_on_create(recipient=creator.email)
+            except Exception as e:
+                print(e)
         except Exception as e:
             if application and isinstance(application, models.Application):
                 application.delete()
