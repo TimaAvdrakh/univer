@@ -225,13 +225,22 @@ class Address(BaseCatalog):
 
     def save(self, *args, **kwargs):
         if not self.name:
-            # В инглише однако порядок наоборот
-            self.name_en = f"{self.region} region, {self.city}, st. {self.street}, house number {self.home_number}"
-            self.name_ru = f"{self.region}, г. {self.city}, ул. {self.street}, дом №{self.home_number}"
-            self.name_kk = (
-                f"{self.region}, {self.city} қ. {self.street}, № {self.home_number} үй"
-            )
-
+            if self.region:
+                self.name_en = f"{self.region} region, "
+                self.name_ru = f"область {self.region}, "
+                self.name_kk = f"{self.region} облысы, "
+            if self.city:
+                self.name_en = f"{self.city} city, "
+                self.name_ru = f"г.{self.city}, "
+                self.name_kk = f"{self.city} қ., "
+            if self.street:
+                self.name_en = f"St. {self.street}, "
+                self.name_ru = f"ул. {self.street}, "
+                self.name_kk = f"{self.street} к., "
+            if self.home_number:
+                self.name_en = f"#{self.home_number}, "
+                self.name_ru = f"д. №{self.home_number}, "
+                self.name_kk = f"№{self.home_number} үй, "
             if self.corpus:
                 self.name_en += f", building {self.corpus}"
                 self.name_ru += f", корпус {self.corpus}"
@@ -240,7 +249,7 @@ class Address(BaseCatalog):
                 self.name_en += f", apartment {self.apartment}"
                 self.name_ru += f", квартира {self.apartment}"
                 self.name_kk += f", {self.apartment} пәтер"
-            self.name = self.name_kk
+            self.name = self.name_ru
         super().save(*args, **kwargs)
 
     class Meta:
@@ -1191,6 +1200,30 @@ class TestResult(BaseModel):
         verbose_name_plural = "Результаты ЕНТ/КТ"
 
 
+# Документы поступающего
+class AdmissionDocument(BaseModel):
+    recruitment_plan = models.ForeignKey(
+        RecruitmentPlan,
+        on_delete=models.SET_NULL,
+        verbose_name='План набора',
+        blank=True,
+        null=True,
+    )
+    creator = models.ForeignKey(
+        Profile,
+        on_delete=models.CASCADE,
+        verbose_name='Профиль'
+    )
+    files = models.ManyToManyField(
+        DocScan,
+        verbose_name='Сканы документов'
+    )
+
+    class Meta:
+        verbose_name = 'Перечень документов для приема на обучение'
+        verbose_name_plural = 'Перечни документов для приема на обучение'
+
+
 # Заявление
 class Application(BaseModel):
     previous_education = models.ForeignKey(
@@ -1242,11 +1275,11 @@ class Application(BaseModel):
         blank=True,
         null=True
     )
-    files = models.ManyToManyField(
-        DocScan,
+    admission_document = models.ForeignKey(
+        AdmissionDocument,
+        on_delete=models.SET_NULL,
         blank=True,
-        related_name='applications',
-        verbose_name='Файлы для поступления'
+        null=True,
     )
 
     class Meta:
@@ -1323,33 +1356,3 @@ class Application(BaseModel):
             return True
         else:
             return False
-
-
-class AdmissionDocument(BaseModel):
-    campaign = models.ForeignKey(
-        AdmissionCampaign,
-        on_delete=models.SET_NULL,
-        verbose_name='Кампания',
-        blank=True,
-        null=True,
-    )
-    recruitment_plan = models.ForeignKey(
-        RecruitmentPlan,
-        on_delete=models.SET_NULL,
-        verbose_name='План набора',
-        blank=True,
-        null=True,
-    )
-    creator = models.ForeignKey(
-        Profile,
-        on_delete=models.CASCADE,
-        verbose_name='Профиль'
-    )
-    files = models.ManyToManyField(
-        DocScan,
-        verbose_name='Сканы документов'
-    )
-
-    class Meta:
-        verbose_name = 'Перечень документов для приема на обучение'
-        verbose_name_plural = 'Перечни документов для приема на обучение'

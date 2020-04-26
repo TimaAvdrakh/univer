@@ -145,7 +145,7 @@ class QuestionnaireViewSet(ModelViewSet):
         if queryset.exists():
             return Response(data=serializers.QuestionnaireSerializer(queryset.first()).data, status=HTTP_200_OK)
         else:
-            return Response(data={"uid": None}, status=HTTP_200_OK)
+            return Response(data=None, status=HTTP_200_OK)
 
     @action(methods=['get'], detail=False, url_path='general-info', url_name='q_general_info')
     def general_info(self, request, pk=None):
@@ -309,7 +309,7 @@ class ApplicationViewSet(ModelViewSet):
         if queryset.exists():
             return Response(data=serializers.ApplicationLiteSerializer(queryset.first()).data, status=HTTP_200_OK)
         else:
-            return Response(data={"uid": None}, status=HTTP_200_OK)
+            return Response(data=None, status=HTTP_200_OK)
 
     @action(methods=['post'], detail=True, url_path='apply-action', url_name='apply_action')
     def apply_action(self, request, pk=None):
@@ -382,10 +382,6 @@ class AdmissionCampaignTypeViewSet(ModelViewSet):
     serializer_class = serializers.AdmissionCampaignTypeSerializer
     permission_classes = (IsAdminOrReadOnly,)
 
-    @action(methods=['get'], detail=False, url_path='campaign-info', url_name='my_campign_info')
-    def get_my_campaign_info(self, request, pk=None):
-        profile = self.request.user.profile
-
 
 class AdmissionCampaignViewSet(ModelViewSet):
     queryset = models.AdmissionCampaign.objects.all()
@@ -405,3 +401,22 @@ class AddressViewSet(ModelViewSet):
         addresses = models.Address.get_by(name=name, code=code)
         data = serializers.AddressClassifierSerializer(addresses, many=True).data
         return Response(data=data, status=HTTP_200_OK)
+
+
+class AdmissionDocumentViewSet(ModelViewSet):
+    queryset = models.AdmissionDocument.objects.all()
+    serializer_class = serializers.AdmissionDocumentSerializer
+
+    def create(self, request, *args, **kwargs):
+        profile = self.request.user.profile
+        request.data['creator'] = profile
+        return super().create(request, *args, **kwargs)
+
+    @action(methods=['get'], detail=False, url_name='my', url_path='my')
+    def get_my_attachments(self, request, pk=None):
+        profile: Profile = self.request.user.profile
+        queryset = self.queryset.filter(creator=profile)
+        if queryset.exists():
+            return Response(data=serializers.AdmissionDocumentSerializer(queryset.first()).data, status=HTTP_200_OK)
+        else:
+            return Response(data=None, status=HTTP_200_OK)

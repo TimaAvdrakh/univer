@@ -640,3 +640,9 @@ class ApplicationSerializer(ApplicationLiteSerializer):
     class Meta:
         model = models.Application
         fields = '__all__'
+
+
+class AdmissionDocumentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.AdmissionDocument
+        fields = '__all__'
