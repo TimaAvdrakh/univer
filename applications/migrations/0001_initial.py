@@ -120,9 +120,9 @@ class Migration(migrations.Migration):
                 ('comment', models.TextField(default='', null=True)),
                 ('responsible', models.CharField(blank=True, default='', max_length=200, verbose_name='Ответственный специалист')),
                 ('profile', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='portal_users.Profile', verbose_name='Профиль')),
-                ('status', models.ForeignKey(on_delete=django.db.models.deletion.DO_NOTHING, to='applications.Status', verbose_name='Status')),
+                ('status', models.ForeignKey(on_delete=django.db.models.deletion.DO_NOTHING, to='applications.Status', verbose_name='Status', null=True)),
                 ('type', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, to='applications.Type')),
-                ('identity_doc', models.ForeignKey(on_delete=django.db.models.deletion.DO_NOTHING, to='applications.IdentityDoc', verbose_name='Identity document')),
+                ('identity_doc', models.ForeignKey(on_delete=django.db.models.deletion.DO_NOTHING, to='applications.IdentityDoc', verbose_name='Identity document', null=True)),
             ],
             options={
                 'verbose_name': 'Заявка',
@@ -143,7 +143,7 @@ class Migration(migrations.Migration):
                 ('copies', models.PositiveSmallIntegerField(blank=True, default=1, null=True, verbose_name='Copies')),
                 ('application', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, to='applications.Application')),
                 ('subtype', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, to='applications.SubType')),
-                ('result_doc', models.ForeignKey(on_delete=django.db.models.deletion.DO_NOTHING, to='applications.ServiceDoc', verbose_name='Result document')),
+                ('result_doc', models.ForeignKey(on_delete=django.db.models.deletion.DO_NOTHING, to='applications.ServiceDoc', verbose_name='Result document', null=True)),
             ],
             options={
                 'verbose_name': 'Справка',

@@ -1,6 +1,11 @@
+import sys
+
 from django.db import models
 from django.utils.translation import ugettext as _
 from common.models import BaseModel, BaseCatalog, BaseIdModel
+#from django.utils import timezone
+from django.contrib.postgres.fields import ArrayField
+
 
 
 # Сканы документов
@@ -70,130 +75,137 @@ class Status(BaseCatalog):
     )
 
     class Meta:
-        verbose_name = 'Статус заявки'
-        verbose_name_plural = 'Статусы заявок'
+        verbose_name = 'Статус'
+        verbose_name_plural = 'Статусы'
+# DEFAULT_STATUS = Status.objects.get(c1_id="1")
+
 
 class SubType(BaseCatalog):
-        type = models.ForeignKey(
-            Type,
-            on_delete=models.CASCADE,
-            verbose_name=_("Type"),
-            blank=True,
-            null=True,
-        )
+    type = models.ForeignKey(
+        Type,
+        on_delete=models.CASCADE,
+        verbose_name=_("Type"),
+        blank=True,
+        null=True,
+    )
 
-        example = models.ForeignKey(
-            Example,
-            on_delete=models.DO_NOTHING,
-            verbose_name=_("Document example")
-        )
+    example = models.ForeignKey(
+        Example,
+        on_delete=models.DO_NOTHING,
+        verbose_name=_("Document example"),
+        blank=True,
+        null=True,
+    )
 
-        class Meta:
-            verbose_name = 'Вид справки'
-            verbose_name_plural = 'Виды справок'
+    class Meta:
+        verbose_name = 'Вид справки'
+        verbose_name_plural = 'Виды справок'
 
 class Application(BaseIdModel):
-        profile = models.ForeignKey(
-            'portal_users.Profile',
-            on_delete=models.CASCADE,
-            verbose_name='Профиль',
-            related_name='students_profile',
-        )
+    profile = models.ForeignKey(
+        'portal_users.Profile',
+        on_delete=models.CASCADE,
+        verbose_name='Профиль',
+        related_name='students_profile'
+    )
 
-        type = models.ForeignKey(
-            Type,
-            on_delete=models.SET_NULL,
-            blank=True,
-            null=True,
-        )
+    type = models.ForeignKey(
+        Type,
+        on_delete=models.SET_NULL,
+        blank=True,
+        null=True,
+    )
 
-        status = models.ForeignKey(
-            Status,
-            on_delete=models.DO_NOTHING,
-            verbose_name=_("Status")
-        )
+    identity_doc = models.ForeignKey(
+        IdentityDoc,
+        blank=True,
+        null=True,
+        on_delete=models.DO_NOTHING,
+        verbose_name=_("Identity document")
+    )
 
-        comment = models.TextField(
-            default='',
-            null=True,
-            blank=True,
-        )
+    send = models.BooleanField(
+        default=False,
+        verbose_name=_("Is send to 1C")
+    )
 
-        responsible = models.CharField(
-            max_length=200,
-            default='',
-            blank=True,
-            verbose_name='Ответственный специалист',
-        )
+    def __str__(self):
+        return '{}) {} - {} {}'.format(self.id,
+                self.type.name, self.profile.last_name, self.profile.first_name)
 
-        identity_doc = models.ForeignKey(
-            IdentityDoc,
-            blank=True,
-            null=True,
-            on_delete=models.DO_NOTHING,
-            verbose_name=_("Identity document")
-        )
-
-        send = models.BooleanField(
-            default=False,
-            verbose_name=_("Is send to 1C")
-        )
-
-        def __str__(self):
-            return '{}) {} - {} {}'.format(self.id,
-                    self.type.name, self.profile.last_name, self.profile.first_name)
-
-        class Meta:
-            verbose_name = 'Заявка'
-            verbose_name_plural = 'Заявки'
+    class Meta:
+        verbose_name = 'Заявка'
+        verbose_name_plural = 'Заявки'
 
 class SubApplication(BaseIdModel):
-        subtype = models.ForeignKey(
-            SubType,
-            on_delete=models.SET_NULL,
-            blank=True,
-            null=True,
-        )
+    subtype = models.ForeignKey(
+        SubType,
+        on_delete=models.SET_NULL,
+        blank=True,
+        null=True,
+    )
 
-        application = models.ForeignKey(
-            Application,
-            on_delete=models.CASCADE,
-            blank=True,
-            null=True,
-        )
+    application = models.ForeignKey(
+        Application,
+        on_delete=models.CASCADE,
+        blank=True,
+        null=True,
+    )
 
-        organization = models.TextField(
-            default='',
-            null=True,
-        )
+    organization = models.TextField(
+        default='',
+        null=True,
+    )
 
-        lang = models.CharField(
-            max_length=5,
-            default='',
-            blank=True,
-            verbose_name='Язык',
-        )
+    lang = ArrayField(
+        models.CharField(max_length=20, blank=True),
+        size=3,
+        default=list,
+        verbose_name='Языки',
+    )
 
-        is_paper = models.BooleanField(
-            default=True,
-            verbose_name='Бумажный вариант',
-        )
+    is_paper = models.BooleanField(
+        default=True,
+        verbose_name='Бумажный вариант',
+    )
 
-        copies = models.PositiveSmallIntegerField(
-            verbose_name=_("Copies"),
-            blank=True,
-            null=True,
-            default=1,
-        )
+    copies = models.PositiveSmallIntegerField(
+        verbose_name=_("Copies"),
+        blank=True,
+        null=True,
+        default=1,
+    )
 
-        result_doc = models.ForeignKey(
-            ServiceDoc,
-            blank=True,
-            null=True,
-            on_delete=models.DO_NOTHING,
-            verbose_name=_("Result document")
-        )
+    responsible = models.CharField(
+        max_length=200,
+        default='',
+        blank=True,
+        verbose_name='Ответственный специалист',
+    )
 
-        class Meta:
-            verbose_name = 'Справка'
-            verbose_name_plural = 'Справки'
+    result_doc = models.ForeignKey(
+        ServiceDoc,
+        blank=True,
+        null=True,
+        on_delete=models.DO_NOTHING,
+        verbose_name=_("Result document")
+    )
+
+    status = models.ForeignKey(
+        Status,
+        on_delete=models.DO_NOTHING,
+        verbose_name=_("Status"),
+        null=True,
+        # default=DEFAULT_STATUS
+    )
+
+    comment = models.TextField(
+        default='',
+        null=True,
+        blank=True,
+        verbose_name='Комментарий к статусу'
+    )
+
+    class Meta:
+        verbose_name = 'Справка'
+        verbose_name_plural = 'Справки'

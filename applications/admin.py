@@ -36,9 +36,6 @@ class ApplicationAdmin(admin.ModelAdmin):
     )
     list_display = [
         'type',
-        'status',
-        'comment',
-        'responsible',
         'identity_doc',
     ]
 admin.site.register(models.SubApplication)

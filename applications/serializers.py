@@ -16,12 +16,15 @@ class SubTypeSerializer(serializers.ModelSerializer):
         fields = (
             'uid',
             'name',
-            'type',
         )
 
     def to_representation(self, instance):
         data = super().to_representation(instance=instance)
-        data['example_file'] = instance.example.file.url
+        if instance.example:
+            data['example_file'] = instance.example.file.url
+        else:
+            data['example_file'] = ""
+
         return data
 
 class ApplicationSerializer(serializers.ModelSerializer):
@@ -31,9 +34,11 @@ class ApplicationSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         data = super().to_representation(instance=instance)
-        #sub_application = SubApplication.objects.filter(application=instance.id)
+        data['type'] = instance.type.name
         sub_application = SubApplication.objects.filter(application=instance.id)
-        sub_application_serializer = SubApplicationSerializer(instance=sub_application, many=True)
+        sub_application_serializer = SubApplicationSerializer(
+            instance=sub_application, many=True
+        )
         data['sub_application'] = sub_application_serializer.data
         return data
 
@@ -58,3 +63,14 @@ class SubApplicationSerializer(serializers.ModelSerializer):
     class Meta:
         model = SubApplication
         fields = "__all__"
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance=instance)
+        data['subtype'] = instance.subtype.name
+        data['status'] = instance.status.name
+
+        if instance.result_doc:
+            data['result_doc_file'] = instance.result_doc.file.url
+        else:
+            data['result_doc_file'] = ""
+        return data
