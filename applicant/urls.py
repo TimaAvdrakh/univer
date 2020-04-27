@@ -20,6 +20,7 @@ router.register(r"applications", viewsets.ApplicationViewSet, "applications")
 router.register(r"campaign-types", viewsets.AdmissionCampaignTypeViewSet, "campaign-types")
 router.register(r"campaigns", viewsets.AdmissionCampaignViewSet, "campaigns")
 router.register(r"addresses", viewsets.AddressViewSet, "addresses")
+router.register(r"attachments", viewsets.AdmissionDocumentViewSet, "documents")
 urlpatterns = router.urls
 
 # endpoint для файлов
