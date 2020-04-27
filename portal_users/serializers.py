@@ -17,7 +17,7 @@ from portal.curr_settings import student_discipline_status, student_discipline_i
 from django.db.models import Q
 from common import serializers as common_serializers
 from uuid import uuid4
-from portal.curr_settings import current_site, FIELDS_TO_SHOW
+from portal.curr_settings import current_site
 from advisors.models import AdvisorCheck
 from validate_email import validate_email
 from datetime import date
