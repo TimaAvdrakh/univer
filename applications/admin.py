@@ -17,6 +17,7 @@ class TypeAdmin(admin.ModelAdmin):
         'name',
     ]
 
+
 @admin.register(models.SubType)
 class TypeAdmin(admin.ModelAdmin):
     search_fields = (
@@ -34,6 +35,7 @@ admin.site.register(models.IdentityDoc)
 admin.site.register(models.ServiceDoc)
 admin.site.register(models.Status)
 
+
 @admin.register(models.Application)
 class ApplicationAdmin(admin.ModelAdmin):
     autocomplete_fields = (
@@ -41,9 +43,6 @@ class ApplicationAdmin(admin.ModelAdmin):
     )
     list_display = [
         'type',
-        'status',
-        'comment',
-        'responsible',
         'identity_doc',
     ]
 
