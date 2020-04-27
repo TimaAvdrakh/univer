@@ -1270,7 +1270,6 @@ class Application(BaseModel):
         on_delete=models.CASCADE,
         verbose_name='Заявитель',
     )
-    comments = GenericRelation(Comment)
     questionnaire = models.OneToOneField(
         Questionnaire,
         on_delete=models.SET_NULL,
