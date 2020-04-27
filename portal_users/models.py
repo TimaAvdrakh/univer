@@ -683,14 +683,14 @@ class InfoShowPermission(BaseModel):
         verbose_name='Дополнительная информация',
     )
     iin = models.BooleanField(
-        default=True,
+        default=False,
         verbose_name='ИИН',
     )
     identity_documents = models.BooleanField(
-        default=True,
+        default=False,
         verbose_name='Документ',
     )
-    education = models.BooleanField(
+    educations = models.BooleanField(
         default=True,
         verbose_name='Информация об образовании',
     )

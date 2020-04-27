@@ -17,7 +17,7 @@ from portal.curr_settings import student_discipline_status, student_discipline_i
 from django.db.models import Q
 from common import serializers as common_serializers
 from uuid import uuid4
-from portal.curr_settings import current_site
+from portal.curr_settings import current_site, FIELDS_TO_SHOW
 from advisors.models import AdvisorCheck
 from validate_email import validate_email
 from datetime import date
@@ -81,7 +81,7 @@ class InformationUsersCanSeeSerializer(serializers.ModelSerializer):
             'interests',
             'extra_data',
             'identity_documents',
-            'education',
+            'educations',
             'iin',
         )
 
@@ -143,22 +143,6 @@ class ProfileFullSerializer(serializers.ModelSerializer):
     middleName = serializers.CharField(
         max_length=100, source="middle_name", read_only=True,
     )
-    gender = serializers.CharField(read_only=True,)
-    marital_status = serializers.CharField(read_only=True,)
-    interests = InterestSerializer(many=True, required=False,)
-    interests_for_del = serializers.ListField(
-        child=serializers.CharField(), required=False,
-    )
-    achievements = AchievementFullSerializer(many=True, required=False,)
-    achievements_for_del = serializers.ListField(
-        child=serializers.CharField(), required=False,
-    )
-    identity_documents = common_serializers.IdentityDocumentSerializer(
-        many=True, required=False,
-    )
-    educations = common_serializers.EducationSerializer(many=True, required=False,)
-    nationality = serializers.CharField()
-    citizenship = serializers.CharField()
 
     class Meta:
         model = models.Profile
@@ -168,28 +152,8 @@ class ProfileFullSerializer(serializers.ModelSerializer):
             "firstName",
             "lastName",
             "middleName",
-            "first_name_en",
-            "last_name_en",
-            "birth_date",
-            "birth_place",
-            "nationality",
-            "citizenship",
-            "gender",
-            "marital_status",
-            "address",
-            "phone",
-            "email",
-            "skype",
             "avatar",
-            "interests",
-            "interests_for_del",
-            "achievements",
-            "achievements_for_del",
-            "extra_data",
-            "iin",
-            "identity_documents",
-            "educations",
-            "notify_me_from_email",
+
         )
         read_only_fields = ("iin",)
 
@@ -242,6 +206,7 @@ class ProfileFullSerializer(serializers.ModelSerializer):
             data.update(TeacherSerializer(teacher).data)
             teacher_positions = models.TeacherPosition.objects.filter(profile=instance,
                                                                       is_active=True)
+
             data['positions'] = TeacherPositionSerializer(teacher_positions,
                                                           many=True).data
         role_serializer = RoleSerializer(instance=role)
@@ -249,17 +214,67 @@ class ProfileFullSerializer(serializers.ModelSerializer):
 
         data["is_employee"] = is_employee
 
-        if request.user.profile != instance:
-            data["iin"] = ""
-
-        if request.user.profile != instance:
-            data["identity_documents"] = []
-
         fields_to_show = models.InfoShowPermission.objects.get_or_create(profile=instance)
-        data['fields_to_show'] = InformationUsersCanSeeSerializer(fields_to_show,
-                                                                  many=True).data
 
+        fields = InformationUsersCanSeeSerializer(fields_to_show, many=True).data[
+            0 if fields_to_show[0] else 1
+        ]
+        fields_serializer = FieldsToShowSerializer(instance=instance, many=True).child.data
+        if request.user.profile != instance:
+            for field in fields:
+                if fields[field]:
+                    data[field] = fields_serializer[field]
+        else:
+            for field in fields_serializer:
+                data[field] = fields_serializer[field]
+            data['fields_to_show'] = InformationUsersCanSeeSerializer(fields_to_show,
+                                                                      many=True).data
         return data
+
+
+class FieldsToShowSerializer(serializers.ModelSerializer):
+    gender = serializers.CharField(read_only=True, )
+    marital_status = serializers.CharField(read_only=True,)
+    interests = InterestSerializer(many=True, required=False,)
+    interests_for_del = serializers.ListField(
+        child=serializers.CharField(), required=False,
+    )
+    achievements = AchievementFullSerializer(many=True, required=False,)
+    achievements_for_del = serializers.ListField(
+        child=serializers.CharField(), required=False,
+    )
+    identity_documents = common_serializers.IdentityDocumentSerializer(
+        many=True, required=False,
+    )
+    educations = common_serializers.EducationSerializer(many=True, required=False,)
+    nationality = serializers.CharField()
+    citizenship = serializers.CharField()
+
+    class Meta:
+        model = models.Profile
+        fields = (
+            "first_name_en",
+            "last_name_en",
+            "birth_date",
+            "birth_place",
+            "nationality",
+            "citizenship",
+            "gender",
+            "marital_status",
+            "address",
+            "phone",
+            "email",
+            "skype",
+            "interests",
+            "interests_for_del",
+            "achievements",
+            "achievements_for_del",
+            "extra_data",
+            "iin",
+            "identity_documents",
+            "educations",
+            "notify_me_from_email",
+        )
 
 
 class ProfileDetailSerializer(serializers.ModelSerializer):
@@ -1460,7 +1475,6 @@ class ChooseControlFormSerializer(serializers.ModelSerializer):
     def update(self, instance, validated_data):
         chosen_control_forms = validated_data.get('chosen_control_forms')
         instance.chosen_control_forms.set(chosen_control_forms)
-        instance.status.set(student_discipline_info_status['chosen'])
         return instance
 
 
