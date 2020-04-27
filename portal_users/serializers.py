@@ -829,6 +829,7 @@ class StudyPlanSerializer(serializers.ModelSerializer):
         model = org_models.StudyPlan
         fields = (
             "uid",
+            "uid_1c",
             "student",
             "study_period",
             "group",
