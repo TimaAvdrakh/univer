@@ -136,14 +136,17 @@ class ApplicantSerializer(serializers.ModelSerializer):
         campaigns = models.AdmissionCampaign.objects.filter(
             type=campaign_type,
             is_active=True,
-            year=dt.datetime.now().year,
+            year=today.year,
             start_date__lte=today,
             end_date__gte=today
         )
         if campaigns.exists():
             validated_data['campaign'] = campaigns.first()
         else:
-            raise ValidationError({"error": "no_campaign"})
+            raise ValidationError({
+                "error": "no_campaign",
+                "campaigns": AdmissionCampaignSerializer(campaigns, many=True).data}
+            )
         return validated_data
 
     def create(self, validated_data):
