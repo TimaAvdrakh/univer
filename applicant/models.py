@@ -632,6 +632,24 @@ class Questionnaire(BaseModel):
         on_delete=models.DO_NOTHING,
         verbose_name="Подающий анкету",
     )
+    first_name = models.CharField(
+        "Имя",
+        max_length=255,
+        blank=True,
+        null=True,
+    )
+    last_name = models.CharField(
+        "Имя",
+        max_length=255,
+        blank=True,
+        null=True,
+    )
+    middle_name = models.CharField(
+        "Имя",
+        max_length=255,
+        blank=True,
+        null=True,
+    )
     first_name_en = models.CharField(
         "Имя на латинице",
         max_length=255,
@@ -1286,6 +1304,11 @@ class Application(BaseModel):
     class Meta:
         verbose_name = "Заявление"
         verbose_name_plural = "Заявления"
+
+    @property
+    def max_choices(self):
+        campaign: AdmissionCampaign = self.creator.user.applicant.campaign
+        return campaign.chosen_directions_max_count
 
     def import_self_to_1c(self):
         pass

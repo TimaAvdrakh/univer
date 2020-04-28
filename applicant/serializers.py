@@ -11,7 +11,6 @@ from django.utils.translation import get_language
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 from common.models import IdentityDocument, GovernmentAgency, DocumentType
-from common.serializers import IdentityDocumentSerializer
 from portal_users.serializers import ProfilePhoneSerializer
 from portal_users.models import Profile, Role, ProfilePhone
 from organizations.models import Education
@@ -200,9 +199,15 @@ class ApplicantSerializer(serializers.ModelSerializer):
             raise ValidationError({"error": e})
 
 
+class IDDocSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.IdentityDocument
+        fields = '__all__'
+
+
 class QuestionnaireSerializer(serializers.ModelSerializer):
     family = FamilySerializer(required=True)
-    id_doc = IdentityDocumentSerializer(required=True)
+    id_doc = IDDocSerializer(required=True)
     address_of_registration = AddressSerializer(required=False)
     address_of_temp_reg = AddressSerializer(required=False)
     address_of_residence = AddressSerializer(required=True)
@@ -288,13 +293,16 @@ class QuestionnaireSerializer(serializers.ModelSerializer):
             validated_data['family'] = family
             if address_of_temp_reg:
                 validated_data['address_of_temp_reg'] = models.Address.objects.create(**address_of_temp_reg)
+            questionnaire: models.Questionnaire = super().create(validated_data)
             if userprivilegelist and len(userprivilegelist['privileges']) > 0:
                 privileges = userprivilegelist.pop('privileges')
-                user_privilege_list = models.UserPrivilegeList.objects.create(**userprivilegelist)
+                user_privilege_list = models.UserPrivilegeList.objects.create(
+                    **userprivilegelist,
+                    questionnaire=questionnaire
+                )
                 for privilege in privileges:
                     models.Privilege.objects.create(**privilege, list=user_privilege_list)
                 validated_data['userprivilegelist'] = user_privilege_list
-            questionnaire: models.Questionnaire = super().create(validated_data)
             application_set = models.Application.objects.filter(creator=profile)
             if application_set.exists():
                 application = application_set.first()
@@ -465,10 +473,11 @@ class EducationSerializer(serializers.ModelSerializer):
 class ApplicationLiteSerializer(serializers.ModelSerializer):
     status_info = serializers.ReadOnlyField()
     applicant = serializers.ReadOnlyField()
+    max_choices = serializers.ReadOnlyField()
 
     class Meta:
         model = models.Application
-        fields = ['uid', 'status_info', 'applicant', 'created', 'updated']
+        fields = ['uid', 'status_info', 'applicant', 'created', 'updated', 'max_choices']
 
     def send_on_create(self, recipient):
         today = dt.date.today().strftime("%d.%m.%Y")

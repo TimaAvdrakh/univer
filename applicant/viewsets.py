@@ -2,6 +2,7 @@ from django import forms
 from django.conf import settings
 from django.contrib.auth import login
 from django.contrib.auth.models import User
+from django.core.mail import send_mail
 from django.db.models import Q
 from django.http import JsonResponse, HttpResponseBadRequest, HttpResponse
 from django.utils.encoding import force_text
@@ -375,6 +376,39 @@ class ApplicationViewSet(ModelViewSet):
     def get_current_campaign(self, request, pk=None):
         campaign = self.request.user.applicant.campaign
         return Response(data=campaign.info, status=HTTP_200_OK)
+
+    @action(methods=['post'], detail=True, url_path='save-directions', url_name='save_directions')
+    def save_directions(self, request, pk=None):
+        """Сохранение направлений
+        Доступно только модераторам.
+        Удалить все предыдущие направелния, подставить новые, уведомить абитуриента
+        """
+        profile = self.request.user.profile
+        role = profile.role
+        if role.is_mod:
+            application: models.Application = self.get_object()
+            directions = request.data.pop('directions')
+            directions = models.DirectionChoice.objects.bulk_create([
+                models.DirectionChoice(
+                    prep_level_id=direction['prep_level'],
+                    study_form_id=direction['study_form'],
+                    education_language_id=direction['education_language'],
+                    education_program_id=direction['info']['education_program']['uid'],
+                    education_program_group_id=direction['info']['education_program_group']['uid'],
+                    education_base_id=direction['info']['education_base']['uid']
+                ) for direction in directions
+            ])
+            application.directions.all().delete()
+            application.directions.add(*directions)
+            application.save()
+            send_mail(
+                subject='Изменение направлений',
+                message=f'Ваши выбранные направления были изменены модератором {profile.full_name}',
+                from_email='',
+                recipient_list=[application.creator.email])
+            return Response(data=None, status=HTTP_200_OK)
+        else:
+            raise ValidationError({"error": "access_denied"})
 
 
 class AdmissionCampaignTypeViewSet(ModelViewSet):
