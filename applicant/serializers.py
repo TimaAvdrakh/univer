@@ -145,7 +145,7 @@ class ApplicantSerializer(serializers.ModelSerializer):
         else:
             raise ValidationError({
                 "error": "no_campaign",
-                "campaigns": len(campaigns)}
+                "campaigns": campaigns.count()}
             )
         return validated_data
 
