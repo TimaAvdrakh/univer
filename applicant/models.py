@@ -121,6 +121,7 @@ class AddressClassifier(BaseCatalog):
     )
     code = models.PositiveIntegerField(
         verbose_name="Код",
+        unique=True
     )
 
     class Meta:
@@ -480,6 +481,7 @@ class Applicant(BaseModel):
     email = models.EmailField(
         "Email",
         max_length=100,
+        unique=True
     )
     doc_num = models.CharField(
         verbose_name="Серийный номер документа",
@@ -1268,7 +1270,6 @@ class Application(BaseModel):
         on_delete=models.CASCADE,
         verbose_name='Заявитель',
     )
-    comments = GenericRelation(Comment)
     questionnaire = models.OneToOneField(
         Questionnaire,
         on_delete=models.SET_NULL,
