@@ -145,7 +145,7 @@ class ApplicantSerializer(serializers.ModelSerializer):
         else:
             raise ValidationError({
                 "error": "no_campaign",
-                "campaigns": AdmissionCampaignSerializer(campaigns, many=True).data}
+                "campaigns": len(campaigns)}
             )
         return validated_data
 
