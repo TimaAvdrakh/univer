@@ -140,16 +140,17 @@ class ApplicantSerializer(serializers.ModelSerializer):
             start_date__lte=today,
             end_date__gte=today
         )
-        try:
-            if campaigns.exists():
-                validated_data['campaign'] = campaigns.first()
-            else:
-                raise ValidationError({
-                    "error": "no_campaign",
-                    "campaigns": campaigns.count()}
-                )
-        except Exception as e:
-            raise ValidationError({"error2": str(e)})
+        raise ValidationError({"error": AdmissionCampaignSerializer(campaigns, many=True).data})
+        # try:
+        #     if campaigns.exists():
+        #         validated_data['campaign'] = campaigns.first()
+        #     else:
+        #         raise ValidationError({
+        #             "error": "no_campaign",
+        #             "campaigns": campaigns.count()}
+        #         )
+        # except Exception as e:
+        #     raise ValidationError({"error2": str(e)})
         return validated_data
 
     def create(self, validated_data):
