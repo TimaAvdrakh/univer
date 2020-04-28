@@ -43,8 +43,6 @@ NO_QUESTIONNAIRE = "NO_QUESTIONNAIRE"
 COND_ORDER = Case(
     When(Q(status__code=AWAITS_VERIFICATION), then=Value(0)),
     When(Q(status__code=NO_QUESTIONNAIRE), then=Value(1)),
-    When(Q(status__code=APPROVED), then=Value(2)),
-    When(Q(status__code=REJECTED), then=Value(3)),
     default=Value(0),
     output_field=models.IntegerField(),
 )
@@ -1305,6 +1303,9 @@ class Application(BaseModel):
         verbose_name = "Заявление"
         verbose_name_plural = "Заявления"
 
+    def __str__(self):
+        return f'Абитуриент {self.applicant}. {self.status.name}'
+
     @property
     def max_choices(self):
         campaign: AdmissionCampaign = self.creator.user.applicant.campaign
@@ -1315,31 +1316,48 @@ class Application(BaseModel):
 
     def approve(self, moderator, comment=None):
         if comment:
-            self.comments.create(creator=moderator, text=comment)
+            Comment.objects.create(
+                text=comment,
+                creator=moderator,
+                content_object=self
+            )
         self.status = ApplicationStatus.objects.get(code=APPROVED)
         self.save()
         # TODO на подтверждение заявления модератором импортировать заявление в 1С
         self.import_self_to_1c()
-        send_mail(
-            subject='Ваше заявление подтверждено',
-            message='Ваше заявление подтверждено модератором университета',
-            recipient_list=[self.creator.email]
-        )
-        role = Role.objects.get(profile=self.creator)
-        role.is_applicant, role.is_student = role.is_student, role.is_applicant
+        try:
+            send_mail(
+                subject='Ваше заявление подтверждено',
+                message='Ваше заявление подтверждено модератором университета',
+                from_email='',
+                recipient_list=[self.creator.email]
+            )
+        except Exception as e:
+            print(e)
+        role: Role = Role.objects.get(profile=self.creator)
+        role.is_applicant = False
+        role.is_student = True
         role.save()
+        return
 
     def reject(self, moderator, comment):
-        self.comments.create(creator=moderator, text=comment)
+        Comment.objects.create(
+            text=comment,
+            creator=moderator,
+            content_object=self
+        )
         self.status = ApplicationStatus.objects.get(code=REJECTED)
         self.save()
-        message = render_to_string('applicant/email/html/application_rejected.html', {
-            'rejected_at': dt.datetime.now().strftime('%d.%m.%Y %H:%I'),
-            'reason': comment
-        })
-        subject = 'Ваше заявление отклонено'
-        email = EmailMessage(subject=subject, body=message, to=self.creator.email)
-        email.send()
+        try:
+            message = render_to_string('applicant/email/html/application_rejected.html', {
+                'rejected_at': dt.datetime.now().strftime('%d.%m.%Y %H:%I'),
+                'reason': comment
+            })
+            subject = 'Ваше заявление отклонено'
+            email = EmailMessage(subject=subject, body=message, to=[self.creator.email])
+            email.send()
+        except Exception as e:
+            print(e)
         return
 
     @property

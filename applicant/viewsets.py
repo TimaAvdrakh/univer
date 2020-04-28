@@ -215,7 +215,9 @@ class ApplicationStatusViewSet(ModelViewSet):
 
 
 class ApplicationViewSet(ModelViewSet):
-    queryset = models.Application.objects.annotate(cond_order=models.COND_ORDER).order_by('cond_order')
+    queryset = models.Application.objects.exclude(
+        status__code__in=[models.APPROVED, models.REJECTED]
+    ).annotate(cond_order=models.COND_ORDER).order_by('cond_order')
     serializer_class = serializers.ApplicationSerializer
     pagination_class = CustomPagination
 
@@ -328,8 +330,8 @@ class ApplicationViewSet(ModelViewSet):
         profile: Profile = self.request.user.profile
         application = self.get_object()
         if models.Application.can_perform_action(profile=profile):
-            action_type: str = request.get('action')
-            comment = request.get('comment')
+            action_type: str = request.data.get('action')
+            comment = request.data.get('comment')
             # Одобряем заявление
             if action_type == 'approve':
                 application.approve(moderator=profile, comment=comment)
@@ -401,11 +403,16 @@ class ApplicationViewSet(ModelViewSet):
             application.directions.all().delete()
             application.directions.add(*directions)
             application.save()
-            send_mail(
-                subject='Изменение направлений',
-                message=f'Ваши выбранные направления были изменены модератором {profile.full_name}',
-                from_email='',
-                recipient_list=[application.creator.email])
+            # Почта может не работать, как у меня на локали
+            try:
+                send_mail(
+                    subject='Изменение направлений',
+                    message=f'Ваши выбранные направления были изменены модератором {profile.full_name}',
+                    from_email='',
+                    recipient_list=[application.creator.email])
+            except Exception as e:
+                # Положить в очередь крона
+                print(e)
             return Response(data=None, status=HTTP_200_OK)
         else:
             raise ValidationError({"error": "access_denied"})
