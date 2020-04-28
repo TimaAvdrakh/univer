@@ -27,6 +27,7 @@ from common import models as common_models
 import urllib3
 import certifi
 from applicant.models import Applicant
+from applications import models as applications_models
 
 
 class EmailCronJob(CronJobBase):
@@ -622,3 +623,16 @@ class ApplicantVerificationJob(CronJobBase):
     def do(self):
         time = dt.date.today() + dt.timedelta(days=1)
         Applicant.objects.filter(created__gte=time, user__is_active=False).delete()
+
+
+# class ApplicationStatusChange(CronJobBase):
+#     RUN_EVERY_MINS = 43200  # every day
+#
+#     schedule = Schedule(run_every_mins=RUN_EVERY_MINS)
+#     code = 'crop_app.close_applications_job'
+#
+#     def do(self):
+#         applications = applications_models.SubApplication.objects.filter(status= ... )
+#         for application in applications:
+#             application.status = ...
+#             application.save()

@@ -35,7 +35,7 @@ class ApplicationView(generics.ListCreateAPIView):
         data = json.loads(request.data["data"])
 
         request.data["profile"] = self.request.user.profile.uid
-        request.data["status"] = Status.objects.get(c1_id="1").uid
+        request.data["status"] = Status.objects.get(code="NEW").uid
         request.data["type"] = data["type"]
 
         request.data["identity_doc"] = IdentityDoc.objects.create(

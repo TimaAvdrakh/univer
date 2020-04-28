@@ -69,7 +69,7 @@ class SubApplicationSerializer(serializers.ModelSerializer):
         data['subtype'] = instance.subtype.name
         data['status'] = instance.status.name
 
-        if instance.result_doc:
+        if instance.status.code != "OUTDATED" and instance.result_doc:
             data['result_doc_file'] = instance.result_doc.file.url
         else:
             data['result_doc_file'] = ""
