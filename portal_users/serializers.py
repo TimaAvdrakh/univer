@@ -1431,7 +1431,7 @@ class StudentDisciplineControlFormSerializer(serializers.ModelSerializer):
             data['status_d'] = StudentDisciplineStatusSerializer(
                 org_models.StudentDisciplineStatus.objects.get(number=1)).data
         control_form_pks = org_models.DisciplineCreditControlForm.objects.filter(
-            discipline_credit=discipline_credit,
+            discipline_credit=discipline_credit.uid,
         ).values('control_form')
         control_forms = org_models.ControlForm.objects.filter(pk__in=control_form_pks)
         serializer = ControlFormSerializer(control_forms,
@@ -1475,7 +1475,10 @@ class ChooseControlFormSerializer(serializers.ModelSerializer):
 
     def update(self, instance, validated_data):
         chosen_control_forms = validated_data.get('chosen_control_forms')
+        status = validated_data.get('status')
         instance.chosen_control_forms.set(chosen_control_forms)
+        instance.status = status
+        instance.save()
         return instance
 
 
