@@ -45,8 +45,6 @@ class ApplicationSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         user = self.context["request"].user
         if user and user.is_authenticated:
-
-
             application :Application = super().create(validated_data)
             # application = Application.objects.create(**validated_data)
 

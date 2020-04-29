@@ -35,12 +35,12 @@ class ApplicationView(generics.ListCreateAPIView):
         data = json.loads(request.data["data"])
 
         request.data["profile"] = self.request.user.profile.uid
-        request.data["status"] = Status.objects.get(code="NEW").uid
         request.data["type"] = data["type"]
 
-        request.data["identity_doc"] = IdentityDoc.objects.create(
-            file=request.data["identity_doc"]
-        )
+        if request.data["identity_doc"] :
+            request.data["identity_doc"] = IdentityDoc.objects.create(
+                file=request.data["identity_doc"]
+            )
 
         serializer = self.serializer_class(data=request.data, context={'request': request})
         if serializer.is_valid(raise_exception=True):
@@ -49,6 +49,8 @@ class ApplicationView(generics.ListCreateAPIView):
 
             resp = {'message': 'ok', 'id': application.id}
 
+            default_status = Status.objects.get(code=NEW)
+
             for sub in sub_applications:
                 SubApplication.objects.create(
                     application=application,
@@ -56,7 +58,8 @@ class ApplicationView(generics.ListCreateAPIView):
                     organization=sub['org_name'],
                     is_paper=sub['is_paper'],
                     copies=sub['copy'],
-                    lang=sub['lang']
+                    lang=sub['lang'],
+                    status=default_status
                 )
 
             return Response(resp, status=status.HTTP_200_OK)
