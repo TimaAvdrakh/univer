@@ -273,18 +273,27 @@ class QuestionnaireSerializer(serializers.ModelSerializer):
                         username=member['email'],
                         password=member['phone']
                     )
-                address = models.Address.objects.create(**member.pop('address'))
-                member_profile = Profile.objects.create(
-                    user=member_user,
-                    first_name=member['first_name'],
-                    last_name=member['last_name'],
-                    middle_name=member['middle_name'],
-                    phone=member['phone'],
-                    email=member['email'],
-                )
-                member['profile'] = member_profile
-                member['family'] = family
-                models.FamilyMember.objects.create(**member, address=address)
+                profile_match = Profile.objects.filter(user=member_user)
+                if profile_match.exists():
+                    member_profile = profile_match.first()
+                else:
+                    member_profile = Profile.objects.create(
+                        user=member_user,
+                        first_name=member['first_name'],
+                        last_name=member['last_name'],
+                        middle_name=member['middle_name'],
+                        phone=member['phone'],
+                        email=member['email'],
+                    )
+                member_match = models.FamilyMember.objects.filter(profile=profile_match.first())
+                if member_match.exists():
+                    pass
+                else:
+                    member['profile'] = member_profile
+                    member['family'] = family
+                    address = models.Address.objects.create(**member.pop('address'))
+                    models.FamilyMember.objects.create(**member, address=address)
+
             validated_data['address_of_registration'] = models.Address.objects.create(
                 **validated_data.pop('address_of_registration')
             )
