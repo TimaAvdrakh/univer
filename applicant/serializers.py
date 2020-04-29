@@ -196,7 +196,7 @@ class ApplicantSerializer(serializers.ModelSerializer):
             raise ValidationError({"error": e})
 
 
-class IDDocSerializer(serializers.ModelSerializer):
+class IdentityDocumentSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.IdentityDocument
         fields = [
