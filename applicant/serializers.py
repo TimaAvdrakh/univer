@@ -265,10 +265,14 @@ class QuestionnaireSerializer(serializers.ModelSerializer):
             members = family.pop('members')
             family = models.Family.objects.create(**family)
             for member in members:
-                member_user = User.objects.create(
-                    username=member['email'],
-                    password=member['phone']
-                )
+                user_match = User.objects.filter(username=members['email'])
+                if user_match.exists():
+                    member_user = user_match.first()
+                else:
+                    member_user = User.objects.create(
+                        username=member['email'],
+                        password=member['phone']
+                    )
                 address = models.Address.objects.create(**member.pop('address'))
                 member_profile = Profile.objects.create(
                     user=member_user,
