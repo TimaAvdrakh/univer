@@ -140,25 +140,15 @@ class ApplicantSerializer(serializers.ModelSerializer):
             start_date__lte=today,
             end_date__gte=today
         )
-        raise ValidationError({"error": AdmissionCampaignSerializer(campaigns, many=True).data})
-        # try:
-        #     if campaigns.exists():
-        #         validated_data['campaign'] = campaigns.first()
-        #     else:
-        #         raise ValidationError({
-        #             "error": "no_campaign",
-        #             "campaigns": campaigns.count()}
-        #         )
-        # except Exception as e:
-        #     raise ValidationError({"error2": str(e)})
+        if campaigns.exists():
+            validated_data['campaign'] = campaigns.first()
+        else:
+            raise ValidationError({"error": "no_campaign"})
         return validated_data
 
     def create(self, validated_data):
         if validated_data['password'] != validated_data['confirm_password']:
             raise ValidationError({"error": "pass_no_match"})
-        # TODO проверку на то, что есть приемные кампании, которые принимают полученный уровень образования
-        #  если он, есть продолжить регистрацию и создать абитуриента с профилем. Если нет вернуть ошибку и сообшение
-        #  о том, что нет приемных кампаний с таким уровнем подготовки
         applicant = super().create(validated_data)
         try:
             raw_password = applicant.password
