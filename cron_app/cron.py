@@ -30,6 +30,7 @@ from common import models as common_models
 import urllib3
 import certifi
 from applicant.models import Applicant
+from applications import models as applications_models
 
 
 class EmailCronJob(CronJobBase):
