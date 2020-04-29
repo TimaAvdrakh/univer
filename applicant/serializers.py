@@ -199,14 +199,7 @@ class ApplicantSerializer(serializers.ModelSerializer):
 class IdentityDocumentSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.IdentityDocument
-        fields = [
-            'document_type',
-            'serial_number',
-            'number',
-            'given_date',
-            'validity_date',
-            'issued_by',
-        ]
+        exclude = ['profile']
 
 
 class QuestionnaireSerializer(serializers.ModelSerializer):
@@ -302,11 +295,10 @@ class QuestionnaireSerializer(serializers.ModelSerializer):
                 **validated_data.pop('address_of_residence'),
                 profile=profile
             )
-            id_doc_serializer = IdentityDocumentSerializer(data=validated_data.pop('id_doc'))
-            id_doc_serializer.is_valid(raise_exception=True)
-            id_doc = id_doc_serializer.save()
-            id_doc.profile = profile
-            id_doc.save()
+            id_doc = IdentityDocument.objects.create(
+                profile=profile,
+                **validated_data.pop('id_doc'),
+            )
             validated_data['id_doc'] = id_doc
             validated_data['phone'] = ProfilePhone.objects.create(**validated_data.pop('phone'))
             validated_data['family'] = family
