@@ -450,7 +450,7 @@ class AdmissionDocumentViewSet(ModelViewSet):
 
     def create(self, request, *args, **kwargs):
         profile = self.request.user.profile
-        request.data['creator'] = profile
+        request.data['creator'] = profile.pk
         return super().create(request, *args, **kwargs)
 
     @action(methods=['get'], detail=False, url_name='my', url_path='my')

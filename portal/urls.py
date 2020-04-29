@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.contrib import admin
 from django.urls import path, include
 from rest_framework_swagger.views import get_swagger_view
@@ -21,3 +22,8 @@ urlpatterns = [
     path('api/v1/applicant/', include('applicant.urls', namespace='applicant')),
     path('api/v1/organizations/', include('organizations.urls', namespace='organizations')),
 ]
+
+if settings.DEBUG:
+    from django.conf.urls.static import static
+    urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

@@ -71,9 +71,25 @@ class FamilyMembership(BaseCatalog):
 
 # Тип адреса
 class AddressType(BaseCatalog):
+    # Адрес прописки
+    REGISTRATION = 'reg'
+    # Адрес временной регистрации
+    TEMP_REG = 'temp'
+    # Адресс фактического проживания
+    RESIDENCE = 'res'
+
     class Meta:
         verbose_name = "Тип адреса"
         verbose_name_plural = "Типы адресов"
+
+    @staticmethod
+    def get_type(code):
+        if code == AddressType.REGISTRATION:
+            return AddressType.objects.get(code=AddressType.REGISTRATION)
+        if code == AddressType.TEMP_REG:
+            return AddressType.objects.get(code=AddressType.TEMP_REG)
+        if code == AddressType.RESIDENCE:
+            return AddressType.objects.get(code=AddressType.RESIDENCE)
 
 
 # Уровни бюджета
@@ -264,45 +280,6 @@ class Address(BaseCatalog):
         classifiers = AddressClassifier.objects.filter(lookup)
         return classifiers
 
-    @property
-    def info(self):
-        info = {
-            'country': {
-                'uid': self.country.uid,
-                'name': self.country.name
-            }
-        }
-        if self.country.code == 'KZ':
-            if self.region:
-                info.update({
-                    'region': {
-                        'uid': self.region.uid,
-                        'name': self.region.name,
-                    }
-                })
-            if self.district:
-                info.update({
-                    'district': {
-                        'uid': self.district.uid,
-                        'name': self.district.name,
-                    }
-                })
-            if self.city:
-                info.update({
-                    'city': {
-                        'uid': self.city.uid,
-                        'name': self.city.name,
-                    }
-                })
-            if self.locality:
-                info.update({
-                    'locality': {
-                        'uid': self.locality.uid,
-                        'name': self.locality.name,
-                    }
-                })
-        return info
-
 
 # Состав семьи
 class Family(BaseModel):
@@ -313,6 +290,12 @@ class Family(BaseModel):
     number_of_young_children = models.PositiveSmallIntegerField(
         default=0,
         verbose_name="Кол-во несовершеннолетних детей в семье"
+    )
+    profile = models.ForeignKey(
+        Profile,
+        on_delete=models.CASCADE,
+        blank=True,
+        null=True,
     )
 
     class Meta:
@@ -785,16 +768,6 @@ class Questionnaire(BaseModel):
         else:
             return f"Абитуриент {self.first_name_en} {self.last_name_en}"
 
-    @property
-    def info(self):
-        info = {
-            'nationality': {
-                'uid': self.nationality.uid,
-                'name': self.nationality.name,
-            }
-        }
-        return info
-
 
 # Список льгот пользователей
 class UserPrivilegeList(BaseModel):
@@ -802,6 +775,12 @@ class UserPrivilegeList(BaseModel):
         Questionnaire,
         on_delete=models.DO_NOTHING,
         verbose_name="Анкета",
+        null=True,
+    )
+    profile = models.ForeignKey(
+        Profile,
+        on_delete=models.CASCADE,
+        blank=True,
         null=True,
     )
 
@@ -855,6 +834,12 @@ class Privilege(BaseModel):
         on_delete=models.DO_NOTHING,
         verbose_name="Список льгот",
         related_name="privileges"
+    )
+    profile = models.ForeignKey(
+        Profile,
+        on_delete=models.DO_NOTHING,
+        blank=True,
+        null=True,
     )
 
     class Meta:
@@ -1230,7 +1215,9 @@ class AdmissionDocument(BaseModel):
     creator = models.ForeignKey(
         Profile,
         on_delete=models.CASCADE,
-        verbose_name='Профиль'
+        verbose_name='Профиль',
+        blank=True,
+        null=True,
     )
     files = models.ManyToManyField(
         DocScan,
