@@ -295,15 +295,18 @@ class QuestionnaireSerializer(serializers.ModelSerializer):
                     models.FamilyMember.objects.create(**member, address=address)
 
             validated_data['address_of_registration'] = models.Address.objects.create(
-                **validated_data.pop('address_of_registration')
+                **validated_data.pop('address_of_registration'),
+                profile=profile
             )
             validated_data['address_of_residence'] = models.Address.objects.create(
-                **validated_data.pop('address_of_residence')
+                **validated_data.pop('address_of_residence'),
+                profile=profile
             )
             id_doc = validated_data.pop('id_doc')
             validated_data['id_doc'] = IdentityDocument.objects.create(
-                document_type=DocumentType.objects.get(uid=id_doc.pop('document_type')),
-                issued_by=GovernmentAgency.objects.get(uid=id_doc.pop('issued_by')),
+                document_type_id=id_doc.pop('document_type'),
+                issued_by_id=id_doc.pop('issued_by'),
+                profile=profile,
                 **id_doc,
             )
             validated_data['phone'] = ProfilePhone.objects.create(**validated_data.pop('phone'))
