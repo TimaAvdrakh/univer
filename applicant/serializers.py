@@ -302,9 +302,9 @@ class QuestionnaireSerializer(serializers.ModelSerializer):
             )
             id_doc = validated_data.pop('id_doc')
             validated_data['id_doc'] = IdentityDocument.objects.create(
-                **id_doc,
                 document_type=DocumentType.objects.get(uid=id_doc.pop('document_type')),
-                issued_by=GovernmentAgency.objects.get(uid=id_doc.pop('issued_by'))
+                issued_by=GovernmentAgency.objects.get(uid=id_doc.pop('issued_by')),
+                **id_doc,
             )
             validated_data['phone'] = ProfilePhone.objects.create(**validated_data.pop('phone'))
             validated_data['family'] = family
