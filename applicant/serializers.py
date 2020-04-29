@@ -302,13 +302,12 @@ class QuestionnaireSerializer(serializers.ModelSerializer):
                 **validated_data.pop('address_of_residence'),
                 profile=profile
             )
-            id_doc = validated_data.pop('id_doc')
-            validated_data['id_doc'] = IdentityDocument.objects.create(
-                document_type_id=id_doc.pop('document_type'),
-                issued_by_id=id_doc.pop('issued_by'),
-                profile=profile,
-                **id_doc,
-            )
+            id_doc_serializer = IdentityDocumentSerializer(data=validated_data.pop('id_doc'))
+            id_doc_serializer.is_valid(raise_exception=True)
+            id_doc = id_doc_serializer.save()
+            id_doc.profile = profile
+            id_doc.save()
+            validated_data['id_doc'] = id_doc
             validated_data['phone'] = ProfilePhone.objects.create(**validated_data.pop('phone'))
             validated_data['family'] = family
             if address_of_temp_reg:
