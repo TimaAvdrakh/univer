@@ -67,10 +67,11 @@ class SubApplicationSerializer(serializers.ModelSerializer):
     def to_representation(self, instance):
         data = super().to_representation(instance=instance)
         data['subtype'] = instance.subtype.name
-        data['status'] = instance.status.name
+        if instance.status:
+            data['status'] = instance.status.name
 
-        if instance.status.code != "OUTDATED" and instance.result_doc:
-            data['result_doc_file'] = instance.result_doc.file.url
-        else:
-            data['result_doc_file'] = ""
+            if instance.status.code != "OUTDATED" and instance.result_doc:
+                data['result_doc_file'] = instance.result_doc.file.url
+            else:
+                data['result_doc_file'] = ""
         return data
