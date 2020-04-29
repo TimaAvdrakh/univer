@@ -199,7 +199,7 @@ class ApplicantSerializer(serializers.ModelSerializer):
 class IDDocSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.IdentityDocument
-        fields = '__all__'
+        exclude = ['profile']
 
 
 class QuestionnaireSerializer(serializers.ModelSerializer):
