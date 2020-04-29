@@ -295,10 +295,14 @@ class QuestionnaireSerializer(serializers.ModelSerializer):
                 **validated_data.pop('address_of_residence'),
                 profile=profile
             )
-            id_doc = IdentityDocument.objects.create(
-                profile=profile,
-                **validated_data.pop('id_doc'),
-            )
+            id_doc_match = IdentityDocument.objects.filter(profile=profile)
+            if id_doc_match.exists():
+                id_doc = id_doc_match.first()
+            else:
+                id_doc = IdentityDocument.objects.create(
+                    profile=profile,
+                    **validated_data.pop('id_doc'),
+                )
             validated_data['id_doc'] = id_doc
             validated_data['phone'] = ProfilePhone.objects.create(**validated_data.pop('phone'))
             validated_data['family'] = family
