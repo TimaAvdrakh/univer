@@ -211,7 +211,7 @@ class IdentityDocumentSerializer(serializers.ModelSerializer):
 
 class QuestionnaireSerializer(serializers.ModelSerializer):
     family = FamilySerializer(required=True)
-    id_doc = IDDocSerializer(required=True)
+    id_doc = IdentityDocumentSerializer(required=True)
     address_of_registration = AddressSerializer(required=False)
     address_of_temp_reg = AddressSerializer(required=False)
     address_of_residence = AddressSerializer(required=True)
