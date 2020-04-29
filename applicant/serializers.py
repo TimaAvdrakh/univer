@@ -265,7 +265,7 @@ class QuestionnaireSerializer(serializers.ModelSerializer):
             members = family.pop('members')
             family = models.Family.objects.create(**family)
             for member in members:
-                user_match = User.objects.filter(username=members['email'])
+                user_match = User.objects.filter(username=member['email'])
                 if user_match.exists():
                     member_user = user_match.first()
                 else:
@@ -319,7 +319,7 @@ class QuestionnaireSerializer(serializers.ModelSerializer):
         except Exception as e:
             if questionnaire and isinstance(questionnaire, models.Questionnaire):
                 questionnaire.delete()
-            raise ValidationError({"error": f"an error occurred\n{e}"})
+            raise ValidationError({"error": f"an error occurred: {e}"})
         return questionnaire
 
 
