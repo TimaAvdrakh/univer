@@ -266,8 +266,12 @@ class QuestionnaireSerializer(serializers.ModelSerializer):
 
     def validate(self, validated_data: dict):
         address_of_registration = validated_data.get('address_of_registration')
+        address_of_registration['type'] = models.AddressType.get_type(models.AddressType.REGISTRATION)
         address_of_temp_reg = validated_data.get('address_of_temp_reg', None)
+        if address_of_temp_reg:
+            address_of_temp_reg['type'] = models.AddressType.get_type(models.AddressType.TEMP_REG)
         address_of_residence = validated_data.get('address_of_residence')
+        address_of_residence['type'] = models.AddressType.get_type(models.AddressType.RESIDENCE)
 
         family: dict = validated_data.get('family')
         members: dict = family.pop('members')
@@ -294,95 +298,95 @@ class QuestionnaireSerializer(serializers.ModelSerializer):
         return validated_data
 
     def create(self, validated_data):
-        profile = self.context["request"].user.profile
+        profile = self.context['request'].user.profile
         questionnaire = None
         try:
-            validated_data["creator"] = profile
-            family = models.Family.objects.filter(profile=profile)
-            if family.exists():
-                family = family.first()
+            applicant_family = models.Family.objects.filter(profile=profile)
+            if applicant_family.exists():
+                family = applicant_family.first()
             else:
                 family = validated_data.pop('family')
                 members = family.pop('members')
                 family = models.Family.objects.create(**family, profile=profile)
+                member: dict
                 for member in members:
-                    user = User.objects.create(
-                        username=member['email'],
-                        password=member['phone']
-                    )
-                    profile = Profile.objects.create(
-                        user=user,
+                    member_user: User = User.objects.create(username=member['email'])
+                    member_user.set_password(member['email'])
+                    member_profile = Profile.objects.create(
+                        user=member_user,
                         first_name=member['first_name'],
                         last_name=member['last_name'],
-                        middle_name=member['middle_name'],
-                        phone=member['phone'],
-                        email=member['email'],
+                        middle_name=member['middle_name']
                     )
-                    address = models.Address.objects.create(**member.pop('address'))
-                    member.update({
-                        'profile': profile,
-                        'family': family,
-                        'address': address
-                    })
-                    models.FamilyMember.objects.create(**member)
-
-            address_of_registration = validated_data.pop('address_of_registration')
-            address_of_registration.pop('type', None)
-            models.Address.objects.create(
+                    # TODO добавить роль родителя
+                    address = models.Address.objects.create(
+                        **member.pop('address'),
+                        profile=member_profile
+                    )
+                    models.FamilyMember.objects.create(
+                        **member,
+                        profile=member_profile,
+                        address=address,
+                        family=family
+                    )
+            validated_data['family'] = family
+            applicant_id_doc = IdentityDocument.objects.filter(profile=profile)
+            if applicant_id_doc.exists():
+                id_doc = applicant_id_doc.first()
+            else:
+                id_doc = IdentityDocument.objects.create(**validated_data.pop('id_doc'))
+            validated_data['id_doc'] = id_doc
+            applicant_reg_addr = models.Address.objects.filter(
                 type=models.AddressType.get_type(models.AddressType.REGISTRATION),
-                **address_of_registration)
-
-            address_of_residence = validated_data.pop('address_of_residence')
-            address_of_residence.pop('type')
-            models.Address.objects.create(
-                type=models.AddressType.get_type(models.AddressType.RESIDENCE),
-                **address_of_residence)
+                profile=profile
+            )
+            if applicant_reg_addr.exists():
+                address_of_registration = applicant_reg_addr.first()
+            else:
+                address_of_registration = models.AddressType.objects.create(
+                    **validated_data.pop('address_of_registration')
+                )
+            validated_data['address_of_registration'] = address_of_registration
             address_of_temp_reg = validated_data.pop('address_of_temp_reg', None)
             if address_of_temp_reg:
-                validated_data['address_of_temp_reg'] = models.Address.objects.create(
+                applicant_temp_reg = models.Address.objects.filter(
                     type=models.AddressType.get_type(models.AddressType.TEMP_REG),
-                    **address_of_temp_reg)
-
-            id_doc = IdentityDocument.objects.filter(profile=profile)
-            if id_doc.exists():
-                id_doc = id_doc.first()
-            else:
-                id_doc = IdentityDocument.objects.create(
-                    profile=profile,
-                    **validated_data.pop('id_doc'),
-                )
-            phone = ProfilePhone.objects.filter(profile=profile)
-            if phone.exists():
-                phone = phone.first()
-            else:
-                phone = ProfilePhone.objects.create(
-                    **validated_data.pop('phone'),
                     profile=profile
                 )
+                if applicant_temp_reg.exists():
+                    address_of_temp_reg = applicant_temp_reg.first()
+                else:
+                    address_of_temp_reg = models.Address.objects.create(**address_of_temp_reg)
+                validated_data['address_of_temp_reg'] = address_of_temp_reg
+            applicant_res_addr = models.Address.objects.filter(
+                type=models.AddressType.get_type(models.AddressType.RESIDENCE),
+                profile=profile
+            )
+            if applicant_res_addr.exists():
+                address_of_residence = applicant_res_addr.first()
+            else:
+                address_of_residence = validated_data.pop('address_of_residence')
+            validated_data['address_of_residence'] = address_of_residence
+            validated_data['creator'] = profile
             questionnaire = super().create(validated_data)
-            user_privilege_list = validated_data.pop('userprivilegelist', None)
-            if user_privilege_list:
-                privileges = user_privilege_list.pop('privileges')
-                user_privilege_list = models.UserPrivilegeList.objects.create(
-                    **user_privilege_list,
-                    questionnaire=questionnaire,
-                    profile=profile
-                )
-                for privilege in privileges:
-                    models.Privilege.objects.create(
-                        **privilege,
-                        list=user_privilege_list,
-                        profile=profile
-                    )
-            applications = models.Application.objects.filter(creator=profile)
-            if applications.exists():
-                application = applications.first()
-                application.status = models.ApplicationStatus.objects.get(code=models.AWAITS_VERIFICATION)
-                application.save()
+            privilege_list = validated_data.pop('userprivilegelist', None)
+            if privilege_list:
+                applicant_privilege = models.UserPrivilegeList.objects.filter(profile=profile)
+                if applicant_privilege.exists():
+                    privilege_list: models.UserPrivilegeList = applicant_privilege.first()
+                    privilege_list.questionnaire = questionnaire
+                else:
+                    privileges = privilege_list.pop('privileges')
+                    privilege_list = models.UserPrivilegeList.objects.create(profile=profile)
+                    models.Privilege.objects.bulk_create([
+                        models.Privilege(
+                            **privilege,
+                            profile=profile,
+                            list=privilege_list
+                        ) for privilege in privileges
+                    ])
         except Exception as e:
-            if questionnaire and isinstance(questionnaire, models.Questionnaire):
-                questionnaire.delete()
-            raise ValidationError({"error": f"an error occurred: {e}"})
+            raise ValidationError({'error': e})
         return questionnaire
 
     def update(self, instance: models.Questionnaire, validated_data: dict):
