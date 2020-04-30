@@ -366,7 +366,9 @@ class QuestionnaireSerializer(serializers.ModelSerializer):
                 address_of_residence = applicant_res_addr.first()
                 validated_data.pop('address_of_residence')
             else:
-                address_of_residence = validated_data.pop('address_of_residence')
+                address_of_residence = models.Address.objects.create(
+                    **validated_data.pop('address_of_residence')
+                )
             applicant_phone = ProfilePhone.objects.filter(profile=profile)
             if applicant_phone.exists():
                 phone = applicant_phone.first()
