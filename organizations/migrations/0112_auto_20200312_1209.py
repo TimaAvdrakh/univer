@@ -17,9 +17,9 @@ class Migration(migrations.Migration):
         #     name='status',
         #     field=models.ForeignKey(null=True, on_delete=django.db.models.deletion.CASCADE, related_name='discipline_credit_status', to='organizations.StudentDisciplineStatus', verbose_name='Статус диспцилины'),
         # ),
-        migrations.AddField(
-            model_name='disciplinecredit',
-            name='teacher',
-            field=models.ForeignKey(null=True, on_delete=django.db.models.deletion.CASCADE, related_name='discipline_credit_teacher', to='portal_users.Profile', verbose_name='Преподаватель'),
-        ),
+        #migrations.AddField(
+            #model_name='disciplinecredit',
+            #name='teacher',
+            #field=models.ForeignKey(null=True, on_delete=django.db.models.deletion.CASCADE, related_name='discipline_credit_teacher', to='portal_users.Profile', verbose_name='Преподаватель'),
+        #),
     ]
