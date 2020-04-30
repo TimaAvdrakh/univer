@@ -897,13 +897,13 @@ class StudentDiscipline(BaseModel):
     @property
     def control_form(self):
         try:
-            discipline_credit = DisciplineCredit.objects.get(
+            discipline_credit = DisciplineCredit.objects.filter(
                 study_plan=self.study_plan,
                 cycle=self.cycle,
                 discipline=self.discipline,
                 acad_period=self.acad_period,
                 student=self.student,
-            )
+            ).first()
             discipline_credit = list(discipline_credit.chosen_control_forms.all().values('name', 'uid'))
         except DisciplineCredit.DoesNotExist:
             discipline_credit = [{'error': 'DoesNotExist'}]
