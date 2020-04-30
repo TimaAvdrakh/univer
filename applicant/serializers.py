@@ -344,7 +344,7 @@ class QuestionnaireSerializer(serializers.ModelSerializer):
                 address_of_registration = applicant_reg_addr.first()
                 validated_data.pop('address_of_registration')
             else:
-                address_of_registration = models.AddressType.objects.create(
+                address_of_registration = models.Address.objects.create(
                     **validated_data.pop('address_of_registration')
                 )
             address_of_temp_reg = validated_data.pop('address_of_temp_reg', None)
