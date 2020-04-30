@@ -304,6 +304,7 @@ class QuestionnaireSerializer(serializers.ModelSerializer):
             applicant_family = models.Family.objects.filter(profile=profile)
             if applicant_family.exists():
                 family = applicant_family.first()
+                validated_data.pop('family')
             else:
                 family = validated_data.pop('family')
                 members = family.pop('members')
@@ -332,6 +333,7 @@ class QuestionnaireSerializer(serializers.ModelSerializer):
             applicant_id_doc = IdentityDocument.objects.filter(profile=profile)
             if applicant_id_doc.exists():
                 id_doc = applicant_id_doc.first()
+                validated_data.pop('id_doc')
             else:
                 id_doc = IdentityDocument.objects.create(**validated_data.pop('id_doc'))
             applicant_reg_addr = models.Address.objects.filter(
@@ -340,6 +342,7 @@ class QuestionnaireSerializer(serializers.ModelSerializer):
             )
             if applicant_reg_addr.exists():
                 address_of_registration = applicant_reg_addr.first()
+                validated_data.pop('address_of_registration')
             else:
                 address_of_registration = models.AddressType.objects.create(
                     **validated_data.pop('address_of_registration')
@@ -352,6 +355,7 @@ class QuestionnaireSerializer(serializers.ModelSerializer):
                 )
                 if applicant_temp_reg.exists():
                     address_of_temp_reg = applicant_temp_reg.first()
+                    validated_data.pop('address_of_temp_reg')
                 else:
                     address_of_temp_reg = models.Address.objects.create(**address_of_temp_reg)
             applicant_res_addr = models.Address.objects.filter(
@@ -360,11 +364,13 @@ class QuestionnaireSerializer(serializers.ModelSerializer):
             )
             if applicant_res_addr.exists():
                 address_of_residence = applicant_res_addr.first()
+                validated_data.pop('address_of_residence')
             else:
                 address_of_residence = validated_data.pop('address_of_residence')
             applicant_phone = ProfilePhone.objects.filter(profile=profile)
             if applicant_phone.exists():
                 phone = applicant_phone.first()
+                validated_data.pop('phone')
             else:
                 phone = ProfilePhone.objects.create(**validated_data.pop('phone'))
             privilege_list = validated_data.pop('userprivilegelist', None)
