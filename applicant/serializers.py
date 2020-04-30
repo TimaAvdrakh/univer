@@ -271,8 +271,6 @@ class QuestionnaireSerializer(serializers.ModelSerializer):
 
         family: dict = validated_data.get('family')
         members: dict = family.pop('members')
-        # Если хоть у одного члена семьи будет стоять временный адрес регистрации,
-        # а абитуриент не указал его - кидать ошибку
         if any(filter(lambda x: x['address_matches'] == 'm_temp', members)) and not address_of_temp_reg:
             raise ValidationError({
                 "error": "no_temp_reg_for_member",
@@ -335,6 +333,7 @@ class QuestionnaireSerializer(serializers.ModelSerializer):
                 **address_of_registration)
 
             address_of_residence = validated_data.pop('address_of_residence')
+            address_of_residence.pop('type')
             models.Address.objects.create(
                 type=models.AddressType.get_type(models.AddressType.RESIDENCE),
                 **address_of_residence)
