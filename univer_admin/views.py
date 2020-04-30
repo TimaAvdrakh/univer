@@ -16,7 +16,6 @@ from applicant.models import (
     AddressClassifier,
     AddressType,
     ApplicationStatus,
-    AdmissionCampaignType,
     AdmissionCampaign,
     CampaignStage,
     DocumentReturnMethod,
@@ -27,7 +26,6 @@ from applicant.serializers import (
     AddressTypeSerializer,
     AddressClassifierSerializer,
     ApplicationStatusSerializer,
-    AdmissionCampaignTypeSerializer,
     AdmissionCampaignSerializer,
     CampaignStageSerializer,
     DocumentReturnMethodSerializer,
@@ -160,12 +158,6 @@ class CancelPlanBlockView(generics.CreateAPIView):  # TODO
 class ApplicationStatusViewSet(ModelViewSet):
     queryset = ApplicationStatus.objects.all()
     serializer_class = ApplicationStatusSerializer
-    permission_classes = (permissions.IsAdminOrReadOnly,)
-
-
-class AdmissionCampaignTypeViewSet(ModelViewSet):
-    queryset = AdmissionCampaignType.objects.all()
-    serializer_class = AdmissionCampaignTypeSerializer
     permission_classes = (permissions.IsAdminOrReadOnly,)
 
 
