@@ -339,7 +339,7 @@ class QuestionnaireSerializer(serializers.ModelSerializer):
                 **address_of_residence)
             address_of_temp_reg = validated_data.pop('address_of_temp_reg', None)
             if address_of_temp_reg:
-                models.Address.objects.create(
+                validated_data['address_of_temp_reg'] = models.Address.objects.create(
                     type=models.AddressType.get_type(models.AddressType.TEMP_REG),
                     **address_of_temp_reg)
 
@@ -359,18 +359,13 @@ class QuestionnaireSerializer(serializers.ModelSerializer):
                     **validated_data.pop('phone'),
                     profile=profile
                 )
-            validated_data.update({
-                'address_of_registration': address_of_registration,
-                'address_of_residence': address_of_residence,
-                'id_doc': id_doc,
-                'phone': phone,
-                'family': family,
-            })
+            questionnaire = super().create(validated_data)
             user_privilege_list = validated_data.pop('userprivilegelist', None)
             if user_privilege_list:
                 privileges = user_privilege_list.pop('privileges')
                 user_privilege_list = models.UserPrivilegeList.objects.create(
                     **user_privilege_list,
+                    questionnaire=questionnaire,
                     profile=profile
                 )
                 for privilege in privileges:
@@ -379,8 +374,6 @@ class QuestionnaireSerializer(serializers.ModelSerializer):
                         list=user_privilege_list,
                         profile=profile
                     )
-                validated_data['userprivilegelist'] = user_privilege_list
-            questionnaire = super().create(validated_data)
             applications = models.Application.objects.filter(creator=profile)
             if applications.exists():
                 application = applications.first()
