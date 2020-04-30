@@ -384,6 +384,7 @@ class QuestionnaireSerializer(serializers.ModelSerializer):
                 address_of_temp_reg=address_of_temp_reg,
                 address_of_residence=address_of_residence,
                 phone=phone,
+                creator=profile,
             )
             if privilege_list:
                 applicant_privilege = models.UserPrivilegeList.objects.filter(profile=profile)
