@@ -328,42 +328,22 @@ class QuestionnaireSerializer(serializers.ModelSerializer):
                     })
                     models.FamilyMember.objects.create(**member)
 
-            registration_type = models.AddressType.REGISTRATION
-            residence_type = models.AddressType.RESIDENCE
-            temp_reg_type = models.AddressType.TEMP_REG
-            reg_match = models.Address.objects.filter(type__code=registration_type, profile=profile)
-            if reg_match.exists():
-                address_of_registration = reg_match.first()
-            else:
-                address_of_registration = validated_data.pop('address_of_registration')
-                address_of_registration.update({
-                    'type': models.AddressType.get_type(registration_type),
-                    'profile': profile,
-                })
-                address_of_registration = models.Address.objects.create(**address_of_registration)
-            res_match = models.Address.objects.filter(type__code=residence_type, profile=profile)
-            if res_match.exists():
-                address_of_residence = res_match.first()
-            else:
-                address_of_residence = validated_data.pop('address_of_residence')
-                address_of_residence.update({
-                    'type': models.AddressType.get_type(residence_type),
-                    'profile': profile,
-                })
-                address_of_residence = models.Address.objects.create(**address_of_residence)
+            address_of_registration = validated_data.pop('address_of_registration')
+            address_of_registration.pop('type', None)
+            models.Address.objects.create(
+                type=models.AddressType.get_type(models.AddressType.REGISTRATION),
+                **address_of_registration)
 
+            address_of_residence = validated_data.pop('address_of_residence')
+            models.Address.objects.create(
+                type=models.AddressType.get_type(models.AddressType.RESIDENCE),
+                **address_of_residence)
             address_of_temp_reg = validated_data.pop('address_of_temp_reg', None)
             if address_of_temp_reg:
-                temp_reg_match = models.Address.objects.filter(type__code=temp_reg_type, profile=profile)
-                if temp_reg_match.exists():
-                    address_of_temp_reg = temp_reg_match.first()
-                else:
-                    address_of_temp_reg.update({
-                        'type': models.AddressType.get_type(models.AddressType.TEMP_REG),
-                        'profile': profile,
-                    })
-                    address_of_temp_reg = models.Address.objects.create(**address_of_temp_reg)
-                validated_data['address_of_temp_reg'] = address_of_temp_reg
+                models.Address.objects.create(
+                    type=models.AddressType.get_type(models.AddressType.TEMP_REG),
+                    **address_of_temp_reg)
+
             id_doc = IdentityDocument.objects.filter(profile=profile)
             if id_doc.exists():
                 id_doc = id_doc.first()
