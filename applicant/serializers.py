@@ -66,12 +66,7 @@ class AddressSerializer(serializers.ModelSerializer):
     info = serializers.SerializerMethodField()
 
     def get_info(self, address: models.Address):
-        info = {
-            'country': {
-                'uid': address.country.uid,
-                'name': address.country.name
-            }
-        }
+        info = {}
         if address.country.code == 'KZ':
             if address.region:
                 info.update({
@@ -376,6 +371,7 @@ class QuestionnaireSerializer(serializers.ModelSerializer):
             else:
                 phone = ProfilePhone.objects.create(**validated_data.pop('phone'))
             privilege_list = validated_data.pop('userprivilegelist', None)
+
             questionnaire = models.Questionnaire.objects.create(
                 **validated_data,
                 family=family,
@@ -386,6 +382,13 @@ class QuestionnaireSerializer(serializers.ModelSerializer):
                 phone=phone,
                 creator=profile,
             )
+            profile.first_name = questionnaire.first_name
+            profile.last_name = questionnaire.last_name
+            profile.middle_name = questionnaire.middle_name
+            profile.email = questionnaire.email
+            profile.save()
+            profile.user.applicant.doc_num = questionnaire.id_doc.serial_number
+            profile.user.applicant.save()
             if privilege_list:
                 applicant_privilege = models.UserPrivilegeList.objects.filter(profile=profile)
                 if applicant_privilege.exists():
