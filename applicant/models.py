@@ -546,6 +546,14 @@ class DocScan(models.Model):
         else:
             return super().__str__()
 
+    @staticmethod
+    # Запись в media
+    def handle_uploaded_file(f):
+        from django.conf import settings
+        with open(f"{settings.MEDIA_ROOT}/{f.name}", "wb+") as destination:
+            for chunk in f.chunks():
+                destination.write(chunk)
+
     class Meta:
         verbose_name = "Скан документа"
         verbose_name_plural = "Сканы документов"

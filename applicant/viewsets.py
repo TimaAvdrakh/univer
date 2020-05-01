@@ -28,15 +28,6 @@ class DocScanForm(forms.ModelForm):
         fields = "__all__"
 
 
-# Запись в media
-def handle_uploaded_file(f):
-    media_catalog = settings.MEDIA_ROOT
-    filename = f.name
-    with open(f"{media_catalog}/{filename}", "wb+") as destination:
-        for chunk in f.chunks():
-            destination.write(chunk)
-
-
 def file_upload(request):
     # TODO add path
     if request.method == "POST":
@@ -52,10 +43,10 @@ def file_upload(request):
                         form.instance.ext = item.name.split(".")[-1]
                         form.instance.size = item.size
                         form.instance.content_type = item.content_type
-                        form.instance.path = f"{settings.MEDIA_ROOT}/{item.name}"
+                        form.instance.path = f"{item.name}"
                         form.save(commit=True)
                         doc_scan_ids.append(form.instance.id)
-                        handle_uploaded_file(item)
+                        models.DocScan.handle_uploaded_file(item)
                     else:
                         raise Exception("An error occurred")
             else:
@@ -66,9 +57,9 @@ def file_upload(request):
                     form.instance.ext = file.name.split(".")[-1]
                     form.instance.size = file.size
                     form.instance.content_type = file.content_type
-                    form.instance.path = f"{settings.MEDIA_ROOT}/{file.name}"
+                    form.instance.path = f"{file.name}"
                     form.save(commit=True)
-                    handle_uploaded_file(file)
+                    models.DocScan.handle_uploaded_file(file)
                     doc_scan_ids.append(form.instance.id)
             return JsonResponse({"ids": doc_scan_ids})
         else:

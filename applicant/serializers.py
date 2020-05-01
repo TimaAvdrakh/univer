@@ -836,10 +836,13 @@ class AdmissionDocumentSerializer(serializers.ModelSerializer):
         return validated_data
 
     def create(self, validated_data):
-        print(validated_data)
         return super().create(validated_data)
 
-    def update(self, instance, validated_data):
+    def update(self, instance: models.AdmissionDocument, validated_data):
+        new_files = validated_data.pop('files')
+        instance.files.clear()
+        instance.files.set(new_files)
+        instance.save()
         return super().update(instance, validated_data)
 
     def get_files_info(self, doc: models.AdmissionDocument):
