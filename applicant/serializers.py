@@ -269,6 +269,7 @@ class QuestionnaireSerializer(serializers.ModelSerializer):
         return info
 
     def validate(self, validated_data: dict):
+        profile = self.context['request'].user.profile
         address_of_registration = validated_data.get('address_of_registration')
         address_of_registration['type'] = models.AddressType.get_type(models.AddressType.REGISTRATION)
         address_of_temp_reg = validated_data.get('address_of_temp_reg', None)
@@ -346,7 +347,7 @@ class QuestionnaireSerializer(serializers.ModelSerializer):
                 id_doc = applicant_id_doc.first()
                 validated_data.pop('id_doc')
             else:
-                id_doc = IdentityDocument.objects.create(**validated_data.pop('id_doc'))
+                id_doc = IdentityDocument.objects.create(**validated_data.pop('id_doc'), profile=profile)
             applicant_reg_addr = models.Address.objects.filter(
                 type=models.AddressType.get_type(models.AddressType.REGISTRATION),
                 profile=profile
@@ -356,7 +357,8 @@ class QuestionnaireSerializer(serializers.ModelSerializer):
                 validated_data.pop('address_of_registration')
             else:
                 address_of_registration = models.Address.objects.create(
-                    **validated_data.pop('address_of_registration')
+                    **validated_data.pop('address_of_registration'),
+                    profile=profile
                 )
             address_of_temp_reg = validated_data.pop('address_of_temp_reg', None)
             if address_of_temp_reg:
@@ -368,7 +370,10 @@ class QuestionnaireSerializer(serializers.ModelSerializer):
                     address_of_temp_reg = applicant_temp_reg.first()
                     validated_data.pop('address_of_temp_reg')
                 else:
-                    address_of_temp_reg = models.Address.objects.create(**address_of_temp_reg)
+                    address_of_temp_reg = models.Address.objects.create(
+                        **address_of_temp_reg,
+                        profile=profile
+                    )
             applicant_res_addr = models.Address.objects.filter(
                 type=models.AddressType.get_type(models.AddressType.RESIDENCE),
                 profile=profile
@@ -378,14 +383,18 @@ class QuestionnaireSerializer(serializers.ModelSerializer):
                 validated_data.pop('address_of_residence')
             else:
                 address_of_residence = models.Address.objects.create(
-                    **validated_data.pop('address_of_residence')
+                    **validated_data.pop('address_of_residence'),
+                    profile=profile
                 )
             applicant_phone = ProfilePhone.objects.filter(profile=profile)
             if applicant_phone.exists():
                 phone = applicant_phone.first()
                 validated_data.pop('phone')
             else:
-                phone = ProfilePhone.objects.create(**validated_data.pop('phone'))
+                phone = ProfilePhone.objects.create(
+                    **validated_data.pop('phone'),
+                    profile=profile
+                )
             privilege_list = validated_data.pop('userprivilegelist', None)
 
             questionnaire = models.Questionnaire.objects.create(
