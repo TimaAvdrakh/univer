@@ -33,7 +33,7 @@ class GetAcadPeriodsForRegisterView(generics.ListAPIView):
     def list(self, request, *args, **kwargs):
         study_plan_id = request.query_params.get("study_plan")
 
-        study_plan = org_models.StudyPlan.objects.get(pk=study_plan_id, is_active=True,)
+        study_plan = org_models.StudyPlan.objects.get(pk=study_plan_id, is_active=True, )
         current_course = study_plan.current_course
         if current_course is None:
             return Response(
@@ -61,7 +61,7 @@ class GetAcadPeriodsForRegisterCopyView(generics.ListAPIView):
     def list(self, request, *args, **kwargs):
         study_plan_id = request.query_params.get("study_plan")
 
-        study_plan = org_models.StudyPlan.objects.get(pk=study_plan_id, is_active=True,)
+        study_plan = org_models.StudyPlan.objects.get(pk=study_plan_id, is_active=True, )
         current_course = study_plan.current_course
         if current_course is None:
             return Response(
@@ -218,7 +218,7 @@ class TestStatusCodeView(generics.RetrieveAPIView):
     def get(self, request, *args, **kwargs):
         code = request.query_params.get("status")
 
-        return Response({"message": "ok",}, status=int(code))
+        return Response({"message": "ok", }, status=int(code))
 
 
 class StudyYearFromStudyPlan(generics.RetrieveAPIView):
@@ -237,7 +237,7 @@ class StudyYearFromStudyPlan(generics.RetrieveAPIView):
         study_years = org_models.StudyPeriod.objects.filter(
             pk__in=study_year_pks, is_study_year=True, is_active=True,
         ).order_by("start")
-        serializer = serializers.StudyPeriodSerializer(instance=study_years, many=True,)
+        serializer = serializers.StudyPeriodSerializer(instance=study_years, many=True, )
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
@@ -259,33 +259,16 @@ class NationalityViewSet(ModelViewSet):
     serializer_class = serializers.NationalitySerializer
     permission_classes = (permissions.AllowAny,)
 
-    @action(methods=['get'], detail=False, url_path='search', url_name='search_nationality')
-    def search(self, request, pk=None):
-        name = request.query_params.get('name')
-        data = self.queryset.filter(
-            Q(name_en__icontains=name) |
-            Q(name_ru__icontains=name) |
-            Q(name_ru__icontains=name)
-        )
-        data = self.serializer_class(data, many=True).data
-        return Response(data=data, status=status.HTTP_200_OK)
-
 
 class CitizenshipViewSet(ModelViewSet):
     queryset = models.Citizenship.objects.order_by('name_ru', 'name_en', 'name_kk')
     serializer_class = serializers.CitizenshipSerializer
     permission_classes = (permissions.AllowAny,)
 
-    @action(methods=['get'], detail=False, url_path='search', url_name='search_country')
-    def search(self, request, pk=None):
-        name = request.query_params.get('name')
-        data = self.queryset.filter(
-            Q(name_en__icontains=name) |
-            Q(name_ru__icontains=name) |
-            Q(name_ru__icontains=name)
-        )
-        data = self.serializer_class(data, many=True).data
-        return Response(data=data, status=status.HTTP_200_OK)
+    @action(methods=['get'], detail=False, url_path='kz', url_name='get_kz')
+    def get_kz(self, request, pk=None):
+        kz = self.queryset.filter(code__icontains='kz').first()
+        return Response(data={'uid': kz.uid}, status=status.HTTP_200_OK)
 
 
 class DocumentTypeViewSet(ModelViewSet):

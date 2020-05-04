@@ -181,6 +181,7 @@ class IdentityDocument(BaseModel):
         max_length=100,
         default='',
         blank=True,
+        null=True,
         verbose_name='Номер',
     )
     given_date = models.DateField(

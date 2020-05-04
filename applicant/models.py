@@ -1,12 +1,12 @@
 import datetime as dt
 from django.contrib.auth.models import User
 from django.contrib.contenttypes.models import ContentType
-from django.contrib.contenttypes.fields import GenericRelation
 from django.core.mail import EmailMessage, send_mail
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
 from django.db.models import Case, When, Value, Q
 from django.template.loader import render_to_string
+from django.utils.translation import ugettext_lazy as _
 from common.models import (
     BaseModel,
     BaseCatalog,
@@ -69,29 +69,6 @@ class FamilyMembership(BaseCatalog):
         verbose_name_plural = "Степени родства"
 
 
-# Тип адреса
-class AddressType(BaseCatalog):
-    # Адрес прописки
-    REGISTRATION = 'reg'
-    # Адрес временной регистрации
-    TEMP_REG = 'temp'
-    # Адресс фактического проживания
-    RESIDENCE = 'res'
-
-    class Meta:
-        verbose_name = "Тип адреса"
-        verbose_name_plural = "Типы адресов"
-
-    @staticmethod
-    def get_type(code):
-        if code == AddressType.REGISTRATION:
-            return AddressType.objects.get(code=AddressType.REGISTRATION)
-        if code == AddressType.TEMP_REG:
-            return AddressType.objects.get(code=AddressType.TEMP_REG)
-        if code == AddressType.RESIDENCE:
-            return AddressType.objects.get(code=AddressType.RESIDENCE)
-
-
 # Уровни бюджета
 class BudgetLevel(BaseCatalog):
     class Meta:
@@ -145,12 +122,43 @@ class AddressClassifier(BaseCatalog):
 
 # Адрес пользователя
 class Address(BaseCatalog):
-    # Представление адреса будет потом после создания
+    REG = 0  # Адрес регистрации/прописки
+    TMP = 1  # Адрес времменной регистрации
+    RES = 2  # Адрес фактического проживания
+    ADDRESS_TYPE_CHOICES = (
+        (REG, _('address of registration')),
+        (TMP, _('address of temporary registration')),
+        (RES, _('address of residence'))
+    )
+    MATCH_REG = 0
+    MATCH_TMP = 1
+    MATCH_RES = 2
+    MATCH_NOT = 3
+    ADDRESS_MATCH_CHOICES = (
+        (MATCH_REG, _('registration')),
+        (MATCH_TMP, _('temporary registration')),
+        (MATCH_RES, _('residence')),
+        (MATCH_NOT, _('does not match'))
+    )
     name = models.CharField(
         blank=True,
         null=True,
         max_length=800,
         verbose_name="Имя",
+    )
+    type = models.CharField(
+        max_length=1,
+        choices=ADDRESS_TYPE_CHOICES,
+        blank=True,
+        null=True,
+        verbose_name='Тип адреса'
+    )
+    address_matches = models.CharField(
+        max_length=1,
+        choices=ADDRESS_MATCH_CHOICES,
+        blank=True,
+        null=True,
+        verbose_name='Адрес соответствует'
     )
     profile = models.ForeignKey(
         Profile,
@@ -160,13 +168,6 @@ class Address(BaseCatalog):
         verbose_name="Профиль",
         related_name="addresses",
     )
-    type = models.ForeignKey(
-        AddressType,
-        blank=True,
-        null=True,
-        on_delete=models.DO_NOTHING,
-        verbose_name="Тип адреса"
-    )
     country = models.ForeignKey(
         Citizenship,
         blank=True,
@@ -174,6 +175,14 @@ class Address(BaseCatalog):
         on_delete=models.DO_NOTHING,
         verbose_name="Страна",
         related_name="addresses",
+    )
+    city = models.ForeignKey(
+        AddressClassifier,
+        blank=True,
+        null=True,
+        on_delete=models.DO_NOTHING,
+        verbose_name="Город",
+        related_name="cities",
     )
     region = models.ForeignKey(
         AddressClassifier,
@@ -190,14 +199,6 @@ class Address(BaseCatalog):
         related_name="localities",
         blank=True,
         null=True,
-    )
-    city = models.ForeignKey(
-        AddressClassifier,
-        blank=True,
-        null=True,
-        on_delete=models.DO_NOTHING,
-        verbose_name="Город",
-        related_name="cities",
     )
     district = models.ForeignKey(
         AddressClassifier,
@@ -377,6 +378,10 @@ class FamilyMember(BaseModel):
 
 class AdmissionCampaignType(BaseCatalog):
     prep_levels = models.ManyToManyField(PreparationLevel, verbose_name='Уровни образования')
+
+    class Meta:
+        verbose_name = 'Тип приемной кампании'
+        verbose_name_plural = 'Типы приемных кампаний'
 
 
 # Приемная кампания
@@ -619,6 +624,12 @@ class ApplicationStatus(BaseCatalog):
 
 # Анкета поступающего
 class Questionnaire(BaseModel):
+    MATCH_REG = 0
+    MATCH_TMP = 1
+    ADDRESS_MATCH_CHOICES = (
+        (MATCH_REG, _('registration address')),
+        (MATCH_TMP, _('temporary registration address')),
+    )
     creator = models.OneToOneField(
         Profile,
         blank=True,
@@ -633,13 +644,13 @@ class Questionnaire(BaseModel):
         null=True,
     )
     last_name = models.CharField(
-        "Имя",
+        "Фамилия",
         max_length=255,
         blank=True,
         null=True,
     )
     middle_name = models.CharField(
-        "Имя",
+        "Отчество",
         max_length=255,
         blank=True,
         null=True,
@@ -676,10 +687,11 @@ class Questionnaire(BaseModel):
     nationality = models.ForeignKey(
         Nationality,
         on_delete=models.DO_NOTHING,
-        verbose_name="Национальн()ость"
+        verbose_name="Национальность"
     )
     is_experienced = models.BooleanField(
         default=False,
+        verbose_name='Имеет опыт работы'
     )
     workplace = models.CharField(
         max_length=500,
@@ -714,11 +726,12 @@ class Questionnaire(BaseModel):
     id_doc = models.ForeignKey(
         IdentityDocument,
         on_delete=models.DO_NOTHING,
-        verbose_name="Удо",
+        verbose_name="Удостоверение личности",
     )
     iin = models.CharField(
         max_length=12,
-        null=True
+        null=True,
+        verbose_name='ИИН'
     )
     id_doc_scan = models.ForeignKey(
         DocScan,
@@ -764,7 +777,7 @@ class Questionnaire(BaseModel):
     )
     need_dormitory = models.BooleanField(
         default=False,
-        verbose_name="Нуждаюсь в общежитии"
+        verbose_name="Нуждается в общежитии"
     )
     doc_return_method = models.ForeignKey(
         DocumentReturnMethod,
@@ -772,6 +785,13 @@ class Questionnaire(BaseModel):
         blank=True,
         null=True,
         verbose_name="Метод возврата документов",
+    )
+    address_matches = models.CharField(
+        max_length=1,
+        choices=ADDRESS_MATCH_CHOICES,
+        verbose_name='Адресу фактического проживания соответствует',
+        blank=True,
+        null=True
     )
 
     class Meta:

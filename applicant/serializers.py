@@ -10,18 +10,18 @@ from django.utils.encoding import force_bytes
 from django.utils.translation import get_language
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
-from common.models import IdentityDocument, GovernmentAgency, DocumentType
+from common.models import IdentityDocument
 from portal_users.serializers import ProfilePhoneSerializer
 from portal_users.models import Profile, Role, ProfilePhone
 from organizations.models import Education
-from . import models
 from .token import token_generator
+from . import models
 
 
 class PrivilegeTypeSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.PrivilegeType
-        fields = "__all__"
+        fields = ['uid', 'name']
 
 
 class PrivilegeSerializer(serializers.ModelSerializer):
@@ -46,25 +46,19 @@ class UserPrivilegeListSerializer(serializers.ModelSerializer):
 class DocumentReturnMethodSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.DocumentReturnMethod
-        fields = "__all__"
+        fields = ['uid', 'name']
 
 
 class FamilyMembershipSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.FamilyMembership
-        fields = "__all__"
-
-
-class AddressTypeSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = models.AddressType
-        fields = "__all__"
+        fields = ['uid', 'name']
 
 
 class AddressClassifierSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.AddressClassifier
-        fields = "__all__"
+        fields = ['uid', 'name']
 
 
 class AddressSerializer(serializers.ModelSerializer):
@@ -110,7 +104,6 @@ class AddressSerializer(serializers.ModelSerializer):
 
 class FamilyMemberSerializer(serializers.ModelSerializer):
     address = AddressSerializer(required=True)
-    address_matches = serializers.CharField(required=False, allow_null=True)
 
     class Meta:
         model = models.FamilyMember
@@ -128,7 +121,7 @@ class FamilySerializer(serializers.ModelSerializer):
 class AdmissionCampaignTypeSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.AdmissionCampaignType
-        fields = '__all__'
+        fields = ['uid', 'name']
 
 
 class AdmissionCampaignSerializer(serializers.ModelSerializer):
@@ -240,6 +233,12 @@ class IdentityDocumentSerializer(serializers.ModelSerializer):
         exclude = ['profile']
 
 
+class QuestionnaireLiteSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.Questionnaire
+        fields = ['uid', 'creator']
+
+
 class QuestionnaireSerializer(serializers.ModelSerializer):
     family = FamilySerializer(required=True)
     id_doc = IdentityDocumentSerializer(required=True)
@@ -271,16 +270,25 @@ class QuestionnaireSerializer(serializers.ModelSerializer):
     def validate(self, validated_data: dict):
         profile = self.context['request'].user.profile
         address_of_registration = validated_data.get('address_of_registration')
-        address_of_registration['type'] = models.AddressType.get_type(models.AddressType.REGISTRATION)
+        address_of_registration.update({
+            'type': models.Address.REG,
+            'profile': profile,
+        })
         address_of_temp_reg = validated_data.get('address_of_temp_reg', None)
         if address_of_temp_reg and any(address_of_temp_reg.values()):
-            address_of_temp_reg['type'] = models.AddressType.get_type(models.AddressType.TEMP_REG)
+            address_of_temp_reg.update({
+                'type': models.Address.TMP,
+                'profile': profile
+            })
         address_of_residence = validated_data.get('address_of_residence')
-        address_of_residence['type'] = models.AddressType.get_type(models.AddressType.RESIDENCE)
+        address_of_residence.update({
+            'type': models.Address.RES,
+            'profile': profile
+        })
 
         family: dict = validated_data.get('family')
         members: dict = family.pop('members')
-        if any(filter(lambda x: x['address_matches'] == 'm_temp', members)) and not address_of_temp_reg:
+        if any(filter(lambda x: x['address_matches'] == '', members)) and not address_of_temp_reg:
             raise ValidationError({
                 "error": "no_temp_reg_for_member",
                 "message": "Temporary address wasn't provided and set as address of member"
@@ -349,7 +357,7 @@ class QuestionnaireSerializer(serializers.ModelSerializer):
             else:
                 id_doc = IdentityDocument.objects.create(**validated_data.pop('id_doc'), profile=profile)
             applicant_reg_addr = models.Address.objects.filter(
-                type=models.AddressType.get_type(models.AddressType.REGISTRATION),
+                type=models.Address.REG,
                 profile=profile
             )
             if applicant_reg_addr.exists():
@@ -363,7 +371,7 @@ class QuestionnaireSerializer(serializers.ModelSerializer):
             address_of_temp_reg = validated_data.pop('address_of_temp_reg', None)
             if address_of_temp_reg:
                 applicant_temp_reg = models.Address.objects.filter(
-                    type=models.AddressType.get_type(models.AddressType.TEMP_REG),
+                    type=models.Address.TMP,
                     profile=profile
                 )
                 if applicant_temp_reg.exists():
@@ -375,7 +383,7 @@ class QuestionnaireSerializer(serializers.ModelSerializer):
                         profile=profile
                     )
             applicant_res_addr = models.Address.objects.filter(
-                type=models.AddressType.get_type(models.AddressType.RESIDENCE),
+                type=models.Address.RES,
                 profile=profile
             )
             if applicant_res_addr.exists():
@@ -527,7 +535,7 @@ class DocScanSerializer(serializers.ModelSerializer):
 class ApplicationStatusSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.ApplicationStatus
-        fields = "__all__"
+        fields = ['uid', 'name']
 
 
 class CampaignStageSerializer(serializers.ModelSerializer):
@@ -562,13 +570,13 @@ class TestCertSerializer(serializers.ModelSerializer):
 class LanguageProficiencySerializer(serializers.ModelSerializer):
     class Meta:
         model = models.LanguageProficiency
-        fields = "__all__"
+        fields = ['uid', 'name']
 
 
 class InternationalCertTypeSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.InternationalCertType
-        fields = "__all__"
+        fields = ['uid', 'name']
 
 
 class InternationalCertSerializer(serializers.ModelSerializer):
@@ -580,7 +588,7 @@ class InternationalCertSerializer(serializers.ModelSerializer):
 class GrantTypeSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.GrantType
-        fields = "__all__"
+        fields = ['uid', 'name']
 
 
 class GrantSerializer(serializers.ModelSerializer):

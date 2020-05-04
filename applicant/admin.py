@@ -5,7 +5,6 @@ models = [
     PrivilegeType,
     DocumentReturnMethod,
     FamilyMembership,
-    AddressType,
     BudgetLevel,
     InternationalCertType,
     GrantType,

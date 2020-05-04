@@ -122,6 +122,11 @@ class QuestionnaireViewSet(ModelViewSet):
     queryset = models.Questionnaire.objects.all()
     serializer_class = serializers.QuestionnaireSerializer
 
+    def get_serializer_class(self):
+        if self.action == 'list':
+            return serializers.QuestionnaireLiteSerializer
+        return serializers.QuestionnaireSerializer
+
     def create(self, request, *args, **kwargs):
         data = request.data
         data['nationality'] = data['nationality']['uid']
@@ -147,7 +152,7 @@ class QuestionnaireViewSet(ModelViewSet):
             'last_name': profile.last_name,
             'middle_name': profile.middle_name,
             'email': profile.email,
-            'serial_number': profile.user.applicant.doc_num
+            'number': profile.user.applicant.doc_num
         }
         return Response(data=data, status=HTTP_200_OK)
 
@@ -167,12 +172,6 @@ class PrivilegeTypeViewSet(ModelViewSet):
 class DocumentReturnMethodViewSet(ModelViewSet):
     queryset = models.DocumentReturnMethod.objects.all()
     serializer_class = serializers.DocumentReturnMethodSerializer
-    permission_classes = (IsAdminOrReadOnly,)
-
-
-class AddressTypeViewSet(ModelViewSet):
-    queryset = models.AddressType.objects.all()
-    serializer_class = serializers.AddressTypeSerializer
     permission_classes = (IsAdminOrReadOnly,)
 
 
@@ -293,8 +292,7 @@ class ApplicationViewSet(ModelViewSet):
     def get_serializer_class(self):
         if self.action == 'list':
             return serializers.ApplicationLiteSerializer
-        else:
-            return serializers.ApplicationSerializer
+        return serializers.ApplicationSerializer
 
     @action(methods=['get'], detail=False, url_name='my', url_path='my')
     def get_my_application(self, request, pk=None):
