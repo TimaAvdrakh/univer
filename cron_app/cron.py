@@ -30,7 +30,7 @@ from common import models as common_models
 import urllib3
 import certifi
 from applicant.models import Applicant
-from applications import models as applications_models
+from applications import models as model_aps
 
 
 class EmailCronJob(CronJobBase):
@@ -636,71 +636,53 @@ class SendApplicationsTo1cJob:
     code = 'crop_app.send_student_application'
 
     def do(self):
+        apps_model = model_aps.Application.objects
+        # Todo Если получение справки то документ не нужен
+        sub_apps = model_aps.SubApplication.objects.filter(application__send=False).values(
+            'application', 'application__type__uid', 'status', 'subtype_id', 'comment', 'id',
+            'application__profile__uid',
+            'organization', 'is_paper', 'copies', 'lang')
+        applications = sub_apps.values('application').distinct().values(
+            'application', 'application__type_id', 'application__profile__uid')
+        #    print(applications)
+        sub_apps = list(sub_apps)
+        apps_json = []
         url = SEND_APPLICATIONS_TO_1C_URL
-        applications = serv_models.StudentDiscipline.objects.filter(
+        print(sub_apps)
+        for app in applications:
 
-        )[0]
-        ''' disciplines = []
-        for sd in sds:
-            print(sd.study_plan)
+            sub_app_by_app = [item for item in sub_apps if item['application'] == app['application']]
+            sub_json = []
+            for sub_application in sub_app_by_app:
+                sub_item = {
+                    "applicationSubtypeID": str(sub_application['subtype_id']),
+                    "subApplicationID": sub_application['id'],
+                    "organizationName": sub_application['organization'],
+                    "isPaper": sub_application['is_paper'],
+                    "copyNumber": sub_application['copies'],
+                    "lang": [sub_application['lang']]
+                }
+                sub_json.append(sub_item)
             item = {
-                'uid_site': str(sd.uid),  # УИД дисицплины студента на сайте
-                'study_plan': sd.study_plan.uid_1c,
-                'student': str(sd.student.uid),
-                'study_period': str(sd.study_year.uid),
-                'advisor': str(sd.study_plan.advisor.uid) if sd.study_plan.advisor else '',
-                'acad_period': str(sd.acad_period.uid),
-                'teacher': str(sd.teacher.uid),
-                'language': str(sd.language.uid),
-                'discipline': str(sd.discipline.uid),
-                'loadtype': str(sd.load_type.load_type2.uid_1c),
-                'isopt': str(sd.component.uid) == component_by_choose_uid if sd.component else False,
+                "applicationID": app['application'],
+                "applicationType": str(app['application__type_id']),
+                "applicationScan": "file_name",
+                "applicationStudent": str(app['application__profile__uid']),
+                "applicationSubtype": sub_json
             }
-            disciplines.append(item)
+            apps_json.append(item)
         urllib3.disable_warnings()
         resp = requests.post(
             url,
-            json=disciplines,
+            json=apps_json,
             verify=False,
             auth=HTTPBasicAuth('Администратор'.encode(), 'qwe123rty'),
             timeout=30,
         )
-
+        print(resp.status_code)
+        print(resp)
         if resp.status_code == 200:
             print("Connected")
             resp_data = resp.json()
-            for item in resp_data:
-                # try:
-                #     sent_data = list(filter(lambda disc: disc['uid_site'] == item['uid_site'], disciplines))[0]
-                #     sent_data_json = json.dumps(sent_data)
-                # except IndexError:
-                #     sent_data_json = ''
+            print(resp_data)
 
-                log = DocumentChangeLog(
-                    content_type_id=CONTENT_TYPES['studentdiscipline'],
-                    object_id=item['uid_site'],
-                    status=item['code'],
-                    # sent_data=item['json'],
-                )
-                error_text = ''
-                for error in item['errors']:
-                    error_text += '{}\n'.format(error)
-
-                log.errors = error_text
-                log.save()
-
-                if item['code'] == 0:
-                    try:
-                        sd = org_models.StudentDiscipline.objects.get(pk=item['uid_site'])
-                    except org_models.StudentDiscipline.DoesNotExist:
-                        continue
-
-                    sd.uid_1c = item['uid_1c']
-                    sd.sent = True
-                    sd.save()
-        else:
-            message = '{}\n{}'.format(resp.status_code,
-                                      resp.content.decode())
-            for chat_id in BOT_DEV_CHAT_IDS:
-                bot.send_message(chat_id,
-                                 message)'''
