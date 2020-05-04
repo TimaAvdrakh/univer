@@ -539,6 +539,11 @@ class DocScan(models.Model):
         null=True,
         verbose_name="Тип контента"
     )
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        blank=True,
+        null=True
+    )
 
     def __str__(self):
         if self.name:
@@ -671,7 +676,10 @@ class Questionnaire(BaseModel):
     nationality = models.ForeignKey(
         Nationality,
         on_delete=models.DO_NOTHING,
-        verbose_name="Национальность"
+        verbose_name="Национальн()ость"
+    )
+    is_experienced = models.BooleanField(
+        default=False,
     )
     workplace = models.CharField(
         max_length=500,
@@ -771,7 +779,7 @@ class Questionnaire(BaseModel):
         verbose_name_plural = "Анкеты"
 
     def __str__(self):
-        if self.creator:
+        if self.creator and self.creator.full_name:
             return f"Абитуриент {self.creator}"
         else:
             return f"Абитуриент {self.first_name_en} {self.last_name_en}"

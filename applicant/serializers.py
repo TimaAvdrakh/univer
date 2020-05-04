@@ -25,9 +25,14 @@ class PrivilegeTypeSerializer(serializers.ModelSerializer):
 
 
 class PrivilegeSerializer(serializers.ModelSerializer):
+    scan_info = serializers.SerializerMethodField()
+
     class Meta:
         model = models.Privilege
         fields = "__all__"
+
+    def get_scan_info(self, privilege: models.Privilege):
+        return DocScanSerializer(privilege.scan).data
 
 
 class UserPrivilegeListSerializer(serializers.ModelSerializer):
@@ -244,10 +249,14 @@ class QuestionnaireSerializer(serializers.ModelSerializer):
     userprivilegelist = UserPrivilegeListSerializer(required=False, many=False)
     phone = ProfilePhoneSerializer(required=True)
     info = serializers.SerializerMethodField()
+    scan = serializers.SerializerMethodField()
 
     class Meta:
         model = models.Questionnaire
         fields = "__all__"
+
+    def get_scan(self, q: models.Questionnaire):
+        return DocScanSerializer(q.id_doc_scan).data
 
     def get_info(self, q: models.Questionnaire):
 
@@ -263,7 +272,7 @@ class QuestionnaireSerializer(serializers.ModelSerializer):
         address_of_registration = validated_data.get('address_of_registration')
         address_of_registration['type'] = models.AddressType.get_type(models.AddressType.REGISTRATION)
         address_of_temp_reg = validated_data.get('address_of_temp_reg', None)
-        if address_of_temp_reg:
+        if any(address_of_temp_reg.values()):
             address_of_temp_reg['type'] = models.AddressType.get_type(models.AddressType.TEMP_REG)
         address_of_residence = validated_data.get('address_of_residence')
         address_of_residence['type'] = models.AddressType.get_type(models.AddressType.RESIDENCE)
@@ -412,7 +421,7 @@ class QuestionnaireSerializer(serializers.ModelSerializer):
         return questionnaire
 
     def update(self, instance: models.Questionnaire, validated_data: dict):
-        profile = self.context['request'].profile
+        profile = self.context['request'].user.profile
         if profile == instance.creator:
             try:
                 info = self.context['request'].data.get('info')
@@ -451,7 +460,7 @@ class QuestionnaireSerializer(serializers.ModelSerializer):
                     setattr(registration_instance, key, value)
                 registration_instance.save(snapshot=True)
                 address_of_temp_reg = validated_data.pop('address_of_temp_reg', None)
-                if address_of_temp_reg:
+                if any(address_of_temp_reg.values()):
                     temp_instance = models.Address.objects.get(pk=instance.address_of_temp_reg.uid)
                     for key, value in address_of_temp_reg.items():
                         setattr(temp_instance, key, value)
@@ -524,9 +533,14 @@ class DisciplineMarkSerializer(serializers.ModelSerializer):
 
 
 class TestCertSerializer(serializers.ModelSerializer):
+    scan_info = serializers.SerializerMethodField()
+
     class Meta:
         model = models.TestCert
         fields = "__all__"
+
+    def get_scan_info(self, cert: models.TestCert):
+        return DocScanSerializer(cert.scan).data
 
 
 class LanguageProficiencySerializer(serializers.ModelSerializer):
@@ -555,19 +569,19 @@ class GrantTypeSerializer(serializers.ModelSerializer):
 
 class GrantSerializer(serializers.ModelSerializer):
     info = serializers.SerializerMethodField(read_only=True, required=False)
+    scan_info = serializers.SerializerMethodField()
 
     def get_info(self, grant: models.Grant):
         info = {
             'speciality': {
                 'uid': grant.speciality.uid,
                 'name': grant.speciality.name
-            },
-            'scan': {
-                'name': grant.scan.name,
-                'path': grant.scan.path,
             }
         }
         return info
+
+    def get_scan_info(self, grant: models.Grant):
+        return DocScanSerializer(grant.scan).data
 
     class Meta:
         model = models.Grant
@@ -623,6 +637,7 @@ class TestResultSerializer(serializers.ModelSerializer):
 
 class EducationSerializer(serializers.ModelSerializer):
     info = serializers.SerializerMethodField(required=False, read_only=True)
+    scan_info = serializers.SerializerMethodField()
 
     def get_info(self, edu: models.Education):
         info = {
@@ -635,13 +650,12 @@ class EducationSerializer(serializers.ModelSerializer):
             'speciality': {
                 'name': edu.speciality.name,
                 'uid': edu.speciality.uid,
-            },
-            'scan': {
-                'name': edu.scan.name,
-                'path': edu.scan.path,
             }
         }
         return info
+
+    def get_scan_info(self, edu: models.Education):
+        return DocScanSerializer(edu.scan).data
 
     class Meta:
         model = models.Education
@@ -846,4 +860,4 @@ class AdmissionDocumentSerializer(serializers.ModelSerializer):
         return super().update(instance, validated_data)
 
     def get_files_info(self, doc: models.AdmissionDocument):
-        return DocScanSerializer(doc.files.all(), many=True).data
+        return DocScanSerializer(doc.files.order_by('-created_at'), many=True).data
