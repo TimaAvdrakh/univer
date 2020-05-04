@@ -633,7 +633,7 @@ class SendApplicationsTo1cJob:
     RUN_EVERY_MINS = 10  # every 1 min
 
     schedule = Schedule(run_every_mins=RUN_EVERY_MINS)
-    code = 'crop_app.send_student_application'
+    code = 'cron_app.send_student_application'
 
     def do(self):
         apps_model = model_aps.Application.objects
