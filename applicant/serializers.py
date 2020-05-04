@@ -272,7 +272,7 @@ class QuestionnaireSerializer(serializers.ModelSerializer):
         address_of_registration = validated_data.get('address_of_registration')
         address_of_registration['type'] = models.AddressType.get_type(models.AddressType.REGISTRATION)
         address_of_temp_reg = validated_data.get('address_of_temp_reg', None)
-        if any(address_of_temp_reg.values()):
+        if address_of_temp_reg and any(address_of_temp_reg.values()):
             address_of_temp_reg['type'] = models.AddressType.get_type(models.AddressType.TEMP_REG)
         address_of_residence = validated_data.get('address_of_residence')
         address_of_residence['type'] = models.AddressType.get_type(models.AddressType.RESIDENCE)
