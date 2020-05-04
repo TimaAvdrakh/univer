@@ -301,39 +301,46 @@ class QuestionnaireSerializer(serializers.ModelSerializer):
 
         return validated_data
 
+    def create_family_members(self, members: list, family: models.Family):
+        member: dict
+        for member in members:
+            member_user: User = User.objects.create(username=member['email'])
+            member_user.set_password(member['email'])
+            member_profile = Profile.objects.create(
+                user=member_user,
+                first_name=member['first_name'],
+                last_name=member['last_name'],
+                middle_name=member['middle_name']
+            )
+            # TODO добавить роль родителя
+            address = models.Address.objects.create(
+                **member.pop('address'),
+                profile=member_profile
+            )
+            models.FamilyMember.objects.create(
+                **member,
+                profile=member_profile,
+                address=address,
+                family=family
+            )
+        return
+
     def create(self, validated_data):
         profile = self.context['request'].user.profile
         questionnaire = None
         try:
             applicant_family = models.Family.objects.filter(profile=profile)
             if applicant_family.exists():
-                family = applicant_family.first()
-                validated_data.pop('family')
+                family: models.Family = applicant_family.first()
+                if not family.members.exists():
+                    family_data = validated_data.pop('family')
+                    members = family_data.pop('members')
+                    self.create_family_members(members=members, family=family)
             else:
-                family = validated_data.pop('family')
+                family: dict = validated_data.pop('family')
                 members = family.pop('members')
-                family = models.Family.objects.create(**family, profile=profile)
-                member: dict
-                for member in members:
-                    member_user: User = User.objects.create(username=member['email'])
-                    member_user.set_password(member['email'])
-                    member_profile = Profile.objects.create(
-                        user=member_user,
-                        first_name=member['first_name'],
-                        last_name=member['last_name'],
-                        middle_name=member['middle_name']
-                    )
-                    # TODO добавить роль родителя
-                    address = models.Address.objects.create(
-                        **member.pop('address'),
-                        profile=member_profile
-                    )
-                    models.FamilyMember.objects.create(
-                        **member,
-                        profile=member_profile,
-                        address=address,
-                        family=family
-                    )
+                family: models.Family = models.Family.objects.create(**family, profile=profile)
+                self.create_family_members(members=members, family=family)
             applicant_id_doc = IdentityDocument.objects.filter(profile=profile)
             if applicant_id_doc.exists():
                 id_doc = applicant_id_doc.first()
