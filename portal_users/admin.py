@@ -106,6 +106,7 @@ class RoleAdmin(admin.ModelAdmin):
         "is_teacher",
         "is_org_admin",
         "is_supervisor",
+        "is_mod"
     ]
 
 
