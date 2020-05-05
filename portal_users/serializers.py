@@ -859,7 +859,8 @@ class StudyPlanSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         data = super().to_representation(instance)
-        data["speciality_with_code"] = instance.speciality.code
+        speciality_pk = org_models.Speciality.objects.filter(uid=instance.speciality.uid)
+        data["speciality_with_code"] = SpecialitySerializer(instance=speciality_pk, many=True).data
         data["is_multilang"] = False
         if str(instance.group.language.pk) == language_multilingual_id:
             data["is_multilang"] = True
