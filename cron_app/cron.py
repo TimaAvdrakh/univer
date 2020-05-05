@@ -2,13 +2,13 @@ import datetime as dt
 from django_cron import CronJobBase, Schedule
 from . import models
 import requests
+import sys
 from portal.curr_settings import (
     student_discipline_status,
     component_by_choose_uid,
     CONTENT_TYPES,
     SEND_STUD_DISC_1C_URL,
     SEND_APPLICATIONS_TO_1C_URL,
-    GET_READY_FROM_1C_URL,
     BOT_DEV_CHAT_IDS
 )
 from django.core.mail import send_mail
@@ -635,6 +635,10 @@ class SendApplicationsTo1cJob:
     schedule = Schedule(run_every_mins=RUN_EVERY_MINS)
     code = 'cron_app.send_student_application'
 
+    LANG_EN = '789cb6fa-31e9-11e9-aa40-0cc47a2bc1bf'
+    LANG_KZ = '789cb6fb-31e9-11e9-aa40-0cc47a2bc1bf'
+    LANG_RU = '789cb6fc-31e9-11e9-aa40-0cc47a2bc1bf'
+
     def do(self):
         apps_model = model_aps.Application.objects
         # Todo Если получение справки то документ не нужен
@@ -644,16 +648,24 @@ class SendApplicationsTo1cJob:
             'organization', 'is_paper', 'copies', 'lang')
         applications = sub_apps.values('application').distinct().values(
             'application', 'application__type_id', 'application__profile__uid')
-        #    print(applications)
+
         sub_apps = list(sub_apps)
         apps_json = []
         url = SEND_APPLICATIONS_TO_1C_URL
-        print(sub_apps)
         for app in applications:
 
             sub_app_by_app = [item for item in sub_apps if item['application'] == app['application']]
             sub_json = []
             for sub_application in sub_app_by_app:
+                lang_list = []
+                for lang in sub_application['lang']:
+                    if lang == 'ru':
+                        lang_list.append(self.LANG_RU)
+                    if lang == 'kz':
+                        lang_list.append(self.LANG_KZ)
+                    if lang == 'en':
+                        lang_list.append(self.LANG_EN)
+
                 sub_item = {
                     "applicationSubtypeID": str(sub_application['subtype_id']),
                     "subApplicationID": sub_application['id'],
@@ -672,6 +684,8 @@ class SendApplicationsTo1cJob:
             }
             apps_json.append(item)
         urllib3.disable_warnings()
+        print(apps_json)
+        sys.exit(1)
         resp = requests.post(
             url,
             json=apps_json,
@@ -679,10 +693,8 @@ class SendApplicationsTo1cJob:
             auth=HTTPBasicAuth('Администратор'.encode(), 'qwe123rty'),
             timeout=30,
         )
-        print(resp.status_code)
-        print(resp)
+
         if resp.status_code == 200:
             print("Connected")
             resp_data = resp.json()
             print(resp_data)
-
