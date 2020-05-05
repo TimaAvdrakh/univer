@@ -1,4 +1,7 @@
+from django.db.models import Q
+from rest_framework.decorators import action
 from rest_framework.viewsets import ModelViewSet
+from rest_framework.response import Response
 from univer_admin.permissions import IsAdminOrReadOnly
 from .models import *
 from .serializers import *
@@ -44,6 +47,17 @@ class OrganizationViewSet(ModelViewSet):
     queryset = Organization.objects.all()
     serializer_class = OrganizationSerializer
     permission_classes = (IsAdminOrReadOnly,)
+
+    @action(methods=['get'], detail=False, url_path='search', url_name='search_organizations')
+    def search(self, request, pk=None):
+        name = request.query_params.get('name')
+        data = self.queryset.filter(
+            Q(name_ru__icontains=name)
+            | Q(name_en__icontains=name)
+            | Q(name_kk__icontains=name)
+        ).distinct()
+        data = self.serializer_class(data, many=True).data
+        return Response(data=data)
 
 
 class SpecialityViewSet(ModelViewSet):

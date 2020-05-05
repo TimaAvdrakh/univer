@@ -446,7 +446,7 @@ class TestCertSerializer(serializers.ModelSerializer):
 class LanguageProficiencySerializer(serializers.ModelSerializer):
     class Meta:
         model = models.LanguageProficiency
-        fields = ['uid', 'name']
+        fields = ['uid', 'code']
 
 
 class InternationalCertTypeSerializer(serializers.ModelSerializer):
