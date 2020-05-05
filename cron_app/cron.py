@@ -7,8 +7,8 @@ from portal.curr_settings import (
     component_by_choose_uid,
     CONTENT_TYPES,
     SEND_STUD_DISC_1C_URL,
-    SEND_APPLICATIONS_TO_1C_URL,
-    GET_READY_FROM_1C_URL,
+    # SEND_APPLICATIONS_TO_1C_URL,
+    # GET_READY_FROM_1C_URL,
     BOT_DEV_CHAT_IDS
 )
 from django.core.mail import send_mail
@@ -159,7 +159,9 @@ class AdvisorRejectBidJob(CronJobBase):
 
     def do(self):
         mail_subject = 'Ваша заявка отклонена'
-        tasks = models.AdvisorRejectedBidTask.objects.filter(is_success=False)
+        tasks = models.AdvisorRejectedBidTask.objects.filter(
+            is_success=False,
+        )
         for task in tasks:
             study_plan = task.study_plan
             student = study_plan.student
@@ -173,16 +175,16 @@ class AdvisorRejectBidJob(CronJobBase):
                                         {'advisor_name': advisor.full_name,
                                          'comment': task.comment}
                                         )
-
-            send_mail(
-                mail_subject,
-                msg_plain,
-                'avtoexpertastana@gmail.com',
-                [student.email],
-                html_message=msg_html,
-            )
-            task.is_success = True
-            task.save()
+            if student.notify_me_from_email:
+                send_mail(
+                    mail_subject,
+                    msg_plain,
+                    'avtoexpertastana@gmail.com',
+                    [student.email],
+                    html_message=msg_html,
+                )
+                task.is_success = True
+                task.save()
 
 
 class StudPerformanceChangedJob(CronJobBase):

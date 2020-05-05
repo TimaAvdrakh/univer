@@ -811,10 +811,20 @@ class EducationProgramGroupSerializer(serializers.ModelSerializer):
         )
 
 
+class SpecialitySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = org_models.Speciality
+        fields = (
+            "uid",
+            "name",
+            "code"
+        )
+
+
 class StudyPlanSerializer(serializers.ModelSerializer):
     study_period = serializers.CharField()
     group = serializers.CharField()
-    speciality = serializers.CharField()
+    speciality = SpecialitySerializer()
     faculty = serializers.CharField()
     cathedra = serializers.CharField()
     education_program = EducationProgramSerializer()
