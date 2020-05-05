@@ -824,7 +824,7 @@ class SpecialitySerializer(serializers.ModelSerializer):
 class StudyPlanSerializer(serializers.ModelSerializer):
     study_period = serializers.CharField()
     group = serializers.CharField()
-    speciality = SpecialitySerializer()
+    speciality = serializers.CharField()
     faculty = serializers.CharField()
     cathedra = serializers.CharField()
     education_program = EducationProgramSerializer()
@@ -859,7 +859,7 @@ class StudyPlanSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         data = super().to_representation(instance)
-
+        data["speciality_with_code"] = instance.speciality.code
         data["is_multilang"] = False
         if str(instance.group.language.pk) == language_multilingual_id:
             data["is_multilang"] = True
