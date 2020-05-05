@@ -10,7 +10,6 @@ router.register(r"questionnaires", viewsets.QuestionnaireViewSet, "questionnaire
 router.register(r"family-memberships", viewsets.FamilyMembershipViewSet, "family_membership")
 router.register(r"privilege-types", viewsets.PrivilegeTypeViewSet, "privilege-types")
 router.register(r"doc-return-methods", viewsets.DocumentReturnMethodViewSet, "doc_return_methods")
-router.register(r"address-types", viewsets.AddressTypeViewSet, "address_types")
 router.register(r"recruitment-plans", viewsets.RecruitmentPlanViewSet, "recruitment_plans")
 router.register(r"lang-levels", viewsets.LanguageProficiencyViewSet, "lang_levels")
 router.register(r"icts", viewsets.InternationalCertTypeViewSet, "icts")

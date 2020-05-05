@@ -75,6 +75,11 @@ class BaseModel(models.Model):
         diffs = Changelog.objects.filter(object_id=self.pk).order_by('-created')
         return diffs
 
+    @property
+    def comments(self):
+        comments = Comment.objects.filter(object_id=self.pk).order_by('-created')
+        return comments
+
 
 class BaseCatalog(BaseModel):
     # univer = models.ForeignKey(
@@ -176,6 +181,7 @@ class IdentityDocument(BaseModel):
         max_length=100,
         default='',
         blank=True,
+        null=True,
         verbose_name='Номер',
     )
     given_date = models.DateField(

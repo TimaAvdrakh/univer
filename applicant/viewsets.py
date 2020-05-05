@@ -2,6 +2,7 @@ from django import forms
 from django.conf import settings
 from django.contrib.auth import login
 from django.contrib.auth.models import User
+from django.core.mail import send_mail
 from django.db.models import Q
 from django.http import JsonResponse, HttpResponseBadRequest, HttpResponse
 from django.utils.encoding import force_text
@@ -27,15 +28,6 @@ class DocScanForm(forms.ModelForm):
         fields = "__all__"
 
 
-# Запись в media
-def handle_uploaded_file(f):
-    media_catalog = settings.MEDIA_ROOT
-    filename = f.name
-    with open(f"{media_catalog}/{filename}", "wb+") as destination:
-        for chunk in f.chunks():
-            destination.write(chunk)
-
-
 def file_upload(request):
     # TODO add path
     if request.method == "POST":
@@ -51,10 +43,10 @@ def file_upload(request):
                         form.instance.ext = item.name.split(".")[-1]
                         form.instance.size = item.size
                         form.instance.content_type = item.content_type
-                        form.instance.path = f"{settings.MEDIA_ROOT}/{item.name}"
+                        form.instance.path = f"{item.name}"
                         form.save(commit=True)
                         doc_scan_ids.append(form.instance.id)
-                        handle_uploaded_file(item)
+                        models.DocScan.handle_uploaded_file(item)
                     else:
                         raise Exception("An error occurred")
             else:
@@ -65,9 +57,9 @@ def file_upload(request):
                     form.instance.ext = file.name.split(".")[-1]
                     form.instance.size = file.size
                     form.instance.content_type = file.content_type
-                    form.instance.path = f"{settings.MEDIA_ROOT}/{file.name}"
+                    form.instance.path = f"{file.name}"
                     form.save(commit=True)
-                    handle_uploaded_file(file)
+                    models.DocScan.handle_uploaded_file(file)
                     doc_scan_ids.append(form.instance.id)
             return JsonResponse({"ids": doc_scan_ids})
         else:
@@ -130,6 +122,11 @@ class QuestionnaireViewSet(ModelViewSet):
     queryset = models.Questionnaire.objects.all()
     serializer_class = serializers.QuestionnaireSerializer
 
+    def get_serializer_class(self):
+        if self.action == 'list':
+            return serializers.QuestionnaireLiteSerializer
+        return serializers.QuestionnaireSerializer
+
     def create(self, request, *args, **kwargs):
         data = request.data
         data['nationality'] = data['nationality']['uid']
@@ -155,7 +152,7 @@ class QuestionnaireViewSet(ModelViewSet):
             'last_name': profile.last_name,
             'middle_name': profile.middle_name,
             'email': profile.email,
-            'serial_number': profile.user.applicant.doc_num
+            'number': profile.user.applicant.doc_num
         }
         return Response(data=data, status=HTTP_200_OK)
 
@@ -175,12 +172,6 @@ class PrivilegeTypeViewSet(ModelViewSet):
 class DocumentReturnMethodViewSet(ModelViewSet):
     queryset = models.DocumentReturnMethod.objects.all()
     serializer_class = serializers.DocumentReturnMethodSerializer
-    permission_classes = (IsAdminOrReadOnly,)
-
-
-class AddressTypeViewSet(ModelViewSet):
-    queryset = models.AddressType.objects.all()
-    serializer_class = serializers.AddressTypeSerializer
     permission_classes = (IsAdminOrReadOnly,)
 
 
@@ -214,7 +205,9 @@ class ApplicationStatusViewSet(ModelViewSet):
 
 
 class ApplicationViewSet(ModelViewSet):
-    queryset = models.Application.objects.annotate(cond_order=models.COND_ORDER).order_by('cond_order')
+    queryset = models.Application.objects.exclude(
+        status__code__in=[models.APPROVED, models.REJECTED]
+    ).annotate(cond_order=models.COND_ORDER).order_by('cond_order')
     serializer_class = serializers.ApplicationSerializer
     pagination_class = CustomPagination
 
@@ -299,8 +292,7 @@ class ApplicationViewSet(ModelViewSet):
     def get_serializer_class(self):
         if self.action == 'list':
             return serializers.ApplicationLiteSerializer
-        else:
-            return serializers.ApplicationSerializer
+        return serializers.ApplicationSerializer
 
     @action(methods=['get'], detail=False, url_name='my', url_path='my')
     def get_my_application(self, request, pk=None):
@@ -327,8 +319,8 @@ class ApplicationViewSet(ModelViewSet):
         profile: Profile = self.request.user.profile
         application = self.get_object()
         if models.Application.can_perform_action(profile=profile):
-            action_type: str = request.get('action')
-            comment = request.get('comment')
+            action_type: str = request.data.get('action')
+            comment = request.data.get('comment')
             # Одобряем заявление
             if action_type == 'approve':
                 application.approve(moderator=profile, comment=comment)
@@ -376,6 +368,44 @@ class ApplicationViewSet(ModelViewSet):
         campaign = self.request.user.applicant.campaign
         return Response(data=campaign.info, status=HTTP_200_OK)
 
+    @action(methods=['post'], detail=True, url_path='save-directions', url_name='save_directions')
+    def save_directions(self, request, pk=None):
+        """Сохранение направлений
+        Доступно только модераторам.
+        Удалить все предыдущие направелния, подставить новые, уведомить абитуриента
+        """
+        profile = self.request.user.profile
+        role = profile.role
+        if role.is_mod:
+            application: models.Application = self.get_object()
+            directions = request.data.pop('directions')
+            directions = models.DirectionChoice.objects.bulk_create([
+                models.DirectionChoice(
+                    prep_level_id=direction['prep_level'],
+                    study_form_id=direction['study_form'],
+                    education_language_id=direction['education_language'],
+                    education_program_id=direction['info']['education_program']['uid'],
+                    education_program_group_id=direction['info']['education_program_group']['uid'],
+                    education_base_id=direction['info']['education_base']['uid']
+                ) for direction in directions
+            ])
+            application.directions.all().delete()
+            application.directions.add(*directions)
+            application.save()
+            # Почта может не работать, как у меня на локали
+            try:
+                send_mail(
+                    subject='Изменение направлений',
+                    message=f'Ваши выбранные направления были изменены модератором {profile.full_name}',
+                    from_email='',
+                    recipient_list=[application.creator.email])
+            except Exception as e:
+                # Положить в очередь крона
+                print(e)
+            return Response(data=None, status=HTTP_200_OK)
+        else:
+            raise ValidationError({"error": "access_denied"})
+
 
 class AdmissionCampaignTypeViewSet(ModelViewSet):
     queryset = models.AdmissionCampaignType.objects.all()
@@ -409,7 +439,7 @@ class AdmissionDocumentViewSet(ModelViewSet):
 
     def create(self, request, *args, **kwargs):
         profile = self.request.user.profile
-        request.data['creator'] = profile
+        request.data['creator'] = profile.pk
         return super().create(request, *args, **kwargs)
 
     @action(methods=['get'], detail=False, url_name='my', url_path='my')

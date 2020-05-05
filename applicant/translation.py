@@ -27,11 +27,6 @@ class FamilyMembershipTranslationOptions(TranslationOptions):
     fields = ('name',)
 
 
-@register(AddressType)
-class AddressTypeTranslationOptions(TranslationOptions):
-    fields = ('name',)
-
-
 @register(BudgetLevel)
 class BudgetLevelTranslationOptions(TranslationOptions):
     fields = ('name',)
