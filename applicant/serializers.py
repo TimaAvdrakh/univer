@@ -232,6 +232,7 @@ class QuestionnaireSerializer(serializers.ModelSerializer):
         members_with_temp_reg = any(map(lambda member: member['address_matches'] == models.Address.TMP, members))
         if members_with_temp_reg and not temp_reg_present:
             raise ValidationError({"error": "member_addr_empty_temp_reg"})
+        family['members'] = members
         address_of_registration = validated_data.pop('address_of_registration')
         address_of_residence = validated_data.pop('address_of_residence')
         if address_matches == models.Questionnaire.MATCH_REG:
@@ -245,6 +246,7 @@ class QuestionnaireSerializer(serializers.ModelSerializer):
         validated_data['address_of_registration'] = address_of_registration
         validated_data['address_of_temp_reg'] = address_of_temp_reg if temp_reg_present else None
         validated_data['address_of_residence'] = address_of_residence
+        validated_data['family'] = family
         return validated_data
 
 
@@ -260,8 +262,8 @@ class QuestionnaireSerializer(serializers.ModelSerializer):
                 address_of_temp_reg = models.Address.objects.create(**address_of_temp_reg)
                 address_of_temp_reg.profiles.add(creator)
                 address_of_temp_reg.save()
-            address_of_residence = models.Address.objects.create(**validated_data.pop('address_of_temp_reg'))
-            address_of_residence.profile.add(creator)
+            address_of_residence = models.Address.objects.create(**validated_data.pop('address_of_residence'))
+            address_of_residence.profiles.add(creator)
             address_of_residence.save()
             family = validated_data.pop('family')
             members = family.pop('members')
@@ -292,10 +294,15 @@ class QuestionnaireSerializer(serializers.ModelSerializer):
                 models.FamilyMember.objects.create(**member)
             id_doc = IdentityDocument.objects.create(**validated_data.pop('id_doc'))
             phone = ProfilePhone.objects.create(**validated_data.pop('phone'))
-            privilege_list = validated_data.pop('privilege_list')
-            privileges = privilege_list.pop('privileges')
-            privilege_list = models.UserPrivilegeList.objects.create(**privilege_list, profile=creator)
-            models.Privilege.objects.bulk_create(models.Privilege(privilege, list=privilege_list) for privilege in privileges)
+            privilege_list = validated_data.pop('privilege_list', None)
+            if privilege_list:
+                privileges = privilege_list.pop('privileges')
+                privilege_list = models.UserPrivilegeList.objects.create(**privilege_list, profile=creator)
+                models.Privilege.objects.bulk_create(models.Privilege(
+                    **privilege,
+                    list=privilege_list,
+                    profile=creator
+                ) for privilege in privileges)
             questionnaire = models.Questionnaire.objects.create(
                 creator=creator,
                 family=family,
@@ -304,7 +311,8 @@ class QuestionnaireSerializer(serializers.ModelSerializer):
                 address_of_residence=address_of_residence,
                 id_doc=id_doc,
                 phone=phone,
-                privilege_list=privilege_list
+                privilege_list=privilege_list,
+                **validated_data
             )
         except Exception as e:
             if isinstance(questionnaire, models.Questionnaire):
