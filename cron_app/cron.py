@@ -628,7 +628,7 @@ class ApplicantVerificationJob(CronJobBase):
         Applicant.objects.filter(created__gte=time, user__is_active=False).delete()
 
 
-class SendApplicationsTo1cJob:
+class SendApplicationsTo1cJob(CronJobBase):
     """Отправляет заявки студентов в 1С"""
     RUN_EVERY_MINS = 10  # every 1 min
 
@@ -684,8 +684,6 @@ class SendApplicationsTo1cJob:
             }
             apps_json.append(item)
         urllib3.disable_warnings()
-        print(apps_json)
-        sys.exit(1)
         resp = requests.post(
             url,
             json=apps_json,
@@ -695,6 +693,17 @@ class SendApplicationsTo1cJob:
         )
 
         if resp.status_code == 200:
-            print("Connected")
             resp_data = resp.json()
-            print(resp_data)
+
+            for item in resp_data:
+                log = DocumentChangeLog(
+                    content_type_id=CONTENT_TYPES['applications'],
+                    object_id=item['uid_site'],
+                    status=item['code'],
+                )
+                error_text = ''
+
+                for error in item['errors']:
+                    error_text += '{}\n'.format(error)
+                    log.errors = error_text
+                    log.save()
