@@ -130,16 +130,6 @@ class Address(BaseCatalog):
         (TMP, _('address of temporary registration')),
         (RES, _('address of residence'))
     )
-    MATCH_REG = 0
-    MATCH_TMP = 1
-    MATCH_RES = 2
-    MATCH_NOT = 3
-    ADDRESS_MATCH_CHOICES = (
-        (MATCH_REG, _('registration')),
-        (MATCH_TMP, _('temporary registration')),
-        (MATCH_RES, _('residence')),
-        (MATCH_NOT, _('does not match'))
-    )
     name = models.CharField(
         blank=True,
         null=True,
@@ -153,19 +143,10 @@ class Address(BaseCatalog):
         null=True,
         verbose_name='Тип адреса'
     )
-    address_matches = models.CharField(
-        max_length=1,
-        choices=ADDRESS_MATCH_CHOICES,
-        blank=True,
-        null=True,
-        verbose_name='Адрес соответствует'
-    )
-    profile = models.ForeignKey(
+    profiles = models.ManyToManyField(
         Profile,
         blank=True,
-        null=True,
-        on_delete=models.DO_NOTHING,
-        verbose_name="Профиль",
+        verbose_name="Профили",
         related_name="addresses",
     )
     country = models.ForeignKey(
@@ -272,15 +253,6 @@ class Address(BaseCatalog):
         verbose_name = "Адрес"
         verbose_name_plural = "Адреса"
 
-    @staticmethod
-    def get_by(name: str, code: str = None):
-        code = int(code)
-        lookup = (Q(name_ru__icontains=name) | Q(name_en__icontains=name) | Q(name_kk__icontains=name))
-        if code in range(1, 5):
-            lookup = lookup & Q(address_element_type=code)
-        classifiers = AddressClassifier.objects.filter(lookup)
-        return classifiers
-
 
 # Состав семьи
 class Family(BaseModel):
@@ -306,11 +278,24 @@ class Family(BaseModel):
 
 # Член семьи
 class FamilyMember(BaseModel):
-    # Мне кажется, что в ТЗ не очень продуманно с составом семьи.
-    # Например, заполнять кол-во детей и кол-во несовершеннолетних в семье
-    # на каждого члена семьи не нужно и затратно по времени.
-    # Лучше создать реальную модель семьи с ее членами и такую информацию о кол-ве детей
-    # закинуть в саму семью и подвязать к абитуриенту
+    MATCH_REG = 0
+    MATCH_TMP = 1
+    MATCH_RES = 2
+    MATCH_NOT = 3
+    ADDRESS_MATCH_CHOICES = (
+        (MATCH_REG, _('registration')),
+        (MATCH_TMP, _('temporary registration')),
+        (MATCH_RES, _('residence')),
+        (MATCH_NOT, _('does not match'))
+    )
+
+    address_matches = models.CharField(
+        max_length=1,
+        choices=ADDRESS_MATCH_CHOICES,
+        blank=True,
+        null=True,
+        verbose_name='Адрес соответствует'
+    )
     first_name = models.CharField(
         max_length=255,
         default="",
@@ -811,7 +796,9 @@ class UserPrivilegeList(BaseModel):
         Questionnaire,
         on_delete=models.DO_NOTHING,
         verbose_name="Анкета",
+        blank=True,
         null=True,
+        related_name='privilege_list'
     )
     profile = models.ForeignKey(
         Profile,

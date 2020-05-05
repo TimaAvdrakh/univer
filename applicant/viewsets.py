@@ -127,14 +127,6 @@ class QuestionnaireViewSet(ModelViewSet):
             return serializers.QuestionnaireLiteSerializer
         return serializers.QuestionnaireSerializer
 
-    def create(self, request, *args, **kwargs):
-        data = request.data
-        data['nationality'] = data['nationality']['uid']
-        address_match = data['address_matches']
-        if address_match == 'registration':
-            data.pop('address_of_temp_reg')
-        return super().create(request, *args, **kwargs)
-
     @action(methods=['get'], detail=False, url_name='my', url_path='my')
     def get_my_questionnaire(self, request, pk=None):
         profile = self.request.user.profile
@@ -423,13 +415,31 @@ class AddressViewSet(ModelViewSet):
     queryset = models.Address.objects.all()
     serializer_class = serializers.AddressSerializer
 
-    @action(methods=['get'], detail=False, url_path='search', url_name='address_search')
-    def search(self, request, pk=None):
-        name, code = request.query_params.get('name'), request.query_params.get('code')
-        if not name:
-            raise ValidationError({"error": "pass name"})
-        addresses = models.Address.get_by(name=name, code=code)
-        data = serializers.AddressClassifierSerializer(addresses, many=True).data
+    @action(methods=['get'], detail=False, url_path='regions', url_name='get_regions')
+    def get_regions(self, request, pk=None):
+        regions = models.AddressClassifier.objects.filter(address_element_type=1)
+        data = serializers.AddressClassifierSerializer(regions, many=True).data
+        return Response(data=data, status=HTTP_200_OK)
+
+    @action(methods=['get'], detail=False, url_path='districts', url_name='districts')
+    def get_districts(self, request, pk=None):
+        region = models.AddressClassifier.objects.filter(pk=request.query_params.get('region')).first()
+        districts = models.AddressClassifier.objects.filter(address_element_type=2, region_code=region.code)
+        data = serializers.AddressClassifierSerializer(districts, many=True).data
+        return Response(data=data, status=HTTP_200_OK)
+
+    @action(methods=['get'], detail=False, url_path='cities', url_name='cities')
+    def get_cities(self, request, pk=None):
+        district = models.AddressClassifier.objects.filter(pk=request.query_params.get('district')).first()
+        cities = models.AddressClassifier.objects.filter(address_element_type=3, district_code=district.code)
+        data = serializers.AddressClassifierSerializer(cities, many=True).data
+        return Response(data=data, status=HTTP_200_OK)
+
+    @action(methods=['get'], detail=False, url_path='localities', url_name='localities')
+    def get_localities(self, request, pk=None):
+        district = models.AddressClassifier.objects.filter(pk=request.query_params.get('district')).first()
+        localities = models.AddressClassifier.objects.filter(address_element_type=4, district_code=district.code)
+        data = serializers.AddressClassifierSerializer(localities, many=True).data
         return Response(data=data, status=HTTP_200_OK)
 
 
