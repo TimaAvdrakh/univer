@@ -34,20 +34,20 @@ class ApplicationView(generics.ListCreateAPIView):
     def create(self, request, *args, **kwargs):
         data = json.loads(request.data["data"])
 
-        request.data["profile"] = self.request.user.profile.uid
-        request.data["type"] = data["type"]
+        data["profile"] = self.request.user.profile.uid
+        # request.data["type"] = data["type"]
 
-        if request.data["identity_doc"] :
-            request.data["identity_doc"] = IdentityDoc.objects.create(
+        if "identity_doc" in request.data :
+            data["identity_doc"] = IdentityDoc.objects.create(
                 file=request.data["identity_doc"]
             )
 
-        serializer = self.serializer_class(data=request.data, context={'request': request})
+        serializer = self.serializer_class(data=data, context={'request': request})
         if serializer.is_valid(raise_exception=True):
             sub_applications = data['subapplications']
             application = serializer.save()
 
-            resp = {'message': 'ok', 'id': application.id}
+            resp = {'message': '1', 'id': application.id}
 
             default_status = Status.objects.get(code=NEW)
 
