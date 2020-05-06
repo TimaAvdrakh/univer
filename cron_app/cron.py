@@ -673,7 +673,7 @@ class SendApplicationsTo1cJob(CronJobBase):
                     "organizationName": sub_application['organization'],
                     "isPaper": sub_application['is_paper'],
                     "copyNumber": sub_application['copies'],
-                    "lang": [sub_application['lang']]
+                    "lang": lang_list
                 }
                 sub_json.append(sub_item)
             item = {
@@ -737,7 +737,6 @@ class SendApplicationsTo1cJob(CronJobBase):
 
                     application_row.send = True
                     application_row.save()
-
 
         else:
             message = '{}\n{}'.format(resp.status_code,
