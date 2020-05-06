@@ -122,11 +122,12 @@ class ApplicantSerializer(serializers.ModelSerializer):
         return
 
     def validate(self, validated_data):
-        # Если идентификационный документ с таким номер уже есть, также кинуть ошибку
+        user = User.objects.filter(email=validated_data['email'])
+        if user.exists():
+            raise ValidationError({'error': 'email_exists'})
         if validated_data["doc_num"]:
             if IdentityDocument.objects.filter(serial_number=validated_data["doc_num"]).exists():
                 raise ValidationError({"error": "id_exists"})
-        # Дальше валидирует сам Django, какие поля указаны в модели
         campaign_type = self.context['request'].data.get('campaign_type')
         today = dt.date.today()
         campaigns = models.AdmissionCampaign.objects.filter(
@@ -187,8 +188,9 @@ class ApplicantSerializer(serializers.ModelSerializer):
             return applicant
         except Exception as e:
             user = applicant.user
+            if user:
+                user.delete()
             applicant.delete()
-            user.delete()
             raise ValidationError({"error": e})
 
 
@@ -478,13 +480,6 @@ class GrantSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
-class DirectionChoiceSerializer(serializers.ModelSerializer):
-
-    class Meta:
-        model = models.DirectionChoice
-        fields = "__all__"
-
-
 class TestResultSerializer(serializers.ModelSerializer):
     disciplines = DisciplineMarkSerializer(required=True, many=True)
     test_certificate = TestCertSerializer(required=True)
@@ -574,13 +569,10 @@ class ApplicationLiteSerializer(serializers.ModelSerializer):
                 grant = models.Grant.objects.create(profile=creator, **grant)
             else:
                 grant = None
-            # Выбор направлений.
-            # TODO сверять направления и основания для поступления с грантом.
-            #  Если грант дан только на Специальность #1, а в каком-то направлении
-            #  стоит Специальность #X и основа поступления "Бюджет" кинуть ошибку -> удалить заявление
-            directions = models.DirectionChoice.objects.bulk_create([
-                models.DirectionChoice(profile=creator, **direction) for direction in directions
-            ])
+
+            # directions = models.DirectionChoice.objects.bulk_create([
+            #     models.DirectionChoice(profile=creator, **direction) for direction in directions
+            # ])
             application = models.Application.objects.create(
                 status=status,
                 previous_education=previous_education,
@@ -590,8 +582,8 @@ class ApplicationLiteSerializer(serializers.ModelSerializer):
                 creator=creator,
                 questionnaire=models.Questionnaire.objects.filter(creator=creator).first()
             )
-            application.directions.add(*directions)
-            application.save()
+            # application.directions.add(*directions)
+            # application.save()
             try:
                 self.send_on_create(recipient=creator.email)
             except Exception as e:
@@ -646,23 +638,23 @@ class ApplicationLiteSerializer(serializers.ModelSerializer):
                     setattr(grant_model, key, value)
                 grant_model.save(snapshot=True)
             # Обновление направлений
-            directions: dict = validated_data.pop('directions', None)
-            if len(directions) > my_campaign.chosen_directions_max_count:
-                directions = directions[:5]
-            direction: dict
-            for direction in directions:
-                instance_direction = models.DirectionChoice.objects.filter(
-                    profile=profile,
-                    education_program=direction['education_program'],
-                    education_program_group=direction['education_program_group']
-                )
-                if instance_direction.exists():
-                    instance_direction = instance_direction.first()
-                    for key, value in direction.items():
-                        setattr(instance_direction, key, value)
-                    instance_direction.save(snapshot=True)
-                else:
-                    models.DirectionChoice.objects.create(**direction)
+            # directions: dict = validated_data.pop('directions', None)
+            # if len(directions) > my_campaign.chosen_directions_max_count:
+            #     directions = directions[:5]
+            # direction: dict
+            # for direction in directions:
+            #     instance_direction = models.DirectionChoice.objects.filter(
+            #         profile=profile,
+            #         education_program=direction['education_program'],
+            #         education_program_group=direction['education_program_group']
+            #     )
+            #     if instance_direction.exists():
+            #         instance_direction = instance_direction.first()
+            #         for key, value in direction.items():
+            #             setattr(instance_direction, key, value)
+            #         instance_direction.save(snapshot=True)
+            #     else:
+            #         models.DirectionChoice.objects.create(**direction)
             application = super().update(instance, validated_data)
             return application
         else:
@@ -674,7 +666,7 @@ class ApplicationSerializer(ApplicationLiteSerializer):
     test_result = TestResultSerializer(required=True)
     international_cert = InternationalCertSerializer(required=False, allow_null=True)
     grant = GrantSerializer(required=False, allow_null=True)
-    directions = DirectionChoiceSerializer(required=True, many=True)
+    directions = RecruitmentPlanSerializer(required=True, many=True)
     questionnaire = QuestionnaireSerializer(required=False, many=False, read_only=True)
 
     class Meta:

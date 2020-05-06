@@ -2,6 +2,7 @@ from django.db.models import Q
 from rest_framework.decorators import action
 from rest_framework.viewsets import ModelViewSet
 from rest_framework.response import Response
+from common.paginators import CustomPagination
 from univer_admin.permissions import IsAdminOrReadOnly
 from .models import *
 from .serializers import *
@@ -47,6 +48,7 @@ class OrganizationViewSet(ModelViewSet):
     queryset = Organization.objects.all()
     serializer_class = OrganizationSerializer
     permission_classes = (IsAdminOrReadOnly,)
+    pagination_class = CustomPagination
 
     @action(methods=['get'], detail=False, url_path='search', url_name='search_organizations')
     def search(self, request, pk=None):
@@ -55,7 +57,7 @@ class OrganizationViewSet(ModelViewSet):
             Q(name_ru__icontains=name)
             | Q(name_en__icontains=name)
             | Q(name_kk__icontains=name)
-        ).distinct()
+        ).distinct()[:20]
         data = self.serializer_class(data, many=True).data
         return Response(data=data)
 
@@ -76,3 +78,16 @@ class DisciplineViewSet(ModelViewSet):
     queryset = Discipline.objects.all()
     serializer_class = DisciplineSerializer
     permission_classes = (IsAdminOrReadOnly,)
+    pagination_class = CustomPagination
+
+    @action(methods=['get'], detail=False, url_path='search', url_name='search_disciplines')
+    def search(self, request, pk=None):
+        name = request.query_params.get('name')
+        data = self.queryset.filter(
+            Q(name_ru__icontains=name)
+            | Q(name_en__icontains=name)
+            | Q(name_kk__icontains=name)
+        ).distinct()[:20]
+        data = self.serializer_class(data, many=True).data
+        return Response(data=data)
+

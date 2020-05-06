@@ -275,6 +275,9 @@ class Family(BaseModel):
         verbose_name = "Семья"
         verbose_name_plural = "Семьи"
 
+    def __str__(self):
+        return f'Семья пользователя {self.profile.full_name}'
+
 
 # Член семьи
 class FamilyMember(BaseModel):
@@ -360,6 +363,9 @@ class FamilyMember(BaseModel):
         verbose_name = "Член семьи"
         verbose_name_plural = "Члены семьи"
 
+    def __str__(self):
+        return f"Член семьи пользователя {self.family.profile.full_name}"
+
 
 class AdmissionCampaignType(BaseCatalog):
     prep_levels = models.ManyToManyField(PreparationLevel, verbose_name='Уровни образования')
@@ -399,9 +405,6 @@ class AdmissionCampaign(BaseCatalog):
     )
     start_date = models.DateField("Дата начала приемной кампании")
     end_date = models.DateField("Дата окончания приемной кампании")
-
-    def __str__(self):
-        return f"{self.uid}"
 
     class Meta:
         verbose_name = "Приемная кампания"
@@ -492,6 +495,9 @@ class Applicant(BaseModel):
         import time
         username = f"{self.prep_level.shifr[:2]}{time.strftime('%y')}{str(order_num).zfill(4)}"
         return username
+
+    def __str__(self):
+        return f'{self.first_name} {self.last_name}'
 
 
 # Сканы документов
@@ -785,7 +791,7 @@ class Questionnaire(BaseModel):
 
     def __str__(self):
         if self.creator and self.creator.full_name:
-            return f"Абитуриент {self.creator}"
+            return f"Абитуриент {self.creator.full_name}"
         else:
             return f"Абитуриент {self.first_name_en} {self.last_name_en}"
 
@@ -810,6 +816,9 @@ class UserPrivilegeList(BaseModel):
     class Meta:
         verbose_name = "Список льгот пользователя"
         verbose_name_plural = "Списки льгот пользователей"
+
+    def __str__(self):
+        return f"Список льгот пользователя {self.profile.full_name}"
 
 
 # Льготы пользователей
@@ -869,6 +878,9 @@ class Privilege(BaseModel):
         verbose_name = "Льгота"
         verbose_name_plural = "Льготы"
 
+    def __str__(self):
+        return f"Льготы пользователя {self.profile.full_name}"
+
 
 # Этапы приемной кампании
 class CampaignStage(BaseModel):
@@ -905,6 +917,9 @@ class CampaignStage(BaseModel):
         verbose_name = "Этап кампании"
         verbose_name_plural = "Этапы кампаний"
 
+    def __str__(self):
+        return f"Стадия приемной кампании {self.campaign.name}"
+
 
 # План набора
 class RecruitmentPlan(BaseModel):
@@ -912,7 +927,7 @@ class RecruitmentPlan(BaseModel):
         AdmissionCampaign,
         on_delete=models.DO_NOTHING,
         related_name="plans",
-        verbose_name="План набора"
+        verbose_name="Кампания"
     )
     study_plan_1c = models.CharField(
         max_length=500,
@@ -928,7 +943,7 @@ class RecruitmentPlan(BaseModel):
         Speciality,
         null=True,
         on_delete=models.DO_NOTHING,
-        verbose_name="Направление подготовки"
+        verbose_name="Направление по подготвке"
     )
     education_program = models.ForeignKey(
         EducationProgram,
@@ -987,6 +1002,10 @@ class RecruitmentPlan(BaseModel):
         verbose_name = "План набора"
         verbose_name_plural = "Планы наборов"
 
+    def __str__(self):
+        return f"{self.campaign.name}, {self.prep_direction.name}, {self.education_program.name}, {self.education_program_group.name}," \
+               f" {self.admission_basis.name}, {self.prep_level.name}, {self.language.name}"
+
 
 # Пройденная дисциплина с отметкой
 class DisciplineMark(BaseModel):
@@ -1009,6 +1028,9 @@ class DisciplineMark(BaseModel):
     class Meta:
         verbose_name = "Пройденная дисциплина на ЕНТ/КТ"
         verbose_name_plural = "Пройденные дисциплины на ЕНТ/КТ"
+
+    def __str__(self):
+        return f'Сданная дисциплина "{self.discipline.name}" пользователем {self.profile.full_name}'
 
 
 # Сертификат теста по ЕНТ/КТ
@@ -1047,9 +1069,17 @@ class TestCert(BaseModel):
         verbose_name = "Серитификат ЕНТ/КТ"
         verbose_name_plural = "Серитификаты ЕНТ/КТ"
 
+    def __str__(self):
+        return f"Сертификат теста ЕНТ/КТ пользователя {self.profile.full_name}"
+
 
 # Навык владения языком
 class LanguageProficiency(BaseModel):
+    name = models.CharField(
+        max_length=100,
+        null=True,
+        verbose_name='Натменование уровня'
+    )
     code = models.CharField(
         max_length=100,
         verbose_name="Код"
@@ -1063,8 +1093,11 @@ class LanguageProficiency(BaseModel):
     )
 
     class Meta:
-        verbose_name = "Уровень владения языком"
-        verbose_name_plural = "Уровени владения языками"
+        verbose_name = "Уровень владения языком (CEFR)"
+        verbose_name_plural = "Уровени владения языками (CEFR)"
+
+    def __str__(self):
+        return f"Уровень {self.code}"
 
 
 # Международный сертификат
@@ -1100,6 +1133,9 @@ class InternationalCert(BaseModel):
     class Meta:
         verbose_name = "Международный сертификат"
         verbose_name_plural = "Международные сертификаты"
+
+    def __str__(self):
+        return f"Международный сертификат пользователя {self.profile.full_name}"
 
 
 # Грант
@@ -1141,8 +1177,8 @@ class Grant(BaseModel):
         max_length=200,
         verbose_name="Номер приказа МОН РК"
     )
-    speciality = models.ForeignKey(
-        Speciality,
+    edu_program_group = models.ForeignKey(
+        EducationProgramGroup,
         null=True,
         on_delete=models.SET_NULL,
         verbose_name='Группа образовательных программ'
@@ -1157,50 +1193,8 @@ class Grant(BaseModel):
         verbose_name = "Грант"
         verbose_name_plural = "Грант"
 
-
-# выбор направления
-class DirectionChoice(BaseModel):
-    prep_level = models.ForeignKey(
-        PreparationLevel,
-        on_delete=models.DO_NOTHING,
-        verbose_name='Уровень образования'
-    )
-    study_form = models.ForeignKey(
-        StudyForm,
-        on_delete=models.DO_NOTHING,
-        verbose_name='Форма обучения'
-    )
-    education_program = models.ForeignKey(
-        EducationProgram,
-        on_delete=models.DO_NOTHING,
-        verbose_name='Образовательная программа'
-    )
-    education_program_group = models.ForeignKey(
-        EducationProgramGroup,
-        on_delete=models.DO_NOTHING,
-        verbose_name='Группа образовательных программ'
-    )
-    education_base = models.ForeignKey(
-        EducationBase,
-        on_delete=models.DO_NOTHING,
-        verbose_name='Основание поступления'
-    )
-    education_language = models.ForeignKey(
-        Language,
-        on_delete=models.DO_NOTHING,
-        verbose_name='Язык обучения'
-    )
-    profile = models.ForeignKey(
-        Profile,
-        on_delete=models.SET_NULL,
-        blank=True,
-        null=True,
-        related_name='directions'
-    )
-
-    class Meta:
-        verbose_name = "Выбор направления"
-        verbose_name_plural = "Выборы направлений"
+    def __str__(self):
+        return f"Грант пользователя {self.profile.full_name}"
 
 
 # Результат теста
@@ -1224,6 +1218,9 @@ class TestResult(BaseModel):
     class Meta:
         verbose_name = "Результат ЕНТ/КТ"
         verbose_name_plural = "Результаты ЕНТ/КТ"
+
+    def __str__(self):
+        return f"Результаты теста ЕНТ/КТ пользователя {self.profile.full_name}"
 
 
 # Документы поступающего
@@ -1250,6 +1247,9 @@ class AdmissionDocument(BaseModel):
     class Meta:
         verbose_name = 'Перечень документов для приема на обучение'
         verbose_name_plural = 'Перечни документов для приема на обучение'
+
+    def __str__(self):
+        return f"Дополнительные поданные документы пользователя {self.creator.full_name}"
 
 
 # Заявление
@@ -1279,7 +1279,7 @@ class Application(BaseModel):
         verbose_name='Грант'
     )
     directions = models.ManyToManyField(
-        DirectionChoice,
+        RecruitmentPlan,
         verbose_name='Выборы направлений'
     )
     status = models.ForeignKey(
@@ -1314,7 +1314,7 @@ class Application(BaseModel):
         verbose_name_plural = "Заявления"
 
     def __str__(self):
-        return f'Абитуриент {self.applicant}. {self.status.name}'
+        return f'Заявление абитуриента {self.applicant}. {self.status.name}'
 
     @property
     def max_choices(self):

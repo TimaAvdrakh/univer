@@ -281,6 +281,10 @@ class Education(BaseModel):
         default=False,
         verbose_name='Закончил учебу с отличием'
     )
+    is_NIS_graduate = models.BooleanField(
+        default=False,
+        verbose_name='Выпускник НИШ'
+    )
     scan = models.ForeignKey(
         'applicant.DocScan',
         on_delete=models.SET_NULL,

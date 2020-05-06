@@ -171,6 +171,38 @@ class RecruitmentPlanViewSet(ModelViewSet):
     queryset = models.RecruitmentPlan.objects.all()
     serializer_class = serializers.RecruitmentPlanSerializer
     permission_classes = (IsAdminOrReadOnly,)
+    pagination_class = CustomPagination
+
+    @action(methods=['get'], detail=False, url_path='search', url_name='search_recruitment_plans')
+    def search(self, request, pk=None):
+        params = request.query_params
+        user = self.request.user
+        campaign = user.applicant.campaign
+        lookup = Q(campaign=campaign)
+        prep_level = params.get('pl')
+        if prep_level:
+            lookup = lookup & Q(prep_level=prep_level)
+        study_form = params.get('sf')
+        if study_form:
+            lookup = lookup & Q(study_form=study_form)
+        language = params.get('lang')
+        if language:
+            lookup = lookup & Q(language=language)
+        edu_program = params.get('ep')
+        if edu_program:
+            lookup = lookup & Q(education_program=edu_program)
+        edu_program_group = params.get('epg')
+        if edu_program_group:
+            lookup = lookup & Q(education_program_group=edu_program_group)
+        edu_base = params.get('eb')
+        if edu_base:
+            lookup = lookup & Q(admission_basis=edu_base)
+        recruitment_plans = self.paginate_queryset(self.queryset.filter(lookup))
+        if recruitment_plans:
+            recruitment_plans = self.serializer_class(recruitment_plans, many=True).data
+            return self.get_paginated_response(recruitment_plans)
+        serializer = self.get_serializer(recruitment_plans, many=True)
+        return Response(data={'results': serializer.data}, status=HTTP_200_OK)
 
 
 class LanguageProficiencyViewSet(ModelViewSet):
@@ -409,6 +441,21 @@ class AdmissionCampaignViewSet(ModelViewSet):
     queryset = models.AdmissionCampaign.objects.all()
     serializer_class = serializers.AdmissionCampaignSerializer
     permission_classes = (IsAdminOrReadOnly,)
+
+    @action(methods=['get'], detail=False, url_path='open', url_name='open_campaigns')
+    def campaigns_open(self, request, pk=None):
+        import datetime as dt
+        today = dt.date.today()
+        campaigns = self.queryset.filter(
+            Q(start_date__lte=today)
+            & Q(end_date__gte=today)
+            & Q(is_active=True)
+            & Q(year=today.year)
+        )
+        if campaigns.exists():
+            return Response({'open': True}, status=HTTP_200_OK)
+        else:
+            return Response({'open': True}, status=HTTP_200_OK)
 
 
 class AddressViewSet(ModelViewSet):
