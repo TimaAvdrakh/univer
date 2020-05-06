@@ -639,8 +639,9 @@ class SendApplicationsTo1cJob(CronJobBase):
     LANG_KZ = '789cb6fb-31e9-11e9-aa40-0cc47a2bc1bf'
     LANG_RU = '789cb6fc-31e9-11e9-aa40-0cc47a2bc1bf'
 
+    IN_PROGRESS = 'b287ecfe-0ac8-499b-9ac4-7da2a64a82ef'
+
     def do(self):
-        apps_model = model_aps.Application.objects
         # Todo Если получение справки то документ не нужен
         sub_apps = model_aps.SubApplication.objects.filter(application__send=False).values(
             'application', 'application__type__uid', 'status', 'subtype_id', 'comment', 'id',
@@ -695,15 +696,52 @@ class SendApplicationsTo1cJob(CronJobBase):
         if resp.status_code == 200:
             resp_data = resp.json()
 
-            for item in resp_data:
+            for application in resp_data:
+                status = application['status']
+                if status == 'errors':
+                    status = 2
+                if status == 'success':
+                    status = 1
+                if status == 'failed':
+                    status = 0
+
                 log = DocumentChangeLog(
-                    content_type_id=CONTENT_TYPES['applications'],
-                    object_id=item['uid_site'],
-                    status=item['code'],
+                    content_type_id = CONTENT_TYPES['applications'],
+                    object_id = application['applicationID'],
+                    status = status,
                 )
                 error_text = ''
 
-                for error in item['errors']:
+                for error in application['applicationErrors']:
                     error_text += '{}\n'.format(error)
-                    log.errors = error_text
-                    log.save()
+                for subtype in application['subtypeAplications']:
+                    error_text += 'subtype_id' + str(subtype['subApplicationID'])
+                    if subtype['status'] == 'errors':
+                        for error in subtype['subApplicationErrors']:
+                            error_text += '{}\n'.format(error)
+                    if subtype['status'] != 'failed':
+                        subtype_row = model_aps.SubApplication.objects.get(pk = subtype['subApplicationID'])
+                        subtype.status = self.IN_PROGRESS
+                        subtype_row.save()
+
+
+
+                log.errors = error_text
+                log.save()
+
+                if application['status'] == 'success':
+                    try:
+                        application_row = model_aps.Application.objects.get(pk=application['applicationID'])
+                    except model_aps.Application.DoesNotExist:
+                        continue
+
+                    application_row.send = True
+                    application_row.save()
+
+
+        else:
+            message = '{}\n{}'.format(resp.status_code,
+                                      resp.content.decode())
+            for chat_id in BOT_DEV_CHAT_IDS:
+                bot.send_message(chat_id,
+                                 message)
