@@ -96,7 +96,10 @@ class ApplicantViewSet(ModelViewSet):
     @action(methods=['get'], detail=False, url_path='my-prep-level', url_name='applicant_prep_level')
     def applicant_prep_level(self, request, pk=None):
         user = self.request.user
-        return Response(data={'prep_level': user.applicant.prep_level.name}, status=HTTP_200_OK)
+        if hasattr(user, 'applicant'):
+            return Response(data={'prep_level': user.applicant.prep_level.name}, status=HTTP_200_OK)
+        else:
+            return Response()
 
     @action(methods=['post'], detail=False, url_path='campaign-types', url_name='campaign_types')
     def get_campaign_types(self, request, pk=None):
@@ -232,23 +235,21 @@ class ApplicationStatusViewSet(ModelViewSet):
 class ApplicationViewSet(ModelViewSet):
     queryset = models.Application.objects.exclude(
         status__code__in=[models.APPROVED, models.REJECTED]
-    ).annotate(cond_order=models.COND_ORDER).order_by('cond_order')
+    ).annotate(cond_order=models.COND_ORDER).order_by('cond_order', '-created')
     serializer_class = serializers.ApplicationSerializer
     pagination_class = CustomPagination
 
     def retrieve(self, request, *args, **kwargs):
-        profile = self.request.user.profile
-        data = {}
+        application = self.get_object()
+        profile = application.creator
+        data = {
+            'application': serializers.ApplicationSerializer(application).data
+        }
         questionnaire = models.Questionnaire.objects.filter(creator=profile)
         if questionnaire.exists():
             data['questionnaire'] = serializers.QuestionnaireSerializer(questionnaire.first()).data
         else:
             data['questionnaire'] = None
-        application = models.Application.objects.filter(creator=profile)
-        if application.exists():
-            data['application'] = serializers.ApplicationSerializer(application.first()).data
-        else:
-            data['application'] = None
         attachments = models.AdmissionDocument.objects.filter(creator=profile)
         if attachments.exists():
             data['attachments'] = serializers.AdmissionDocumentSerializer(attachments.first()).data
