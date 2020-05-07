@@ -1225,13 +1225,6 @@ class TestResult(BaseModel):
 
 # Документы поступающего
 class AdmissionDocument(BaseModel):
-    recruitment_plan = models.ForeignKey(
-        RecruitmentPlan,
-        on_delete=models.SET_NULL,
-        verbose_name='План набора',
-        blank=True,
-        null=True,
-    )
     creator = models.ForeignKey(
         Profile,
         on_delete=models.CASCADE,
@@ -1299,18 +1292,6 @@ class Application(BaseModel):
         null=True,
         on_delete=models.CASCADE,
         verbose_name='Заявитель',
-    )
-    questionnaire = models.OneToOneField(
-        Questionnaire,
-        on_delete=models.SET_NULL,
-        blank=True,
-        null=True
-    )
-    admission_document = models.ForeignKey(
-        AdmissionDocument,
-        on_delete=models.SET_NULL,
-        blank=True,
-        null=True,
     )
 
     class Meta:

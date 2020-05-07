@@ -236,83 +236,50 @@ class ApplicationViewSet(ModelViewSet):
     serializer_class = serializers.ApplicationSerializer
     pagination_class = CustomPagination
 
+    def retrieve(self, request, *args, **kwargs):
+        profile = self.request.user.profile
+        data = {}
+        questionnaire = models.Questionnaire.objects.filter(creator=profile)
+        if questionnaire.exists():
+            data['questionnaire'] = serializers.QuestionnaireSerializer(questionnaire.first()).data
+        else:
+            data['questionnaire'] = None
+        application = models.Application.objects.filter(creator=profile)
+        if application.exists():
+            data['application'] = serializers.ApplicationSerializer(application.first()).data
+        else:
+            data['application'] = None
+        attachments = models.AdmissionDocument.objects.filter(creator=profile)
+        if attachments.exists():
+            data['attachments'] = serializers.AdmissionDocumentSerializer(attachments.first()).data
+        else:
+            data['attachments'] = None
+        return Response(data=data, status=HTTP_200_OK)
+
     def create(self, request, *args, **kwargs):
-        data = request.data
+        validated_data = request.data
         user = self.request.user
-        campaign = user.applicant.campaign
-        cdmc, icfl = campaign.info['cdmc'], campaign.info['icfl']
-        if not icfl:
-            data.pop('international_cert')
-
-        # Вытаскиваем данные
-        previous_education = data.pop('previous_education')
-        test_result = data.pop('test_result')
-        grant = data.pop('grant', None)
-        directions = data.pop('directions')
-        # Переписываем объекты на uid
-        previous_education.update({
-            'institute': previous_education['institute']['uid'],
-            'speciality': previous_education['speciality']['uid'],
-        })
-        for discipline in test_result['disciplines']:
-            discipline['discipline'] = discipline['discipline']['uid']
-        if grant:
-            grant['speciality'] = grant['speciality']['uid']
-            data['grant'] = grant
-
-        if len(directions) > cdmc:
-            directions = directions[:cdmc]
-        for direction in directions:
-            direction.update({
-                'education_base': direction['education_base']['uid'],
-                'education_program': direction['education_program']['uid'],
-                'education_program_group': direction['education_program_group']['uid'],
-            })
-        # Обратно впихиваем данные
-        data.update({
-            'previous_education': previous_education,
-            'test_result': test_result,
-            'directions': directions,
-        })
-        # Отдаем сериализатору как ни в чем не бывало
+        campaign: models.AdmissionCampaign = user.applicant.campaign
+        directions = validated_data.get('directions')
+        if campaign.chosen_directions_max_count < len(directions):
+            raise ValidationError({"error": "direction_max_count_exceeded"})
+        is_grant_holder = validated_data.get('is_grant_holder')
+        grant = validated_data.get('grant', None)
+        if not is_grant_holder and grant:
+            validated_data.pop('grant')
+        elif grant:
+            grant_epg = models.EducationProgramGroup.objects.get(pk=grant.get('edu_program_group'))
+            budget_basis = models.EducationBase.objects.filter(code='budget').first()
+            for direction in directions:
+                direction = models.RecruitmentPlan.objects.get(pk=direction)
+                # Если основы поступления в плане набора и гранте равны, а группы программ разные выводить ошибку,
+                # т.к. грант выдан для другой группы программ
+                if direction.education_program_group != grant_epg and direction.admission_basis == budget_basis:
+                    raise ValidationError({'error': 'grant_dir_epg_not_match'})
+        international_cert = validated_data.get('international_cert', None)
+        if international_cert and not campaign.inter_cert_foreign_lang:
+            validated_data['international_cert'] = None
         return super().create(request, *args, **kwargs)
-
-    def update(self, request, *args, **kwargs):
-        data = request.data
-        previous_education = data.pop('previous_education')
-        education_info = previous_education.pop('info')
-        previous_education.update({
-            'institute': education_info['institute']['uid'],
-            'speciality': education_info['speciality']['uid']
-        })
-        test_result = data.pop('test_result')
-        result_info = test_result.pop('info')
-        test_result.update({
-                               'discipline': discipline['discipline']['uid'],
-                               'mark': discipline['mark'],
-                           } for discipline in result_info['disciplines'])
-        grant = data.pop('grant', None)
-        if grant:
-            grant_info = grant.pop('info')
-            grant.update({
-                'speciality': grant_info['speciality']['uid']
-            })
-        directions = data.pop('directions')
-        for direction in directions:
-            direction_info = direction.pop('info')
-            direction.update({
-                'education_program': direction_info['education_program']['uid'],
-                'education_program_group': direction_info['education_program_group']['uid'],
-                'education_base': direction_info['education_base']['uid']
-            })
-        data.update({
-            'previous_education': previous_education,
-            'test_result': test_result,
-            'grant': grant,
-            'directions': directions
-        })
-        print(data)
-        return super().update(request, *args, **kwargs)
 
     def get_serializer_class(self):
         if self.action == 'list':
