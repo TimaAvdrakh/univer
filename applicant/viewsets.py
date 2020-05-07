@@ -93,6 +93,11 @@ class ApplicantViewSet(ModelViewSet):
     permission_classes = (AllowAny,)
     pagination_class = CustomPagination
 
+    @action(methods=['get'], detail=False, url_path='my-prep-level', url_name='applicant_prep_level')
+    def applicant_prep_level(self, request, pk=None):
+        user = self.request.user
+        return Response(data={'prep_level': user.applicant.prep_level.name}, status=HTTP_200_OK)
+
     @action(methods=['post'], detail=False, url_path='campaign-types', url_name='campaign_types')
     def get_campaign_types(self, request, pk=None):
         prep_level = request.data.get('prep_level')
@@ -177,11 +182,7 @@ class RecruitmentPlanViewSet(ModelViewSet):
     def search(self, request, pk=None):
         params = request.query_params
         user = self.request.user
-        campaign = user.applicant.campaign
-        lookup = Q(campaign=campaign)
-        prep_level = params.get('pl')
-        if prep_level:
-            lookup = lookup & Q(prep_level=prep_level)
+        lookup = Q(campaign=user.applicant.campaign) & Q(prep_level=user.applicant.prep_level)
         study_form = params.get('sf')
         if study_form:
             lookup = lookup & Q(study_form=study_form)

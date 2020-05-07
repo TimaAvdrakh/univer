@@ -251,7 +251,6 @@ class QuestionnaireSerializer(serializers.ModelSerializer):
         validated_data['family'] = family
         return validated_data
 
-
     def create(self, validated_data):
         creator = self.context['request'].user.profile
         questionnaire = None
@@ -335,7 +334,8 @@ class QuestionnaireSerializer(serializers.ModelSerializer):
                     setattr(family_instance, key, value)
                 family_instance.save(snapshot=True)
                 for member in members:
-                    member_instance: models.FamilyMember = models.FamilyMember.objects.get(profile=member['profile'].uid)
+                    member_instance: models.FamilyMember = models.FamilyMember.objects.get(
+                        profile=member['profile'].uid)
                     address_instance = models.Address.objects.get(pk=member_instance.address.uid)
                     address = member.pop('address')
                     # info = address.pop('info')
@@ -423,6 +423,19 @@ class CampaignStageSerializer(serializers.ModelSerializer):
 
 
 class RecruitmentPlanSerializer(serializers.ModelSerializer):
+    info = serializers.SerializerMethodField()
+
+    def get_info(self, plan: models.RecruitmentPlan):
+        return {
+            "prep_level": plan.prep_level.name,
+            "study_form": plan.study_form.name,
+            "language": plan.language.name,
+            "prep_direction": plan.prep_direction.name,
+            "admission_basis": plan.admission_basis.name,
+            "education_program_group": plan.education_program_group.name,
+            "education_program": plan.education_program.name,
+        }
+
     class Meta:
         model = models.RecruitmentPlan
         fields = "__all__"
@@ -509,6 +522,26 @@ class ApplicationLiteSerializer(serializers.ModelSerializer):
         model = models.Application
         fields = ['uid', 'status_info', 'applicant', 'created', 'updated', 'max_choices']
 
+    def validate(self, validated_data):
+        user = self.context['request'].user
+        campaign: models.AdmissionCampaign = user.applicant.campaign
+        directions = validated_data.get('directions')
+        if campaign.chosen_directions_max_count < len(directions):
+            raise ValidationError({"error": "direction_max_count_exceeded"})
+        grant = validated_data.get('grant', None)
+        if grant:
+            grant_epg = grant.get('edu_program_group')
+            budget_basis = models.EducationBase.objects.filter(code='budget').first()
+            for direction in directions:
+                # Если основы поступления в плане набора и гранте равны, а группы программ разные выводить ошибку,
+                # т.к. грант выдан для другой группы программ
+                if direction.education_program_group != grant_epg and direction.admission_basis == budget_basis:
+                    raise ValidationError({'error': 'grant_dir_epg_not_match'})
+        international_cert = validated_data.get('international_cert', None)
+        if international_cert and not campaign.inter_cert_foreign_lang:
+            validated_data['international_cert'] = None
+        return validated_data
+
     def send_on_create(self, recipient):
         today = dt.date.today().strftime("%d.%m.%Y")
         subject = 'Заявление поступило на проверку'
@@ -521,12 +554,6 @@ class ApplicationLiteSerializer(serializers.ModelSerializer):
         application = None
         creator: Profile = self.context['request'].user.profile
         try:
-            # Ориентируемся на приемную кампанию
-            my_campaign = creator.user.applicant.campaign
-            # Проверяем если абитуриент выбрал больше направлений, чем задано в приемной кампании
-            directions = validated_data.pop('directions')
-            if my_campaign.chosen_directions_max_count < len(directions):
-                raise ValidationError({"error": "chosen directions maximum count exceeded"})
             # Если есть заполненная анкета, статус будет "Ожидает проверки", иначе - "Без анкеты"
             has_questionnaire: bool = models.Questionnaire.objects.filter(creator=creator).exists()
             if has_questionnaire:
@@ -540,27 +567,28 @@ class ApplicationLiteSerializer(serializers.ModelSerializer):
                 profile=creator,
                 **validated_data.pop('previous_education')
             )
-            # Результаты теста ЕНТ/КТА
+            # Результаты теста ЕНТ/КТ
             test_result = validated_data.pop('test_result')
+            # Сертификат теста ЕНТ/КТ
             test_certificate = models.TestCert.objects.create(
                 profile=creator,
                 **test_result.pop('test_certificate')
             )
+            # Пройденные дисциплины на тесте
             disciplines = models.DisciplineMark.objects.bulk_create([
                 models.DisciplineMark(profile=creator, **discipline) for discipline in test_result.pop('disciplines')
             ])
+            # Результат теста
             test_result = models.TestResult.objects.create(
                 profile=creator,
                 test_certificate=test_certificate
             )
             test_result.disciplines.add(*disciplines)
             test_result.save()
-            # Международный сертификат, только если в кампании указано, что он принимаются сертифиакаты
-            if my_campaign.inter_cert_foreign_lang:
-                international_cert = models.InternationalCert.objects.create(
-                    profile=creator,
-                    **validated_data.pop('international_cert')
-                )
+            # Международный сертификат
+            international_cert = validated_data.pop('international_cert', None)
+            if international_cert:
+                international_cert = models.InternationalCert.objects.create(profile=creator, **international_cert)
             else:
                 international_cert = None
             # Грант
@@ -617,7 +645,8 @@ class ApplicationLiteSerializer(serializers.ModelSerializer):
             disciplines = test_result.pop('disciplines')
             discipline: dict
             for discipline in disciplines:
-                instance_discipline = instance.test_result.disciplines.get(discipline=discipline['discipline'], profile=profile)
+                instance_discipline = instance.test_result.disciplines.get(discipline=discipline['discipline'],
+                                                                           profile=profile)
                 d = models.DisciplineMark.objects.get(pk=instance_discipline.uid)
                 for key, value in discipline.items():
                     setattr(d, key, value)
