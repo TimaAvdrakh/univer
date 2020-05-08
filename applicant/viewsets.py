@@ -233,9 +233,7 @@ class ApplicationStatusViewSet(ModelViewSet):
 
 
 class ApplicationViewSet(ModelViewSet):
-    queryset = models.Application.objects.exclude(
-        status__code__in=[models.APPROVED, models.REJECTED]
-    ).annotate(cond_order=models.COND_ORDER).order_by('cond_order', '-created')
+    queryset = models.Application.objects.annotate(cond_order=models.COND_ORDER).order_by('cond_order', '-created')
     serializer_class = serializers.ApplicationSerializer
     pagination_class = CustomPagination
 
@@ -294,7 +292,7 @@ class ApplicationViewSet(ModelViewSet):
         if queryset.exists():
             return Response(data=serializers.ApplicationLiteSerializer(queryset.first()).data, status=HTTP_200_OK)
         else:
-            return Response(data=None, status=HTTP_200_OK)
+            return Response(data='inshalla', status=HTTP_200_OK)
 
     @action(methods=['post'], detail=True, url_path='apply-action', url_name='apply_action')
     def apply_action(self, request, pk=None):

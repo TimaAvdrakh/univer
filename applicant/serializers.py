@@ -585,7 +585,10 @@ class ApplicationLiteSerializer(serializers.ModelSerializer):
                 grant=grant,
                 creator=creator,
             )
-            application.directions.set(validated_data.pop('directions'))
+            directions = models.OrderedDirection.objects.bulk_create([
+                models.OrderedDirection(**direction) for direction in validated_data.pop('directions')
+            ])
+            application.directions.set(directions)
             application.save()
             try:
                 self.send_on_create(recipient=creator.email)
@@ -639,7 +642,10 @@ class ApplicationLiteSerializer(serializers.ModelSerializer):
                     setattr(grant_model, key, value)
                 grant_model.save(snapshot=True)
             instance.directions.all().delete()
-            instance.directions.set(validated_data.pop('directions'))
+            directions = models.OrderedDirection.objects.bulk_create([
+                models.OrderedDirection(**direction) for direction in validated_data.pop('directions')
+            ])
+            instance.directions.set(directions)
             instance.save(snapshot=True)
             application = super().update(instance, validated_data)
             return application
@@ -647,12 +653,19 @@ class ApplicationLiteSerializer(serializers.ModelSerializer):
             raise ValidationError({"error": "access_denied"})
 
 
+class OrderedDirectionSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = models.OrderedDirection
+        fields = ['plan', 'order_number']
+
+
 class ApplicationSerializer(ApplicationLiteSerializer):
     previous_education = EducationSerializer(required=True)
     test_result = TestResultSerializer(required=True)
     international_cert = InternationalCertSerializer(required=False, allow_null=True)
     grant = GrantSerializer(required=False, allow_null=True)
-    questionnaire = QuestionnaireSerializer(required=False, many=False, read_only=True)
+    directions = OrderedDirectionSerializer(required=True, many=True)
 
     class Meta:
         model = models.Application

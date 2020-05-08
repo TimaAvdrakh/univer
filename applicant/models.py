@@ -1003,8 +1003,7 @@ class RecruitmentPlan(BaseModel):
         verbose_name_plural = "Планы наборов"
 
     def __str__(self):
-        return f"{self.campaign.name}, {self.prep_direction.name}, {self.education_program.name}, {self.education_program_group.name}," \
-               f" {self.admission_basis.name}, {self.prep_level.name}, {self.language.name}"
+        return f"{self.campaign}, {self.prep_direction}, {self.education_program}, {self.education_program_group}, {self.admission_basis}, {self.prep_level}, {self.language}"
 
 
 # Пройденная дисциплина с отметкой
@@ -1245,6 +1244,22 @@ class AdmissionDocument(BaseModel):
         return f"Дополнительные поданные документы пользователя {self.creator.full_name}"
 
 
+class OrderedDirection(BaseModel):
+    plan = models.ForeignKey(
+            RecruitmentPlan,
+            on_delete=models.CASCADE,
+            verbose_name='План набора')
+    order_number = models.PositiveSmallIntegerField()
+
+    class Meta:
+        verbose_name = 'Упорядоченный план набора'
+        verbose_name_plural = 'Упорядоченные планы наборов'
+        ordering = ['order_number']
+
+    def __str__(self):
+        return f'#{self.order_number} {self.plan}'
+
+
 # Заявление
 class Application(BaseModel):
     previous_education = models.ForeignKey(
@@ -1276,7 +1291,7 @@ class Application(BaseModel):
         verbose_name='Грант'
     )
     directions = models.ManyToManyField(
-        RecruitmentPlan,
+        OrderedDirection,
         verbose_name='Выборы направлений'
     )
     status = models.ForeignKey(
