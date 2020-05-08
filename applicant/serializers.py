@@ -584,7 +584,6 @@ class ApplicationLiteSerializer(serializers.ModelSerializer):
                 international_cert=international_cert,
                 grant=grant,
                 creator=creator,
-                questionnaire=models.Questionnaire.objects.filter(creator=creator).first()
             )
             application.directions.set(validated_data.pop('directions'))
             application.save()
