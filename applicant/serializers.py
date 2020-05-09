@@ -430,8 +430,8 @@ class RecruitmentPlanSerializer(serializers.ModelSerializer):
             "language": plan.language.name,
             "admission_basis": plan.admission_basis.name,
             "education_program_group": f'{plan.education_program_group.code} {plan.education_program_group.name}',
-            "education_program": f'{plan.education_program.code} {plan.education_program.name'},
-            "study_period": plan.study_period.name,
+            "education_program": f'{plan.education_program.code} {plan.education_program.name}',
+            "study_period": plan.study_period.repr_name,
             "test_form": plan.entrance_test_form.name,
         }
 
