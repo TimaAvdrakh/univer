@@ -270,7 +270,7 @@ class ApplicationViewSet(ModelViewSet):
             grant_epg = models.EducationProgramGroup.objects.get(pk=grant.get('edu_program_group'))
             budget_basis = models.EducationBase.objects.filter(code='budget').first()
             for direction in directions:
-                direction = models.RecruitmentPlan.objects.get(pk=direction)
+                direction = models.RecruitmentPlan.objects.get(pk=direction['plan'])
                 # Если основы поступления в плане набора и гранте равны, а группы программ разные выводить ошибку,
                 # т.к. грант выдан для другой группы программ
                 if direction.education_program_group != grant_epg and direction.admission_basis == budget_basis:
