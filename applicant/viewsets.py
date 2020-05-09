@@ -255,9 +255,7 @@ class ApplicationViewSet(ModelViewSet):
             data['attachments'] = None
         return Response(data=data, status=HTTP_200_OK)
 
-    def create(self, request, *args, **kwargs):
-        validated_data = request.data
-        user = self.request.user
+    def validate(self, validated_data, user):
         campaign: models.AdmissionCampaign = user.applicant.campaign
         directions = validated_data.get('directions')
         if campaign.chosen_directions_max_count < len(directions):
@@ -282,7 +280,14 @@ class ApplicationViewSet(ModelViewSet):
         international_cert = validated_data.get('international_cert', None)
         if international_cert and not campaign.inter_cert_foreign_lang:
             validated_data['international_cert'] = None
+
+    def create(self, request, *args, **kwargs):
+        self.validate(request.data, self.request.user)
         return super().create(request, *args, **kwargs)
+
+    def update(self, request, *args, **kwargs):
+        self.validate(request.data, self.request.user)
+        return super().update(request, *args, **kwargs)
 
     def get_serializer_class(self):
         if self.action == 'list':
