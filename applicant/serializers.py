@@ -325,8 +325,6 @@ class QuestionnaireSerializer(serializers.ModelSerializer):
         profile = self.context['request'].user.profile
         if profile == instance.creator:
             try:
-                info = self.context['request'].data.get('info')
-                validated_data['nationality'] = models.Nationality.objects.get(pk=info['nationality']['uid'])
                 family = validated_data.pop('family')
                 members = family.pop('members')
                 family_instance: models.Family = models.Family.objects.get(pk=instance.family.uid)
@@ -430,10 +428,11 @@ class RecruitmentPlanSerializer(serializers.ModelSerializer):
             "prep_level": plan.prep_level.name,
             "study_form": plan.study_form.name,
             "language": plan.language.name,
-            "prep_direction": plan.prep_direction.name,
             "admission_basis": plan.admission_basis.name,
-            "education_program_group": plan.education_program_group.name,
-            "education_program": plan.education_program.name,
+            "education_program_group": f'{plan.education_program_group.code} {plan.education_program_group.name}',
+            "education_program": f'{plan.education_program.code} {plan.education_program.name'},
+            "study_period": plan.study_period.name,
+            "test_form": plan.entrance_test_form.name,
         }
 
     class Meta:

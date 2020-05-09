@@ -266,15 +266,16 @@ class ApplicationViewSet(ModelViewSet):
         grant = validated_data.get('grant', None)
         if not is_grant_holder and grant:
             validated_data.pop('grant')
-        elif grant:
+        else:
             grant_epg = models.EducationProgramGroup.objects.get(pk=grant.get('edu_program_group'))
-            budget_basis = models.EducationBase.objects.filter(code='budget').first()
-            for direction in directions:
-                direction = models.RecruitmentPlan.objects.get(pk=direction['plan'])
-                # Если основы поступления в плане набора и гранте равны, а группы программ разные выводить ошибку,
-                # т.к. грант выдан для другой группы программ
-                if direction.education_program_group != grant_epg and direction.admission_basis == budget_basis:
-                    raise ValidationError({'error': 'grant_dir_epg_not_match'})
+            # Если грантник, то первое направление должно соответствовать группе обр. программ в гранте, бюджетному основанию поступления и очной форме обучения
+            first_direction = models.RecruitmentPlan.objects.get(
+                pk=list(filter(lambda direction: direction['order_number'] == 0, directions))[0]['plan']
+            )
+            budget_admission_basis = models.EducationBase.objects.get(code='budget')
+            full_time_study_form = models.StudyForm.objects.get(code='full-time')
+            if first_direction.education_program_group != grant_epg or first_direction.admission_basis != budget_admission_basis or first_direction.study_form != full_time_study_form:
+                raise ValidationError({'error': 'choose_other_first_direction'})
         international_cert = validated_data.get('international_cert', None)
         if international_cert and not campaign.inter_cert_foreign_lang:
             validated_data['international_cert'] = None
