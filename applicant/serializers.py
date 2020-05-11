@@ -121,28 +121,6 @@ class ApplicantSerializer(serializers.ModelSerializer):
         email.send()
         return
 
-    def validate(self, validated_data):
-        user = User.objects.filter(email=validated_data['email'])
-        if user.exists():
-            raise ValidationError({'error': 'email_exists'})
-        if validated_data["doc_num"]:
-            if IdentityDocument.objects.filter(serial_number=validated_data["doc_num"]).exists():
-                raise ValidationError({"error": "id_exists"})
-        campaign_type = self.context['request'].data.get('campaign_type')
-        today = dt.date.today()
-        campaigns = models.AdmissionCampaign.objects.filter(
-            type=campaign_type,
-            is_active=True,
-            year=today.year,
-            start_date__lte=today,
-            end_date__gte=today
-        )
-        if campaigns.exists():
-            validated_data['campaign'] = campaigns.first()
-        else:
-            raise ValidationError({"error": "no_campaign"})
-        return validated_data
-
     def create(self, validated_data):
         if validated_data['password'] != validated_data['confirm_password']:
             raise ValidationError({"error": "pass_no_match"})
@@ -460,7 +438,7 @@ class TestCertSerializer(serializers.ModelSerializer):
 class LanguageProficiencySerializer(serializers.ModelSerializer):
     class Meta:
         model = models.LanguageProficiency
-        fields = ['uid', 'code']
+        fields = ['uid', 'name', 'code']
 
 
 class InternationalCertTypeSerializer(serializers.ModelSerializer):

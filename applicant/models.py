@@ -1283,6 +1283,10 @@ class Application(BaseModel):
         default=False,
         verbose_name='Обладатель гранта'
     )
+    is_cert_holder = models.BooleanField(
+        default=False,
+        verbose_name='Обладатель международного языкового сертификата'
+    )
     grant = models.ForeignKey(
         Grant,
         on_delete=models.DO_NOTHING,

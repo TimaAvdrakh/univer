@@ -27,25 +27,25 @@ class EducationTypeViewSet(ModelViewSet):
 
 
 class EducationBaseViewSet(ModelViewSet):
-    queryset = EducationBase.objects.all()
+    queryset = EducationBase.objects.all().order_by('name_ru', 'name_en', 'name_kk').distinct('name_ru', 'name_en', 'name_kk')
     serializer_class = EducationBaseSerializer
     permission_classes = (IsAdminOrReadOnly,)
 
 
 class EducationProgramViewSet(ModelViewSet):
-    queryset = EducationProgram.objects.all()
+    queryset = EducationProgram.objects.all().order_by('name_ru', 'name_en', 'name_kk').distinct('name_ru', 'name_en', 'name_kk')
     serializer_class = EducationProgramSerializer
     permission_classes = (IsAdminOrReadOnly,)
 
 
 class EducationProgramGroupViewSet(ModelViewSet):
-    queryset = EducationProgramGroup.objects.all()
+    queryset = EducationProgramGroup.objects.all().order_by('name_ru', 'name_en', 'name_kk').distinct('name_ru', 'name_en', 'name_kk')
     serializer_class = EducationProgramGroupSerializer
     permission_classes = (IsAdminOrReadOnly,)
 
 
 class OrganizationViewSet(ModelViewSet):
-    queryset = Organization.objects.all()
+    queryset = Organization.objects.all().order_by('name_ru', 'name_en', 'name_kk').distinct('name_ru', 'name_en', 'name_kk')
     serializer_class = OrganizationSerializer
     permission_classes = (IsAdminOrReadOnly,)
     pagination_class = CustomPagination
@@ -63,7 +63,7 @@ class OrganizationViewSet(ModelViewSet):
 
 
 class SpecialityViewSet(ModelViewSet):
-    queryset = Speciality.objects.all()
+    queryset = Speciality.objects.all().order_by('name_ru', 'name_en', 'name_kk').distinct('name_ru', 'name_en', 'name_kk')
     serializer_class = SpecialitySerializer
     permission_classes = (IsAdminOrReadOnly,)
 
@@ -75,7 +75,7 @@ class LanguageViewSet(ModelViewSet):
 
 
 class DisciplineViewSet(ModelViewSet):
-    queryset = Discipline.objects.all()
+    queryset = Discipline.objects.all().order_by('name_ru', 'name_en', 'name_kk').distinct('name_ru', 'name_en', 'name_kk')
     serializer_class = DisciplineSerializer
     permission_classes = (IsAdminOrReadOnly,)
     pagination_class = CustomPagination

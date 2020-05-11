@@ -93,6 +93,55 @@ class ApplicantViewSet(ModelViewSet):
     permission_classes = (AllowAny,)
     pagination_class = CustomPagination
 
+    def create(self, request, *args, **kwargs):
+        import datetime as dt
+        validated_data = request.data
+        user = User.objects.filter(email=validated_data['email'])
+        if user.exists():
+            raise ValidationError({
+                'error': {
+                    "message": "email_exists"
+                }
+            })
+        if models.IdentityDocument.objects.filter(number=validated_data["doc_num"]).exists():
+            raise ValidationError({
+                "error": {
+                    "message": "id_exists"
+                }
+            })
+        campaign_type = validated_data.get('campaign_type')
+        today = dt.date.today()
+        campaigns = models.AdmissionCampaign.objects.filter(
+            type=campaign_type,
+            is_active=True,
+            year=today.year,
+            start_date__lte=today,
+            end_date__gte=today
+        )
+        if campaigns.exists():
+            validated_data['campaign'] = campaigns.first()
+        else:
+            raise ValidationError({
+                "error": {
+                    "message": "no_campaign"
+                }
+            })
+        # Проверка этапов приемной кампан
+        campaign: models.AdmissionCampaign = validated_data.get('campaign')
+        stages = campaign.stages.filter(
+            prep_level=validated_data['prep_level'],
+            start_date__lte=today,
+            end_date__gte=today,
+            is_active=True
+        )
+        if not stages.exists():
+            raise ValidationError({
+                "error": {
+                    "message": "no_stages"
+                }
+            })
+        return super().create(request, *args, **kwargs)
+
     @action(methods=['get'], detail=False, url_path='my-prep-level', url_name='applicant_prep_level')
     def applicant_prep_level(self, request, pk=None):
         user = self.request.user
@@ -428,10 +477,7 @@ class AdmissionCampaignViewSet(ModelViewSet):
             & Q(is_active=True)
             & Q(year=today.year)
         )
-        if campaigns.exists():
-            return Response({'open': True}, status=HTTP_200_OK)
-        else:
-            return Response({'open': True}, status=HTTP_200_OK)
+        return Response({'open': campaigns.exists()}, status=HTTP_200_OK)
 
 
 class AddressViewSet(ModelViewSet):
