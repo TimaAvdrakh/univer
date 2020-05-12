@@ -720,7 +720,7 @@ class SendApplicationsTo1cJob(CronJobBase):
                             error_text += '{}\n'.format(error)
                     if subtype['status'] != 'failed':
                         subtype_row = model_aps.SubApplication.objects.get(pk = subtype['subApplicationID'])
-                        subtype.status = self.IN_PROGRESS
+                        subtype_row.status = model_aps.Status.objects.only('uid').get(uid = self.IN_PROGRESS)
                         subtype_row.save()
 
 
