@@ -705,9 +705,9 @@ class SendApplicationsTo1cJob(CronJobBase):
                     status = 0
 
                 log = DocumentChangeLog(
-                    content_type_id = CONTENT_TYPES['applications'],
-                    object_id = application['applicationID'],
-                    status = status,
+                    content_type_id=CONTENT_TYPES['applications'],
+                    object_id=application['applicationID'],
+                    status=status,
                 )
                 error_text = ''
 
@@ -719,11 +719,13 @@ class SendApplicationsTo1cJob(CronJobBase):
                         for error in subtype['subApplicationErrors']:
                             error_text += '{}\n'.format(error)
                     if subtype['status'] != 'failed':
-                        subtype_row = model_aps.SubApplication.objects.get(pk = subtype['subApplicationID'])
-                        subtype_row.status = model_aps.Status.objects.only('uid').get(uid = self.IN_PROGRESS)
+                        try:
+                            subtype_row = model_aps.SubApplication.objects.get(pk=subtype['subApplicationID'])
+                        except model_aps.SubApplication.DoesNotExist:
+                            error_text += '{}\n Дочерний тип '+ subtype['subApplicationID']+' заявки не найден'
+                            continue
+                        subtype_row.status = model_aps.Status.objects.only('uid').get(uid=self.IN_PROGRESS)
                         subtype_row.save()
-
-
 
                 log.errors = error_text
                 log.save()
@@ -732,6 +734,7 @@ class SendApplicationsTo1cJob(CronJobBase):
                     try:
                         application_row = model_aps.Application.objects.get(pk=application['applicationID'])
                     except model_aps.Application.DoesNotExist:
+                        error_text += '{}\n Заявка ' + application['applicationID'] + ' не найдена'
                         continue
 
                     application_row.send = True
