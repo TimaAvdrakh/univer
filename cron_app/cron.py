@@ -700,9 +700,9 @@ class SendApplicationsTo1cJob(CronJobBase):
                 if status == 'errors':
                     status = 2
                 if status == 'success':
-                    status = 1
-                if status == 'failed':
                     status = 0
+                if status == 'failed':
+                    status = 1
 
                 log = DocumentChangeLog(
                     content_type_id=CONTENT_TYPES['applications'],
@@ -714,7 +714,7 @@ class SendApplicationsTo1cJob(CronJobBase):
                 for error in application['applicationErrors']:
                     error_text += '{}\n'.format(error)
                 for subtype in application['subtypeAplications']:
-                    error_text += 'subtype_id' + str(subtype['subApplicationID'])
+                    error_text += '\n Дочерний тип заявки ' + str(subtype['subApplicationID'])
                     if subtype['status'] == 'errors':
                         for error in subtype['subApplicationErrors']:
                             error_text += '{}\n'.format(error)
@@ -722,7 +722,7 @@ class SendApplicationsTo1cJob(CronJobBase):
                         try:
                             subtype_row = model_aps.SubApplication.objects.get(pk=subtype['subApplicationID'])
                         except model_aps.SubApplication.DoesNotExist:
-                            error_text += '{}\n Дочерний тип '+ subtype['subApplicationID']+' заявки не найден'
+                            error_text += '{}\n Дочерний тип '+ subtype['subApplicationID'] + ' заявки не найден'
                             continue
                         subtype_row.status = model_aps.Status.objects.only('uid').get(uid=self.IN_PROGRESS)
                         subtype_row.save()
