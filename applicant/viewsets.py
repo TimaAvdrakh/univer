@@ -93,6 +93,63 @@ class ApplicantViewSet(ModelViewSet):
     permission_classes = (AllowAny,)
     pagination_class = CustomPagination
 
+    def create(self, request, *args, **kwargs):
+        import datetime as dt
+        validated_data = request.data
+        user = User.objects.filter(email=validated_data['email'])
+        if user.exists():
+            raise ValidationError({
+                'error': {
+                    "message": "email_exists"
+                }
+            })
+        if models.IdentityDocument.objects.filter(number=validated_data["doc_num"]).exists():
+            raise ValidationError({
+                "error": {
+                    "message": "id_exists"
+                }
+            })
+        campaign_type = validated_data.get('campaign_type')
+        today = dt.date.today()
+        campaigns = models.AdmissionCampaign.objects.filter(
+            type=campaign_type,
+            is_active=True,
+            year=today.year,
+            start_date__lte=today,
+            end_date__gte=today
+        )
+        if campaigns.exists():
+            validated_data['campaign'] = campaigns.first()
+        else:
+            raise ValidationError({
+                "error": {
+                    "message": "no_campaign"
+                }
+            })
+        # Проверка этапов приемной кампан
+        campaign: models.AdmissionCampaign = validated_data.get('campaign')
+        stages = campaign.stages.filter(
+            prep_level=validated_data['prep_level'],
+            start_date__lte=today,
+            end_date__gte=today,
+            is_active=True
+        )
+        if not stages.exists():
+            raise ValidationError({
+                "error": {
+                    "message": "no_stages"
+                }
+            })
+        return super().create(request, *args, **kwargs)
+
+    @action(methods=['get'], detail=False, url_path='my-prep-level', url_name='applicant_prep_level')
+    def applicant_prep_level(self, request, pk=None):
+        user = self.request.user
+        if hasattr(user, 'applicant'):
+            return Response(data={'prep_level': user.applicant.prep_level.name}, status=HTTP_200_OK)
+        else:
+            return Response()
+
     @action(methods=['post'], detail=False, url_path='campaign-types', url_name='campaign_types')
     def get_campaign_types(self, request, pk=None):
         prep_level = request.data.get('prep_level')
@@ -171,6 +228,34 @@ class RecruitmentPlanViewSet(ModelViewSet):
     queryset = models.RecruitmentPlan.objects.all()
     serializer_class = serializers.RecruitmentPlanSerializer
     permission_classes = (IsAdminOrReadOnly,)
+    pagination_class = CustomPagination
+
+    @action(methods=['get'], detail=False, url_path='search', url_name='search_recruitment_plans')
+    def search(self, request, pk=None):
+        params = request.query_params
+        user = self.request.user
+        lookup = Q(campaign=user.applicant.campaign) & Q(prep_level=user.applicant.prep_level)
+        study_form = params.get('sf')
+        if study_form:
+            lookup = lookup & Q(study_form=study_form)
+        language = params.get('lang')
+        if language:
+            lookup = lookup & Q(language=language)
+        edu_program = params.get('ep')
+        if edu_program:
+            lookup = lookup & Q(education_program=edu_program)
+        edu_program_group = params.get('epg')
+        if edu_program_group:
+            lookup = lookup & Q(education_program_group=edu_program_group)
+        edu_base = params.get('eb')
+        if edu_base:
+            lookup = lookup & Q(admission_basis=edu_base)
+        recruitment_plans = self.paginate_queryset(self.queryset.filter(lookup))
+        if recruitment_plans:
+            recruitment_plans = self.serializer_class(recruitment_plans, many=True).data
+            return self.get_paginated_response(recruitment_plans)
+        serializer = self.get_serializer(recruitment_plans, many=True)
+        return Response(data={'results': serializer.data}, status=HTTP_200_OK)
 
 
 class LanguageProficiencyViewSet(ModelViewSet):
@@ -197,88 +282,60 @@ class ApplicationStatusViewSet(ModelViewSet):
 
 
 class ApplicationViewSet(ModelViewSet):
-    queryset = models.Application.objects.exclude(
-        status__code__in=[models.APPROVED, models.REJECTED]
-    ).annotate(cond_order=models.COND_ORDER).order_by('cond_order')
+    queryset = models.Application.objects.annotate(cond_order=models.COND_ORDER).order_by('cond_order', '-created')
     serializer_class = serializers.ApplicationSerializer
     pagination_class = CustomPagination
 
+    def retrieve(self, request, *args, **kwargs):
+        application = self.get_object()
+        profile = application.creator
+        data = {
+            'application': serializers.ApplicationSerializer(application).data
+        }
+        questionnaire = models.Questionnaire.objects.filter(creator=profile)
+        if questionnaire.exists():
+            data['questionnaire'] = serializers.QuestionnaireSerializer(questionnaire.first()).data
+        else:
+            data['questionnaire'] = None
+        attachments = models.AdmissionDocument.objects.filter(creator=profile)
+        if attachments.exists():
+            data['attachments'] = serializers.AdmissionDocumentSerializer(attachments.first()).data
+        else:
+            data['attachments'] = None
+        return Response(data=data, status=HTTP_200_OK)
+
+    def validate(self, validated_data, user):
+        campaign: models.AdmissionCampaign = user.applicant.campaign
+        directions = validated_data.get('directions')
+        if campaign.chosen_directions_max_count < len(directions):
+            raise ValidationError({"error": "direction_max_count_exceeded"})
+        is_grant_holder = validated_data.get('is_grant_holder')
+        grant = validated_data.get('grant', None)
+        if not is_grant_holder and grant:
+            validated_data.pop('grant')
+        else:
+            grant_epg = models.EducationProgramGroup.objects.get(pk=grant.get('edu_program_group'))
+            # Если грантник, то первое направление должно соответствовать группе обр. программ в гранте,
+            # бюджетному основанию поступления и очной форме обучения
+            first_direction = models.RecruitmentPlan.objects.get(
+                pk=list(filter(lambda direction: direction['order_number'] == 0, directions))[0]['plan']
+            )
+            budget_admission_basis = models.EducationBase.objects.get(code='budget')
+            full_time_study_form = models.StudyForm.objects.get(code='full-time')
+            if (first_direction.education_program_group != grant_epg) or (
+                    first_direction.admission_basis != budget_admission_basis) or (
+                    first_direction.study_form != full_time_study_form):
+                raise ValidationError({'error': 'choose_other_first_direction'})
+        international_cert = validated_data.get('international_cert', None)
+        if international_cert and not campaign.inter_cert_foreign_lang:
+            validated_data['international_cert'] = None
+
     def create(self, request, *args, **kwargs):
-        data = request.data
-        user = self.request.user
-        campaign = user.applicant.campaign
-        cdmc, icfl = campaign.info['cdmc'], campaign.info['icfl']
-        if not icfl:
-            data.pop('international_cert')
-
-        # Вытаскиваем данные
-        previous_education = data.pop('previous_education')
-        test_result = data.pop('test_result')
-        grant = data.pop('grant', None)
-        directions = data.pop('directions')
-        # Переписываем объекты на uid
-        previous_education.update({
-            'institute': previous_education['institute']['uid'],
-            'speciality': previous_education['speciality']['uid'],
-        })
-        for discipline in test_result['disciplines']:
-            discipline['discipline'] = discipline['discipline']['uid']
-        if grant:
-            grant['speciality'] = grant['speciality']['uid']
-            data['grant'] = grant
-
-        if len(directions) > cdmc:
-            directions = directions[:cdmc]
-        for direction in directions:
-            direction.update({
-                'education_base': direction['education_base']['uid'],
-                'education_program': direction['education_program']['uid'],
-                'education_program_group': direction['education_program_group']['uid'],
-            })
-        # Обратно впихиваем данные
-        data.update({
-            'previous_education': previous_education,
-            'test_result': test_result,
-            'directions': directions,
-        })
-        # Отдаем сериализатору как ни в чем не бывало
+        self.validate(request.data, self.request.user)
         return super().create(request, *args, **kwargs)
 
     def update(self, request, *args, **kwargs):
-        data = request.data
-        previous_education = data.pop('previous_education')
-        education_info = previous_education.pop('info')
-        previous_education.update({
-            'institute': education_info['institute']['uid'],
-            'speciality': education_info['speciality']['uid']
-        })
-        test_result = data.pop('test_result')
-        result_info = test_result.pop('info')
-        test_result.update({
-                               'discipline': discipline['discipline']['uid'],
-                               'mark': discipline['mark'],
-                           } for discipline in result_info['disciplines'])
-        grant = data.pop('grant', None)
-        if grant:
-            grant_info = grant.pop('info')
-            grant.update({
-                'speciality': grant_info['speciality']['uid']
-            })
-        directions = data.pop('directions')
-        for direction in directions:
-            direction_info = direction.pop('info')
-            direction.update({
-                'education_program': direction_info['education_program']['uid'],
-                'education_program_group': direction_info['education_program_group']['uid'],
-                'education_base': direction_info['education_base']['uid']
-            })
-        data.update({
-            'previous_education': previous_education,
-            'test_result': test_result,
-            'grant': grant,
-            'directions': directions
-        })
-        print(data)
+        self.validate(request.data, self.request.user)
         return super().update(request, *args, **kwargs)
 
     def get_serializer_class(self):
@@ -293,7 +350,7 @@ class ApplicationViewSet(ModelViewSet):
         if queryset.exists():
             return Response(data=serializers.ApplicationLiteSerializer(queryset.first()).data, status=HTTP_200_OK)
         else:
-            return Response(data=None, status=HTTP_200_OK)
+            return Response(data='inshalla', status=HTTP_200_OK)
 
     @action(methods=['post'], detail=True, url_path='apply-action', url_name='apply_action')
     def apply_action(self, request, pk=None):
@@ -409,6 +466,18 @@ class AdmissionCampaignViewSet(ModelViewSet):
     queryset = models.AdmissionCampaign.objects.all()
     serializer_class = serializers.AdmissionCampaignSerializer
     permission_classes = (IsAdminOrReadOnly,)
+
+    @action(methods=['get'], detail=False, url_path='open', url_name='open_campaigns')
+    def campaigns_open(self, request, pk=None):
+        import datetime as dt
+        today = dt.date.today()
+        campaigns = self.queryset.filter(
+            Q(start_date__lte=today)
+            & Q(end_date__gte=today)
+            & Q(is_active=True)
+            & Q(year=today.year)
+        )
+        return Response({'open': campaigns.exists()}, status=HTTP_200_OK)
 
 
 class AddressViewSet(ModelViewSet):

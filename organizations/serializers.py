@@ -23,7 +23,7 @@ class StudyFormSerializer(serializers.ModelSerializer):
 class EducationTypeSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.EducationType
-        fields = ['uid', 'name']
+        fields = ['uid', 'name', 'code']
 
 
 class EducationBaseSerializer(serializers.ModelSerializer):

@@ -257,7 +257,7 @@ class Education(BaseModel):
         null=True,
     )
     avg_mark = models.FloatField(
-        validators=[MinValueValidator(2), MaxValueValidator(3.7)],
+        validators=[MinValueValidator(0.0), MaxValueValidator(4.0)],
         null=True,
         verbose_name='Средняя оценка (не выще 3.7)'
     )
@@ -270,6 +270,7 @@ class Education(BaseModel):
     speciality = models.ForeignKey(
         Speciality,
         on_delete=models.SET_NULL,
+        blank=True,
         null=True,
         verbose_name='Специальность'
     )
@@ -280,6 +281,10 @@ class Education(BaseModel):
     is_nerd = models.BooleanField(
         default=False,
         verbose_name='Закончил учебу с отличием'
+    )
+    is_NIS_graduate = models.BooleanField(
+        default=False,
+        verbose_name='Выпускник НИШ'
     )
     scan = models.ForeignKey(
         'applicant.DocScan',

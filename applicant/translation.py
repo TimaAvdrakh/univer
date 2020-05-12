@@ -55,3 +55,8 @@ class AddressTranslationOptions(TranslationOptions):
 @register(AdmissionCampaignType)
 class AdmissionCampaignTypeTranslationOptions(TranslationOptions):
     fields = ('name',)
+
+
+@register(LanguageProficiency)
+class LanguageProficiencyTranslationOptions(TranslationOptions):
+    fields = ('name',)

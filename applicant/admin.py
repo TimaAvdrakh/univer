@@ -27,7 +27,6 @@ models = [
     LanguageProficiency,
     InternationalCert,
     Grant,
-    DirectionChoice,
     TestResult,
     Application,
     AdmissionDocument,

@@ -121,27 +121,6 @@ class ApplicantSerializer(serializers.ModelSerializer):
         email.send()
         return
 
-    def validate(self, validated_data):
-        # Если идентификационный документ с таким номер уже есть, также кинуть ошибку
-        if validated_data["doc_num"]:
-            if IdentityDocument.objects.filter(serial_number=validated_data["doc_num"]).exists():
-                raise ValidationError({"error": "id_exists"})
-        # Дальше валидирует сам Django, какие поля указаны в модели
-        campaign_type = self.context['request'].data.get('campaign_type')
-        today = dt.date.today()
-        campaigns = models.AdmissionCampaign.objects.filter(
-            type=campaign_type,
-            is_active=True,
-            year=today.year,
-            start_date__lte=today,
-            end_date__gte=today
-        )
-        if campaigns.exists():
-            validated_data['campaign'] = campaigns.first()
-        else:
-            raise ValidationError({"error": "no_campaign"})
-        return validated_data
-
     def create(self, validated_data):
         if validated_data['password'] != validated_data['confirm_password']:
             raise ValidationError({"error": "pass_no_match"})
@@ -187,8 +166,9 @@ class ApplicantSerializer(serializers.ModelSerializer):
             return applicant
         except Exception as e:
             user = applicant.user
+            if user:
+                user.delete()
             applicant.delete()
-            user.delete()
             raise ValidationError({"error": e})
 
 
@@ -248,7 +228,6 @@ class QuestionnaireSerializer(serializers.ModelSerializer):
         validated_data['address_of_residence'] = address_of_residence
         validated_data['family'] = family
         return validated_data
-
 
     def create(self, validated_data):
         creator = self.context['request'].user.profile
@@ -324,8 +303,6 @@ class QuestionnaireSerializer(serializers.ModelSerializer):
         profile = self.context['request'].user.profile
         if profile == instance.creator:
             try:
-                info = self.context['request'].data.get('info')
-                validated_data['nationality'] = models.Nationality.objects.get(pk=info['nationality']['uid'])
                 family = validated_data.pop('family')
                 members = family.pop('members')
                 family_instance: models.Family = models.Family.objects.get(pk=instance.family.uid)
@@ -333,7 +310,8 @@ class QuestionnaireSerializer(serializers.ModelSerializer):
                     setattr(family_instance, key, value)
                 family_instance.save(snapshot=True)
                 for member in members:
-                    member_instance: models.FamilyMember = models.FamilyMember.objects.get(profile=member['profile'].uid)
+                    member_instance: models.FamilyMember = models.FamilyMember.objects.get(
+                        profile=member['profile'].uid)
                     address_instance = models.Address.objects.get(pk=member_instance.address.uid)
                     address = member.pop('address')
                     # info = address.pop('info')
@@ -421,6 +399,20 @@ class CampaignStageSerializer(serializers.ModelSerializer):
 
 
 class RecruitmentPlanSerializer(serializers.ModelSerializer):
+    info = serializers.SerializerMethodField()
+
+    def get_info(self, plan: models.RecruitmentPlan):
+        return {
+            "prep_level": plan.prep_level.name,
+            "study_form": plan.study_form.name,
+            "language": plan.language.name,
+            "admission_basis": plan.admission_basis.name,
+            "education_program_group": f'{plan.education_program_group.code} {plan.education_program_group.name}',
+            "education_program": f'{plan.education_program.code} {plan.education_program.name}',
+            "study_period": plan.study_period.repr_name,
+            "test_form": plan.entrance_test_form.name,
+        }
+
     class Meta:
         model = models.RecruitmentPlan
         fields = "__all__"
@@ -446,7 +438,7 @@ class TestCertSerializer(serializers.ModelSerializer):
 class LanguageProficiencySerializer(serializers.ModelSerializer):
     class Meta:
         model = models.LanguageProficiency
-        fields = ['uid', 'name']
+        fields = ['uid', 'name', 'code']
 
 
 class InternationalCertTypeSerializer(serializers.ModelSerializer):
@@ -475,13 +467,6 @@ class GrantSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = models.Grant
-        fields = "__all__"
-
-
-class DirectionChoiceSerializer(serializers.ModelSerializer):
-
-    class Meta:
-        model = models.DirectionChoice
         fields = "__all__"
 
 
@@ -526,12 +511,6 @@ class ApplicationLiteSerializer(serializers.ModelSerializer):
         application = None
         creator: Profile = self.context['request'].user.profile
         try:
-            # Ориентируемся на приемную кампанию
-            my_campaign = creator.user.applicant.campaign
-            # Проверяем если абитуриент выбрал больше направлений, чем задано в приемной кампании
-            directions = validated_data.pop('directions')
-            if my_campaign.chosen_directions_max_count < len(directions):
-                raise ValidationError({"error": "chosen directions maximum count exceeded"})
             # Если есть заполненная анкета, статус будет "Ожидает проверки", иначе - "Без анкеты"
             has_questionnaire: bool = models.Questionnaire.objects.filter(creator=creator).exists()
             if has_questionnaire:
@@ -545,27 +524,28 @@ class ApplicationLiteSerializer(serializers.ModelSerializer):
                 profile=creator,
                 **validated_data.pop('previous_education')
             )
-            # Результаты теста ЕНТ/КТА
+            # Результаты теста ЕНТ/КТ
             test_result = validated_data.pop('test_result')
+            # Сертификат теста ЕНТ/КТ
             test_certificate = models.TestCert.objects.create(
                 profile=creator,
                 **test_result.pop('test_certificate')
             )
+            # Пройденные дисциплины на тесте
             disciplines = models.DisciplineMark.objects.bulk_create([
                 models.DisciplineMark(profile=creator, **discipline) for discipline in test_result.pop('disciplines')
             ])
+            # Результат теста
             test_result = models.TestResult.objects.create(
                 profile=creator,
                 test_certificate=test_certificate
             )
             test_result.disciplines.add(*disciplines)
             test_result.save()
-            # Международный сертификат, только если в кампании указано, что он принимаются сертифиакаты
-            if my_campaign.inter_cert_foreign_lang:
-                international_cert = models.InternationalCert.objects.create(
-                    profile=creator,
-                    **validated_data.pop('international_cert')
-                )
+            # Международный сертификат
+            international_cert = validated_data.pop('international_cert', None)
+            if international_cert:
+                international_cert = models.InternationalCert.objects.create(profile=creator, **international_cert)
             else:
                 international_cert = None
             # Грант
@@ -574,13 +554,6 @@ class ApplicationLiteSerializer(serializers.ModelSerializer):
                 grant = models.Grant.objects.create(profile=creator, **grant)
             else:
                 grant = None
-            # Выбор направлений.
-            # TODO сверять направления и основания для поступления с грантом.
-            #  Если грант дан только на Специальность #1, а в каком-то направлении
-            #  стоит Специальность #X и основа поступления "Бюджет" кинуть ошибку -> удалить заявление
-            directions = models.DirectionChoice.objects.bulk_create([
-                models.DirectionChoice(profile=creator, **direction) for direction in directions
-            ])
             application = models.Application.objects.create(
                 status=status,
                 previous_education=previous_education,
@@ -588,9 +561,11 @@ class ApplicationLiteSerializer(serializers.ModelSerializer):
                 international_cert=international_cert,
                 grant=grant,
                 creator=creator,
-                questionnaire=models.Questionnaire.objects.filter(creator=creator).first()
             )
-            application.directions.add(*directions)
+            directions = models.OrderedDirection.objects.bulk_create([
+                models.OrderedDirection(**direction) for direction in validated_data.pop('directions')
+            ])
+            application.directions.set(directions)
             application.save()
             try:
                 self.send_on_create(recipient=creator.email)
@@ -622,14 +597,12 @@ class ApplicationLiteSerializer(serializers.ModelSerializer):
             for key, value in test_cert.items():
                 setattr(cert, key, value)
             cert.save(snapshot=True)
-            disciplines = test_result.pop('disciplines')
-            discipline: dict
-            for discipline in disciplines:
-                instance_discipline = instance.test_result.disciplines.get(discipline=discipline['discipline'], profile=profile)
-                d = models.DisciplineMark.objects.get(pk=instance_discipline.uid)
-                for key, value in discipline.items():
-                    setattr(d, key, value)
-                d.save(snapshot=True)
+            instance.test_result.disciplines.all().delete()
+            new_disciplines = models.DisciplineMark.objects.bulk_create([
+                models.DisciplineMark(**discipline) for discipline in test_result.pop('disciplines')
+            ])
+            instance.test_result.disciplines.set(new_disciplines)
+            instance.test_result.save(snapshot=True)
 
             # Обновление международного сертификата, если есть
             international_cert: dict = validated_data.pop('international_cert', None)
@@ -645,28 +618,23 @@ class ApplicationLiteSerializer(serializers.ModelSerializer):
                 for key, value in grant.items():
                     setattr(grant_model, key, value)
                 grant_model.save(snapshot=True)
-            # Обновление направлений
-            directions: dict = validated_data.pop('directions', None)
-            if len(directions) > my_campaign.chosen_directions_max_count:
-                directions = directions[:5]
-            direction: dict
-            for direction in directions:
-                instance_direction = models.DirectionChoice.objects.filter(
-                    profile=profile,
-                    education_program=direction['education_program'],
-                    education_program_group=direction['education_program_group']
-                )
-                if instance_direction.exists():
-                    instance_direction = instance_direction.first()
-                    for key, value in direction.items():
-                        setattr(instance_direction, key, value)
-                    instance_direction.save(snapshot=True)
-                else:
-                    models.DirectionChoice.objects.create(**direction)
+            instance.directions.all().delete()
+            directions = models.OrderedDirection.objects.bulk_create([
+                models.OrderedDirection(**direction) for direction in validated_data.pop('directions')
+            ])
+            instance.directions.set(directions)
+            instance.save(snapshot=True)
             application = super().update(instance, validated_data)
             return application
         else:
             raise ValidationError({"error": "access_denied"})
+
+
+class OrderedDirectionSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = models.OrderedDirection
+        fields = ['plan', 'order_number']
 
 
 class ApplicationSerializer(ApplicationLiteSerializer):
@@ -674,8 +642,7 @@ class ApplicationSerializer(ApplicationLiteSerializer):
     test_result = TestResultSerializer(required=True)
     international_cert = InternationalCertSerializer(required=False, allow_null=True)
     grant = GrantSerializer(required=False, allow_null=True)
-    directions = DirectionChoiceSerializer(required=True, many=True)
-    questionnaire = QuestionnaireSerializer(required=False, many=False, read_only=True)
+    directions = OrderedDirectionSerializer(required=True, many=True)
 
     class Meta:
         model = models.Application
@@ -693,6 +660,7 @@ class AdmissionDocumentSerializer(serializers.ModelSerializer):
         return validated_data
 
     def create(self, validated_data):
+        creator = validated_data.get('creator')
         return super().create(validated_data)
 
     def update(self, instance: models.AdmissionDocument, validated_data):
