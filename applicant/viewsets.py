@@ -119,7 +119,7 @@ class ApplicantViewSet(ModelViewSet):
             end_date__gte=today
         )
         if campaigns.exists():
-            validated_data['campaign'] = campaigns.first()
+            validated_data['campaign'] = str(campaigns.first().uid)
         else:
             raise ValidationError({
                 "error": {
