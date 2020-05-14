@@ -127,19 +127,19 @@ class ApplicantViewSet(ModelViewSet):
                 }
             })
         # Проверка этапов приемной кампан
-        campaign: models.AdmissionCampaign = validated_data.get('campaign')
-        stages = campaign.stages.filter(
-            prep_level=validated_data['prep_level'],
-            start_date__lte=today,
-            end_date__gte=today,
-            is_active=True
-        )
-        if not stages.exists():
-            raise ValidationError({
-                "error": {
-                    "message": "no_stages"
-                }
-            })
+        # campaign: models.AdmissionCampaign = validated_data.get('campaign')
+        # stages = campaign.stages.filter(
+        #     prep_level=validated_data['prep_level'],
+        #     start_date__lte=today,
+        #     end_date__gte=today,
+        #     is_active=True
+        # )
+        # if not stages.exists():
+        #     raise ValidationError({
+        #         "error": {
+        #             "message": "no_stages"
+        #         }
+        #     })
         return super().create(request, *args, **kwargs)
 
     @action(methods=['get'], detail=False, url_path='my-prep-level', url_name='applicant_prep_level')
