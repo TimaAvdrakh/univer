@@ -453,10 +453,6 @@ class Role(BaseModel):
         default=False,
         verbose_name='Эдвайзор',
     )
-    is_selection_committer = models.BooleanField(
-        default=False,
-        verbose_name='Специалист приемной комиссии',
-    )
     is_applicant = models.BooleanField(
         default=False,
         verbose_name='Абитуриент'
