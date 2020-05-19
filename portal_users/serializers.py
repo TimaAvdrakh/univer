@@ -70,7 +70,8 @@ class AchievementSerializer(serializers.ModelSerializer):
             "achievement_type",
             "level",
             "content",
-      
+        )
+
     def to_representation(self, instance):
         data = super().to_representation(instance=instance)
         if data['achievement_type']:
