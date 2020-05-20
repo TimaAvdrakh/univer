@@ -1,4 +1,4 @@
-FROM python:3.7-alpine
+FROM python:3.7-buster
 
 ENV PYTHONUNBUFFERED 1
 
@@ -40,10 +40,7 @@ RUN apk update && \
     && apk add --virtual .rundeps $runDeps \
     && apk del .build-deps
 
-COPY . .
-
-CMD python manage.py migrate
-CMD python venv venv
+#COPY . .
 
 EXPOSE 8000
 
