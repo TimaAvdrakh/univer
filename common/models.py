@@ -1,10 +1,9 @@
 from django.db import models
+from django.core.validators import MaxValueValidator
 from django.contrib.auth.models import User
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from django.forms.models import model_to_dict
-# from .utils import get_sentinel_user
-from django.contrib.postgres.fields import JSONField
 from uuid import uuid4
 
 
@@ -56,9 +55,7 @@ class BaseModel(models.Model):
         # т.е. сохранять историю изменений модели, также предотвращает рекурсивный вызов
         snapshot = kwargs.pop('snapshot', False)
         if snapshot:
-            print("SNAPSHOT")
             if self.pk:
-                print("UPDATING")
                 # Тащим пока что неизмененную модель и конвертируем ее в словарь
                 original = model_to_dict(self._meta.model.objects.get(pk=self.pk))
                 # Применили изменения

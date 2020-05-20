@@ -617,9 +617,12 @@ class ApplicationStatus(BaseCatalog):
 class Questionnaire(BaseModel):
     MATCH_REG = 0
     MATCH_TMP = 1
+    MATCH_RES = 3
+
     ADDRESS_MATCH_CHOICES = (
-        (MATCH_REG, _('registration address')),
-        (MATCH_TMP, _('temporary registration address')),
+        (MATCH_REG, 'Адресу регистрации/прописки'),
+        (MATCH_TMP, 'Адресу временной регистрации'),
+        (MATCH_RES, 'Фактическому адресу')
     )
     creator = models.OneToOneField(
         Profile,
@@ -780,9 +783,13 @@ class Questionnaire(BaseModel):
     address_matches = models.CharField(
         max_length=1,
         choices=ADDRESS_MATCH_CHOICES,
-        verbose_name='Адресу фактического проживания соответствует',
+        verbose_name='Адрес соответствует',
         blank=True,
         null=True
+    )
+    is_privileged = models.BooleanField(
+        default=False,
+        verbose_name='Имеет льготы'
     )
 
     class Meta:
