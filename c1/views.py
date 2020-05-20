@@ -9,6 +9,7 @@ from common import models as models_common
 from organizations import models as models_organizations
 from portal_users import models as models_portal_users
 from schedules import models as models_schedules
+from applications import models as models_applications
 # from portal.curr_settings import journal_statuses
 from rest_framework import generics
 from rest_framework import status
@@ -536,14 +537,21 @@ def putfrom1c_copy(request):
                         base64_string = value  # .encode('utf-8')
                         # data_index = base64_string.index('base64') + 7
                         # filedata = base64_string[data_index:len(base64_string)]
+
+                        base64_string = base64_string.replace(" ", "+")
                         image = b64decode(base64_string)
 
-                        setattr(
-                            finding_object,
-                            rule_field['django'],
-                            ContentFile(image, each_elem['uid'] + each_elem['extension'])
-                            # ContentFile(image, each_elem['uid'] + '.jpg')
-                        )
+                        if rule_field['django'][-3:] == "_id":
+                            ff = finding_object._meta.get_field(rule_field['django'][:-3]).remote_field.model
+                            new_file = ff.objects.create(file=ContentFile(image, each_elem['uid'] + each_elem['extension']))
+                            setattr(finding_object, rule_field['django'], new_file.id)
+                        else:
+                            setattr(
+                                finding_object,
+                                rule_field['django'],
+                                ContentFile(image, each_elem['uid'] + each_elem['extension'])
+                                # ContentFile(image, each_elem['uid'] + '.jpg')
+                            )
 
                     if not is_related and not rule_field['is_binary_data']:
                         try:
