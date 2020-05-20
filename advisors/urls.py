@@ -3,6 +3,7 @@ from . import views
 
 app_name = 'advisors'
 
+
 urlpatterns = [
     # 1 стр Заявки на ИУПы обучающихся
     path('study_plans/', views.StudyPlansListView.as_view(),  # Не используется

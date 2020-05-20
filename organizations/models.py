@@ -119,6 +119,8 @@ class Group(BaseCatalog):
         verbose_name_plural = 'Группы'
 
 
+#
+
 # class Student(BaseModel):
 #     profile = models.ForeignKey(
 #         'portal_users.Profile',
@@ -140,7 +142,7 @@ class Group(BaseCatalog):
 #     class Meta:
 #         verbose_name = 'Студент'
 #         verbose_name_plural = 'Студенты'
-
+#
 
 class EducationBase(BaseCatalog):
     class Meta:
@@ -255,7 +257,7 @@ class Education(BaseModel):
         null=True,
     )
     avg_mark = models.FloatField(
-        validators=[MinValueValidator(2), MaxValueValidator(3.7)],
+        validators=[MinValueValidator(0.0), MaxValueValidator(4.0)],
         null=True,
         verbose_name='Средняя оценка (не выще 3.7)'
     )
@@ -268,6 +270,7 @@ class Education(BaseModel):
     speciality = models.ForeignKey(
         Speciality,
         on_delete=models.SET_NULL,
+        blank=True,
         null=True,
         verbose_name='Специальность'
     )
@@ -278,6 +281,10 @@ class Education(BaseModel):
     is_nerd = models.BooleanField(
         default=False,
         verbose_name='Закончил учебу с отличием'
+    )
+    is_NIS_graduate = models.BooleanField(
+        default=False,
+        verbose_name='Выпускник НИШ'
     )
     scan = models.ForeignKey(
         'applicant.DocScan',
@@ -895,13 +902,13 @@ class StudentDiscipline(BaseModel):
     @property
     def control_form(self):
         try:
-            discipline_credit = DisciplineCredit.objects.get(
+            discipline_credit = DisciplineCredit.objects.filter(
                 study_plan=self.study_plan,
                 cycle=self.cycle,
                 discipline=self.discipline,
                 acad_period=self.acad_period,
                 student=self.student,
-            )
+            ).first()
             discipline_credit = list(discipline_credit.chosen_control_forms.all().values('name', 'uid'))
         except DisciplineCredit.DoesNotExist:
             discipline_credit = [{'error': 'DoesNotExist'}]
@@ -918,20 +925,21 @@ class StudentDiscipline(BaseModel):
             discipline_credit = list(discipline_credit.chosen_control_forms.all().values('name', 'uid'))
         return discipline_credit
 
+    #
     @property
     def credit_obj(self):
         try:
-            discipline_credit = DisciplineCredit.objects.get(
+            discipline_credit = DisciplineCredit.objects.filter(
                 study_plan=self.study_plan,
                 cycle=self.cycle,
                 discipline=self.discipline,
                 acad_period=self.acad_period,
                 student=self.student,
-                disciplinecreditcontrolform__isnull=False,
-            )
+            ).first()
+
             return {
                 'credit': discipline_credit.credit,
-                'control_forms': list(
+                'control_form': list(
                     discipline_credit.disciplinecreditcontrolform_set.filter(is_active=True).values('control_form__name', 'uid'))
             }
 
@@ -1209,6 +1217,13 @@ class DisciplineCredit(BaseModel):
         verbose_name='Статус диспцилины',
         related_name='discipline_credit_status'
     )
+    # teacher = models.ForeignKey(
+    #     'portal_users.Profile',
+    #     null=True,
+    #     on_delete=models.CASCADE,
+    #     verbose_name='Преподаватель',
+    #     related_name='discipline_credit_teacher'
+    # )
     uid_1c = models.CharField(
         max_length=100,
         null=True,
@@ -1221,15 +1236,6 @@ class DisciplineCredit(BaseModel):
         default=False,
         verbose_name='Отправлен в 1С',
     )
-
-    # teacher = models.ForeignKey(
-    #     'portal_users.Profile',
-    #     null=True,
-    #     on_delete=models.CASCADE,
-    #     verbose_name='Преподаватель',
-    #     related_name='discipline_credit_teacher'
-    # )
-
 
     def __str__(self):
         return '{} {} {}'.format(self.study_plan,

@@ -7,6 +7,8 @@ from portal.curr_settings import (
     component_by_choose_uid,
     CONTENT_TYPES,
     SEND_STUD_DISC_1C_URL,
+    # SEND_APPLICATIONS_TO_1C_URL,
+    # GET_READY_FROM_1C_URL,
     BOT_DEV_CHAT_IDS
 )
 from django.core.mail import send_mail
@@ -14,8 +16,8 @@ from django.template.loader import render_to_string
 from portal.curr_settings import current_site
 from portal_users import models as user_models
 from organizations import models as org_models
+from applications import models as serv_models
 from schedules import models as sh_models
-from advisors import models as ad_models
 from datetime import datetime, timedelta
 from integration.models import DocumentChangeLog
 from requests.auth import HTTPBasicAuth
@@ -157,7 +159,9 @@ class AdvisorRejectBidJob(CronJobBase):
 
     def do(self):
         mail_subject = 'Ваша заявка отклонена'
-        tasks = models.AdvisorRejectedBidTask.objects.filter(is_success=False)
+        tasks = models.AdvisorRejectedBidTask.objects.filter(
+            is_success=False,
+        )
         for task in tasks:
             study_plan = task.study_plan
             student = study_plan.student
@@ -171,16 +175,16 @@ class AdvisorRejectBidJob(CronJobBase):
                                         {'advisor_name': advisor.full_name,
                                          'comment': task.comment}
                                         )
-
-            send_mail(
-                mail_subject,
-                msg_plain,
-                'avtoexpertastana@gmail.com',
-                [student.email],
-                html_message=msg_html,
-            )
-            task.is_success = True
-            task.save()
+            if student.notify_me_from_email:
+                send_mail(
+                    mail_subject,
+                    msg_plain,
+                    'avtoexpertastana@gmail.com',
+                    [student.email],
+                    html_message=msg_html,
+                )
+                task.is_success = True
+                task.save()
 
 
 class StudPerformanceChangedJob(CronJobBase):
@@ -252,13 +256,14 @@ class ControlNotifyJob(CronJobBase):
                                         )
 
             for sp in study_plans:
-                send_mail(
-                    mail_subject,
-                    msg_plain,
-                    'avtoexpertastana@gmail.com',
-                    [sp.student.email],
-                    html_message=msg_html,
-                )
+                if sp.student.notify_me_from_email:
+                    send_mail(
+                        mail_subject,
+                        msg_plain,
+                        'avtoexpertastana@gmail.com',
+                        [sp.student.email],
+                        html_message=msg_html,
+                    )
             task.is_success = True
             task.save()
 
@@ -314,7 +319,6 @@ class SendStudentDisciplinesTo1CJob(CronJobBase):
         )
         disciplines = []
         for sd in sds:
-            print(sd.study_plan)
             item = {
                 'uid_site': str(sd.uid),  # УИД дисицплины студента на сайте
                 'study_plan': sd.study_plan.uid_1c,
@@ -385,39 +389,51 @@ class SendConfirmedDisciplineCreditTo1CJob(CronJobBase):
     code = 'cron_app.send_discipline_credit'
 
     def do(self):
-        print("Working")
         url = SEND_STUD_DISC_1C_URL
         status = student_discipline_status['confirmed']
+        # dcs = org_models.DisciplineCredit.objects.filter(
+        #     status_id=status,
+        #     uuid1c__isnull=False,
+        #     sent=False,
+        #     chosen_control_forms__isnull=False,
+        #     acad_period__isnull=False,
+        #     student__isnull=False
+        # )[:3]
         dcs = org_models.DisciplineCredit.objects.filter(
+            student='89f4f1ac-355d-11e9-aa40-0cc47a2bc1bf',
             status_id=status,
-            uuid1c__isnull=False,
-            sent=False,
-            chosen_control_forms__isnull=False,
-            acad_period__isnull=False,
-            student__isnull=False
-        )[:5]
-        print(dcs)
+        )
+
         discredits = []
         for dc in dcs:
-            item = {
-                'uid_site': str(dc.uid),
-                'discipline': str(dc.discipline.uid),
-                'cycle': str(dc.cycle.uid),
-                'credit': str(dc.credit),
-                'acad_period': str(dc.acad_period.uid),
-                'chosen_control_forms': str(dc.chosen_control_forms.uid),
-                'student': str(dc.student.uid),
-                'study_plan_uid_1c': str(dc.study_plan_uid_1c),
-                'study_period': str(dc.study_plan.study_period.uid)
-            }
-            discredits.append(item)
-        print(discredits)
+            student_discipline_study_period = org_models.StudentDiscipline.objects.get(
+                status=dc.status,
+                student=dc.student.uid,
+                acad_period=dc.acad_period.uid,
+                discipline=dc.discipline.uid,
+            )
+            for control_form in dc.chosen_control_forms.all():
+                item = {
+                    'blocktype': 'disciplinecredit',
+                    'uid_site': str(dc.uid),
+                    'discipline': str(dc.discipline.uid),
+                    'cycle': str(dc.cycle.uid),
+                    'credit': str(dc.credit),
+                    'acad_period': str(dc.acad_period.uid),
+                    'chosen_control_forms': str(control_form.uid),
+                    'student': str(dc.student.uid),
+                    'study_plan_uid_1c': str(dc.study_plan_uid_1c),
+                    'study_period': str(student_discipline_study_period.study_year.uid),
+                }
+                discredits.append(item)
         urllib3.disable_warnings()
+        # with open('data.json', 'w') as outfile:
+        #     json.dump(discredits, outfile, indent=1)
         resp = requests.post(
             url,
             json=discredits,
             verify=False,
-            auth=HTTPBasicAuth('Админимстратор'.encode(), 'qwe123rty'),
+            auth=HTTPBasicAuth('Администратор'.encode(), 'qwe123rty'),
             timeout=30,
         )
         if resp.status_code == 200:
@@ -622,3 +638,81 @@ class ApplicantVerificationJob(CronJobBase):
     def do(self):
         time = dt.date.today() + dt.timedelta(days=1)
         Applicant.objects.filter(created__gte=time, user__is_active=False).delete()
+
+
+class SendApplicationsTo1cJob:
+    """Отправляет заявки студентов в 1С"""
+    RUN_EVERY_MINS = 10  # every 1 min
+
+    schedule = Schedule(run_every_mins=RUN_EVERY_MINS)
+    code = 'crop_app.send_student_application'
+
+    def do(self):
+        url = SEND_APPLICATIONS_TO_1C_URL
+        applications = serv_models.StudentDiscipline.objects.filter(
+
+        )[0]
+        ''' disciplines = []
+        for sd in sds:
+            print(sd.study_plan)
+            item = {
+                'uid_site': str(sd.uid),  # УИД дисицплины студента на сайте
+                'study_plan': sd.study_plan.uid_1c,
+                'student': str(sd.student.uid),
+                'study_period': str(sd.study_year.uid),
+                'advisor': str(sd.study_plan.advisor.uid) if sd.study_plan.advisor else '',
+                'acad_period': str(sd.acad_period.uid),
+                'teacher': str(sd.teacher.uid),
+                'language': str(sd.language.uid),
+                'discipline': str(sd.discipline.uid),
+                'loadtype': str(sd.load_type.load_type2.uid_1c),
+                'isopt': str(sd.component.uid) == component_by_choose_uid if sd.component else False,
+            }
+            disciplines.append(item)
+        urllib3.disable_warnings()
+        resp = requests.post(
+            url,
+            json=disciplines,
+            verify=False,
+            auth=HTTPBasicAuth('Администратор'.encode(), 'qwe123rty'),
+            timeout=30,
+        )
+
+        if resp.status_code == 200:
+            print("Connected")
+            resp_data = resp.json()
+            for item in resp_data:
+                # try:
+                #     sent_data = list(filter(lambda disc: disc['uid_site'] == item['uid_site'], disciplines))[0]
+                #     sent_data_json = json.dumps(sent_data)
+                # except IndexError:
+                #     sent_data_json = ''
+
+                log = DocumentChangeLog(
+                    content_type_id=CONTENT_TYPES['studentdiscipline'],
+                    object_id=item['uid_site'],
+                    status=item['code'],
+                    # sent_data=item['json'],
+                )
+                error_text = ''
+                for error in item['errors']:
+                    error_text += '{}\n'.format(error)
+
+                log.errors = error_text
+                log.save()
+
+                if item['code'] == 0:
+                    try:
+                        sd = org_models.StudentDiscipline.objects.get(pk=item['uid_site'])
+                    except org_models.StudentDiscipline.DoesNotExist:
+                        continue
+
+                    sd.uid_1c = item['uid_1c']
+                    sd.sent = True
+                    sd.save()
+        else:
+            message = '{}\n{}'.format(resp.status_code,
+                                      resp.content.decode())
+            for chat_id in BOT_DEV_CHAT_IDS:
+                bot.send_message(chat_id,
+                                 message)'''

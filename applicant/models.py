@@ -1,11 +1,12 @@
+import datetime as dt
 from django.contrib.auth.models import User
-from django.contrib.contenttypes.fields import GenericRelation
-from django.core.mail import EmailMultiAlternatives
+from django.contrib.contenttypes.models import ContentType
+from django.core.mail import EmailMessage, send_mail
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
 from django.db.models import Case, When, Value, Q
-from django.template import Context
-from django.template.loader import get_template
+from django.template.loader import render_to_string
+from django.utils.translation import ugettext_lazy as _
 from common.models import (
     BaseModel,
     BaseCatalog,
@@ -13,8 +14,9 @@ from common.models import (
     IdentityDocument,
     Citizenship,
     Nationality,
+    Changelog,
 )
-from portal_users.models import Profile, ProfilePhone, Gender, MaritalStatus
+from portal_users.models import Profile, ProfilePhone, Gender, MaritalStatus, Role
 from organizations.models import (
     PreparationLevel,
     Speciality,
@@ -37,14 +39,10 @@ APPROVED = "APPROVED"
 REJECTED = "REJECTED"
 AWAITS_VERIFICATION = "AWAITS_VERIFICATION"
 NO_QUESTIONNAIRE = "NO_QUESTIONNAIRE"
-IMPROVE = "IMPROVE"
 
 COND_ORDER = Case(
     When(Q(status__code=AWAITS_VERIFICATION), then=Value(0)),
     When(Q(status__code=NO_QUESTIONNAIRE), then=Value(1)),
-    When(Q(status__code=IMPROVE), then=Value(3)),
-    When(Q(status__code=APPROVED), then=Value(4)),
-    When(Q(status__code=REJECTED), then=Value(5)),
     default=Value(0),
     output_field=models.IntegerField(),
 )
@@ -52,7 +50,6 @@ COND_ORDER = Case(
 
 # Вид льготы
 class PrivilegeType(BaseCatalog):
-
     class Meta:
         verbose_name = "Тип льготы"
         verbose_name_plural = "Типы льготы"
@@ -60,7 +57,6 @@ class PrivilegeType(BaseCatalog):
 
 # Способ возврата документа
 class DocumentReturnMethod(BaseCatalog):
-
     class Meta:
         verbose_name = "Метод возврата документа"
         verbose_name_plural = "Методы возврата документов"
@@ -68,23 +64,13 @@ class DocumentReturnMethod(BaseCatalog):
 
 # Членство в семье
 class FamilyMembership(BaseCatalog):
-
     class Meta:
         verbose_name = "Степень родства"
         verbose_name_plural = "Степени родства"
 
 
-# Тип адреса
-class AddressType(BaseCatalog):
-
-    class Meta:
-        verbose_name = "Тип адреса"
-        verbose_name_plural = "Типы адресов"
-
-
 # Уровни бюджета
 class BudgetLevel(BaseCatalog):
-
     class Meta:
         verbose_name = "Уровень бюджета"
         verbose_name_plural = "Уровни бюджета"
@@ -92,7 +78,6 @@ class BudgetLevel(BaseCatalog):
 
 # Тип международного сертификата
 class InternationalCertType(BaseCatalog):
-
     class Meta:
         verbose_name = "Тип международного сертификата"
         verbose_name_plural = "Типы международных сертификатов"
@@ -100,7 +85,6 @@ class InternationalCertType(BaseCatalog):
 
 # Тип гранта
 class GrantType(BaseCatalog):
-
     class Meta:
         verbose_name = "Вид гранта"
         verbose_name_plural = "Виды грантов"
@@ -108,62 +92,78 @@ class GrantType(BaseCatalog):
 
 # Адресный классификатор
 class AddressClassifier(BaseCatalog):
-    address_element_type = models.PositiveSmallIntegerField(
+    address_element_type = models.PositiveIntegerField(
         verbose_name="Тип адресного элемента"
     )
-    district_code = models.PositiveSmallIntegerField(
+    district_code = models.PositiveIntegerField(
         verbose_name="Код района",
         blank=True,
         null=True
     )
-    region_code = models.PositiveSmallIntegerField(
+    region_code = models.PositiveIntegerField(
         verbose_name="Код региона",
         blank=True,
         null=True
     )
-    locality_code = models.PositiveSmallIntegerField(
+    locality_code = models.PositiveIntegerField(
         verbose_name="Код населенного пункта",
         blank=True,
         null=True  # Населенный пункт
     )
-    code = models.PositiveSmallIntegerField(
+    code = models.PositiveIntegerField(
         verbose_name="Код",
     )
 
     class Meta:
         verbose_name = "Адресный классификатор"
         verbose_name_plural = "Адресные классификаторы"
+        unique_together = ['address_element_type', 'code']
 
 
 # Адрес пользователя
 class Address(BaseCatalog):
-    # Представление адреса будет потом после создания
+    REG = 0  # Адрес регистрации/прописки
+    TMP = 1  # Адрес времменной регистрации
+    RES = 2  # Адрес фактического проживания
+    ADDRESS_TYPE_CHOICES = (
+        (REG, _('address of registration')),
+        (TMP, _('address of temporary registration')),
+        (RES, _('address of residence'))
+    )
     name = models.CharField(
         blank=True,
         null=True,
         max_length=800,
         verbose_name="Имя",
     )
-    profile = models.ForeignKey(
+    type = models.CharField(
+        max_length=1,
+        choices=ADDRESS_TYPE_CHOICES,
+        blank=True,
+        null=True,
+        verbose_name='Тип адреса'
+    )
+    profiles = models.ManyToManyField(
         Profile,
         blank=True,
-        null=True,
-        on_delete=models.DO_NOTHING,
-        verbose_name="Профиль",
+        verbose_name="Профили",
         related_name="addresses",
-    )
-    type = models.ForeignKey(
-        AddressType,
-        blank=True,
-        null=True,
-        on_delete=models.DO_NOTHING,
-        verbose_name="Тип адреса"
     )
     country = models.ForeignKey(
         Citizenship,
+        blank=True,
+        null=True,
         on_delete=models.DO_NOTHING,
         verbose_name="Страна",
         related_name="addresses",
+    )
+    city = models.ForeignKey(
+        AddressClassifier,
+        blank=True,
+        null=True,
+        on_delete=models.DO_NOTHING,
+        verbose_name="Город",
+        related_name="cities",
     )
     region = models.ForeignKey(
         AddressClassifier,
@@ -181,14 +181,6 @@ class Address(BaseCatalog):
         blank=True,
         null=True,
     )
-    city = models.ForeignKey(
-        AddressClassifier,
-        blank=True,
-        null=True,
-        on_delete=models.DO_NOTHING,
-        verbose_name="Город",
-        related_name="cities",
-    )
     district = models.ForeignKey(
         AddressClassifier,
         blank=True,
@@ -199,11 +191,15 @@ class Address(BaseCatalog):
     )
     street = models.CharField(
         max_length=500,
-        verbose_name="Улица"
+        verbose_name="Улица",
+        blank=True,
+        null=True,
     )
     home_number = models.CharField(
         max_length=500,
-        verbose_name="Дом"
+        verbose_name="Дом",
+        blank=True,
+        null=True,
     )
     corpus = models.CharField(
         max_length=500,
@@ -219,18 +215,29 @@ class Address(BaseCatalog):
     )
     index = models.CharField(
         max_length=100,
-        verbose_name="Индекс"
+        verbose_name="Индекс",
+        blank=True,
+        null=True,
     )
 
     def save(self, *args, **kwargs):
         if not self.name:
-            # В инглише однако порядок наоборот
-            self.name_en = f"{self.region} region, {self.city}, st. {self.street}, house number {self.home_number}"
-            self.name_ru = f"{self.region}, г. {self.city}, ул. {self.street}, дом №{self.home_number}"
-            self.name_kk = (
-                f"{self.region}, {self.city} қ. {self.street}, № {self.home_number} үй"
-            )
-
+            if self.region:
+                self.name_en = f"{self.region} region, "
+                self.name_ru = f"область {self.region}, "
+                self.name_kk = f"{self.region} облысы, "
+            if self.city:
+                self.name_en = f"{self.city} city, "
+                self.name_ru = f"г.{self.city}, "
+                self.name_kk = f"{self.city} қ., "
+            if self.street:
+                self.name_en = f"St. {self.street}, "
+                self.name_ru = f"ул. {self.street}, "
+                self.name_kk = f"{self.street} к., "
+            if self.home_number:
+                self.name_en = f"#{self.home_number}, "
+                self.name_ru = f"д. №{self.home_number}, "
+                self.name_kk = f"№{self.home_number} үй, "
             if self.corpus:
                 self.name_en += f", building {self.corpus}"
                 self.name_ru += f", корпус {self.corpus}"
@@ -239,7 +246,7 @@ class Address(BaseCatalog):
                 self.name_en += f", apartment {self.apartment}"
                 self.name_ru += f", квартира {self.apartment}"
                 self.name_kk += f", {self.apartment} пәтер"
-            self.name = self.name_kk
+            self.name = self.name_ru
         super().save(*args, **kwargs)
 
     class Meta:
@@ -257,19 +264,41 @@ class Family(BaseModel):
         default=0,
         verbose_name="Кол-во несовершеннолетних детей в семье"
     )
+    profile = models.ForeignKey(
+        Profile,
+        on_delete=models.CASCADE,
+        blank=True,
+        null=True,
+    )
 
     class Meta:
         verbose_name = "Семья"
         verbose_name_plural = "Семьи"
 
+    def __str__(self):
+        return f'Семья пользователя {self.profile.full_name}'
+
 
 # Член семьи
 class FamilyMember(BaseModel):
-    # Мне кажется, что в ТЗ не очень продуманно с составом семьи.
-    # Например, заполнять кол-во детей и кол-во несовершеннолетних в семье
-    # на каждого члена семьи не нужно и затратно по времени.
-    # Лучше создать реальную модель семьи с ее членами и такую информацию о кол-ве детей
-    # закинуть в саму семью и подвязать к абитуриенту
+    MATCH_REG = 0
+    MATCH_TMP = 1
+    MATCH_RES = 2
+    MATCH_NOT = 3
+    ADDRESS_MATCH_CHOICES = (
+        (MATCH_REG, _('registration')),
+        (MATCH_TMP, _('temporary registration')),
+        (MATCH_RES, _('residence')),
+        (MATCH_NOT, _('does not match'))
+    )
+
+    address_matches = models.CharField(
+        max_length=1,
+        choices=ADDRESS_MATCH_CHOICES,
+        blank=True,
+        null=True,
+        verbose_name='Адрес соответствует'
+    )
     first_name = models.CharField(
         max_length=255,
         default="",
@@ -334,9 +363,16 @@ class FamilyMember(BaseModel):
         verbose_name = "Член семьи"
         verbose_name_plural = "Члены семьи"
 
+    def __str__(self):
+        return f"Член семьи пользователя {self.family.profile.full_name}"
+
 
 class AdmissionCampaignType(BaseCatalog):
     prep_levels = models.ManyToManyField(PreparationLevel, verbose_name='Уровни образования')
+
+    class Meta:
+        verbose_name = 'Тип приемной кампании'
+        verbose_name_plural = 'Типы приемных кампаний'
 
 
 # Приемная кампания
@@ -370,12 +406,18 @@ class AdmissionCampaign(BaseCatalog):
     start_date = models.DateField("Дата начала приемной кампании")
     end_date = models.DateField("Дата окончания приемной кампании")
 
-    def __str__(self):
-        return f"{self.uid}"
-
     class Meta:
         verbose_name = "Приемная кампания"
         verbose_name_plural = "Приемные кампании"
+
+    @property
+    def info(self):
+        return {
+            # cdmc - максимум направлений, которые может выбрать абитуриент в этой кампании
+            'cdmc': self.chosen_directions_max_count,
+            # icfl - кампания принимает международные сертификаты
+            'icfl': self.inter_cert_foreign_lang
+        }
 
 
 # Абитуриент
@@ -413,6 +455,7 @@ class Applicant(BaseModel):
     email = models.EmailField(
         "Email",
         max_length=100,
+        unique=True
     )
     doc_num = models.CharField(
         verbose_name="Серийный номер документа",
@@ -453,25 +496,8 @@ class Applicant(BaseModel):
         username = f"{self.prep_level.shifr[:2]}{time.strftime('%y')}{str(order_num).zfill(4)}"
         return username
 
-    @staticmethod
-    def send_credentials(username, email, password):
-        url = "qwerty/asd"
-        context = Context({"username": username, "password": password, "url": url})
-        plain_text = get_template("applicant/email/txt/send_credentials.txt").render(context.dicts[1])
-        html = get_template("applicant/email/html/send_credentials.html").render(context.dicts[1])
-        subject, email_from, to = (
-            "Successfully registered",
-            "alibekkaparov@gmail.com",
-            [email],
-        )
-        message = EmailMultiAlternatives(subject, plain_text, email_from, to)
-        message.attach_alternative(html, "text/html")
-        result = message.send()
-        return result
-
-    class Meta:
-        verbose_name = "Абитуриент"
-        verbose_name_plural = "Абитуриенты"
+    def __str__(self):
+        return f'{self.first_name} {self.last_name}'
 
 
 # Сканы документов
@@ -509,12 +535,25 @@ class DocScan(models.Model):
         null=True,
         verbose_name="Тип контента"
     )
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        blank=True,
+        null=True
+    )
 
     def __str__(self):
         if self.name:
             return self.name
         else:
             return super().__str__()
+
+    @staticmethod
+    # Запись в media
+    def handle_uploaded_file(f):
+        from django.conf import settings
+        with open(f"{settings.MEDIA_ROOT}/{f.name}", "wb+") as destination:
+            for chunk in f.chunks():
+                destination.write(chunk)
 
     class Meta:
         verbose_name = "Скан документа"
@@ -561,13 +600,6 @@ class ApplicationStatus(BaseCatalog):
                 "name_en": "No questionnaire",
                 "code": NO_QUESTIONNAIRE,
             },
-            {
-                "name": IMPROVE,
-                "name_ru": "Требует доработки",
-                "name_kk": "Жақсартуды қажет етеді",
-                "name_en": "Needs to be improved",
-                "code": IMPROVE
-            }
         ]
         for status in statuses:
             match: [ApplicationStatus] = ApplicationStatus.objects.filter(code=status["code"])
@@ -583,6 +615,12 @@ class ApplicationStatus(BaseCatalog):
 
 # Анкета поступающего
 class Questionnaire(BaseModel):
+    MATCH_REG = 0
+    MATCH_TMP = 1
+    ADDRESS_MATCH_CHOICES = (
+        (MATCH_REG, _('registration address')),
+        (MATCH_TMP, _('temporary registration address')),
+    )
     creator = models.OneToOneField(
         Profile,
         blank=True,
@@ -590,13 +628,35 @@ class Questionnaire(BaseModel):
         on_delete=models.DO_NOTHING,
         verbose_name="Подающий анкету",
     )
+    first_name = models.CharField(
+        "Имя",
+        max_length=255,
+        blank=True,
+        null=True,
+    )
+    last_name = models.CharField(
+        "Фамилия",
+        max_length=255,
+        blank=True,
+        null=True,
+    )
+    middle_name = models.CharField(
+        "Отчество",
+        max_length=255,
+        blank=True,
+        null=True,
+    )
     first_name_en = models.CharField(
         "Имя на латинице",
         max_length=255,
+        blank=True,
+        null=True,
     )
     last_name_en = models.CharField(
         "Фамилия на латинице",
         max_length=255,
+        blank=True,
+        null=True,
     )
     gender = models.ForeignKey(
         Gender,
@@ -606,7 +666,9 @@ class Questionnaire(BaseModel):
     marital_status = models.ForeignKey(
         MaritalStatus,
         on_delete=models.DO_NOTHING,
-        verbose_name="Семейное положение"
+        verbose_name="Семейное положение",
+        blank=True,
+        null=True,
     )
     citizenship = models.ForeignKey(
         Citizenship,
@@ -617,6 +679,10 @@ class Questionnaire(BaseModel):
         Nationality,
         on_delete=models.DO_NOTHING,
         verbose_name="Национальность"
+    )
+    is_experienced = models.BooleanField(
+        default=False,
+        verbose_name='Имеет опыт работы'
     )
     workplace = models.CharField(
         max_length=500,
@@ -651,11 +717,12 @@ class Questionnaire(BaseModel):
     id_doc = models.ForeignKey(
         IdentityDocument,
         on_delete=models.DO_NOTHING,
-        verbose_name="Удо",
+        verbose_name="Удостоверение личности",
     )
     iin = models.CharField(
         max_length=12,
-        null=True
+        null=True,
+        verbose_name='ИИН'
     )
     id_doc_scan = models.ForeignKey(
         DocScan,
@@ -699,23 +766,9 @@ class Questionnaire(BaseModel):
         verbose_name="Семья",
         related_name="questionnaires",
     )
-
-    class Meta:
-        verbose_name = "Анкета"
-        verbose_name_plural = "Анкеты"
-
-
-# Список льгот пользователей
-class UserPrivilegeList(BaseModel):
     need_dormitory = models.BooleanField(
         default=False,
-        verbose_name="Нуждаюсь в общежитии"
-    )
-    questionnaire = models.OneToOneField(
-        Questionnaire,
-        on_delete=models.DO_NOTHING,
-        verbose_name="Анкета",
-        null=True,
+        verbose_name="Нуждается в общежитии"
     )
     doc_return_method = models.ForeignKey(
         DocumentReturnMethod,
@@ -724,10 +777,48 @@ class UserPrivilegeList(BaseModel):
         null=True,
         verbose_name="Метод возврата документов",
     )
+    address_matches = models.CharField(
+        max_length=1,
+        choices=ADDRESS_MATCH_CHOICES,
+        verbose_name='Адресу фактического проживания соответствует',
+        blank=True,
+        null=True
+    )
+
+    class Meta:
+        verbose_name = "Анкета"
+        verbose_name_plural = "Анкеты"
+
+    def __str__(self):
+        if self.creator and self.creator.full_name:
+            return f"Абитуриент {self.creator.full_name}"
+        else:
+            return f"Абитуриент {self.first_name_en} {self.last_name_en}"
+
+
+# Список льгот пользователей
+class UserPrivilegeList(BaseModel):
+    questionnaire = models.OneToOneField(
+        Questionnaire,
+        on_delete=models.DO_NOTHING,
+        verbose_name="Анкета",
+        blank=True,
+        null=True,
+        related_name='privilege_list'
+    )
+    profile = models.ForeignKey(
+        Profile,
+        on_delete=models.CASCADE,
+        blank=True,
+        null=True,
+    )
 
     class Meta:
         verbose_name = "Список льгот пользователя"
         verbose_name_plural = "Списки льгот пользователей"
+
+    def __str__(self):
+        return f"Список льгот пользователя {self.profile.full_name}"
 
 
 # Льготы пользователей
@@ -776,10 +867,19 @@ class Privilege(BaseModel):
         verbose_name="Список льгот",
         related_name="privileges"
     )
+    profile = models.ForeignKey(
+        Profile,
+        on_delete=models.DO_NOTHING,
+        blank=True,
+        null=True,
+    )
 
     class Meta:
         verbose_name = "Льгота"
         verbose_name_plural = "Льготы"
+
+    def __str__(self):
+        return f"Льготы пользователя {self.profile.full_name}"
 
 
 # Этапы приемной кампании
@@ -817,6 +917,9 @@ class CampaignStage(BaseModel):
         verbose_name = "Этап кампании"
         verbose_name_plural = "Этапы кампаний"
 
+    def __str__(self):
+        return f"Стадия приемной кампании {self.campaign.name}"
+
 
 # План набора
 class RecruitmentPlan(BaseModel):
@@ -824,7 +927,7 @@ class RecruitmentPlan(BaseModel):
         AdmissionCampaign,
         on_delete=models.DO_NOTHING,
         related_name="plans",
-        verbose_name="План набора"
+        verbose_name="Кампания"
     )
     study_plan_1c = models.CharField(
         max_length=500,
@@ -840,7 +943,7 @@ class RecruitmentPlan(BaseModel):
         Speciality,
         null=True,
         on_delete=models.DO_NOTHING,
-        verbose_name="Направление подготовки"
+        verbose_name="Направление по подготвке"
     )
     education_program = models.ForeignKey(
         EducationProgram,
@@ -887,10 +990,20 @@ class RecruitmentPlan(BaseModel):
         on_delete=models.DO_NOTHING,
         verbose_name="Форма вступительного испытания"
     )
+    language = models.ForeignKey(
+        Language,
+        on_delete=models.SET_NULL,
+        blank=True,
+        null=True,
+        verbose_name='Язык обучения'
+    )
 
     class Meta:
         verbose_name = "План набора"
         verbose_name_plural = "Планы наборов"
+
+    def __str__(self):
+        return f"{self.campaign}, {self.prep_direction}, {self.education_program}, {self.education_program_group}, {self.admission_basis}, {self.prep_level}, {self.language}"
 
 
 # Пройденная дисциплина с отметкой
@@ -914,6 +1027,9 @@ class DisciplineMark(BaseModel):
     class Meta:
         verbose_name = "Пройденная дисциплина на ЕНТ/КТ"
         verbose_name_plural = "Пройденные дисциплины на ЕНТ/КТ"
+
+    def __str__(self):
+        return f'Сданная дисциплина "{self.discipline.name}" пользователем {self.profile.full_name}'
 
 
 # Сертификат теста по ЕНТ/КТ
@@ -952,9 +1068,17 @@ class TestCert(BaseModel):
         verbose_name = "Серитификат ЕНТ/КТ"
         verbose_name_plural = "Серитификаты ЕНТ/КТ"
 
+    def __str__(self):
+        return f"Сертификат теста ЕНТ/КТ пользователя {self.profile.full_name}"
+
 
 # Навык владения языком
 class LanguageProficiency(BaseModel):
+    name = models.CharField(
+        max_length=100,
+        null=True,
+        verbose_name='Натменование уровня'
+    )
     code = models.CharField(
         max_length=100,
         verbose_name="Код"
@@ -968,8 +1092,11 @@ class LanguageProficiency(BaseModel):
     )
 
     class Meta:
-        verbose_name = "Уровень владения языком"
-        verbose_name_plural = "Уровени владения языками"
+        verbose_name = "Уровень владения языком (CEFR)"
+        verbose_name_plural = "Уровени владения языками (CEFR)"
+
+    def __str__(self):
+        return f"Уровень {self.code}"
 
 
 # Международный сертификат
@@ -1005,6 +1132,9 @@ class InternationalCert(BaseModel):
     class Meta:
         verbose_name = "Международный сертификат"
         verbose_name_plural = "Международные сертификаты"
+
+    def __str__(self):
+        return f"Международный сертификат пользователя {self.profile.full_name}"
 
 
 # Грант
@@ -1046,8 +1176,8 @@ class Grant(BaseModel):
         max_length=200,
         verbose_name="Номер приказа МОН РК"
     )
-    speciality = models.ForeignKey(
-        Speciality,
+    edu_program_group = models.ForeignKey(
+        EducationProgramGroup,
         null=True,
         on_delete=models.SET_NULL,
         verbose_name='Группа образовательных программ'
@@ -1062,50 +1192,8 @@ class Grant(BaseModel):
         verbose_name = "Грант"
         verbose_name_plural = "Грант"
 
-
-# выбор направления
-class DirectionChoice(BaseModel):
-    prep_level = models.ForeignKey(
-        PreparationLevel,
-        on_delete=models.DO_NOTHING,
-        verbose_name='Уровень образования'
-    )
-    study_form = models.ForeignKey(
-        StudyForm,
-        on_delete=models.DO_NOTHING,
-        verbose_name='Форма обучения'
-    )
-    education_program = models.ForeignKey(
-        EducationProgram,
-        on_delete=models.DO_NOTHING,
-        verbose_name='Образовательная программа'
-    )
-    education_program_group = models.ForeignKey(
-        EducationProgramGroup,
-        on_delete=models.DO_NOTHING,
-        verbose_name='Группа образовательных программ'
-    )
-    education_base = models.ForeignKey(
-        EducationBase,
-        on_delete=models.DO_NOTHING,
-        verbose_name='Основание поступления'
-    )
-    education_language = models.ForeignKey(
-        Language,
-        on_delete=models.DO_NOTHING,
-        verbose_name='Язык обучения'
-    )
-    profile = models.ForeignKey(
-        Profile,
-        on_delete=models.SET_NULL,
-        blank=True,
-        null=True,
-        related_name='directions'
-    )
-
-    class Meta:
-        verbose_name = "Выбор направления"
-        verbose_name_plural = "Выборы направлений"
+    def __str__(self):
+        return f"Грант пользователя {self.profile.full_name}"
 
 
 # Результат теста
@@ -1130,6 +1218,47 @@ class TestResult(BaseModel):
         verbose_name = "Результат ЕНТ/КТ"
         verbose_name_plural = "Результаты ЕНТ/КТ"
 
+    def __str__(self):
+        return f"Результаты теста ЕНТ/КТ пользователя {self.profile.full_name}"
+
+
+# Документы поступающего
+class AdmissionDocument(BaseModel):
+    creator = models.ForeignKey(
+        Profile,
+        on_delete=models.CASCADE,
+        verbose_name='Профиль',
+        blank=True,
+        null=True,
+    )
+    files = models.ManyToManyField(
+        DocScan,
+        verbose_name='Сканы документов'
+    )
+
+    class Meta:
+        verbose_name = 'Перечень документов для приема на обучение'
+        verbose_name_plural = 'Перечни документов для приема на обучение'
+
+    def __str__(self):
+        return f"Дополнительные поданные документы пользователя {self.creator.full_name}"
+
+
+class OrderedDirection(BaseModel):
+    plan = models.ForeignKey(
+            RecruitmentPlan,
+            on_delete=models.CASCADE,
+            verbose_name='План набора')
+    order_number = models.PositiveSmallIntegerField()
+
+    class Meta:
+        verbose_name = 'Упорядоченный план набора'
+        verbose_name_plural = 'Упорядоченные планы наборов'
+        ordering = ['order_number']
+
+    def __str__(self):
+        return f'#{self.order_number} {self.plan}'
+
 
 # Заявление
 class Application(BaseModel):
@@ -1150,6 +1279,14 @@ class Application(BaseModel):
         null=True,
         verbose_name='Международный сертификат'
     )
+    is_grant_holder = models.BooleanField(
+        default=False,
+        verbose_name='Обладатель гранта'
+    )
+    is_cert_holder = models.BooleanField(
+        default=False,
+        verbose_name='Обладатель международного языкового сертификата'
+    )
     grant = models.ForeignKey(
         Grant,
         on_delete=models.DO_NOTHING,
@@ -1158,7 +1295,7 @@ class Application(BaseModel):
         verbose_name='Грант'
     )
     directions = models.ManyToManyField(
-        DirectionChoice,
+        OrderedDirection,
         verbose_name='Выборы направлений'
     )
     status = models.ForeignKey(
@@ -1175,33 +1312,67 @@ class Application(BaseModel):
         on_delete=models.CASCADE,
         verbose_name='Заявитель',
     )
-    comments = GenericRelation(Comment)
-    questionnaire = models.OneToOneField(
-        Questionnaire,
-        on_delete=models.SET_NULL,
-        blank=True,
-        null=True
-    )
 
     class Meta:
         verbose_name = "Заявление"
         verbose_name_plural = "Заявления"
 
+    def __str__(self):
+        return f'Заявление абитуриента {self.applicant}. {self.status.name}'
+
+    @property
+    def max_choices(self):
+        campaign: AdmissionCampaign = self.creator.user.applicant.campaign
+        return campaign.chosen_directions_max_count
+
+    def import_self_to_1c(self):
+        pass
+
     def approve(self, moderator, comment=None):
         if comment:
-            self.comments.create(creator=moderator, text=comment)
+            Comment.objects.create(
+                text=comment,
+                creator=moderator,
+                content_object=self
+            )
         self.status = ApplicationStatus.objects.get(code=APPROVED)
         self.save()
+        # TODO на подтверждение заявления модератором импортировать заявление в 1С
+        self.import_self_to_1c()
+        try:
+            send_mail(
+                subject='Ваше заявление подтверждено',
+                message='Ваше заявление подтверждено модератором университета',
+                from_email='',
+                recipient_list=[self.creator.email]
+            )
+        except Exception as e:
+            print(e)
+        role: Role = Role.objects.get(profile=self.creator)
+        role.is_applicant = False
+        role.is_student = True
+        role.save()
+        return
 
     def reject(self, moderator, comment):
-        self.comments.create(creator=moderator, text=comment)
+        Comment.objects.create(
+            text=comment,
+            creator=moderator,
+            content_object=self
+        )
         self.status = ApplicationStatus.objects.get(code=REJECTED)
         self.save()
-
-    def improve(self, moderator, comment):
-        self.comments.create(creator=moderator, text=comment)
-        self.status = ApplicationStatus.objects.get(code=IMPROVE)
-        self.save()
+        try:
+            message = render_to_string('applicant/email/html/application_rejected.html', {
+                'rejected_at': dt.datetime.now().strftime('%d.%m.%Y %H:%I'),
+                'reason': comment
+            })
+            subject = 'Ваше заявление отклонено'
+            email = EmailMessage(subject=subject, body=message, to=[self.creator.email])
+            email.send()
+        except Exception as e:
+            print(e)
+        return
 
     @property
     def status_info(self):
@@ -1235,38 +1406,9 @@ class Application(BaseModel):
         if directions.exists():
             [direction.delete() for direction in directions.all()]
 
-    def can_perform_action(self, profile: Profile):
+    @staticmethod
+    def can_perform_action(profile: Profile):
         if profile.role.is_mod:
             return True
         else:
             return False
-
-
-class AdmissionDocument(BaseModel):
-    campaign = models.ForeignKey(
-        AdmissionCampaign,
-        on_delete=models.SET_NULL,
-        verbose_name='Кампания',
-        blank=True,
-        null=True,
-    )
-    recruitment_plan = models.ForeignKey(
-        RecruitmentPlan,
-        on_delete=models.SET_NULL,
-        verbose_name='План набора',
-        blank=True,
-        null=True,
-    )
-    creator = models.ForeignKey(
-        Profile,
-        on_delete=models.CASCADE,
-        verbose_name='Профиль'
-    )
-    files = models.ManyToManyField(
-        DocScan,
-        verbose_name='Сканы документов'
-    )
-
-    class Meta:
-        verbose_name = 'Перечень документов для приема на обучение'
-        verbose_name_plural = 'Перечни документов для приема на обучение'

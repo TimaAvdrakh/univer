@@ -202,6 +202,10 @@ class Profile(BaseModel):
         default=False,
         verbose_name='Сменил пароль',
     )
+    notify_me_from_email = models.NullBooleanField(
+        default=True,
+        verbose_name='Оповещать по почте',
+    )
 
     def save(self, *args, **kwargs):
         if self.exchange:
@@ -288,6 +292,7 @@ class Profile(BaseModel):
             self.first_name,
             self.middle_name
         )
+
 
     @property
     def name_initial(self):
@@ -448,10 +453,6 @@ class Role(BaseModel):
         default=False,
         verbose_name='Эдвайзор',
     )
-    is_selection_committer = models.BooleanField(
-        default=False,
-        verbose_name='Специалист приемной комиссии',
-    )
     is_applicant = models.BooleanField(
         default=False,
         verbose_name='Абитуриент'
@@ -610,3 +611,93 @@ class ProfilePhone(BaseModel):
             'phone_type',
             'value',
         )
+
+
+class InfoShowPermission(BaseModel):
+    profile = models.ForeignKey(
+        Profile,
+        blank=True,
+        null=True,
+        on_delete=models.CASCADE,
+        verbose_name='Профиль',
+        related_name='info_show_permission',
+    )
+    first_name_en = models.BooleanField(
+        default=True,
+        verbose_name='Имя',
+    )
+    last_name_en = models.BooleanField(
+        default=True,
+        verbose_name='Фамилия',
+    )
+    birth_date = models.BooleanField(
+        default=True,
+        verbose_name='Дата рождения',
+    )
+    birth_place = models.BooleanField(
+        default=True,
+        verbose_name='Место рождения',
+    )
+    nationality = models.BooleanField(
+        default=True,
+        verbose_name='Национальность',
+    )
+    citizenship = models.BooleanField(
+        default=True,
+        verbose_name='Гражданство',
+    )
+    gender = models.BooleanField(
+        default=True,
+        verbose_name='Пол',
+    )
+    marital_status = models.BooleanField(
+        default=True,
+        verbose_name='Семейное положение',
+    )
+    address = models.BooleanField(
+        default=True,
+        verbose_name='Адрес',
+    )
+    phone = models.BooleanField(
+        default=True,
+        verbose_name='Телефон',
+    )
+    email = models.BooleanField(
+        default=True,
+        verbose_name='Email',
+    )
+    skype = models.BooleanField(
+        default=True,
+        verbose_name='Skype',
+    )
+    interests = models.BooleanField(
+        default=True,
+        verbose_name='Интересы'
+    )
+    extra_data = models.BooleanField(
+        default=True,
+        verbose_name='Дополнительная информация',
+    )
+    iin = models.BooleanField(
+        default=False,
+        verbose_name='ИИН',
+    )
+    identity_documents = models.BooleanField(
+        default=False,
+        verbose_name='Документ',
+    )
+    educations = models.BooleanField(
+        default=True,
+        verbose_name='Информация об образовании',
+    )
+
+    def __str__(self):
+        return "{} {} {}".format(
+            self.profile.first_name,
+            self.profile.last_name,
+            self.profile.middle_name,
+        )
+
+    class Meta:
+        verbose_name = 'Разрешение для отображения инфо пользователя'
+        verbose_name_plural = 'Разрешения для отображения инфо пользователя'
