@@ -8,6 +8,14 @@ from django.contrib.postgres.fields import JSONField
 from uuid import uuid4
 
 
+class BaseManager(models.Manager):
+    def all(self):
+        return super(BaseManager, self).all().filter(is_active=True, deleted=None)
+
+    def filter(self, *args, **kwargs):
+        return super(BaseManager, self).filter(is_active=True, deleted=None)
+
+
 class BaseModel(models.Model):
     class Meta:
         abstract = True
@@ -34,6 +42,8 @@ class BaseModel(models.Model):
     )
     sort = models.IntegerField(default=500,)
     exchange = False
+
+    objects = BaseManager()
 
     def __str__(self):
         if hasattr(self, 'name'):
@@ -136,8 +146,13 @@ class Citizenship(BaseCatalog):
         verbose_name_plural = 'Гражданство'
 
 
+class DocumentTypeGroup(BaseCatalog):
+    class Meta:
+        verbose_name = 'Группа типов документа'
+        verbose_name_plural = 'Группы типов документов'
+
+
 class DocumentType(BaseCatalog):
-    # TODO добавить поле group, где будут содержаться следующие значения:
     #  Документы абитуриентов
     #  Документы иностранных граждан
     #  Документы об образовании
@@ -145,6 +160,13 @@ class DocumentType(BaseCatalog):
     #  Регистрация деятельности
     #  Основания приказов
     #  Другие
+    group = models.ForeignKey(
+        DocumentTypeGroup,
+        on_delete=models.SET_NULL,
+        null=True,
+        verbose_name='Группа типов',
+    )
+
     class Meta:
         verbose_name = 'Тип документа'
         verbose_name_plural = 'Типы документа'

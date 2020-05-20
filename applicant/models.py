@@ -112,12 +112,12 @@ class AddressClassifier(BaseCatalog):
     )
     code = models.PositiveIntegerField(
         verbose_name="Код",
-        unique=True
     )
 
     class Meta:
         verbose_name = "Адресный классификатор"
         verbose_name_plural = "Адресные классификаторы"
+        unique_together = ['address_element_type', 'code']
 
 
 # Адрес пользователя
