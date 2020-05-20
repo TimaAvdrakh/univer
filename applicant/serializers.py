@@ -1,5 +1,5 @@
 import datetime as dt
-from django.core.mail import EmailMessage
+from django.core.mail import EmailMessage, send_mail
 from django.contrib.auth.models import User
 from django.contrib.auth.hashers import make_password
 from django.contrib.sites.shortcuts import get_current_site
@@ -7,95 +7,63 @@ from django.db.models import Max
 from django.template.loader import render_to_string
 from django.utils.http import urlsafe_base64_encode
 from django.utils.encoding import force_bytes
+from django.utils.translation import get_language
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
-from common.models import IdentityDocument, GovernmentAgency, DocumentType
-from common.serializers import IdentityDocumentSerializer
+from common.models import IdentityDocument
 from portal_users.serializers import ProfilePhoneSerializer
 from portal_users.models import Profile, Role, ProfilePhone
 from organizations.models import Education
-from .models import (
-    PrivilegeType,
-    Privilege,
-    UserPrivilegeList,
-    DocumentReturnMethod,
-    FamilyMembership,
-    AddressType,
-    AddressClassifier,
-    Address,
-    FamilyMember,
-    Family,
-    AdmissionCampaign,
-    Applicant,
-    Questionnaire,
-    Application,
-    DocScan,
-    ApplicationStatus,
-    CampaignStage,
-    RecruitmentPlan,
-    DisciplineMark,
-    TestCert,
-    LanguageProficiency,
-    InternationalCertType,
-    InternationalCert,
-    GrantType,
-    Grant,
-    DirectionChoice,
-    TestResult,
-    AdmissionCampaignType,
-    AWAITS_VERIFICATION,
-    NO_QUESTIONNAIRE
-)
 from .token import token_generator
+from . import models
 
 
 class PrivilegeTypeSerializer(serializers.ModelSerializer):
     class Meta:
-        model = PrivilegeType
-        fields = "__all__"
+        model = models.PrivilegeType
+        fields = ['uid', 'name']
 
 
 class PrivilegeSerializer(serializers.ModelSerializer):
+    scan_info = serializers.SerializerMethodField()
+
     class Meta:
-        model = Privilege
+        model = models.Privilege
         fields = "__all__"
+
+    def get_scan_info(self, privilege: models.Privilege):
+        return DocScanSerializer(privilege.scan).data
 
 
 class UserPrivilegeListSerializer(serializers.ModelSerializer):
     privileges = PrivilegeSerializer(many=True, required=True)
 
     class Meta:
-        model = UserPrivilegeList
+        model = models.UserPrivilegeList
         exclude = ['questionnaire']
 
 
 class DocumentReturnMethodSerializer(serializers.ModelSerializer):
     class Meta:
-        model = DocumentReturnMethod
-        fields = "__all__"
+        model = models.DocumentReturnMethod
+        fields = ['uid', 'name']
 
 
 class FamilyMembershipSerializer(serializers.ModelSerializer):
     class Meta:
-        model = FamilyMembership
-        fields = "__all__"
-
-
-class AddressTypeSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = AddressType
-        fields = "__all__"
+        model = models.FamilyMembership
+        fields = ['uid', 'name']
 
 
 class AddressClassifierSerializer(serializers.ModelSerializer):
     class Meta:
-        model = AddressClassifier
-        fields = "__all__"
+        model = models.AddressClassifier
+        fields = ['uid', 'name']
 
 
 class AddressSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Address
+        model = models.Address
         fields = "__all__"
 
 
@@ -103,7 +71,7 @@ class FamilyMemberSerializer(serializers.ModelSerializer):
     address = AddressSerializer(required=True)
 
     class Meta:
-        model = FamilyMember
+        model = models.FamilyMember
         fields = "__all__"
 
 
@@ -111,25 +79,25 @@ class FamilySerializer(serializers.ModelSerializer):
     members = FamilyMemberSerializer(many=True, required=True)
 
     class Meta:
-        model = Family
+        model = models.Family
         fields = "__all__"
 
 
 class AdmissionCampaignTypeSerializer(serializers.ModelSerializer):
     class Meta:
-        model = AdmissionCampaignType
-        fields = '__all__'
+        model = models.AdmissionCampaignType
+        fields = ['uid', 'name']
 
 
 class AdmissionCampaignSerializer(serializers.ModelSerializer):
     class Meta:
-        model = AdmissionCampaign
+        model = models.AdmissionCampaign
         fields = "__all__"
 
 
 class ApplicantSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Applicant
+        model = models.Applicant
         fields = "__all__"
 
     def to_representation(self, instance):
@@ -138,12 +106,14 @@ class ApplicantSerializer(serializers.ModelSerializer):
         return fields
 
     def send_verification_email(self, user: User, to_email: list, password: str):
-        subject = 'Verify your email'
+        subject = 'Подтвердите регистрацию'
         current_site = get_current_site(self.context['request'])
+        current_lang = get_language() or 'ru'
         message = render_to_string('applicant/email/html/verify_email.html', {
             'username': user.username,
             'password': password,
             'domain': current_site.domain,
+            'lang': current_lang,
             'uid': urlsafe_base64_encode(force_bytes(user.pk)),
             'token': token_generator.make_token(user)
         })
@@ -151,49 +121,19 @@ class ApplicantSerializer(serializers.ModelSerializer):
         email.send()
         return
 
-    def validate(self, validated_data):
-
-        # Если не дал согласие на обработку - кинуть ошибку
-        if not validated_data["consented"]:
-            raise ValidationError({"error": "Consent to process personal data required"})
-        # Если идентификационный документ с таким номер уже есть, также кинуть ошибку
-        if validated_data["doc_num"]:
-            if IdentityDocument.objects.filter(serial_number=validated_data["doc_num"]).exists():
-                raise ValidationError({"error": "Identity document with this serial number already exists"})
-        else:
-            raise ValidationError({"error": "document number is required"})
-        # Дальше валидирует сам Django, какие поля указаны в модели
-        campaign_type: AdmissionCampaignType = self.context['request'].data.get('campaign_type')
-        today = dt.date.today()
-        campaigns = AdmissionCampaign.objects.filter(
-            type=campaign_type,
-            is_active=True,
-            year=dt.datetime.now().year,
-            start_date__lte=today,
-            end_date__gte=today
-        )
-        if campaigns.exists():
-            validated_data['campaign'] = campaigns.first()
-        else:
-            raise ValidationError({'error': 'no campaign found'})
-        return validated_data
-
     def create(self, validated_data):
         if validated_data['password'] != validated_data['confirm_password']:
-            raise ValidationError({"error": "passwords don't match"})
-        # TODO проверку на то, что есть приемные кампании, которые принимают полученный уровень образования
-        #  если он, есть продолжить регистрацию и создать абитуриента с профилем. Если нет вернуть ошибку и сообшение
-        #  о том, что нет приемных кампаний с таким уровнем подготовки
+            raise ValidationError({"error": "pass_no_match"})
         applicant = super().create(validated_data)
         try:
             raw_password = applicant.password
-            order_number = Applicant.objects.aggregate(Max("order_number"))["order_number__max"]
+            order_number = models.Applicant.objects.aggregate(Max("order_number"))["order_number__max"]
             # Самый первый подающий
             if not order_number:
                 order_number = 0
             elif order_number == 9999:
                 # По ТЗ
-                raise ValidationError({"error": "all places are occupied, see ya next year"})
+                raise ValidationError({"error": "places_exceeded"})
             applicant.order_number = order_number + 1
             applicant.password = make_password(raw_password)
             applicant.confirm_password = make_password(validated_data['confirm_password'])
@@ -218,12 +158,6 @@ class ApplicantSerializer(serializers.ModelSerializer):
             # Отправить письмо с верификацией
             try:
                 self.send_verification_email(user, [user.email], raw_password)
-                # applicant.send_credentials(
-                #     uid=user.uid,
-                #     username=username,
-                #     password=raw_password,
-                #     email=applicant.email
-                # )
             except Exception as e:
                 # Почтовый сервер может не работать
                 # applicant.delete()
@@ -232,159 +166,307 @@ class ApplicantSerializer(serializers.ModelSerializer):
             return applicant
         except Exception as e:
             user = applicant.user
+            if user:
+                user.delete()
             applicant.delete()
-            user.delete()
             raise ValidationError({"error": e})
+
+
+class IdentityDocumentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.IdentityDocument
+        exclude = ['profile']
+
+
+class QuestionnaireLiteSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.Questionnaire
+        fields = ['uid', 'creator']
 
 
 class QuestionnaireSerializer(serializers.ModelSerializer):
     family = FamilySerializer(required=True)
     id_doc = IdentityDocumentSerializer(required=True)
     address_of_registration = AddressSerializer(required=False)
-    address_of_temp_reg = AddressSerializer(required=False)
+    address_of_temp_reg = AddressSerializer(required=False, allow_null=True)
     address_of_residence = AddressSerializer(required=True)
-    userprivilegelist = UserPrivilegeListSerializer(required=False, many=False)
+    privilege_list = UserPrivilegeListSerializer(required=False, many=False)
     phone = ProfilePhoneSerializer(required=True)
+    scan = serializers.SerializerMethodField()
 
     class Meta:
-        model = Questionnaire
+        model = models.Questionnaire
         fields = "__all__"
 
+    def get_scan(self, q: models.Questionnaire):
+        return DocScanSerializer(q.id_doc_scan).data
+
+    def validate(self, validated_data: dict):
+        address_matches: int = validated_data.get('address_matches')
+        address_of_temp_reg: dict = validated_data.pop('address_of_temp_reg')
+        temp_reg_present = any(address_of_temp_reg.values())
+        if address_matches == models.Questionnaire.MATCH_TMP and not temp_reg_present:
+            raise ValidationError({"error": "temp_addr_not_present"})
+        family: dict = validated_data.pop('family')
+        members: list = family.pop('members')
+        members_with_temp_reg = any(map(lambda member: member['address_matches'] == models.Address.TMP, members))
+        if members_with_temp_reg and not temp_reg_present:
+            raise ValidationError({"error": "member_addr_empty_temp_reg"})
+        family['members'] = members
+        address_of_registration = validated_data.pop('address_of_registration')
+        address_of_residence = validated_data.pop('address_of_residence')
+        if address_matches == models.Questionnaire.MATCH_REG:
+            address_of_residence = address_of_registration
+        elif address_matches == models.Questionnaire.MATCH_TMP:
+            address_of_residence = address_of_temp_reg
+        address_of_registration['type'] = models.Address.REG
+        if temp_reg_present:
+            address_of_temp_reg['type'] = models.Address.TMP
+        address_of_residence['type'] = models.Address.RES
+        validated_data['address_of_registration'] = address_of_registration
+        validated_data['address_of_temp_reg'] = address_of_temp_reg if temp_reg_present else None
+        validated_data['address_of_residence'] = address_of_residence
+        validated_data['family'] = family
+        return validated_data
+
     def create(self, validated_data):
+        creator = self.context['request'].user.profile
         questionnaire = None
         try:
-            user = self.context["request"].user
-            validated_data["creator"] = user.profile
+            address_of_registration = models.Address.objects.create(**validated_data.pop('address_of_registration'))
+            address_of_registration.profiles.add(creator)
+            address_of_registration.save()
+            address_of_temp_reg = validated_data.pop('address_of_temp_reg')
+            if address_of_temp_reg:
+                address_of_temp_reg = models.Address.objects.create(**address_of_temp_reg)
+                address_of_temp_reg.profiles.add(creator)
+                address_of_temp_reg.save()
+            address_of_residence = models.Address.objects.create(**validated_data.pop('address_of_residence'))
+            address_of_residence.profiles.add(creator)
+            address_of_residence.save()
             family = validated_data.pop('family')
-            address_of_temp_reg = validated_data.pop('address_of_temp_reg', None)
-            userprivilegelist = validated_data.pop('userprivilegelist', None)
             members = family.pop('members')
-            family = Family.objects.create(**family)
+            family = models.Family.objects.create(**family, profile=creator)
             for member in members:
-                member_user = User.objects.create(
-                    username=member['email'],
-                    password=member['phone']
-                )
-                address = Address.objects.create(**member.pop('address'))
-                member_profile = Profile.objects.create(
-                    user=member_user,
+                member['family'] = family
+                user = User.objects.create(username=member['email'])
+                user.set_password(member['email'])
+                profile = Profile.objects.create(
                     first_name=member['first_name'],
                     last_name=member['last_name'],
                     middle_name=member['middle_name'],
-                    phone=member['phone'],
-                    email=member['email'],
+                    user=user
                 )
-                member['profile'] = member_profile
-                member['family'] = family
-                FamilyMember.objects.create(**member, address=address)
-            validated_data['address_of_registration'] = Address.objects.create(
-                **validated_data.pop('address_of_registration')
+                member['profile'] = profile
+                address_matches = member['address_matches']
+                if address_matches == models.FamilyMember.MATCH_REG:
+                    member['address'] = address_of_registration
+                elif address_matches == models.FamilyMember.MATCH_TMP:
+                    member['address'] = address_of_temp_reg
+                elif address_matches == models.FamilyMember.MATCH_RES:
+                    member['address'] = address_of_residence
+                elif address_matches == models.FamilyMember.MATCH_NOT:
+                    address = models.Address.objects.create(**member['address'])
+                    address.profiles.add(profile)
+                    address.save()
+                    member['address'] = address
+                models.FamilyMember.objects.create(**member)
+            id_doc = IdentityDocument.objects.create(**validated_data.pop('id_doc'))
+            phone = ProfilePhone.objects.create(**validated_data.pop('phone'))
+            privilege_list = validated_data.pop('privilege_list', None)
+            if privilege_list:
+                privileges = privilege_list.pop('privileges')
+                privilege_list = models.UserPrivilegeList.objects.create(**privilege_list, profile=creator)
+                models.Privilege.objects.bulk_create(models.Privilege(
+                    **privilege,
+                    list=privilege_list,
+                    profile=creator
+                ) for privilege in privileges)
+            questionnaire = models.Questionnaire.objects.create(
+                creator=creator,
+                family=family,
+                address_of_registration=address_of_registration,
+                address_of_temp_reg=address_of_temp_reg,
+                address_of_residence=address_of_residence,
+                id_doc=id_doc,
+                phone=phone,
+                privilege_list=privilege_list,
+                **validated_data
             )
-            validated_data['address_of_residence'] = Address.objects.create(
-                **validated_data.pop('address_of_residence')
-            )
-            id_doc = validated_data.pop('id_doc')
-            validated_data['id_doc'] = IdentityDocument.objects.create(
-                **id_doc,
-                document_type=DocumentType.objects.get(uid=id_doc.pop('document_type')),
-                issued_by=GovernmentAgency.objects.get(uid=id_doc.pop('issued_by'))
-            )
-            validated_data['phone'] = ProfilePhone.objects.create(**validated_data.pop('phone'))
-            validated_data['family'] = family
-            if address_of_temp_reg:
-                validated_data['address_of_temp_reg'] = Address.objects.create(**address_of_temp_reg)
-            if userprivilegelist and len(userprivilegelist['privileges']) > 0:
-                privileges = userprivilegelist.pop('privileges')
-                user_privilege_list = UserPrivilegeList.objects.create(**userprivilegelist)
-                for privilege in privileges:
-                    Privilege.objects.create(**privilege, list=user_privilege_list)
-                validated_data['userprivilegelist'] = user_privilege_list
-            questionnaire: Questionnaire = super().create(validated_data)
-            # Role.objects.create(profile=profile, is_student=True)
         except Exception as e:
-            questionnaire.delete()
-            raise ValidationError({"error": f"an error occurred\n{e}"})
+            if isinstance(questionnaire, models.Questionnaire):
+                questionnaire.delete()
+            raise ValidationError({'error': e})
         return questionnaire
+
+    def update(self, instance: models.Questionnaire, validated_data: dict):
+        profile = self.context['request'].user.profile
+        if profile == instance.creator:
+            try:
+                family = validated_data.pop('family')
+                members = family.pop('members')
+                family_instance: models.Family = models.Family.objects.get(pk=instance.family.uid)
+                for key, value in family.items():
+                    setattr(family_instance, key, value)
+                family_instance.save(snapshot=True)
+                for member in members:
+                    member_instance: models.FamilyMember = models.FamilyMember.objects.get(
+                        profile=member['profile'].uid)
+                    address_instance = models.Address.objects.get(pk=member_instance.address.uid)
+                    address = member.pop('address')
+                    # info = address.pop('info')
+                    # address.update({
+                    #     'region': info['region'] and info['region']['uid'],
+                    #     'district': info['district'] and info['district']['uid'],
+                    #     'city': info['city'] and info['city']['uid'],
+                    #     'locality': info['locality'] and info['locality']['uid']
+                    # })
+                    for key, value in address.items():
+                        setattr(address_instance, key, value)
+                    address_instance.save(snapshot=True)
+                    for key, value in member.items():
+                        setattr(member_instance, key, value)
+                    member_instance.save(snapshot=True)
+                id_doc = validated_data.pop('id_doc')
+                id_doc_instance = IdentityDocument.objects.get(pk=instance.id_doc.uid)
+                for key, value in id_doc.items():
+                    setattr(id_doc_instance, key, value)
+                id_doc_instance.save(snapshot=True)
+                address_of_registration = validated_data.pop('address_of_registration')
+                registration_instance = models.Address.objects.get(pk=instance.address_of_registration.uid)
+                for key, value in address_of_registration.items():
+                    setattr(registration_instance, key, value)
+                registration_instance.save(snapshot=True)
+                address_of_temp_reg = validated_data.pop('address_of_temp_reg', None)
+                if any(address_of_temp_reg.values()):
+                    temp_instance = models.Address.objects.get(pk=instance.address_of_temp_reg.uid)
+                    for key, value in address_of_temp_reg.items():
+                        setattr(temp_instance, key, value)
+                    temp_instance.save(snapshot=True)
+                address_of_residence = validated_data.pop('address_of_residence')
+                residence_instance = models.Address.objects.get(pk=instance.address_of_residence.uid)
+                for key, value in address_of_residence.items():
+                    setattr(residence_instance, key, value)
+                residence_instance.save(snapshot=True)
+                user_privilege_list = validated_data.pop('privilege_list', None)
+                if user_privilege_list:
+                    privileges = user_privilege_list.pop('privileges')
+                    for privilege in privileges:
+                        privilege_instance = models.Privilege.objects.get(
+                            type=privilege['type'],
+                            doc_type=privilege['doc_type'],
+                        )
+                        for key, value in privilege.items():
+                            setattr(privilege_instance, key, value)
+                        privilege_instance.save(snapshot=True)
+                phone = validated_data.pop('phone')
+                phone_instance = ProfilePhone.objects.get(pk=instance.phone.uid)
+                for key, value in phone.items():
+                    setattr(phone_instance, key, value)
+                phone_instance.save(snapshot=True)
+                for key, value in validated_data.items():
+                    setattr(instance, key, value)
+                instance.save(snapshot=True)
+                profile = instance.creator
+                profile.first_name = instance.first_name
+                profile.last_name = instance.last_name
+                profile.middle_name = instance.middle_name
+                profile.email = instance.email
+                profile.save()
+            except Exception as e:
+                raise ValidationError({"error": e})
+            return instance
+        else:
+            raise ValidationError({"error": "access_denied"})
 
 
 class DocScanSerializer(serializers.ModelSerializer):
     class Meta:
-        model = DocScan
+        model = models.DocScan
         fields = "__all__"
 
 
 class ApplicationStatusSerializer(serializers.ModelSerializer):
     class Meta:
-        model = ApplicationStatus
-        fields = "__all__"
+        model = models.ApplicationStatus
+        fields = ['uid', 'name']
 
 
 class CampaignStageSerializer(serializers.ModelSerializer):
     class Meta:
-        model = CampaignStage
+        model = models.CampaignStage
         fields = "__all__"
 
 
 class RecruitmentPlanSerializer(serializers.ModelSerializer):
+    info = serializers.SerializerMethodField()
+
+    def get_info(self, plan: models.RecruitmentPlan):
+        return {
+            "prep_level": plan.prep_level.name,
+            "study_form": plan.study_form.name,
+            "language": plan.language.name,
+            "admission_basis": plan.admission_basis.name,
+            "education_program_group": f'{plan.education_program_group.code} {plan.education_program_group.name}',
+            "education_program": f'{plan.education_program.code} {plan.education_program.name}',
+            "study_period": plan.study_period.repr_name,
+            "test_form": plan.entrance_test_form.name,
+        }
 
     class Meta:
-        model = RecruitmentPlan
+        model = models.RecruitmentPlan
         fields = "__all__"
 
 
 class DisciplineMarkSerializer(serializers.ModelSerializer):
-
     class Meta:
-        model = DisciplineMark
+        model = models.DisciplineMark
         fields = "__all__"
 
 
 class TestCertSerializer(serializers.ModelSerializer):
+    scan_info = serializers.SerializerMethodField()
 
     class Meta:
-        model = TestCert
+        model = models.TestCert
         fields = "__all__"
+
+    def get_scan_info(self, cert: models.TestCert):
+        return DocScanSerializer(cert.scan).data
 
 
 class LanguageProficiencySerializer(serializers.ModelSerializer):
-
     class Meta:
-        model = LanguageProficiency
-        fields = "__all__"
+        model = models.LanguageProficiency
+        fields = ['uid', 'name', 'code']
 
 
 class InternationalCertTypeSerializer(serializers.ModelSerializer):
-
     class Meta:
-        model = InternationalCertType
-        fields = "__all__"
+        model = models.InternationalCertType
+        fields = ['uid', 'name']
 
 
 class InternationalCertSerializer(serializers.ModelSerializer):
-
     class Meta:
-        model = InternationalCert
+        model = models.InternationalCert
         fields = "__all__"
 
 
 class GrantTypeSerializer(serializers.ModelSerializer):
-
     class Meta:
-        model = GrantType
-        fields = "__all__"
+        model = models.GrantType
+        fields = ['uid', 'name']
 
 
 class GrantSerializer(serializers.ModelSerializer):
+    scan_info = serializers.SerializerMethodField()
+
+    def get_scan_info(self, grant: models.Grant):
+        return DocScanSerializer(grant.scan).data
 
     class Meta:
-        model = Grant
-        fields = "__all__"
-
-
-class DirectionChoiceSerializer(serializers.ModelSerializer):
-
-    class Meta:
-        model = DirectionChoice
+        model = models.Grant
         fields = "__all__"
 
 
@@ -393,96 +475,200 @@ class TestResultSerializer(serializers.ModelSerializer):
     test_certificate = TestCertSerializer(required=True)
 
     class Meta:
-        model = TestResult
+        model = models.TestResult
         fields = "__all__"
 
 
 class EducationSerializer(serializers.ModelSerializer):
+    scan_info = serializers.SerializerMethodField()
+
+    def get_scan_info(self, edu: models.Education):
+        return DocScanSerializer(edu.scan).data
+
     class Meta:
-        model = Education
+        model = models.Education
         exclude = ['profile']
 
 
 class ApplicationLiteSerializer(serializers.ModelSerializer):
     status_info = serializers.ReadOnlyField()
     applicant = serializers.ReadOnlyField()
+    max_choices = serializers.ReadOnlyField()
 
     class Meta:
-        model = Application
-        fields = ['uid', 'status_info', 'applicant', 'created', 'updated']
+        model = models.Application
+        fields = ['uid', 'status_info', 'applicant', 'created', 'updated', 'max_choices']
 
+    def send_on_create(self, recipient):
+        today = dt.date.today().strftime("%d.%m.%Y")
+        subject = 'Заявление поступило на проверку'
+        message = f'Ваше заявление на поступление от {today} отправлено на проверку модератору. ' \
+                  f'Ожидайте дальнейших действий'
+        send_mail(subject=subject, message=message, from_email='', recipient_list=[recipient])
+        return
 
-class ApplicationSerializer(ApplicationLiteSerializer):
-    previous_education = EducationSerializer(required=True)
-    test_result = TestResultSerializer(required=True)
-    international_cert = InternationalCertSerializer(required=False)
-    grant = GrantSerializer(required=False)
-    directions = DirectionChoiceSerializer(required=True, many=True)
-
-    class Meta:
-        model = Application
-        fields = '__all__'
-
-    def create(self, validated_data):
+    def create(self, validated_data: dict):
         application = None
         creator: Profile = self.context['request'].user.profile
         try:
-            # Ориентируемся на приемную кампанию
-            my_campaign: AdmissionCampaign = creator.user.applicant.campaign
-            # Проверяем если абитуриент выбрал больше направлений, чем задано в приемной кампании
-            directions: dict = validated_data.pop('directions')
-            if my_campaign.chosen_directions_max_count < len(directions):
-                raise ValidationError({"error": "chosen directions maximum count exceeded"})
             # Если есть заполненная анкета, статус будет "Ожидает проверки", иначе - "Без анкеты"
-            has_questionnaire: bool = Questionnaire.objects.filter(creator=creator).exists()
+            has_questionnaire: bool = models.Questionnaire.objects.filter(creator=creator).exists()
             if has_questionnaire:
-                status = AWAITS_VERIFICATION
+                status = models.AWAITS_VERIFICATION
             else:
-                status = NO_QUESTIONNAIRE
-            status: ApplicationStatus = ApplicationStatus.objects.get(code=status)
+                status = models.NO_QUESTIONNAIRE
+            status = models.ApplicationStatus.objects.get(code=status)
             # На основании забитых данных абитуриентом создаем его заявление
             # Предыдущее образование
-            previous_education: Education = Education.objects.create(profile=creator, **validated_data.pop('previous_education'))
-            # Результаты теста ЕНТ/КТА
-            test_result: dict = validated_data.pop('test_result')
-            test_certificate: TestCert = TestCert.objects.create(profile=creator, **test_result.pop('test_certificate'))
-            disciplines: [DisciplineMark] = DisciplineMark.objects.bulk_create([
-                DisciplineMark(profile=creator, **discipline) for discipline in test_result.pop('disciplines')
+            previous_education = Education.objects.create(
+                profile=creator,
+                **validated_data.pop('previous_education')
+            )
+            # Результаты теста ЕНТ/КТ
+            test_result = validated_data.pop('test_result')
+            # Сертификат теста ЕНТ/КТ
+            test_certificate = models.TestCert.objects.create(
+                profile=creator,
+                **test_result.pop('test_certificate')
+            )
+            # Пройденные дисциплины на тесте
+            disciplines = models.DisciplineMark.objects.bulk_create([
+                models.DisciplineMark(profile=creator, **discipline) for discipline in test_result.pop('disciplines')
             ])
-            test_result: TestResult = TestResult.objects.create(profile=creator, test_certificate=test_certificate)
+            # Результат теста
+            test_result = models.TestResult.objects.create(
+                profile=creator,
+                test_certificate=test_certificate
+            )
             test_result.disciplines.add(*disciplines)
             test_result.save()
-            # Международный сертификат, только если в кампании указано, что он принимаются сертифиакаты
-            if my_campaign.inter_cert_foreign_lang:
-                international_cert = InternationalCert(profile=creator, **validated_data.pop('international_cert'))
+            # Международный сертификат
+            international_cert = validated_data.pop('international_cert', None)
+            if international_cert:
+                international_cert = models.InternationalCert.objects.create(profile=creator, **international_cert)
             else:
                 international_cert = None
             # Грант
-            grant: dict = validated_data.pop('grant', None)
+            grant = validated_data.pop('grant', None)
             if grant:
-                grant: Grant = Grant.objects.create(profile=creator, **grant)
+                grant = models.Grant.objects.create(profile=creator, **grant)
             else:
-                grant: None = None
-            # Выбор направлений.
-            # TODO сверять направления и основания для поступления с грантом.
-            #  Если грант дан только на Специальность #1, а в каком-то направлении
-            #  стоит Специальность #X и основа поступления "Бюджет" кинуть ошибку -> удалить заявление
-            directions: [DirectionChoice] = DirectionChoice.objects.bulk_create([
-                DirectionChoice(profile=creator, **direction) for direction in directions
-            ])
-            application: Application = Application.objects.create(
+                grant = None
+            application = models.Application.objects.create(
                 status=status,
                 previous_education=previous_education,
                 test_result=test_result,
                 international_cert=international_cert,
                 grant=grant,
                 creator=creator,
-                questionnaire=Questionnaire.objects.filter(creator=creator).first()
             )
-            application.directions.add(*directions)
+            directions = models.OrderedDirection.objects.bulk_create([
+                models.OrderedDirection(**direction) for direction in validated_data.pop('directions')
+            ])
+            application.directions.set(directions)
             application.save()
+            try:
+                self.send_on_create(recipient=creator.email)
+            except Exception as e:
+                print(e)
         except Exception as e:
-            if application and isinstance(application, Application):
+            if application and isinstance(application, models.Application):
                 application.delete()
             raise ValidationError({"error": f"an error occurred\n{e}"})
         return application
+
+    def update(self, instance: models.Application, validated_data: dict):
+        profile = self.context['request'].user.profile
+        if profile == instance.creator:
+            my_campaign = profile.user.applicant.campaign
+            validated_data['status'] = models.ApplicationStatus.objects.get(code=models.AWAITS_VERIFICATION)
+
+            # Обновление предыдущего образования
+            previous_education: dict = validated_data.pop('previous_education')
+            education = Education.objects.get(pk=instance.previous_education.uid)
+            for key, value in previous_education.items():
+                setattr(education, key, value)
+            education.save(snapshot=True)
+
+            # Обновление тестов ЕНТ/КТ
+            test_result: dict = validated_data.pop('test_result')
+            test_cert: dict = test_result.pop('test_certificate')
+            cert = models.TestCert.objects.get(pk=instance.test_result.test_certificate.uid)
+            for key, value in test_cert.items():
+                setattr(cert, key, value)
+            cert.save(snapshot=True)
+            instance.test_result.disciplines.all().delete()
+            new_disciplines = models.DisciplineMark.objects.bulk_create([
+                models.DisciplineMark(**discipline) for discipline in test_result.pop('disciplines')
+            ])
+            instance.test_result.disciplines.set(new_disciplines)
+            instance.test_result.save(snapshot=True)
+
+            # Обновление международного сертификата, если есть
+            international_cert: dict = validated_data.pop('international_cert', None)
+            if international_cert and my_campaign.inter_cert_foreign_lang:
+                inter_cert_model = models.InternationalCert.objects.get(pk=instance.international_cert.uid)
+                for key, value in international_cert.items():
+                    setattr(inter_cert_model, key, value)
+                inter_cert_model.save(snapshot=True)
+            # Обновление гранта, если есть
+            grant: dict = validated_data.pop('grant', None)
+            if grant:
+                grant_model: models.Grant = models.Grant.objects.get(pk=instance.grant.uid)
+                for key, value in grant.items():
+                    setattr(grant_model, key, value)
+                grant_model.save(snapshot=True)
+            instance.directions.all().delete()
+            directions = models.OrderedDirection.objects.bulk_create([
+                models.OrderedDirection(**direction) for direction in validated_data.pop('directions')
+            ])
+            instance.directions.set(directions)
+            instance.save(snapshot=True)
+            application = super().update(instance, validated_data)
+            return application
+        else:
+            raise ValidationError({"error": "access_denied"})
+
+
+class OrderedDirectionSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = models.OrderedDirection
+        fields = ['plan', 'order_number']
+
+
+class ApplicationSerializer(ApplicationLiteSerializer):
+    previous_education = EducationSerializer(required=True)
+    test_result = TestResultSerializer(required=True)
+    international_cert = InternationalCertSerializer(required=False, allow_null=True)
+    grant = GrantSerializer(required=False, allow_null=True)
+    directions = OrderedDirectionSerializer(required=True, many=True)
+
+    class Meta:
+        model = models.Application
+        fields = '__all__'
+
+
+class AdmissionDocumentSerializer(serializers.ModelSerializer):
+    files_info = serializers.SerializerMethodField(read_only=True)
+
+    class Meta:
+        model = models.AdmissionDocument
+        fields = '__all__'
+
+    def validate(self, validated_data):
+        return validated_data
+
+    def create(self, validated_data):
+        creator = validated_data.get('creator')
+        return super().create(validated_data)
+
+    def update(self, instance: models.AdmissionDocument, validated_data):
+        new_files = validated_data.pop('files')
+        instance.files.clear()
+        instance.files.set(new_files)
+        instance.save()
+        return super().update(instance, validated_data)
+
+    def get_files_info(self, doc: models.AdmissionDocument):
+        return DocScanSerializer(doc.files.order_by('-created_at'), many=True).data

@@ -5,7 +5,6 @@ models = [
     PrivilegeType,
     DocumentReturnMethod,
     FamilyMembership,
-    AddressType,
     BudgetLevel,
     InternationalCertType,
     GrantType,
@@ -13,6 +12,7 @@ models = [
     Address,
     Family,
     FamilyMember,
+    AdmissionCampaignType,
     AdmissionCampaign,
     Applicant,
     DocScan,
@@ -27,9 +27,9 @@ models = [
     LanguageProficiency,
     InternationalCert,
     Grant,
-    DirectionChoice,
     TestResult,
-    Application
+    Application,
+    AdmissionDocument,
 ]
 
 admin.site.register(models)
