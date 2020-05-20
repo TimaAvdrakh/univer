@@ -2,7 +2,6 @@ import datetime as dt
 from django_cron import CronJobBase, Schedule
 from . import models
 import requests
-import sys
 from portal.curr_settings import (
     student_discipline_status,
     component_by_choose_uid,
@@ -653,7 +652,6 @@ class SendApplicationsTo1cJob(CronJobBase):
         apps_json = []
         url = SEND_APPLICATIONS_TO_1C_URL
         for app in applications:
-
             sub_app_by_app = [item for item in sub_apps if item['application'] == app['application']]
             sub_json = []
             for sub_application in sub_app_by_app:

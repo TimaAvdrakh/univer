@@ -269,3 +269,7 @@ class SubApplication(BaseIdModel):
     class Meta:
         verbose_name = 'Справка'
         verbose_name_plural = 'Справки'
+
+        unique_together = (
+            'id',
+        )
