@@ -33,7 +33,7 @@ class GetAcadPeriodsForRegisterView(generics.ListAPIView):
     def list(self, request, *args, **kwargs):
         study_plan_id = request.query_params.get("study_plan")
 
-        study_plan = org_models.StudyPlan.objects.get(pk=study_plan_id, is_active=True,)
+        study_plan = org_models.StudyPlan.objects.get(pk=study_plan_id, is_active=True, )
         current_course = study_plan.current_course
         if current_course is None:
             return Response(
@@ -61,7 +61,7 @@ class GetAcadPeriodsForRegisterCopyView(generics.ListAPIView):
     def list(self, request, *args, **kwargs):
         study_plan_id = request.query_params.get("study_plan")
 
-        study_plan = org_models.StudyPlan.objects.get(pk=study_plan_id, is_active=True,)
+        study_plan = org_models.StudyPlan.objects.get(pk=study_plan_id, is_active=True, )
         current_course = study_plan.current_course
         if current_course is None:
             return Response(
@@ -184,6 +184,7 @@ class RegistrationPeriodListView(generics.ListAPIView):
             #                       day=1)
             # queryset = queryset.filter(start_date__year__gte=study_year_obj.start,
             #                            end_date__lte=study_year_end)
+
             queryset = queryset.filter(study_year_id=study_year)
         return queryset
 
@@ -217,7 +218,7 @@ class TestStatusCodeView(generics.RetrieveAPIView):
     def get(self, request, *args, **kwargs):
         code = request.query_params.get("status")
 
-        return Response({"message": "ok",}, status=int(code))
+        return Response({"message": "ok", }, status=int(code))
 
 
 class StudyYearFromStudyPlan(generics.RetrieveAPIView):
@@ -236,7 +237,7 @@ class StudyYearFromStudyPlan(generics.RetrieveAPIView):
         study_years = org_models.StudyPeriod.objects.filter(
             pk__in=study_year_pks, is_study_year=True, is_active=True,
         ).order_by("start")
-        serializer = serializers.StudyPeriodSerializer(instance=study_years, many=True,)
+        serializer = serializers.StudyPeriodSerializer(instance=study_years, many=True, )
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
@@ -254,24 +255,29 @@ class StudentDisciplineStatusListView(generics.ListAPIView):
 
 
 class NationalityViewSet(ModelViewSet):
-    queryset = models.Nationality.objects.all()
+    queryset = models.Nationality.objects.order_by('name_ru', 'name_en', 'name_kk').distinct('name_ru', 'name_en', 'name_kk')
     serializer_class = serializers.NationalitySerializer
     permission_classes = (permissions.AllowAny,)
 
 
 class CitizenshipViewSet(ModelViewSet):
-    queryset = models.Citizenship.objects.all()
+    queryset = models.Citizenship.objects.order_by('name_ru', 'name_en', 'name_kk').distinct('name_ru', 'name_en', 'name_kk')
     serializer_class = serializers.CitizenshipSerializer
     permission_classes = (permissions.AllowAny,)
 
+    @action(methods=['get'], detail=False, url_path='kz', url_name='get_kz')
+    def get_kz(self, request, pk=None):
+        kz = self.queryset.filter(code__icontains='kz').first()
+        return Response(data={'uid': kz.uid}, status=status.HTTP_200_OK)
+
 
 class DocumentTypeViewSet(ModelViewSet):
-    queryset = models.DocumentType.objects.all()
+    queryset = models.DocumentType.objects.order_by('name_ru', 'name_en', 'name_kk').distinct('name_ru', 'name_en', 'name_kk')
     serializer_class = serializers.DocumentTypeSerializer
     permission_classes = (permissions.AllowAny,)
 
 
 class GovernmentAgencyViewSet(ModelViewSet):
-    queryset = models.GovernmentAgency.objects.all()
+    queryset = models.GovernmentAgency.objects.order_by('name_ru', 'name_en', 'name_kk')
     serializer_class = serializers.GovernmentAgencySerializer
     permission_classes = (permissions.AllowAny,)

@@ -11,6 +11,7 @@ from django.contrib.auth.models import User
 from organizations import models as org_models
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import permissions as rest_permissions
+from rest_framework.parsers import FileUploadParser
 from . import permissions
 from .utils import get_current_study_year
 from portal.curr_settings import student_discipline_info_status, not_choosing_load_types2, CYCLE_DISCIPLINE
@@ -38,6 +39,7 @@ class LoginView(generics.CreateAPIView):
                 "user": profile_data,
                 "firstLogin": user.last_login is None or (not user.profile.password_changed),
             }
+
             login(request, user)
             return Response(data, status=status.HTTP_200_OK)
         else:
@@ -432,7 +434,7 @@ class ChooseTeacherView(generics.UpdateAPIView):
 
         return Response({"message": "ok",}, status=status.HTTP_200_OK)
 
-      
+
 class MyGroupListView(generics.RetrieveAPIView):
     """Получить группу выбранного учебного плана"""
     serializer_class = serializers.GroupDetailSerializer
@@ -443,6 +445,7 @@ class MyGroupListView(generics.RetrieveAPIView):
 
     def get(self, request, *args, **kwargs):
         study_plan_id = request.query_params.get('study_plan')
+
         try:
             study_plan = org_models.StudyPlan.objects.get(
                 pk=study_plan_id,
@@ -530,7 +533,7 @@ class StudentAllDisciplineListView(generics.ListAPIView):
                 study_plan_id=study_plan_id,
                 acad_period=acad_period,
                 # is_active=True,
-            ).order_by('discipline')
+            ).order_by('discipline__name')
             serializer = self.serializer_class(student_disciplines,
                                                many=True)
             item_key = acad_period.repr_name
@@ -545,7 +548,6 @@ class StudentAllDisciplineListView(generics.ListAPIView):
 
 class ProfileDetailView(generics.RetrieveAPIView):
     """Получить профиль пользователя"""
-
     queryset = models.Profile.objects.filter(is_active=True)
     serializer_class = serializers.ProfileFullSerializer
 
@@ -581,6 +583,22 @@ class AchievementsEditView(generics.UpdateAPIView):
     )
     queryset = models.Profile.objects.filter(is_active=True)
     serializer_class = serializers.ProfileAchievementsEditSerializer
+
+
+class FieldsToShowUpdateView(generics.UpdateAPIView):
+    """ Редактировать Поля для отображения """
+
+    permission_classes = (
+        IsAuthenticated,
+        permissions.ProfilePermission
+    )
+    queryset = models.InfoShowPermission.objects.filter(is_active=True)
+    serializer_class = serializers.InformationUsersCanSeeSerializer
+
+    def update(self, request, *args, **kwargs):
+        queryset = self.queryset.filter(profile=self.request.user.profile)
+        queryset.update(**request.data)
+        return Response(data="Updated", status=status.HTTP_200_OK)
 
 
 class AvatarUploadView(generics.CreateAPIView):
@@ -628,7 +646,7 @@ class PhoneTypeViewSet(ModelViewSet):
     serializer_class = serializers.PhoneTypeSerializer
     permission_classes = (rest_permissions.AllowAny,)
 
-    
+
 class ChooseControlFormListView(generics.ListAPIView):
     """Получить список дисциплин для выбора формы контроля если цикл - Итоговая аттестация
        Принимает: query_params: ?study_plan=<uid study_plan>&acad_period=<uid acad_period>
@@ -836,28 +854,23 @@ class ChooseFormControlView(generics.UpdateAPIView):
     def update(self, request, *args, **kwargs):
         data = request.data
         partial = kwargs.pop('partial', False)
-        instance = self.get_object()
-
         try:
             if request.user.profile.role.is_student:
-                status_s = org_models.StudentDisciplineStatus.objects.get(number=1)
-                if data.get('chosen_control_forms'):
-                    status_s = org_models.StudentDisciplineStatus.objects.get(number=2)
-                data['status'] = status_s.uid
-                instance.status_id = status_s.uid
+                data['status'] = org_models.StudentDisciplineStatus.objects.get(number=2).uid
             elif request.user.profile.role.is_supervisor:
-                status_s = org_models.StudentDisciplineStatus.objects.get(number=5)
-                data['status'] = status_s.uid
-                instance.status_id = data['status']
-                # data['teacher'] = request.user.profile.uid
-                # instance.teacher = request.user.profile
-            instance.save()
+                data['status'] = org_models.StudentDisciplineStatus.objects.get(number=5).uid
+                data['teacher'] = request.user.profile.uid
+            instance = self.get_object()
             serializer = self.get_serializer(instance, data=data, partial=partial)
-            if serializer.is_valid(raise_exception=True):
-                self.perform_update(serializer)
-                return Response(serializer.data)
-            else:
-                return Response(serializer.error_messages, status=status.HTTP_400_BAD_REQUEST)
+            serializer.is_valid(raise_exception=True)
+            self.perform_update(serializer)
+
+            if getattr(instance, '_prefetched_objects_cache', None):
+                # If 'prefetch_related' has been applied to a queryset, we need to
+                # forcibly invalidate the prefetch cache on the instance.
+                instance._prefetched_objects_cache = {}
+
+            return Response(serializer.data)
         except:
             return Response(status=status.HTTP_400_BAD_REQUEST)
 

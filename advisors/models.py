@@ -63,7 +63,7 @@ class ThemesOfTheses(BaseCatalog):
         verbose_name='Руководитель извне',
         null=True,
         blank=True)
-    uid_1c = models.CharField(
+    uuid_1c = models.CharField(
         max_length=100,
         null=True,
         default='',
