@@ -512,20 +512,27 @@ class AddressViewSet(ModelViewSet):
         return Response(data=data, status=HTTP_200_OK)
 
 
-class AdmissionDocumentViewSet(ModelViewSet):
-    queryset = models.AdmissionDocument.objects.all()
-    serializer_class = serializers.AdmissionDocumentSerializer
+# class AdmissionDocumentViewSet(ModelViewSet):
+#     queryset = models.AdmissionDocument.objects.all()
+#     serializer_class = serializers.AdmissionocumentSerializer
+#
+#     def create(self, request, *args, **kwargs):
+#         profile = self.request.user.profile
+#         request.data['creator'] = profile.pk
+#         return super().create(request, *args, **kwargs)
+#
+#     @action(methods=['get'], detail=False, url_name='my', url_path='my')
+#     def get_my_attachments(self, request, pk=None):
+#         profile: Profile = self.request.user.profile
+#         queryset = self.queryset.filter(creator=profile)
+#         if queryset.exists():
+#             return Response(data=serializers.AdmissionDocumentSerializer(queryset.first()).data, status=HTTP_200_OK)
+#         else:
+#             return Response(data=None, status=HTTP_200_OK)
 
-    def create(self, request, *args, **kwargs):
-        profile = self.request.user.profile
-        request.data['creator'] = profile.pk
-        return super().create(request, *args, **kwargs)
 
-    @action(methods=['get'], detail=False, url_name='my', url_path='my')
-    def get_my_attachments(self, request, pk=None):
-        profile: Profile = self.request.user.profile
-        queryset = self.queryset.filter(creator=profile)
-        if queryset.exists():
-            return Response(data=serializers.AdmissionDocumentSerializer(queryset.first()).data, status=HTTP_200_OK)
-        else:
-            return Response(data=None, status=HTTP_200_OK)
+class ModeratorViewSet(ModelViewSet):
+    queryset = Profile.objects.filter(role__is_applicant=True)
+    serializer_class = serializers.ModeratorSerializer
+
+
