@@ -240,3 +240,15 @@ class UserCredentialAdmin(admin.ModelAdmin):
         "password",
         "created",
     ]
+
+
+@admin.register(models.InfoShowPermission)
+class InfoShowPermissionAdmin(admin.ModelAdmin):
+    search_fields = (
+        "profile__first_name",
+        "profile__last_name",
+        "profile__middle_name",
+    )
+    list_display = [
+        "profile",
+    ]

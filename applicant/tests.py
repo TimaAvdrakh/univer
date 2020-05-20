@@ -1,6 +1,7 @@
 import json
 import datetime as dt
 from rest_framework.test import APITestCase
+from common.models import GovernmentAgency
 from organizations.models import Organization
 from portal_users.models import PhoneType
 from .models import *
@@ -12,7 +13,7 @@ class ApplicantTestCase(APITestCase):
     OBJ_RANGE = range(1, 7)
     today = f'{dt.date.today()}'
     period = f'{dt.date.today() + dt.timedelta(days=365)}'
-    
+
     def setup_refs(self):
         # сетапим справочники
         ApplicationStatus.create_or_update()
@@ -39,7 +40,7 @@ class ApplicantTestCase(APITestCase):
                 'chosen_directions_max_count': 5,
                 'year': str(dt.date.today().year),
                 'start_date': self.today,
-                'end_date': self.period 
+                'end_date': self.period
             } for obj in self.OBJ_RANGE]
         )
         PhoneType.objects.bulk_create([
@@ -91,9 +92,39 @@ class ApplicantTestCase(APITestCase):
         Organization.objects.bulk_create([
             Organization(**o) for o in [{'name': f'org #{obj}'} for obj in self.OBJ_RANGE]
         ])
-    
+        Gender.objects.bulk_create([
+            Gender(name='Male', name_en='Male'),
+            Gender(name='Female', name_en='Female')
+        ])
+        MaritalStatus.objects.bulk_create([
+            MaritalStatus(**ms) for ms in [{'name': f'ms {obj}'} for obj in self.OBJ_RANGE]
+        ])
+        Citizenship.objects.bulk_create([
+            Citizenship(**c) for c in [{'name': f'citizenship {obj}'} for obj in self.OBJ_RANGE]
+        ])
+        Nationality.objects.bulk_create([
+            Nationality(**n) for n in [{'name': f'nationality {obj}'} for obj in self.OBJ_RANGE]
+        ])
+        GovernmentAgency.objects.bulk_create([
+            GovernmentAgency(**ga) for ga in [{'name': f'Gov agency {obj}'} for obj in self.OBJ_RANGE]
+        ])
+
     def setUp(self) -> None:
         super().setUp()
+        self._USERNAME = '6B200001'
+        self._PASSWORD = 'applicant228'
+        self.user = User.objects.create(
+            username=self._USERNAME,
+            password=self._PASSWORD,
+            last_login=self.today
+        )
+        self.profile = Profile.objects.create(
+            user=self.user,
+            first_name='John',
+            last_name='Doe',
+            password_changed=True,
+            login_sent=True
+        )
         self.setup_refs()
         self.education_types = EducationType.objects.all()
         self.statuses = ApplicationStatus.objects.all()
@@ -112,52 +143,84 @@ class ApplicantTestCase(APITestCase):
         self.disciplines = Discipline.objects.all()
         self.doc_types = DocumentType.objects.all()
         self.organizations = Organization.objects.all()
-        self._USERNAME = '6B200001'
-        self._PASSWORD = 'applicant228'
-        self.user = User.objects.create(username=self._USERNAME, password=self._PASSWORD)
-        self.profile = Profile.objects.create(
-            user=self.user,
-            first_name='John',
-            last_name='Doe',
-            password_changed=True,
-            login_sent=True
+        self.genders = Gender.objects.all()
+        self.marital_statuses = MaritalStatus.objects.all()
+        self.countries = Citizenship.objects.all()
+        self.nationalities = Nationality.objects.all()
+        self.gov_agencies = GovernmentAgency.objects.all()
+
+    def test_registration(self):
+        data = {
+            'first_name': 'John',
+            'last_name': 'Doe',
+            'middle_name': 'Mr.',
+            'confirm_password': 'test_pass1234',
+            'password': 'test_pass1234',
+            'email': 'johndoe@gmail.com',
+            'doc_num': '88005553535',
+            'prep_level': self.prep_levels.first().uid.__str__(),
+            'consented': True,
+        }
+        response = self.client.post(
+            path='/api/v1/applicant/applications/',
+            data=json.dumps(data),
+            content_type='application/json'
         )
+        self.assertEqual(response.status_code, 201, f"Request failed, can't create application")
+        self.assertEqual(data['status'], AWAITS_VERIFICATION, 'Application is not in queue of verification')
 
-    # def test_registration(self):
-    #     data = {
-    #         'first_name': 'John',
-    #         'last_name': 'Doe',
-    #         'middle_name': 'Mr.',
-    #         'confirm_password': 'test_pass1234',
-    #         'password': 'test_pass1234',
-    #         'email': 'johndoe@gmail.com',
-    #         'doc_num': '88005553535',
-    #         'campaign': self.campaigns.first().uid.__str__(),
-    #         'prep_level': self.prep_levels.first().uid.__str__(),
-    #         'consented': True,
-    #     }
-    #     response = self.client.post(
-    #         path='/api/v1/applicant/applicants/',
-    #         data=json.dumps(data),
-    #         content_type='application/json'
-    #     )
-    #     response_data = response.data
-    #     self.assertEqual(response.status_code, 201, f"Response fails: {response.status_code}")
-    #     self.assertEqual(response_data["order_number"], 1, f'Order starts from 1, got: {response_data["order_number"]}')
-    #     self.assertIsNotNone(response_data['user'], f"User didn't created, {response_data['user']}")
+    def test_create_questionnaire(self):
+        data = {
+            'first_name': 'John',
+            'last_name': 'Doe',
+            'first_name_en': 'John',
+            'last_name_en': 'Doe',
+            'gender': f'{self.genders.first().uid}',
+            'marital_status': f'{self.marital_statuses.first().uid}',
+            'citizenship': f'{self.countries.first().uid}',
+            'nationality': f'{self.nationalities.first().uid}',
+            'workplace': 'TOO "UralGovnoZavod"',
+            'position': 'Govnovoz',
+            'experience_years': 40,
+            'experience_months': 0,
+            'birthday': self.today,
+            'birthplace': 'Ust\'-Pizduisk',
+            'id_doc': {
+                'document_type': f'',
+                'serial_number': f'',
+                'number': f'',
+                'given_date': self.today,
+                'validity_date': self.period,
+                'issued_by': f'{self.gov_agencies.first().uid}'
+            },
+            'id_doc_scan': f'{self.scans.first().uid}',
+            'iin': '88005553535',
+            'phone': {
+                'phone_type': '',
+                'value': '88005553535'
+            },
+            'email': 'johndoe@gmail.com',
+            'address_of_registration': {
 
-    # def test_create_questionnaire(self):
-    #     data = {
-    #         'first_name': 'John',
-    #         'last_name': 'Doe',
-    #         'first_name_en': 'John',
-    #         'last_name_en': 'Doe',
-    #         'email': 'johndoe@gmail.com',
-    #         'phone': {
-    #             'phone_type': 'mobile',
-    #             'value': '88005553535'
-    #         }
-    #     }
+            },
+            'address_of_residence': '',
+            'family': {
+                'number_of_children': 3,
+                'number_of_young_children': 1,
+                'members': [
+                    {
+                        'first_name': '',
+                        'last_name': '',
+                        'membership': '',
+                        'workplace': '',
+                        'position': '',
+                        'address': '',
+                        'phone': '',
+                        'email': '',
+                    }
+                ]
+            }
+        }
 
     def test_create_admission_application(self):
         self.client.login(**{'username': self._USERNAME, 'password': self._PASSWORD})
@@ -261,4 +324,3 @@ class ApplicantTestCase(APITestCase):
         )
         self.assertEqual(response.status_code, 201, f"Request failed, can't create application")
         self.assertEqual(data['status'], AWAITS_VERIFICATION, 'Application is not in queue of verification')
-

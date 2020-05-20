@@ -5,71 +5,58 @@ from . import models
 class DisciplineSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Discipline
-        fields = (
-            "uid",
-            "name",
-        )
+        fields = ("uid", "name",)
 
-        
+
 class PreparationLevelSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.PreparationLevel
-        fields = "__all__"
+        fields = ['uid', 'name']
 
 
 class StudyFormSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.StudyForm
-        fields = "__all__"
-
-        
-class DisciplineSerializer2(serializers.ModelSerializer):
-    class Meta:
-        model = models.Discipline
-        fields = (
-            'uid',
-            'name',
-            'count_credits',
-        )
+        fields = ['uid', 'name']
 
 
 class EducationTypeSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.EducationType
-        fields = '__all__'
+        fields = ['uid', 'name', 'code']
 
 
 class EducationBaseSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.EducationBase
-        fields = '__all__'
+        fields = ['uid', 'name']
 
 
 class EducationProgramSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.EducationProgram
-        fields = '__all__'
+        fields = ['uid', 'name']
 
 
 class EducationProgramGroupSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.EducationProgramGroup
-        fields = '__all__'
+        fields = ['uid', 'name']
 
 
 class OrganizationSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Organization
-        fields = '__all__'
+        fields = ['uid', 'name']
 
 
 class SpecialitySerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Speciality
-        fields = '__all__'
+        fields = ['uid', 'name']
 
 
 class LanguageSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Language
-        fields = '__all__'
+        fields = ['uid', 'name']

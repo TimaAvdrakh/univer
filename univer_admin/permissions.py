@@ -1,8 +1,9 @@
-from rest_framework import permissions
+from rest_framework.permissions import BasePermission
 from portal_users import models as user_models
+from rest_framework import permissions
 
 
-class AdminPermission(permissions.BasePermission):
+class AdminPermission(BasePermission):
     """Доступ у админа универа"""
     def has_permission(self, request, view):
         return user_models.Role.objects.filter(

@@ -39,7 +39,7 @@ class RoleSerializer(serializers.ModelSerializer):
             "is_teacher",
             "is_org_admin",
             "is_supervisor",
-            "is_selection_committer",
+            # "is_selection_committer",
             "is_applicant",
             "is_mod"
         )
@@ -58,6 +58,35 @@ class InterestSerializer(serializers.ModelSerializer):
         )
 
 
+class InformationUsersCanSeeSerializer(serializers.ModelSerializer):
+    """
+    Список полей который могут видеть другие пользователи
+    """
+
+    class Meta:
+        model = models.InfoShowPermission
+        fields = (
+            'first_name_en',
+            'last_name_en',
+            'birth_date',
+            'birth_place',
+            'nationality',
+            'citizenship',
+            'gender',
+            'marital_status',
+            'address',
+            'phone',
+            'email',
+            'skype',
+            'interests',
+            'extra_data',
+            'identity_documents',
+            'educations',
+            'iin',
+        )
+
+
+
 class AchievementSerializer(serializers.ModelSerializer):
     achievement_type = serializers.CharField()
     level = serializers.CharField()
@@ -70,7 +99,8 @@ class AchievementSerializer(serializers.ModelSerializer):
             "achievement_type",
             "level",
             "content",
-      
+        )
+
     def to_representation(self, instance):
         data = super().to_representation(instance=instance)
         if data['achievement_type']:
@@ -114,22 +144,6 @@ class ProfileFullSerializer(serializers.ModelSerializer):
     middleName = serializers.CharField(
         max_length=100, source="middle_name", read_only=True,
     )
-    gender = serializers.CharField(read_only=True,)
-    marital_status = serializers.CharField(read_only=True,)
-    interests = InterestSerializer(many=True, required=False,)
-    interests_for_del = serializers.ListField(
-        child=serializers.CharField(), required=False,
-    )
-    achievements = AchievementFullSerializer(many=True, required=False,)
-    achievements_for_del = serializers.ListField(
-        child=serializers.CharField(), required=False,
-    )
-    identity_documents = common_serializers.IdentityDocumentSerializer(
-        many=True, required=False,
-    )
-    educations = common_serializers.EducationSerializer(many=True, required=False,)
-    nationality = serializers.CharField()
-    citizenship = serializers.CharField()
 
     class Meta:
         model = models.Profile
@@ -139,27 +153,8 @@ class ProfileFullSerializer(serializers.ModelSerializer):
             "firstName",
             "lastName",
             "middleName",
-            "first_name_en",
-            "last_name_en",
-            "birth_date",
-            "birth_place",
-            "nationality",
-            "citizenship",
-            "gender",
-            "marital_status",
-            "address",
-            "phone",
-            "email",
-            "skype",
             "avatar",
-            "interests",
-            "interests_for_del",
-            "achievements",
-            "achievements_for_del",
-            "extra_data",
-            "iin",
-            "identity_documents",
-            "educations",
+
         )
         read_only_fields = ("iin",)
 
@@ -169,6 +164,7 @@ class ProfileFullSerializer(serializers.ModelSerializer):
         instance.email = validated_data.get("email", instance.email)
         instance.skype = validated_data.get("skype", instance.skype)
         instance.extra_data = validated_data.get("extra_data", instance.extra_data)
+        instance.notify_me_from_email = validated_data.get("notify_me_from_email", instance.notify_me_from_email)
         instance.save()
 
         interests = validated_data.get("interests")
@@ -211,137 +207,176 @@ class ProfileFullSerializer(serializers.ModelSerializer):
             data.update(TeacherSerializer(teacher).data)
             teacher_positions = models.TeacherPosition.objects.filter(profile=instance,
                                                                       is_active=True)
+
             data['positions'] = TeacherPositionSerializer(teacher_positions,
                                                           many=True).data
-
         role_serializer = RoleSerializer(instance=role)
         data["role"] = role_serializer.data
 
         data["is_employee"] = is_employee
 
-        if request.user.profile != instance:
-            data["iin"] = ""
+        fields_to_show = models.InfoShowPermission.objects.get_or_create(profile=instance)
 
+        fields = InformationUsersCanSeeSerializer(fields_to_show, many=True).data[
+            0 if fields_to_show[0] else 1
+        ]
+        fields_serializer = FieldsToShowSerializer(instance=instance, many=True).child.data
         if request.user.profile != instance:
-            data["identity_documents"] = []
-
+            for field in fields:
+                if fields[field]:
+                    data[field] = fields_serializer[field]
+        else:
+            for field in fields_serializer:
+                data[field] = fields_serializer[field]
+            data['fields_to_show'] = InformationUsersCanSeeSerializer(fields_to_show,
+                                                                      many=True).data
         return data
 
 
-class ProfileDetailSerializer(serializers.ModelSerializer):
-    """С префиксом домена в поле аватар"""
-    profileId = serializers.CharField(
-        source='uid',
+class FieldsToShowSerializer(serializers.ModelSerializer):
+    gender = serializers.CharField(read_only=True, )
+    marital_status = serializers.CharField(read_only=True,)
+    interests = InterestSerializer(many=True, required=False,)
+    interests_for_del = serializers.ListField(
+        child=serializers.CharField(), required=False,
     )
-    middleName = serializers.CharField(
-        max_length=100,
-        source='middle_name',
-        allow_blank=True,
+    achievements = AchievementFullSerializer(many=True, required=False,)
+    achievements_for_del = serializers.ListField(
+        child=serializers.CharField(), required=False,
     )
-    firstName = serializers.CharField(
-        max_length=100,
-        source='first_name',
-        required=True,
+    identity_documents = common_serializers.IdentityDocumentSerializer(
+        many=True, required=False,
     )
-    lastName = serializers.CharField(
-        max_length=100,
-        source='last_name',
-        required=True,
-    )
+    educations = common_serializers.EducationSerializer(many=True, required=False,)
+    nationality = serializers.CharField()
+    citizenship = serializers.CharField()
 
     class Meta:
         model = models.Profile
         fields = (
-            'profileId',
-            'firstName',
-            'lastName',
-            'middleName',
-            'phone',
-            'email',
-            'avatar'
+            "first_name_en",
+            "last_name_en",
+            "birth_date",
+            "birth_place",
+            "nationality",
+            "citizenship",
+            "gender",
+            "marital_status",
+            "address",
+            "phone",
+            "email",
+            "skype",
+            "interests",
+            "interests_for_del",
+            "achievements",
+            "achievements_for_del",
+            "extra_data",
+            "iin",
+            "identity_documents",
+            "educations",
+            "notify_me_from_email",
+        )
+
+
+class ProfileDetailSerializer(serializers.ModelSerializer):
+    """С префиксом домена в поле аватар"""
+
+    profileId = serializers.CharField(source="uid",)
+    middleName = serializers.CharField(
+        max_length=100, source="middle_name", allow_blank=True,
+    )
+    firstName = serializers.CharField(
+        max_length=100, source="first_name", required=True,
+    )
+    lastName = serializers.CharField(max_length=100, source="last_name", required=True,)
+
+    class Meta:
+        model = models.Profile
+        fields = (
+            "profileId",
+            "firstName",
+            "lastName",
+            "middleName",
+            "phone",
+            "email",
+            "avatar",
         )
 
     def to_representation(self, instance):
         data = super().to_representation(instance=instance)
         role = models.Role.objects.filter(profile=instance).first()
         role_serializer = RoleSerializer(instance=role)
-        data['role'] = role_serializer.data
+        data["role"] = role_serializer.data
 
-        if data['avatar'] is not None:
-            data['avatar'] = current_site + data['avatar']
+        if data["avatar"] is not None:
+            data["avatar"] = current_site + data["avatar"]
 
         return data
 
 
 class ProfileSerializer(serializers.ModelSerializer):
     """Без префикс домена в поле аватар"""
-    profileId = serializers.CharField(
-        source='uid',
-    )
+
+    profileId = serializers.CharField(source="uid",)
     middleName = serializers.CharField(
-        max_length=100,
-        source='middle_name',
-        allow_blank=True,
+        max_length=100, source="middle_name", allow_blank=True,
     )
     firstName = serializers.CharField(
-        max_length=100,
-        source='first_name',
-        required=True,
+        max_length=100, source="first_name", required=True,
     )
-    lastName = serializers.CharField(
-        max_length=100,
-        source='last_name',
-        required=True,
-    )
+    lastName = serializers.CharField(max_length=100, source="last_name", required=True,)
 
     class Meta:
         model = models.Profile
         fields = (
-            'profileId',
-            'firstName',
-            'lastName',
-            'middleName',
-            'phone',
-            'email',
-            'avatar'
+            "profileId",
+            "firstName",
+            "lastName",
+            "middleName",
+            "phone",
+            "email",
+            "avatar",
         )
 
     def to_representation(self, instance):
         data = super().to_representation(instance=instance)
         role = models.Role.objects.filter(profile=instance).first()
         role_serializer = RoleSerializer(instance=role)
-        data['role'] = role_serializer.data
+        data["role"] = role_serializer.data
 
         return data
 
 
+class ProfileLiteSerializer(serializers.ModelSerializer):
+    # name = serializers.SerializerMethodField()
+
+    # def get_name(self, profile: models.Profile):
+    #     return profile.full_name
+
+    full_name = serializers.ReadOnlyField()
+
+    class Meta:
+        model = models.Profile
+        fields = ['uid', 'full_name']
+
+
 class ProfileShortSerializer(serializers.ModelSerializer):
-    profileId = serializers.CharField(
-        source='uid',
-    )
+    profileId = serializers.CharField(source="uid",)
     middleName = serializers.CharField(
-        max_length=100,
-        source='middle_name',
-        allow_blank=True,
+        max_length=100, source="middle_name", allow_blank=True,
     )
     firstName = serializers.CharField(
-        max_length=100,
-        source='first_name',
-        required=True,
+        max_length=100, source="first_name", required=True,
     )
-    lastName = serializers.CharField(
-        max_length=100,
-        source='last_name',
-        required=True,
-    )
+    lastName = serializers.CharField(max_length=100, source="last_name", required=True,)
 
     class Meta:
         model = models.Profile
         fields = (
-            'profileId',
-            'firstName',
-            'lastName',
-            'middleName',
+            "profileId",
+            "firstName",
+            "lastName",
+            "middleName",
         )
 
 
@@ -352,26 +387,26 @@ class PasswordChangeSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = (
-            'id',
-            'oldPassword',
-            'password',
-            'passwordConfirm',
+            "id",
+            "oldPassword",
+            "password",
+            "passwordConfirm",
         )
 
     def validate(self, data):
-        user = self.context.get('request').user
+        user = self.context.get("request").user
 
-        if not user.check_password(data['oldPassword']):
+        if not user.check_password(data["oldPassword"]):
             raise CustomException(detail=3)  # wrong_old_password
 
-        if data['password'] != data['passwordConfirm']:
+        if data["password"] != data["passwordConfirm"]:
             raise CustomException(detail=2)  # password_mismatch
-        password_validation.validate_password(data['password'])
+        password_validation.validate_password(data["password"])
         return data
 
     def create(self, validated_data):
-        user = self.context.get('request').user
-        user.set_password(validated_data['password'])
+        user = self.context.get("request").user
+        user.set_password(validated_data["password"])
         user.save()
 
         user.profile.password_changed = True
@@ -384,37 +419,32 @@ class ForgetPasswordSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.ResetPassword
         fields = (
-            'uid',
-            'username',
+            "uid",
+            "username",
         )
 
     def validate(self, data):
-        if not User.objects.filter(username=data['username'],
-                                   is_active=True).exists():
+        if not User.objects.filter(username=data["username"], is_active=True).exists():
             raise CustomException(detail=2)  # not_found
 
         return data
 
     def create(self, validated_data):
-        request = self.context.get('request')
-        username = validated_data.get('username')
+        request = self.context.get("request")
+        username = validated_data.get("username")
 
-        user = User.objects.get(username=username,
-                                is_active=True)
+        user = User.objects.get(username=username, is_active=True)
         email = user.profile.email
         if len(email) == 0 or not validate_email(email):
             raise CustomException(detail=3)  # has_not_email_or_invalid_email
 
         reset = models.ResetPassword.objects.create(
-            username=username,
-            user=user,
-            email=email,
+            username=username, user=user, email=email,
         )
 
         # Создаем задачу для крон
         ResetPasswordUrlSendTask.objects.create(
-            reset_password=reset,
-            lang_code=request.LANGUAGE_CODE,
+            reset_password=reset, lang_code=request.LANGUAGE_CODE,
         )
 
         return reset
@@ -426,13 +456,13 @@ class ResetPasswordSerializer(serializers.Serializer):
     password2 = serializers.CharField()
 
     def validate(self, data):
-        if data['password'] != data['password2']:
+        if data["password"] != data["password2"]:
             raise CustomException(detail=2)  # password_mismatch
 
-        password_validation.validate_password(data['password'])
+        password_validation.validate_password(data["password"])
 
         try:
-            reset = models.ResetPassword.objects.get(uuid=data['uuid'])
+            reset = models.ResetPassword.objects.get(uuid=data["uuid"])
         except models.ResetPassword.DoesNotExist:
             raise CustomException(detail=3)  # not_found
 
@@ -450,9 +480,9 @@ class ResetPasswordSerializer(serializers.Serializer):
         return data
 
     def save(self, **kwargs):
-        reset = models.ResetPassword.objects.get(uuid=self.validated_data['uuid'])
+        reset = models.ResetPassword.objects.get(uuid=self.validated_data["uuid"])
         user = reset.user
-        user.set_password(self.validated_data['password'])
+        user.set_password(self.validated_data["password"])
         user.save()
         reset.changed = True
         reset.save()
@@ -465,104 +495,69 @@ class UserCreateSerializer(serializers.ModelSerializer):
     #     required=True,
     #     help_text='Токен организации для авторизации из 1С',
     # )
-    uid = serializers.UUIDField(
-        required=True,
-        help_text='uuid для профиля из 1С'
-    )
-    middle_name = serializers.CharField(
-        required=True,
-    )
-    first_name_en = serializers.CharField(
-        required=True,
-    )
-    last_name_en = serializers.CharField(
-        required=True,
-    )
-    birth_date = serializers.DateField(
-        required=True,
-    )
-    birth_place = serializers.CharField(
-        required=True,
-    )
-    nationality = serializers.CharField(
-        required=True,
-    )
-    citizenship = serializers.CharField(
-        required=True,
-    )
+    uid = serializers.UUIDField(required=True, help_text="uuid для профиля из 1С")
+    middle_name = serializers.CharField(required=True,)
+    first_name_en = serializers.CharField(required=True,)
+    last_name_en = serializers.CharField(required=True,)
+    birth_date = serializers.DateField(required=True,)
+    birth_place = serializers.CharField(required=True,)
+    nationality = serializers.CharField(required=True,)
+    citizenship = serializers.CharField(required=True,)
     gender = serializers.PrimaryKeyRelatedField(
-        required=True,
-        queryset=models.Gender.objects.filter(is_active=True),
+        required=True, queryset=models.Gender.objects.filter(is_active=True),
     )
     marital_status = serializers.PrimaryKeyRelatedField(
-        required=True,
-        queryset=models.MaritalStatus.objects.filter(is_active=True)
+        required=True, queryset=models.MaritalStatus.objects.filter(is_active=True)
     )
-    iin = serializers.CharField(
-        required=True,
-    )
-    address = serializers.CharField(
-        required=True,
-    )
-    phone = serializers.CharField(
-        required=True,
-    )
-    email = serializers.EmailField(
-        required=True,
-    )
-    skype = serializers.CharField(
-        required=True,
-    )
+    iin = serializers.CharField(required=True,)
+    address = serializers.CharField(required=True,)
+    phone = serializers.CharField(required=True,)
+    email = serializers.EmailField(required=True,)
+    skype = serializers.CharField(required=True,)
     study_form = serializers.PrimaryKeyRelatedField(
-        required=True,
-        queryset=org_models.StudyForm.objects.filter(is_active=True),
+        required=True, queryset=org_models.StudyForm.objects.filter(is_active=True),
     )
 
     class Meta:
         model = models.Profile
         fields = (
-            'uid',
+            "uid",
             # 'org_token',
-            'first_name',
-            'last_name',
-            'middle_name',
-            'first_name_en',
-            'last_name_en',
-            'birth_date',
-            'birth_place',
-            'nationality',
-            'citizenship',
-            'gender',
-            'marital_status',
-            'iin',
-            'address',
-            'phone',
-            'email',
-            'skype',
-            'study_form',
+            "first_name",
+            "last_name",
+            "middle_name",
+            "first_name_en",
+            "last_name_en",
+            "birth_date",
+            "birth_place",
+            "nationality",
+            "citizenship",
+            "gender",
+            "marital_status",
+            "iin",
+            "address",
+            "phone",
+            "email",
+            "skype",
+            "study_form",
         )
 
     def create(self, validated_data):
         password = password_generator(size=8)
 
         user = User.objects.create(
-            username=validated_data['iin'],
-            email=validated_data['email'],
-            first_name=validated_data['first_name'],
-            last_name=validated_data['last_name']
+            username=validated_data["iin"],
+            email=validated_data["email"],
+            first_name=validated_data["first_name"],
+            last_name=validated_data["last_name"],
         )
         user.set_password(password)
         user.save()
 
-        profile = models.Profile.objects.create(
-            user=user,
-            **validated_data
-        )
+        profile = models.Profile.objects.create(user=user, **validated_data)
 
         CredentialsEmailTask.objects.create(
-            to=user.email,
-            username=user.username,
-            password=password
+            to=user.email, username=user.username, password=password
         )
 
         return profile
@@ -584,9 +579,9 @@ class TeacherDisciplineSerializer(serializers.ModelSerializer):
     class Meta:
         model = org_models.TeacherDiscipline
         fields = (
-            'uid',
-            'teacher',
-            'language',
+            "uid",
+            "teacher",
+            "language",
         )
 
 
@@ -594,8 +589,8 @@ class StudentDisciplineStatusSerializer(serializers.ModelSerializer):
     class Meta:
         model = org_models.StudentDisciplineStatus
         fields = (
-            'name',
-            'number',
+            "name",
+            "number",
         )
 
 
@@ -611,36 +606,35 @@ class StudentDisciplineSerializer(serializers.ModelSerializer):
     class Meta:
         model = org_models.StudentDiscipline
         fields = (
-            'uid',
-            'acad_period',
-            'discipline',
-            'load_type',
-            'hours',
-            'status',
-            'author',
-            'teacher',
-            'language',
+            "uid",
+            "acad_period",
+            "discipline",
+            "load_type",
+            "hours",
+            "status",
+            "author",
+            "teacher",
+            "language",
         )
         read_only_fields = (
-            'uid',
-            'student',
-            'study_plan',
-            'hours',
-            'language',
+            "uid",
+            "student",
+            "study_plan",
+            "hours",
+            "language",
         )
 
     def to_representation(self, instance):
         data = super().to_representation(instance)
         teacher_disciplines, languages = self.__get_allowed_teachers(instance)
-        teachers_serializer = TeacherDisciplineSerializer(instance=teacher_disciplines,
-                                                          many=True)
+        teachers_serializer = TeacherDisciplineSerializer(
+            instance=teacher_disciplines, many=True
+        )
         if languages:
-            lang_serializer = LanguageSerializer(instance=languages,
-                                                 many=True)
-            data['languages'] = lang_serializer.data
+            lang_serializer = LanguageSerializer(instance=languages, many=True)
+            data["languages"] = lang_serializer.data
         else:
-            data['languages'] = []
-
+            data["languages"] = []
         data['selection_teachers'] = teachers_serializer.data
         data['ruled_out'] = False
 
@@ -778,7 +772,7 @@ class StudentDisciplineCopySerializer(serializers.ModelSerializer):
         return data
 
     def __get_allowed_teachers(self, instance):
-        study_year_id = self.context.get('study_year_id')
+        study_year_id = self.context.get("study_year_id")
 
         teacher_disciplines = org_models.TeacherDiscipline.objects.filter(
             discipline=instance.discipline,
@@ -790,8 +784,8 @@ class StudentDisciplineCopySerializer(serializers.ModelSerializer):
             teacher_disciplines = teacher_disciplines.filter(
                 study_period_id=study_year_id,
             )
-        language_pks = teacher_disciplines.values('language').distinct('language')
-        teacher_disciplines = teacher_disciplines.order_by('teacher__last_name')
+        language_pks = teacher_disciplines.values("language").distinct("language")
+        teacher_disciplines = teacher_disciplines.order_by("teacher__last_name")
 
         languages = org_models.Language.objects.filter(pk__in=language_pks)
 
@@ -802,9 +796,9 @@ class EducationProgramSerializer(serializers.ModelSerializer):
     class Meta:
         model = org_models.EducationProgram
         fields = (
-            'uid',
-            'name',
-            'code',
+            "uid",
+            "name",
+            "code",
         )
 
 
@@ -812,9 +806,19 @@ class EducationProgramGroupSerializer(serializers.ModelSerializer):
     class Meta:
         model = org_models.EducationProgramGroup
         fields = (
-            'uid',
-            'name',
-            'code',
+            "uid",
+            "name",
+            "code",
+        )
+
+
+class SpecialitySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = org_models.Speciality
+        fields = (
+            "uid",
+            "name",
+            "code"
         )
 
 
@@ -830,46 +834,46 @@ class StudyPlanSerializer(serializers.ModelSerializer):
     study_form = serializers.CharField()
     on_base = serializers.CharField()
     education_base = serializers.CharField()
-    active = serializers.BooleanField(
-        default=False,  # Для удобства на фронте
-    )
+    active = serializers.BooleanField(default=False,)  # Для удобства на фронте
 
     class Meta:
         model = org_models.StudyPlan
         fields = (
-            'uid',
-            'uid_1c',
-            'student',
-            'study_period',
-            'group',
-            'speciality',
-            'faculty',
-            'cathedra',
-            'education_program',
-            'education_type',
-            'preparation_level',
-            'study_form',
-            'on_base',
-            'education_base',
-            'active',
-            'current_course',
-            'entry_date',
+            "uid",
+            "uid_1c",
+            "student",
+            "study_period",
+            "group",
+            "speciality",
+            "faculty",
+            "cathedra",
+            "education_program",
+            "education_type",
+            "preparation_level",
+            "study_form",
+            "on_base",
+            "education_base",
+            "active",
+            "current_course",
+            "entry_date",
         )
 
     def to_representation(self, instance):
         data = super().to_representation(instance)
-
-        data['is_multilang'] = False
+        speciality_pk = org_models.Speciality.objects.filter(uid=instance.speciality.uid)
+        data["speciality_with_code"] = SpecialitySerializer(instance=speciality_pk, many=True).data[0]
+        data["is_multilang"] = False
         if str(instance.group.language.pk) == language_multilingual_id:
-            data['is_multilang'] = True
+            data["is_multilang"] = True
 
-        data['language'] = instance.group.language.name
+        data["language"] = instance.group.language.name
 
         return data
 
 
 class ChooseTeacherSerializer(serializers.ModelSerializer):
     """Студент выбирает препода или эдвайзер за студента"""
+
     teacher_discipline = serializers.PrimaryKeyRelatedField(
         queryset=org_models.TeacherDiscipline.objects.filter(is_active=True),
         allow_null=True,
@@ -878,13 +882,13 @@ class ChooseTeacherSerializer(serializers.ModelSerializer):
     class Meta:
         model = org_models.StudentDiscipline
         fields = (
-            'uid',
-            'teacher_discipline',
+            "uid",
+            "teacher_discipline",
         )
 
     def update(self, instance, validated_data):
-        request = self.context.get('request')
-        teacher_discipline = validated_data.get('teacher_discipline')
+        request = self.context.get("request")
+        teacher_discipline = validated_data.get("teacher_discipline")
         if teacher_discipline is None:
             """Выбор отменен"""
             instance.teacher = None
@@ -892,27 +896,27 @@ class ChooseTeacherSerializer(serializers.ModelSerializer):
             instance.status_id = student_discipline_status['not_chosen']
         else:
             teacher_disciplines = self.__get_allowed_teachers(instance)
-            teachers_pk = teacher_disciplines.values('teacher')
+            teachers_pk = teacher_disciplines.values("teacher")
             teachers = models.Profile.objects.filter(pk__in=teachers_pk)
 
             chosen_teacher = teacher_discipline.teacher
 
             if chosen_teacher not in teachers:
-                raise CustomException(detail='teacher_not_allowed')
+                raise CustomException(detail="teacher_not_allowed")
 
             instance.teacher = chosen_teacher
             instance.language = teacher_discipline.language
 
             if request.user.profile == instance.student:
                 """Студент сам делает выбор"""
-                instance.status_id = student_discipline_status['chosen']
+                instance.status_id = student_discipline_status["chosen"]
             elif request.user.profile == instance.study_plan.advisor:
                 """Эдвайзер делает выбор за студента"""
-                instance.status_id = student_discipline_status['changed']
+                instance.status_id = student_discipline_status["changed"]
                 AdvisorCheck.objects.create(
                     study_plan=instance.study_plan,
                     acad_period=instance.acad_period,
-                    status=5  # Изменено
+                    status=5,  # Изменено
                 )
 
         instance.author = request.user.profile
@@ -927,8 +931,9 @@ class ChooseTeacherSerializer(serializers.ModelSerializer):
         acad_period = instance.acad_period
 
         try:
-            student_discipline_info = org_models.StudentDisciplineInfo.objects.get(study_plan=study_plan,
-                                                                                   acad_period=instance.acad_period)
+            student_discipline_info = org_models.StudentDisciplineInfo.objects.get(
+                study_plan=study_plan, acad_period=instance.acad_period
+            )
         except org_models.StudentDisciplineInfo.DoesNotExist:
             student_discipline_info = org_models.StudentDisciplineInfo.objects.create(
                 student=study_plan.student,
@@ -937,16 +942,18 @@ class ChooseTeacherSerializer(serializers.ModelSerializer):
             )
 
         if org_models.StudentDiscipline.objects.filter(
-                Q(status_id=student_discipline_status["not_chosen"]) | Q(
-                    status_id=student_discipline_status["rejected"]),
-                study_plan=study_plan,
-                acad_period=acad_period,
-                is_active=True,
+            Q(status_id=student_discipline_status["not_chosen"])
+            | Q(status_id=student_discipline_status["rejected"]),
+            study_plan=study_plan,
+            acad_period=acad_period,
+            is_active=True,
         ).exists():
             """Если есть дисциплина где не выбран препод или отклонен"""
-            student_discipline_info.status_id = student_discipline_info_status['choosing']
+            student_discipline_info.status_id = student_discipline_info_status[
+                "choosing"
+            ]
         else:
-            student_discipline_info.status_id = student_discipline_info_status['chosen']
+            student_discipline_info.status_id = student_discipline_info_status["chosen"]
         student_discipline_info.save()
 
     def __get_allowed_teachers(self, instance):
@@ -985,50 +992,46 @@ class ChooseTeacherSerializer(serializers.ModelSerializer):
 class GroupDetailSerializer(serializers.ModelSerializer):
     headman = ProfileSerializer()
     kurator = ProfileSerializer()
-    active = serializers.BooleanField(
-        default=False,
-    )
+    active = serializers.BooleanField(default=False,)
 
     class Meta:
         model = org_models.Group
         fields = (
-            'name',
-            'active',
-            'headman',
-            'kurator',
-            'language',
+            "name",
+            "active",
+            "headman",
+            "kurator",
+            "language",
         )
 
     def to_representation(self, instance):
         data = super().to_representation(instance)
-        request = self.context.get('request')
+        request = self.context.get("request")
 
         study_plans = org_models.StudyPlan.objects.filter(
-            student=request.user.profile,
-            group=instance,
-            is_active=True,
-        ).distinct('advisor')
+            student=request.user.profile, group=instance, is_active=True,
+        ).distinct("advisor")
 
-        data['supervisors'] = []
+        data["supervisors"] = []
         for study_plan in study_plans:
             advisor_serializer = ProfileDetailSerializer(study_plan.advisor)
             advisor_data = advisor_serializer.data
 
             item = advisor_data
-            item['edu_program'] = study_plan.education_program.name
-            item['edu_program_code'] = study_plan.education_program.code
+            item["edu_program"] = study_plan.education_program.name
+            item["edu_program_code"] = study_plan.education_program.code
 
-            data['supervisors'].append(item)
+            data["supervisors"].append(item)
 
-        student_pks = org_models.StudyPlan.objects.filter(group=instance).values('student')
-        if data['headman'] is not None:
-            student_pks = student_pks.exclude(student=data['headman']['profileId'])
+        student_pks = org_models.StudyPlan.objects.filter(group=instance).values(
+            "student"
+        )
+        if data["headman"] is not None:
+            student_pks = student_pks.exclude(student=data["headman"]["profileId"])
 
-        students = models.Profile.objects.filter(pk__in=student_pks,
-                                                 is_active=True)
-        serializer = ProfileDetailSerializer(students,
-                                             many=True)
-        data['students'] = serializer.data
+        students = models.Profile.objects.filter(pk__in=student_pks, is_active=True)
+        serializer = ProfileDetailSerializer(students, many=True)
+        data["students"] = serializer.data
 
         return data
 
@@ -1038,6 +1041,8 @@ class StudentDisciplineShortSerializer2(serializers.ModelSerializer):
 
     # acad_period = serializers.CharField(read_only=True)
     discipline = serializers.CharField(read_only=True)
+    language = serializers.CharField(read_only=True)
+    teacher = serializers.CharField(read_only=True)
     load_type = serializers.CharField(read_only=True)
 
     class Meta:
@@ -1047,6 +1052,8 @@ class StudentDisciplineShortSerializer2(serializers.ModelSerializer):
             # 'study_plan',
             # 'acad_period',
             'discipline',
+            'language',
+            'teacher',
             'load_type',
             'control_form',
             'credit_obj',
@@ -1068,6 +1075,26 @@ class StudentDisciplineShortSerializer(serializers.ModelSerializer):
             # 'study_plan',
             # 'acad_period',
             'discipline',
+            'load_type',
+            'credit_obj',
+            'hours',
+        )
+
+
+class StudentDisciplineShortSerializer(serializers.ModelSerializer):
+    """Используется для получения всех дисциплин студента во всех акад.периодах"""
+
+    # acad_period = serializers.CharField(read_only=True)
+    discipline = serializers.CharField(read_only=True)
+    load_type = serializers.CharField(read_only=True)
+
+    class Meta:
+        model = org_models.StudentDiscipline
+        fields = (
+            "uid",
+            # 'study_plan',
+            # 'acad_period',
+            'discipline',
             # 'control_form',
             'credit_obj',
             'load_type',
@@ -1077,6 +1104,7 @@ class StudentDisciplineShortSerializer(serializers.ModelSerializer):
 
 class NotifyAdviserSerializer(serializers.Serializer):
     """Уведомлять адвайзера о том, что студент завершил регистрацию на дисциплины"""
+
     study_plan = serializers.PrimaryKeyRelatedField(
         queryset=org_models.StudyPlan.objects.filter(is_active=True),
     )
@@ -1158,28 +1186,28 @@ class NotifyAdviserSerializer(serializers.Serializer):
 
 class ProfileContactEditSerializer(serializers.ModelSerializer):
     """Используется для редактирования контактных данных профиля"""
-    profileId = serializers.CharField(
-        source='uid',
-        read_only=True,
-    )
+
+    profileId = serializers.CharField(source="uid", read_only=True,)
 
     class Meta:
         model = models.Profile
         fields = (
-            'profileId',
-            'address',
-            'phone',
-            'email',
-            'skype',
-            'extra_data',
+            "profileId",
+            "address",
+            "phone",
+            "email",
+            "skype",
+            "extra_data",
+            "notify_me_from_email",
         )
 
     def update(self, instance, validated_data):
-        instance.address = validated_data.get('address', instance.address)
-        instance.phone = validated_data.get('phone', instance.phone)
-        instance.email = validated_data.get('email', instance.email)
-        instance.skype = validated_data.get('skype', instance.skype)
-        instance.extra_data = validated_data.get('extra_data', instance.extra_data)
+        instance.address = validated_data.get("address", instance.address)
+        instance.phone = validated_data.get("phone", instance.phone)
+        instance.email = validated_data.get("email", instance.email)
+        instance.skype = validated_data.get("skype", instance.skype)
+        instance.extra_data = validated_data.get("extra_data", instance.extra_data)
+        instance.notify_me_from_email = validated_data.get("notify_me_from_email", instance.notify_me_from_email)
         instance.save()
 
         return instance
@@ -1187,37 +1215,29 @@ class ProfileContactEditSerializer(serializers.ModelSerializer):
 
 class ProfileInterestsEditSerializer(serializers.ModelSerializer):
     """Используется для редактирования интереса"""
-    profileId = serializers.CharField(
-        source='uid',
-        read_only=True,
-    )
-    interests = InterestSerializer(
-        many=True,
-        required=False,
-    )
+
+    profileId = serializers.CharField(source="uid", read_only=True,)
+    interests = InterestSerializer(many=True, required=False,)
     interests_for_del = serializers.ListField(
-        child=serializers.CharField(),
-        required=False,
+        child=serializers.CharField(), required=False,
     )
 
     class Meta:
         model = models.Profile
         fields = (
-            'profileId',
-            'interests',
-            'interests_for_del',
+            "profileId",
+            "interests",
+            "interests_for_del",
         )
 
     def update(self, instance, validated_data):
-        interests = validated_data.get('interests')
+        interests = validated_data.get("interests")
         for interest in interests:
             models.Interest.objects.get_or_create(
-                profile=instance,
-                name=interest['name'],
-                is_active=True,
+                profile=instance, name=interest["name"], is_active=True,
             )
 
-        interests_for_del = validated_data.get('interests_for_del')
+        interests_for_del = validated_data.get("interests_for_del")
         models.Interest.objects.filter(pk__in=interests_for_del).update(is_active=False)
 
         return instance
@@ -1225,29 +1245,23 @@ class ProfileInterestsEditSerializer(serializers.ModelSerializer):
 
 class ProfileAchievementsEditSerializer(serializers.ModelSerializer):
     """Используется для редактирования достижения"""
-    profileId = serializers.CharField(
-        source='uid',
-        read_only=True,
-    )
-    achievements = AchievementSerializer(
-        many=True,
-        required=False,
-    )
+
+    profileId = serializers.CharField(source="uid", read_only=True,)
+    achievements = AchievementSerializer(many=True, required=False,)
     achievements_for_del = serializers.ListField(
-        child=serializers.CharField(),
-        required=False,
+        child=serializers.CharField(), required=False,
     )
 
     class Meta:
         model = models.Profile
         fields = (
-            'profileId',
-            'achievements',
-            'achievements_for_del',
+            "profileId",
+            "achievements",
+            "achievements_for_del",
         )
 
     def update(self, instance, validated_data):
-        achievements = validated_data.get('achievements')
+        achievements = validated_data.get("achievements")
         for achievement in achievements:
             if achievement['achievement_type'].get('uid'):
                 achievement['achievement_type'] = achievement['achievement_type'].get('uid')
@@ -1256,14 +1270,16 @@ class ProfileAchievementsEditSerializer(serializers.ModelSerializer):
 
             models.Achievement.objects.get_or_create(
                 profile=instance,
-                level_id=achievement['level'],
-                achievement_type_id=achievement['achievement_type'],
-                content=achievement['content'],
+                level_id=achievement["level"],
+                achievement_type_id=achievement["achievement_type"],
+                content=achievement["content"],
                 is_active=True,
             )
 
-        achievements_for_del = validated_data.get('achievements_for_del')
-        models.Achievement.objects.filter(pk__in=achievements_for_del).update(is_active=False)
+        achievements_for_del = validated_data.get("achievements_for_del")
+        models.Achievement.objects.filter(pk__in=achievements_for_del).update(
+            is_active=False
+        )
 
         return instance
 
@@ -1272,22 +1288,19 @@ class AvatarSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Profile
         fields = (
-            'uid',
-            'avatar',
+            "uid",
+            "avatar",
         )
 
     def create(self, validated_data):
-        request = self.context.get('request')
+        request = self.context.get("request")
         profile = request.user.profile
 
-        image = validated_data['avatar']
-        extension = image.name.split('.')[-1]
-        image_name = '{}.{}'.format(str(uuid4()),
-                                    extension)
+        image = validated_data["avatar"]
+        extension = image.name.split(".")[-1]
+        image_name = "{}.{}".format(str(uuid4()), extension)
 
-        profile.avatar.save(image_name,
-                            image,
-                            save=True)
+        profile.avatar.save(image_name, image, save=True)
         return profile
 
 
@@ -1295,10 +1308,10 @@ class TeacherSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Teacher
         fields = (
-            'academic_degree',
-            'academic_rank',
-            'work_experience_year',
-            'work_experience_month',
+            "academic_degree",
+            "academic_rank",
+            "work_experience_year",
+            "work_experience_month",
         )
 
 
@@ -1310,9 +1323,9 @@ class TeacherPositionSerializer(serializers.ModelSerializer):
         model = models.TeacherPosition
         fields = (
             # 'teacher',
-            'position',
-            'cathedra',
-            'is_main',
+            "position",
+            "cathedra",
+            "is_main",
         )
 
     def to_representation(self, instance):
@@ -1330,19 +1343,18 @@ class TeacherShortSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Profile
         fields = (
-            'uid',
-            'full_name',
+            "uid",
+            "full_name",
         )
 
     def to_representation(self, instance):
         data = super().to_representation(instance)
 
-        data['name'] = '{} {}.'.format(instance.last_name,
-                                       instance.first_name[0])
+        data["name"] = "{} {}.".format(instance.last_name, instance.first_name[0])
 
         try:
             middle_name = instance.middle_name[0]
-            data['name'] += '{}.'.format(middle_name)
+            data["name"] += "{}.".format(middle_name)
         except IndexError:
             pass
 
@@ -1431,7 +1443,7 @@ class StudentDisciplineControlFormSerializer(serializers.ModelSerializer):
             data['status_d'] = StudentDisciplineStatusSerializer(
                 org_models.StudentDisciplineStatus.objects.get(number=1)).data
         control_form_pks = org_models.DisciplineCreditControlForm.objects.filter(
-            discipline_credit=discipline_credit,
+            discipline_credit=discipline_credit.uid,
         ).values('control_form')
         control_forms = org_models.ControlForm.objects.filter(pk__in=control_form_pks)
         serializer = ControlFormSerializer(control_forms,
@@ -1475,15 +1487,16 @@ class ChooseControlFormSerializer(serializers.ModelSerializer):
 
     def update(self, instance, validated_data):
         chosen_control_forms = validated_data.get('chosen_control_forms')
+        status = validated_data.get('status')
         instance.chosen_control_forms.set(chosen_control_forms)
-
+        instance.status = status
+        instance.save()
         return instance
 
 
 class ProfileForAdviserSerializer(serializers.ModelSerializer):
     """Список студентов для полного списка адвайзеру"""
     status = serializers.CharField()
-
 
     class Meta:
         model = models.Profile
@@ -1534,3 +1547,5 @@ class CitizenshipListSerializer(serializers.ModelSerializer):
             'uid',
             'name',
         )
+
+
