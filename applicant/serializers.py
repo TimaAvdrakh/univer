@@ -685,15 +685,15 @@ class ModeratorSerializer(serializers.ModelSerializer):
     def to_representation(self, instance):
         data = super().to_representation(instance=instance)
         try:
-            questionairies = models.Questionnaire.objects.get(creator=instance)
-            data['iin'] = questionairies.iin
-            data['citizenship'] = questionairies.citizenship.name
-            if questionairies.address_of_registration is not None:
-                data['address_of_registration'] = questionairies.address_of_registration.name
-            if questionairies.address_of_residence is not None:
-                data['address_of_residence'] = questionairies.address_of_residence.name
-            if questionairies.address_of_temp_reg is not None:
-                data['address_of_temp_reg'] = questionairies.address_of_temp_reg.name
+            questionnairies = models.Questionnaire.objects.get(creator=instance)
+            data['iin'] = questionnairies.iin # iin В Казахстане означает индивидуальный идентификационный номер
+            data['citizenship'] = questionnairies.citizenship.name
+            if questionnairies.address_of_registration is not None:
+                data['address_of_registration'] = questionnairies.address_of_registration.name
+            if questionnairies.address_of_residence is not None:
+                data['address_of_residence'] = questionnairies.address_of_residence.name
+            if questionnairies.address_of_temp_reg is not None:
+                data['address_of_temp_reg'] = questionnairies.address_of_temp_reg.name
 
             family_members = models.FamilyMember.objects.filter(profile=instance)
             data['family_members'] = FamilyMemberForModerator(family_members, many=True).data
