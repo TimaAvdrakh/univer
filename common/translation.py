@@ -30,3 +30,8 @@ class CitizenshipTranslationOptions(TranslationOptions):
 @register(models.Course)
 class CourseTranslationOptions(TranslationOptions):
     fields = ('name',)
+
+
+@register(models.DocumentTypeGroup)
+class DocumentTypeGroupTranslationOptions(TranslationOptions):
+    fields = ('name',)
