@@ -2,11 +2,6 @@ from django.contrib import admin
 from . import models
 
 # Register your models here.
-
-from django.contrib import admin
-from . import models
-
-# Register your models here.
 @admin.register(models.Type)
 class TypeAdmin(admin.ModelAdmin):
     search_fields = (
@@ -16,7 +11,6 @@ class TypeAdmin(admin.ModelAdmin):
         'uid',
         'name',
     ]
-
 
 @admin.register(models.SubType)
 class TypeAdmin(admin.ModelAdmin):
@@ -35,7 +29,6 @@ admin.site.register(models.IdentityDoc)
 admin.site.register(models.ServiceDoc)
 admin.site.register(models.Status)
 
-
 @admin.register(models.Application)
 class ApplicationAdmin(admin.ModelAdmin):
     autocomplete_fields = (
@@ -45,6 +38,4 @@ class ApplicationAdmin(admin.ModelAdmin):
         'type',
         'identity_doc',
     ]
-
-
 admin.site.register(models.SubApplication)

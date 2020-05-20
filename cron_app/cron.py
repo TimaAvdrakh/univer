@@ -7,8 +7,7 @@ from portal.curr_settings import (
     component_by_choose_uid,
     CONTENT_TYPES,
     SEND_STUD_DISC_1C_URL,
-    # SEND_APPLICATIONS_TO_1C_URL,
-    # GET_READY_FROM_1C_URL,
+    SEND_APPLICATIONS_TO_1C_URL,
     BOT_DEV_CHAT_IDS
 )
 from django.core.mail import send_mail
@@ -16,7 +15,6 @@ from django.template.loader import render_to_string
 from portal.curr_settings import current_site
 from portal_users import models as user_models
 from organizations import models as org_models
-from applications import models as serv_models
 from schedules import models as sh_models
 from datetime import datetime, timedelta
 from integration.models import DocumentChangeLog
@@ -29,6 +27,7 @@ from common import models as common_models
 import urllib3
 import certifi
 from applicant.models import Applicant
+from applications import models as model_aps
 
 
 class EmailCronJob(CronJobBase):
@@ -640,79 +639,121 @@ class ApplicantVerificationJob(CronJobBase):
         Applicant.objects.filter(created__gte=time, user__is_active=False).delete()
 
 
-class SendApplicationsTo1cJob:
+class SendApplicationsTo1cJob(CronJobBase):
     """Отправляет заявки студентов в 1С"""
     RUN_EVERY_MINS = 10  # every 1 min
 
     schedule = Schedule(run_every_mins=RUN_EVERY_MINS)
-    code = 'crop_app.send_student_application'
+    code = 'cron_app.send_student_application'
+
+    LANG_EN = '789cb6fa-31e9-11e9-aa40-0cc47a2bc1bf'
+    LANG_KZ = '789cb6fb-31e9-11e9-aa40-0cc47a2bc1bf'
+    LANG_RU = '789cb6fc-31e9-11e9-aa40-0cc47a2bc1bf'
+
+    IN_PROGRESS = 'b287ecfe-0ac8-499b-9ac4-7da2a64a82ef'
 
     def do(self):
-        url = SEND_APPLICATIONS_TO_1C_URL
-        applications = serv_models.StudentDiscipline.objects.filter(
+        # Todo Если получение справки то документ не нужен
+        sub_apps = model_aps.SubApplication.objects.filter(application__send=False).values(
+            'application', 'application__type__uid', 'status', 'subtype_id', 'comment', 'id',
+            'application__profile__uid',
+            'organization', 'is_paper', 'copies', 'lang')
+        applications = sub_apps.values('application').distinct().values(
+            'application', 'application__type_id', 'application__profile__uid')
 
-        )[0]
-        ''' disciplines = []
-        for sd in sds:
-            print(sd.study_plan)
+        sub_apps = list(sub_apps)
+        apps_json = []
+        url = SEND_APPLICATIONS_TO_1C_URL
+        for app in applications:
+            sub_app_by_app = [item for item in sub_apps if item['application'] == app['application']]
+            sub_json = []
+            for sub_application in sub_app_by_app:
+                lang_list = []
+                for lang in sub_application['lang']:
+                    if lang == 'ru':
+                        lang_list.append(self.LANG_RU)
+                    if lang == 'kz':
+                        lang_list.append(self.LANG_KZ)
+                    if lang == 'en':
+                        lang_list.append(self.LANG_EN)
+
+                sub_item = {
+                    "applicationSubtypeID": str(sub_application['subtype_id']),
+                    "subApplicationID": sub_application['id'],
+                    "organizationName": sub_application['organization'],
+                    "isPaper": sub_application['is_paper'],
+                    "copyNumber": sub_application['copies'],
+                    "lang": lang_list
+                }
+                sub_json.append(sub_item)
             item = {
-                'uid_site': str(sd.uid),  # УИД дисицплины студента на сайте
-                'study_plan': sd.study_plan.uid_1c,
-                'student': str(sd.student.uid),
-                'study_period': str(sd.study_year.uid),
-                'advisor': str(sd.study_plan.advisor.uid) if sd.study_plan.advisor else '',
-                'acad_period': str(sd.acad_period.uid),
-                'teacher': str(sd.teacher.uid),
-                'language': str(sd.language.uid),
-                'discipline': str(sd.discipline.uid),
-                'loadtype': str(sd.load_type.load_type2.uid_1c),
-                'isopt': str(sd.component.uid) == component_by_choose_uid if sd.component else False,
+                "applicationID": app['application'],
+                "applicationType": str(app['application__type_id']),
+                "applicationScan": "file_name",
+                "applicationStudent": str(app['application__profile__uid']),
+                "applicationSubtype": sub_json
             }
-            disciplines.append(item)
+            apps_json.append(item)
         urllib3.disable_warnings()
         resp = requests.post(
             url,
-            json=disciplines,
+            json=apps_json,
             verify=False,
             auth=HTTPBasicAuth('Администратор'.encode(), 'qwe123rty'),
             timeout=30,
         )
 
         if resp.status_code == 200:
-            print("Connected")
             resp_data = resp.json()
-            for item in resp_data:
-                # try:
-                #     sent_data = list(filter(lambda disc: disc['uid_site'] == item['uid_site'], disciplines))[0]
-                #     sent_data_json = json.dumps(sent_data)
-                # except IndexError:
-                #     sent_data_json = ''
+
+            for application in resp_data:
+                status = application['status']
+                if status == 'errors':
+                    status = 2
+                if status == 'success':
+                    status = 0
+                if status == 'failed':
+                    status = 1
 
                 log = DocumentChangeLog(
-                    content_type_id=CONTENT_TYPES['studentdiscipline'],
-                    object_id=item['uid_site'],
-                    status=item['code'],
-                    # sent_data=item['json'],
+                    content_type_id=CONTENT_TYPES['applications'],
+                    object_id=application['applicationID'],
+                    status=status,
                 )
                 error_text = ''
-                for error in item['errors']:
+
+                for error in application['applicationErrors']:
                     error_text += '{}\n'.format(error)
+                for subtype in application['subtypeAplications']:
+                    error_text += '\n Дочерний тип заявки ' + str(subtype['subApplicationID'])
+                    if subtype['status'] == 'errors':
+                        for error in subtype['subApplicationErrors']:
+                            error_text += '{}\n'.format(error)
+                    if subtype['status'] != 'failed':
+                        try:
+                            subtype_row = model_aps.SubApplication.objects.get(pk=subtype['subApplicationID'])
+                        except model_aps.SubApplication.DoesNotExist:
+                            error_text += '{}\n Дочерний тип '+ subtype['subApplicationID'] + ' заявки не найден'
+                            continue
+                        subtype_row.status = model_aps.Status.objects.only('uid').get(uid=self.IN_PROGRESS)
+                        subtype_row.save()
 
                 log.errors = error_text
                 log.save()
 
-                if item['code'] == 0:
+                if application['status'] == 'success':
                     try:
-                        sd = org_models.StudentDiscipline.objects.get(pk=item['uid_site'])
-                    except org_models.StudentDiscipline.DoesNotExist:
+                        application_row = model_aps.Application.objects.get(pk=application['applicationID'])
+                    except model_aps.Application.DoesNotExist:
+                        error_text += '{}\n Заявка ' + application['applicationID'] + ' не найдена'
                         continue
 
-                    sd.uid_1c = item['uid_1c']
-                    sd.sent = True
-                    sd.save()
+                    application_row.send = True
+                    application_row.save()
+
         else:
             message = '{}\n{}'.format(resp.status_code,
                                       resp.content.decode())
             for chat_id in BOT_DEV_CHAT_IDS:
                 bot.send_message(chat_id,
-                                 message)'''
+                                 message)

@@ -3,22 +3,65 @@ from rest_framework import generics, views
 from rest_framework import status
 from rest_framework.response import Response
 from . import serializers
-from . import models
+from .models import *
 import json
 
 # Create your views here.
 class TypeView(generics.ListAPIView):
-    queryset = models.Type.objects.all()
+    queryset = Type.objects.all()
     serializer_class = serializers.TypeSerializer
 
-# Create your views here.
 class SubTypeView(generics.ListAPIView):
-    queryset = models.SubType.objects.all()
+    queryset = SubType.objects.all()
     serializer_class = serializers.SubTypeSerializer
 
     def get_queryset(self):
-        type = self.request.query_params.get('service_type')
+        application_type = self.request.query_params.get('application_type')
         queryset = self.queryset.filter()
-        if type:
-            queryset = self.queryset.filter(type_id=type)
+        if application_type:
+            queryset = self.queryset.filter(type_id=application_type)
         return queryset
+
+
+class ApplicationView(generics.ListCreateAPIView):
+    queryset = Application.objects.all()
+    serializer_class = serializers.ApplicationSerializer
+
+    def get_queryset(self):
+        queryset = self.queryset.filter(profile=self.request.user.profile)
+        return queryset
+
+    def create(self, request, *args, **kwargs):
+        data = json.loads(request.data["data"])
+
+        data["profile"] = self.request.user.profile.uid
+        # request.data["type"] = data["type"]
+
+        if "identity_doc" in request.data :
+            data["identity_doc"] = IdentityDoc.objects.create(
+                file=request.data["identity_doc"]
+            )
+
+        serializer = self.serializer_class(data=data, context={'request': request})
+        if serializer.is_valid(raise_exception=True):
+            sub_applications = data['subapplications']
+            application = serializer.save()
+
+            resp = {'message': '1', 'id': application.id}
+
+            default_status = Status.objects.get(code=NEW)
+
+            for sub in sub_applications:
+                SubApplication.objects.create(
+                    application=application,
+                    subtype=SubType.objects.get(uid=sub['sub_type']),
+                    organization=sub['org_name'],
+                    is_paper=sub['is_paper'],
+                    copies=sub['copy'],
+                    lang=sub['lang'],
+                    status=default_status
+                )
+
+            return Response(resp, status=status.HTTP_200_OK)
+        else:
+            return Response({'message': serializer.error_messages}, status=status.HTTP_400_BAD_REQUEST)
