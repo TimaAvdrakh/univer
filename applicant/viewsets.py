@@ -541,8 +541,8 @@ class ModeratorViewSet(ModelViewSet):
         queryset = self.queryset
         application_status = request.query_params.get('status')
         if application_status is not None and application_status != applicant_application_statuses['NO_QUESTIONNAIRE']:
-            profiles_with_questionnarie = models.Application.objects.filter(status=application_status).values_list('creator')
-            queryset = queryset.filter(pk__in=profiles_with_questionnarie)
+            profiles_with_questionnaire = models.Application.objects.filter(status=application_status).values_list('creator')
+            queryset = queryset.filter(pk__in=profiles_with_questionnaire)
         elif application_status == applicant_application_statuses['NO_QUESTIONNAIRE']:
             profiles_with_applications = models.Application.objects.all().values_list('creator')
             queryset_with_application = queryset.filter(pk__in=profiles_with_applications)
