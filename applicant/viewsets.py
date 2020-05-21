@@ -1,5 +1,3 @@
-from django import forms
-from django.conf import settings
 from django.contrib.auth import login
 from django.contrib.auth.models import User
 from django.core.mail import send_mail
@@ -19,55 +17,6 @@ from portal_users.models import Profile
 from . import models
 from . import serializers
 from .token import token_generator
-
-
-# Спец форма для того, чтобы парсить файлы
-class DocScanForm(forms.ModelForm):
-    class Meta:
-        model = models.DocScan
-        fields = "__all__"
-
-
-def file_upload(request):
-    # TODO add path
-    if request.method == "POST":
-        if request.FILES:
-            # Сюда пишем id-шники DocScan, чтобы потом связать с заявкой
-            doc_scan_ids = []
-            if len(request.FILES) > 1:
-                for item in request.FILES.get("files"):
-                    # Может привести к багу если несколько файлов
-                    form = DocScanForm(request.POST, item)
-                    if form.is_valid():
-                        form.instance.name = item.name
-                        form.instance.ext = item.name.split(".")[-1]
-                        form.instance.size = item.size
-                        form.instance.content_type = item.content_type
-                        form.instance.path = f"{item.name}"
-                        form.save(commit=True)
-                        doc_scan_ids.append(form.instance.id)
-                        models.DocScan.handle_uploaded_file(item)
-                    else:
-                        raise Exception("An error occurred")
-            else:
-                form = DocScanForm(request.POST, request.FILES)
-                if form.is_valid():
-                    file = request.FILES.get("file")
-                    form.instance.name = file.name
-                    form.instance.ext = file.name.split(".")[-1]
-                    form.instance.size = file.size
-                    form.instance.content_type = file.content_type
-                    form.instance.path = f"{file.name}"
-                    form.save(commit=True)
-                    models.DocScan.handle_uploaded_file(file)
-                    doc_scan_ids.append(form.instance.id)
-            return JsonResponse({"ids": doc_scan_ids})
-        else:
-            return HttpResponseBadRequest(
-                content_type=b"application/pdf", content="Send files"
-            )
-    else:
-        return HttpResponse(content_type=b"text/html", content="Method GET not allowed")
 
 
 # Активация аккаунта

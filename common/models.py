@@ -1,6 +1,5 @@
 from django.db import models
 from django.core.validators import MaxValueValidator
-from django.contrib.auth.models import User
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from django.forms.models import model_to_dict
@@ -8,11 +7,8 @@ from uuid import uuid4
 
 
 class BaseManager(models.Manager):
-    def all(self):
-        return super(BaseManager, self).all().filter(is_active=True, deleted=None)
-
-    def filter(self, *args, **kwargs):
-        return super(BaseManager, self).filter(is_active=True, deleted=None)
+    def get_queryset(self):
+        return super(BaseManager, self).get_queryset().filter(is_active=True)
 
 
 class BaseModel(models.Model):
@@ -68,6 +64,10 @@ class BaseModel(models.Model):
                 for k in original.keys():
                     # Значения ключей не совпадают, значит сохраняем Changelog
                     if original[k] != updated_dict[k]:
+                        field = self._meta.get_field(k)
+                        if field.many_to_many:
+                            original[k] = list(map(lambda x: x.uid, original[k]))
+                            updated_dict[k] = list(map(lambda x: x.uid, updated_dict[k]))
                         Changelog.objects.create(
                             content_object=updated,
                             key=k,
@@ -75,6 +75,18 @@ class BaseModel(models.Model):
                             new_value=updated_dict[k]
                         )
         super().save(*args, **kwargs)
+
+    def update(self, src: dict):
+        # Для трекинга изменений в моделей за счет словаря со значениями
+        for key, value in src.items():
+            field = self._meta.get_field(key)
+            if field.is_relation and field.many_to_many:
+                # если поле M2M, то setattr не прокатит.
+                # Нужно тащить само M2M-отношение и сетить (set())
+                relation = getattr(self, key)
+                relation.set(value)
+            else:
+                setattr(self, key, value)
 
     @property
     def diffs(self):
@@ -366,7 +378,12 @@ class Course(BaseCatalog):
 
 class Comment(BaseModel):
     text = models.TextField('Текст комментария')
-    files = models.ManyToManyField('applicant.DocScan', blank=True)
+    document = models.ForeignKey(
+        'Document',
+        on_delete=models.SET_NULL,
+        blank=True,
+        null=True
+    )
     creator = models.ForeignKey(
         'portal_users.Profile',
         related_name='comments',
@@ -394,12 +411,14 @@ class Changelog(BaseModel):
         'Старое значение',
         max_length=300,
         blank=True,
+        null=True,
         default=''
     )
     new_value = models.CharField(
         'Новое значение',
         max_length=300,
         blank=True,
+        null=True,
         default=''
     )
     content_type = models.ForeignKey(
@@ -423,3 +442,54 @@ class Changelog(BaseModel):
     class Meta:
         verbose_name = 'Изменения заявления'
         verbose_name_plural = 'Изменения заявлений'
+
+
+class File(BaseModel):
+    name = models.CharField(
+        max_length=1000,
+        blank=True,
+        null=True,
+        verbose_name="Имя файла"
+    )
+    path = models.FileField(
+        verbose_name="Путь к файлу",
+        upload_to="upload"
+    )
+    extension = models.CharField(
+        max_length=20,
+        blank=True,
+        null=True,
+        verbose_name="Расширение файла"
+    )
+    size = models.PositiveIntegerField(
+        validators=[MaxValueValidator(20971520)],
+        blank=True,
+        null=True,
+        verbose_name="Размер файла"
+    )
+    content_type = models.CharField(
+        max_length=500,
+        blank=True,
+        null=True,
+        verbose_name="Тип контента"
+    )
+
+    @staticmethod
+    # Запись в media
+    def handle(file):
+        from django.conf import settings
+        with open(f"{settings.MEDIA_ROOT}/upload/{file.name}", "wb+") as destination:
+            for chunk in file.chunks():
+                destination.write(chunk)
+
+
+class Document(BaseCatalog):
+    files = models.ManyToManyField(
+        File,
+        related_name='document',
+        verbose_name='Файлы',
+    )
+
+    class Meta:
+        verbose_name = 'Документы'
+        verbose_name_plural = 'Документы'

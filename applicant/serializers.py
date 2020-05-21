@@ -11,6 +11,7 @@ from django.utils.translation import get_language
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 from common.models import IdentityDocument
+from common.serializers import DocumentSerializer
 from portal_users.serializers import ProfilePhoneSerializer
 from portal_users.models import Profile, Role, ProfilePhone
 from organizations.models import Education
@@ -25,14 +26,11 @@ class PrivilegeTypeSerializer(serializers.ModelSerializer):
 
 
 class PrivilegeSerializer(serializers.ModelSerializer):
-    scan_info = serializers.SerializerMethodField()
+    uid = serializers.ReadOnlyField()
 
     class Meta:
         model = models.Privilege
-        fields = "__all__"
-
-    def get_scan_info(self, privilege: models.Privilege):
-        return DocScanSerializer(privilege.scan).data
+        fields = '__all__'
 
 
 class UserPrivilegeListSerializer(serializers.ModelSerializer):
@@ -192,14 +190,11 @@ class QuestionnaireSerializer(serializers.ModelSerializer):
     address_of_residence = AddressSerializer(required=True)
     privilege_list = UserPrivilegeListSerializer(required=False, many=False)
     phone = ProfilePhoneSerializer(required=True)
-    scan = serializers.SerializerMethodField()
+    document = DocumentSerializer(source='id_document', required=False)
 
     class Meta:
         model = models.Questionnaire
         fields = "__all__"
-
-    def get_scan(self, q: models.Questionnaire):
-        return DocScanSerializer(q.id_doc_scan).data
 
     def validate(self, validated_data: dict):
         address_matches: int = validated_data.get('address_matches')
@@ -209,6 +204,10 @@ class QuestionnaireSerializer(serializers.ModelSerializer):
             raise ValidationError({"error": "temp_addr_not_present"})
         family: dict = validated_data.pop('family')
         members: list = family.pop('members')
+        emails = list(map(lambda member: member['email'], members))
+        users = User.objects.filter(username__in=emails)
+        if users.exists() and self.context['view'].action == 'create':
+            raise ValidationError({"error": {"msg": "user_exist"}})
         members_with_temp_reg = any(map(lambda member: member['address_matches'] == models.Address.TMP, members))
         if members_with_temp_reg and not temp_reg_present:
             raise ValidationError({"error": "member_addr_empty_temp_reg"})
@@ -219,6 +218,8 @@ class QuestionnaireSerializer(serializers.ModelSerializer):
             address_of_residence = address_of_registration
         elif address_matches == models.Questionnaire.MATCH_TMP:
             address_of_residence = address_of_temp_reg
+        elif address_matches == models.Questionnaire.MATCH_RES:
+            pass
         address_of_registration['type'] = models.Address.REG
         if temp_reg_present:
             address_of_temp_reg['type'] = models.Address.TMP
@@ -273,15 +274,8 @@ class QuestionnaireSerializer(serializers.ModelSerializer):
                 models.FamilyMember.objects.create(**member)
             id_doc = IdentityDocument.objects.create(**validated_data.pop('id_doc'))
             phone = ProfilePhone.objects.create(**validated_data.pop('phone'))
+            is_privileged = validated_data.get('is_privileged', False)
             privilege_list = validated_data.pop('privilege_list', None)
-            if privilege_list:
-                privileges = privilege_list.pop('privileges')
-                privilege_list = models.UserPrivilegeList.objects.create(**privilege_list, profile=creator)
-                models.Privilege.objects.bulk_create(models.Privilege(
-                    **privilege,
-                    list=privilege_list,
-                    profile=creator
-                ) for privilege in privileges)
             questionnaire = models.Questionnaire.objects.create(
                 creator=creator,
                 family=family,
@@ -290,9 +284,19 @@ class QuestionnaireSerializer(serializers.ModelSerializer):
                 address_of_residence=address_of_residence,
                 id_doc=id_doc,
                 phone=phone,
-                privilege_list=privilege_list,
                 **validated_data
             )
+            if privilege_list and is_privileged:
+                privileges = privilege_list.pop('privileges')
+                privilege_list = models.UserPrivilegeList.objects.create(**privilege_list, profile=creator, questionnaire=questionnaire)
+                models.Privilege.objects.bulk_create([
+                    models.Privilege(
+                        **privilege,
+                        list=privilege_list,
+                        profile=creator
+                    ) for privilege in privileges
+                ])
+
         except Exception as e:
             if isinstance(questionnaire, models.Questionnaire):
                 questionnaire.delete()
@@ -306,84 +310,67 @@ class QuestionnaireSerializer(serializers.ModelSerializer):
                 family = validated_data.pop('family')
                 members = family.pop('members')
                 family_instance: models.Family = models.Family.objects.get(pk=instance.family.uid)
-                for key, value in family.items():
-                    setattr(family_instance, key, value)
+                family_instance.update(family)
                 family_instance.save(snapshot=True)
                 for member in members:
                     member_instance: models.FamilyMember = models.FamilyMember.objects.get(
                         profile=member['profile'].uid)
                     address_instance = models.Address.objects.get(pk=member_instance.address.uid)
                     address = member.pop('address')
-                    # info = address.pop('info')
-                    # address.update({
-                    #     'region': info['region'] and info['region']['uid'],
-                    #     'district': info['district'] and info['district']['uid'],
-                    #     'city': info['city'] and info['city']['uid'],
-                    #     'locality': info['locality'] and info['locality']['uid']
-                    # })
-                    for key, value in address.items():
-                        setattr(address_instance, key, value)
+                    address_instance.update(address)
                     address_instance.save(snapshot=True)
-                    for key, value in member.items():
-                        setattr(member_instance, key, value)
+                    member_instance.update(member)
                     member_instance.save(snapshot=True)
                 id_doc = validated_data.pop('id_doc')
                 id_doc_instance = IdentityDocument.objects.get(pk=instance.id_doc.uid)
-                for key, value in id_doc.items():
-                    setattr(id_doc_instance, key, value)
+                id_doc_instance.update(id_doc)
                 id_doc_instance.save(snapshot=True)
                 address_of_registration = validated_data.pop('address_of_registration')
                 registration_instance = models.Address.objects.get(pk=instance.address_of_registration.uid)
-                for key, value in address_of_registration.items():
-                    setattr(registration_instance, key, value)
+                registration_instance.update(address_of_registration)
                 registration_instance.save(snapshot=True)
                 address_of_temp_reg = validated_data.pop('address_of_temp_reg', None)
-                if any(address_of_temp_reg.values()):
+                if address_of_temp_reg:
                     temp_instance = models.Address.objects.get(pk=instance.address_of_temp_reg.uid)
-                    for key, value in address_of_temp_reg.items():
-                        setattr(temp_instance, key, value)
+                    temp_instance.update(address_of_temp_reg)
                     temp_instance.save(snapshot=True)
                 address_of_residence = validated_data.pop('address_of_residence')
                 residence_instance = models.Address.objects.get(pk=instance.address_of_residence.uid)
-                for key, value in address_of_residence.items():
-                    setattr(residence_instance, key, value)
+                residence_instance.update(address_of_residence)
                 residence_instance.save(snapshot=True)
                 user_privilege_list = validated_data.pop('privilege_list', None)
                 if user_privilege_list:
                     privileges = user_privilege_list.pop('privileges')
                     for privilege in privileges:
-                        privilege_instance = models.Privilege.objects.get(
-                            type=privilege['type'],
-                            doc_type=privilege['doc_type'],
-                        )
-                        for key, value in privilege.items():
-                            setattr(privilege_instance, key, value)
-                        privilege_instance.save(snapshot=True)
+                        privilege_pk = privilege.get('uid', None)
+                        if privilege_pk:
+                            privilege_instance = models.Privilege.objects.get(pk=privilege_pk)
+                            privilege_instance.update(privilege)
+                            privilege_instance.save(snapshot=True)
+                        else:
+                            models.Privilege.objects.create(
+                                list=instance.privilege_list,
+                                profile=profile,
+                                **privilege
+                            )
                 phone = validated_data.pop('phone')
                 phone_instance = ProfilePhone.objects.get(pk=instance.phone.uid)
-                for key, value in phone.items():
-                    setattr(phone_instance, key, value)
+                phone_instance.update(phone)
                 phone_instance.save(snapshot=True)
-                for key, value in validated_data.items():
-                    setattr(instance, key, value)
+                instance.update(validated_data)
                 instance.save(snapshot=True)
                 profile = instance.creator
-                profile.first_name = instance.first_name
-                profile.last_name = instance.last_name
-                profile.middle_name = instance.middle_name
-                profile.email = instance.email
-                profile.save()
+                Profile.objects.filter(pk=profile.pk).update(
+                    first_name=instance.first_name,
+                    last_name=instance.last_name,
+                    middle_name=instance.middle_name,
+                    email=instance.email
+                )
             except Exception as e:
                 raise ValidationError({"error": e})
             return instance
         else:
             raise ValidationError({"error": "access_denied"})
-
-
-class DocScanSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = models.DocScan
-        fields = "__all__"
 
 
 class ApplicationStatusSerializer(serializers.ModelSerializer):
@@ -425,14 +412,9 @@ class DisciplineMarkSerializer(serializers.ModelSerializer):
 
 
 class TestCertSerializer(serializers.ModelSerializer):
-    scan_info = serializers.SerializerMethodField()
-
     class Meta:
         model = models.TestCert
         fields = "__all__"
-
-    def get_scan_info(self, cert: models.TestCert):
-        return DocScanSerializer(cert.scan).data
 
 
 class LanguageProficiencySerializer(serializers.ModelSerializer):
@@ -460,10 +442,6 @@ class GrantTypeSerializer(serializers.ModelSerializer):
 
 
 class GrantSerializer(serializers.ModelSerializer):
-    scan_info = serializers.SerializerMethodField()
-
-    def get_scan_info(self, grant: models.Grant):
-        return DocScanSerializer(grant.scan).data
 
     class Meta:
         model = models.Grant
@@ -480,11 +458,6 @@ class TestResultSerializer(serializers.ModelSerializer):
 
 
 class EducationSerializer(serializers.ModelSerializer):
-    scan_info = serializers.SerializerMethodField()
-
-    def get_scan_info(self, edu: models.Education):
-        return DocScanSerializer(edu.scan).data
-
     class Meta:
         model = models.Education
         exclude = ['profile']
@@ -650,7 +623,6 @@ class ApplicationSerializer(ApplicationLiteSerializer):
 
 
 class AdmissionDocumentSerializer(serializers.ModelSerializer):
-    files_info = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = models.AdmissionDocument
@@ -669,6 +641,3 @@ class AdmissionDocumentSerializer(serializers.ModelSerializer):
         instance.files.set(new_files)
         instance.save()
         return super().update(instance, validated_data)
-
-    def get_files_info(self, doc: models.AdmissionDocument):
-        return DocScanSerializer(doc.files.order_by('-created_at'), many=True).data

@@ -15,7 +15,6 @@ models = [
     AdmissionCampaignType,
     AdmissionCampaign,
     Applicant,
-    DocScan,
     ApplicationStatus,
     Questionnaire,
     UserPrivilegeList,
