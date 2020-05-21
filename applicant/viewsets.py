@@ -534,5 +534,20 @@ class AddressViewSet(ModelViewSet):
 class ModeratorViewSet(ModelViewSet):
     queryset = Profile.objects.filter(role__is_applicant=True)
     serializer_class = serializers.ModeratorSerializer
+    pagination_class = CustomPagination
 
+    def retrieve(self, request, *args, **kwargs):
+        queryset = self.queryset
+        application_status = request.data.get('status')
+        if application_status is not None: # TODO
+            pass
+
+        page = self.pagination_class(queryset)
+        return Response(self.serializer_class(page).data, status=HTTP_200_OK)
+
+    @action(methods=['get'], detail=False, url_path='statuses', url_name='statuses')
+    def get_statuses(self, request, pk=None):
+        statuses = models.ApplicationStatus.objects.all()
+        data = serializers.ApplicationStatusSerializer(statuses, many=True).data
+        return Response(data=data, status=HTTP_200_OK)
 
