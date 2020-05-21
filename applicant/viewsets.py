@@ -18,6 +18,7 @@ from univer_admin.permissions import IsAdminOrReadOnly
 from portal_users.models import Profile
 from . import models
 from . import serializers
+from portal.curr_settings import applicant_application_statuses
 from .token import token_generator
 
 
@@ -536,14 +537,19 @@ class ModeratorViewSet(ModelViewSet):
     serializer_class = serializers.ModeratorSerializer
     pagination_class = CustomPagination
 
-    def retrieve(self, request, *args, **kwargs):
+    def list(self, request):
         queryset = self.queryset
-        application_status = request.data.get('status')
-        if application_status is not None: # TODO
-            pass
+        application_status = request.query_params.get('status')
+        if application_status is not None and application_status != applicant_application_statuses['NO_QUESTIONNAIRE']:
+            profiles_with_questionnaire = models.Application.objects.filter(status=application_status).values_list('creator')
+            queryset = queryset.filter(pk__in=profiles_with_questionnaire)
+        elif application_status == applicant_application_statuses['NO_QUESTIONNAIRE']:
+            profiles_with_applications = models.Application.objects.all().values_list('creator')
+            queryset_with_application = queryset.filter(pk__in=profiles_with_applications)
+            queryset = queryset.difference(queryset_with_application)
 
-        page = self.pagination_class(queryset)
-        return Response(self.serializer_class(page).data, status=HTTP_200_OK)
+        page = self.paginate_queryset(queryset)
+        return Response(data=self.serializer_class(page, many=True).data, status=HTTP_200_OK)
 
     @action(methods=['get'], detail=False, url_path='statuses', url_name='statuses')
     def get_statuses(self, request, pk=None):
