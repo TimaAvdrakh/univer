@@ -12,8 +12,8 @@ class BaseManager(models.Manager):
     def all(self):
         return super(BaseManager, self).all().filter(is_active=True, deleted=None)
 
-    def filter(self, *args, **kwargs):
-        return super(BaseManager, self).filter(is_active=True, deleted=None)
+    def get_queryset(self):
+        return super(BaseManager, self).get_queryset().filter(is_active=True, deleted=None)
 
 
 class BaseModel(models.Model):
