@@ -15,6 +15,7 @@ from common.models import (
     Citizenship,
     Nationality,
     Changelog,
+    Document,
 )
 from portal_users.models import Profile, ProfilePhone, Gender, MaritalStatus, Role
 from organizations.models import (
@@ -218,6 +219,12 @@ class Address(BaseCatalog):
         verbose_name="Индекс",
         blank=True,
         null=True,
+    )
+    city_text = models.CharField(
+        max_length=200,
+        verbose_name='Город (текст)',
+        blank=True,
+        null=True
     )
 
     def save(self, *args, **kwargs):
@@ -500,66 +507,6 @@ class Applicant(BaseModel):
         return f'{self.first_name} {self.last_name}'
 
 
-# Сканы документов
-class DocScan(models.Model):
-    file = models.FileField(
-        verbose_name="Файл",
-        upload_to="media"
-    )
-    path = models.TextField(
-        blank=True,
-        null=True,
-        verbose_name="Путь к файлу"
-    )
-    ext = models.CharField(
-        max_length=20,
-        blank=True,
-        null=True,
-        verbose_name="Расширение файла"
-    )
-    name = models.CharField(
-        max_length=500,
-        blank=True,
-        null=True,
-        verbose_name="Имя файла"
-    )
-    size = models.PositiveIntegerField(
-        blank=True,
-        null=True,
-        verbose_name="Размер файла"
-    )
-    # File"s content type not Django"s
-    content_type = models.CharField(
-        max_length=500,
-        blank=True,
-        null=True,
-        verbose_name="Тип контента"
-    )
-    created_at = models.DateTimeField(
-        auto_now_add=True,
-        blank=True,
-        null=True
-    )
-
-    def __str__(self):
-        if self.name:
-            return self.name
-        else:
-            return super().__str__()
-
-    @staticmethod
-    # Запись в media
-    def handle_uploaded_file(f):
-        from django.conf import settings
-        with open(f"{settings.MEDIA_ROOT}/{f.name}", "wb+") as destination:
-            for chunk in f.chunks():
-                destination.write(chunk)
-
-    class Meta:
-        verbose_name = "Скан документа"
-        verbose_name_plural = "Сканы документов"
-
-
 # Статус заявки
 class ApplicationStatus(BaseCatalog):
     code = models.CharField(
@@ -617,9 +564,12 @@ class ApplicationStatus(BaseCatalog):
 class Questionnaire(BaseModel):
     MATCH_REG = 0
     MATCH_TMP = 1
+    MATCH_RES = 3
+
     ADDRESS_MATCH_CHOICES = (
-        (MATCH_REG, _('registration address')),
-        (MATCH_TMP, _('temporary registration address')),
+        (MATCH_REG, 'Адресу регистрации/прописки'),
+        (MATCH_TMP, 'Адресу временной регистрации'),
+        (MATCH_RES, 'Фактическому адресу')
     )
     creator = models.OneToOneField(
         Profile,
@@ -724,9 +674,10 @@ class Questionnaire(BaseModel):
         null=True,
         verbose_name='ИИН'
     )
-    id_doc_scan = models.ForeignKey(
-        DocScan,
-        on_delete=models.DO_NOTHING,
+    id_document = models.ForeignKey(
+        Document,
+        null=True,
+        on_delete=models.SET_NULL,
         verbose_name="Удо скан",
         related_name="application_id_doc",
     )
@@ -780,9 +731,13 @@ class Questionnaire(BaseModel):
     address_matches = models.CharField(
         max_length=1,
         choices=ADDRESS_MATCH_CHOICES,
-        verbose_name='Адресу фактического проживания соответствует',
+        verbose_name='Адрес соответствует',
         blank=True,
         null=True
+    )
+    is_privileged = models.BooleanField(
+        default=False,
+        verbose_name='Имеет льготы'
     )
 
     class Meta:
@@ -854,9 +809,10 @@ class Privilege(BaseModel):
         max_length=200,
         verbose_name="Кем выдано"
     )
-    scan = models.ForeignKey(
-        DocScan,
-        on_delete=models.DO_NOTHING,
+    document = models.ForeignKey(
+        Document,
+        null=True,
+        on_delete=models.SET_NULL,
         verbose_name="Скан документа"
     )
     list = models.ForeignKey(
@@ -1050,8 +1006,9 @@ class TestCert(BaseModel):
         default=False,
         verbose_name="Подтверждающий документ предоставлен"
     )
-    scan = models.ForeignKey(
-        DocScan,
+    document = models.ForeignKey(
+        Document,
+        null=True,
         on_delete=models.DO_NOTHING,
         verbose_name="Скан сертификата"
     )
@@ -1182,9 +1139,10 @@ class Grant(BaseModel):
         on_delete=models.SET_NULL,
         verbose_name='Группа образовательных программ'
     )
-    scan = models.ForeignKey(
-        DocScan,
-        on_delete=models.DO_NOTHING,
+    document = models.ForeignKey(
+        Document,
+        null=True,
+        on_delete=models.SET_NULL,
         verbose_name='Скан'
     )
 
@@ -1231,8 +1189,11 @@ class AdmissionDocument(BaseModel):
         blank=True,
         null=True,
     )
-    files = models.ManyToManyField(
-        DocScan,
+    document = models.ForeignKey(
+        Document,
+        blank=True,
+        null=True,
+        on_delete=models.SET_NULL,
         verbose_name='Сканы документов'
     )
 

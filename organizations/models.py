@@ -286,8 +286,8 @@ class Education(BaseModel):
         default=False,
         verbose_name='Выпускник НИШ'
     )
-    scan = models.ForeignKey(
-        'applicant.DocScan',
+    document = models.ForeignKey(
+        'common.Document',
         on_delete=models.SET_NULL,
         blank=True,
         null=True

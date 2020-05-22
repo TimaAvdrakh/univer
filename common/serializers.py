@@ -4,6 +4,20 @@ from . import models
 from portal_users.models import Level, AchievementType
 
 
+class FileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.File
+        fields = '__all__'
+
+
+class DocumentSerializer(serializers.ModelSerializer):
+    files = FileSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = models.Document
+        fields = ["files"]
+
+
 class FilteredListSerializer(serializers.ListSerializer):
     def to_representation(self, data):
         data = data.filter(is_active=True)

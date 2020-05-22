@@ -87,7 +87,7 @@ class Profile(BaseModel):
     middle_name = models.CharField(
         max_length=200,
         verbose_name='Отчество',
-        default='',
+        null=True,
         blank=True,
     )
     first_name_en = models.CharField(
