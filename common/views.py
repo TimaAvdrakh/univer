@@ -1,19 +1,105 @@
-from django.db.models import Q
+from django.conf import settings
 from rest_framework import generics
 from rest_framework import permissions
 from . import serializers
 from . import models
 from organizations import models as org_models
-from datetime import date
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.viewsets import ModelViewSet
 from rest_framework.decorators import action
+from rest_framework.exceptions import ValidationError
 from portal_users.models import Level, AchievementType
 from datetime import date
-from organizations import serializers as org_serializers
-from portal_users import serializers as user_serializers
 from django.utils.translation import gettext as _
+from django import forms
+from django.http import JsonResponse, HttpResponseBadRequest, HttpResponse
+
+
+class FileForm(forms.ModelForm):
+    path = forms.FileField(widget=forms.ClearableFileInput(attrs={'multiple': True}))
+
+    class Meta:
+        model = models.File
+        fields = ["path"]
+
+
+def upload(request):
+    if request.method == "POST":
+        if request.FILES:
+            path = request.FILES.getlist("path")
+            if len(path) > 1:
+                files = []
+                try:
+                    form = FileForm(request.POST, request.FILES)
+                    if form.is_valid():
+                        for file in path:
+                            file_instance = models.File.objects.create(
+                                name=file.name,
+                                extension=file.name.split('.')[-1],
+                                size=file.size,
+                                content_type=file.content_type,
+                                path=f'{settings.MEDIA_ROOT}/upload/{file.name}'
+                            )
+
+                            files.append(file_instance.pk)
+                            models.File.handle(file)
+                    document: models.Document = models.Document.objects.create()
+                    document.files.set(files)
+                    document.save()
+                    return JsonResponse({"pk": document.pk}, status=status.HTTP_200_OK)
+                except Exception as e:
+                    raise ValidationError(
+                        {
+                            "error": {
+                                "msg": "an error occurred",
+                                "exc": e
+                            }
+                        }
+                    )
+            else:
+                try:
+                    form = FileForm(request.POST, request.FILES)
+                    if form.is_valid():
+                        file = request.FILES.get("path")
+                        form.instance.name = file.name
+                        form.instance.extension = file.name.split(".")[-1]
+                        form.instance.size = file.size
+                        form.instance.content_type = file.content_type
+                        form.instance.path = f'{settings.MEDIA_ROOT}/upload/{file.name}'
+                        form.save(commit=True)
+                        models.File.handle(file)
+                    else:
+                        raise ValidationError(
+                            {
+                                "error": {
+                                    "msg": "form is invalid"
+                                }
+                            }
+                        )
+                    document: models.Document = models.Document.objects.create()
+                    document.files.add(form.instance.pk)
+                    document.save()
+                    return JsonResponse({"pk": document.pk})
+                except Exception as e:
+                    raise ValidationError(
+                        {
+                            "error": {
+                                "msg": "an error occurred",
+                                "exc": e
+                            }
+                        }
+                    )
+        else:
+            return HttpResponseBadRequest(
+                content_type=b"application/pdf",
+                content="Send files"
+            )
+    else:
+        return HttpResponse(
+            content_type=b"application/pdf",
+            content="Send files"
+        )
 
 
 class AcadPeriodListView(generics.ListAPIView):
@@ -33,7 +119,7 @@ class GetAcadPeriodsForRegisterView(generics.ListAPIView):
     def list(self, request, *args, **kwargs):
         study_plan_id = request.query_params.get("study_plan")
 
-        study_plan = org_models.StudyPlan.objects.get(pk=study_plan_id, is_active=True, )
+        study_plan = org_models.StudyPlan.objects.get(pk=study_plan_id, is_active=True,)
         current_course = study_plan.current_course
         if current_course is None:
             return Response(
@@ -61,7 +147,7 @@ class GetAcadPeriodsForRegisterCopyView(generics.ListAPIView):
     def list(self, request, *args, **kwargs):
         study_plan_id = request.query_params.get("study_plan")
 
-        study_plan = org_models.StudyPlan.objects.get(pk=study_plan_id, is_active=True, )
+        study_plan = org_models.StudyPlan.objects.get(pk=study_plan_id, is_active=True,)
         current_course = study_plan.current_course
         if current_course is None:
             return Response(
@@ -69,57 +155,46 @@ class GetAcadPeriodsForRegisterCopyView(generics.ListAPIView):
             )
 
         today = date.today()
-        acad_period_pks = list(models.CourseAcadPeriodPermission.objects.filter(
-            registration_period__start_date__lte=today,
-            registration_period__end_date__gte=today,
-            course=current_course,
-        ).values_list('acad_period', flat=True))
+        acad_period_pks = list(
+            models.CourseAcadPeriodPermission.objects.filter(
+                registration_period__start_date__lte=today,
+                registration_period__end_date__gte=today,
+                course=current_course,
+            ).values_list("acad_period", flat=True)
+        )
 
         acad_periods = org_models.AcadPeriod.objects.filter(
-            pk__in=acad_period_pks,
-            is_active=True,
+            pk__in=acad_period_pks, is_active=True,
         )
 
         serializer = self.serializer_class(acad_periods, many=True).data
         serializer.append(
-            {
-                'name': _('all period'),
-                'uid': 'all',
-            }
+            {"name": _("all period"), "uid": "all",}
         )
-        return Response(
-            serializer,
-            status=status.HTTP_200_OK
-        )
+        return Response(serializer, status=status.HTTP_200_OK)
 
 
 class GetRegPeriodAcadPeriodsView(generics.ListAPIView):  # TODO a
     """Получить акад периоды в указанном периоде регистрации
     Принимает query_param: ?study_plan="<uid study_plan>, reg_period "
     """
+
     serializer_class = serializers.AcadPeriodSerializer
 
     def list(self, request, *args, **kwargs):
-        study_plan_id = request.query_params.get('study_plan')
-        reg_period = self.request.query_params.get('reg_period')
+        study_plan_id = request.query_params.get("study_plan")
+        reg_period = self.request.query_params.get("reg_period")
 
-        study_plan = org_models.StudyPlan.objects.get(
-            pk=study_plan_id,
-            is_active=True,
-        )
+        study_plan = org_models.StudyPlan.objects.get(pk=study_plan_id, is_active=True,)
         current_course = study_plan.current_course
         if current_course is None:
             return Response(
-                {
-                    "message": "not_actual_study_plan"
-                },
-                status=status.HTTP_403_FORBIDDEN
+                {"message": "not_actual_study_plan"}, status=status.HTTP_403_FORBIDDEN
             )
 
         acad_period_pks = models.CourseAcadPeriodPermission.objects.filter(
-            registration_period_id=reg_period,
-            course=current_course,
-        ).values('acad_period')
+            registration_period_id=reg_period, course=current_course,
+        ).values("acad_period")
         acad_periods = org_models.AcadPeriod.objects.filter(
             pk__in=acad_period_pks, is_active=True,
         )
@@ -155,11 +230,14 @@ class StudyYearListView(generics.ListAPIView):
         my = self.request.query_params.get("my")
 
         queryset = self.queryset.all()
-        if my == '1':  # Если пользователь является студентом
-            study_plans = org_models.StudyPlan.objects.filter(student=profile,
-                                                              is_active=True)
-            study_year_pks = org_models.StudyYearCourse.objects.filter(study_plan__in=study_plans).values('study_year')
-            queryset = queryset.filter(pk__in=study_year_pks).order_by('start')
+        if my == "1":  # Если пользователь является студентом
+            study_plans = org_models.StudyPlan.objects.filter(
+                student=profile, is_active=True
+            )
+            study_year_pks = org_models.StudyYearCourse.objects.filter(
+                study_plan__in=study_plans
+            ).values("study_year")
+            queryset = queryset.filter(pk__in=study_year_pks).order_by("start")
         return queryset
 
 
@@ -218,7 +296,7 @@ class TestStatusCodeView(generics.RetrieveAPIView):
     def get(self, request, *args, **kwargs):
         code = request.query_params.get("status")
 
-        return Response({"message": "ok", }, status=int(code))
+        return Response({"message": "ok",}, status=int(code))
 
 
 class StudyYearFromStudyPlan(generics.RetrieveAPIView):
@@ -237,13 +315,14 @@ class StudyYearFromStudyPlan(generics.RetrieveAPIView):
         study_years = org_models.StudyPeriod.objects.filter(
             pk__in=study_year_pks, is_study_year=True, is_active=True,
         ).order_by("start")
-        serializer = serializers.StudyPeriodSerializer(instance=study_years, many=True, )
+        serializer = serializers.StudyPeriodSerializer(instance=study_years, many=True,)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 class CourseListView(generics.ListAPIView):
     """Получить список курсов"""
-    queryset = models.Course.objects.filter(is_active=True).order_by('number')
+
+    queryset = models.Course.objects.filter(is_active=True).order_by("number")
     serializer_class = serializers.CourseSerializer
 
 
@@ -255,29 +334,35 @@ class StudentDisciplineStatusListView(generics.ListAPIView):
 
 
 class NationalityViewSet(ModelViewSet):
-    queryset = models.Nationality.objects.order_by('name_ru', 'name_en', 'name_kk').distinct('name_ru', 'name_en', 'name_kk')
+    queryset = models.Nationality.objects.order_by(
+        "name_ru", "name_en", "name_kk"
+    ).distinct("name_ru", "name_en", "name_kk")
     serializer_class = serializers.NationalitySerializer
     permission_classes = (permissions.AllowAny,)
 
 
 class CitizenshipViewSet(ModelViewSet):
-    queryset = models.Citizenship.objects.order_by('name_ru', 'name_en', 'name_kk').distinct('name_ru', 'name_en', 'name_kk')
+    queryset = models.Citizenship.objects.order_by(
+        "name_ru", "name_en", "name_kk"
+    ).distinct("name_ru", "name_en", "name_kk")
     serializer_class = serializers.CitizenshipSerializer
     permission_classes = (permissions.AllowAny,)
 
-    @action(methods=['get'], detail=False, url_path='kz', url_name='get_kz')
+    @action(methods=["get"], detail=False, url_path="kz", url_name="get_kz")
     def get_kz(self, request, pk=None):
-        kz = self.queryset.filter(code__icontains='kz').first()
-        return Response(data={'uid': kz.uid}, status=status.HTTP_200_OK)
+        kz = self.queryset.filter(code__icontains="kz").first()
+        return Response(data={"uid": kz.uid}, status=status.HTTP_200_OK)
 
 
 class DocumentTypeViewSet(ModelViewSet):
-    queryset = models.DocumentType.objects.order_by('name_ru', 'name_en', 'name_kk').distinct('name_ru', 'name_en', 'name_kk')
+    queryset = models.DocumentType.objects.order_by(
+        "name_ru", "name_en", "name_kk"
+    ).distinct("name_ru", "name_en", "name_kk")
     serializer_class = serializers.DocumentTypeSerializer
     permission_classes = (permissions.AllowAny,)
 
 
 class GovernmentAgencyViewSet(ModelViewSet):
-    queryset = models.GovernmentAgency.objects.order_by('name_ru', 'name_en', 'name_kk')
+    queryset = models.GovernmentAgency.objects.order_by("name_ru", "name_en", "name_kk")
     serializer_class = serializers.GovernmentAgencySerializer
     permission_classes = (permissions.AllowAny,)

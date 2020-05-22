@@ -1,9 +1,7 @@
-from django import forms
-from django.conf import settings
 from django.contrib.auth import login
 from django.contrib.auth.models import User
 from django.core.mail import send_mail
-from django.db.models import Q
+from django.db.models import Q, prefetch_related_objects
 from django.http import JsonResponse, HttpResponseBadRequest, HttpResponse
 from django.utils.encoding import force_text
 from django.utils.http import urlsafe_base64_decode
@@ -20,55 +18,6 @@ from . import models
 from . import serializers
 from portal.curr_settings import applicant_application_statuses
 from .token import token_generator
-
-
-# Спец форма для того, чтобы парсить файлы
-class DocScanForm(forms.ModelForm):
-    class Meta:
-        model = models.DocScan
-        fields = "__all__"
-
-
-def file_upload(request):
-    # TODO add path
-    if request.method == "POST":
-        if request.FILES:
-            # Сюда пишем id-шники DocScan, чтобы потом связать с заявкой
-            doc_scan_ids = []
-            if len(request.FILES) > 1:
-                for item in request.FILES.get("files"):
-                    # Может привести к багу если несколько файлов
-                    form = DocScanForm(request.POST, item)
-                    if form.is_valid():
-                        form.instance.name = item.name
-                        form.instance.ext = item.name.split(".")[-1]
-                        form.instance.size = item.size
-                        form.instance.content_type = item.content_type
-                        form.instance.path = f"{item.name}"
-                        form.save(commit=True)
-                        doc_scan_ids.append(form.instance.id)
-                        models.DocScan.handle_uploaded_file(item)
-                    else:
-                        raise Exception("An error occurred")
-            else:
-                form = DocScanForm(request.POST, request.FILES)
-                if form.is_valid():
-                    file = request.FILES.get("file")
-                    form.instance.name = file.name
-                    form.instance.ext = file.name.split(".")[-1]
-                    form.instance.size = file.size
-                    form.instance.content_type = file.content_type
-                    form.instance.path = f"{file.name}"
-                    form.save(commit=True)
-                    models.DocScan.handle_uploaded_file(file)
-                    doc_scan_ids.append(form.instance.id)
-            return JsonResponse({"ids": doc_scan_ids})
-        else:
-            return HttpResponseBadRequest(
-                content_type=b"application/pdf", content="Send files"
-            )
-    else:
-        return HttpResponse(content_type=b"text/html", content="Method GET not allowed")
 
 
 # Активация аккаунта
@@ -533,13 +482,18 @@ class AddressViewSet(ModelViewSet):
 
 
 class ModeratorViewSet(ModelViewSet):
-    queryset = Profile.objects.filter(role__is_applicant=True)
+    queryset = Profile.objects.filter(role__is_applicant=True).order_by('last_name')
     serializer_class = serializers.ModeratorSerializer
     pagination_class = CustomPagination
 
     def list(self, request):
         queryset = self.queryset
         application_status = request.query_params.get('status')
+        full_name = request.query_params.get('full_name')
+        preparation_level = request.query_params.get('preparation_level')
+        edu_program_groups = request.query_params.get('edu_program_groups')
+        application_date = request.query_params.get('application_date')
+
         if application_status is not None and application_status != applicant_application_statuses['NO_QUESTIONNAIRE']:
             profiles_with_questionnaire = models.Application.objects.filter(status=application_status).values_list('creator')
             queryset = queryset.filter(pk__in=profiles_with_questionnaire)
@@ -547,6 +501,30 @@ class ModeratorViewSet(ModelViewSet):
             profiles_with_applications = models.Application.objects.all().values_list('creator')
             queryset_with_application = queryset.filter(pk__in=profiles_with_applications)
             queryset = queryset.difference(queryset_with_application)
+
+        if full_name is not None:
+            lookup = Q(first_name__contains=full_name) \
+                     | Q(last_name__contains=full_name) \
+                     | Q(middle_name__contains=full_name)
+            queryset = queryset.filter(lookup)
+        if preparation_level is not None:
+            profiles_with_prep_levels = models.Application.objects.filter(
+                directions__plan__preparaion_level=preparation_level
+            )
+            profiles_with_prep_levels.values_list('creator')
+            queryset = queryset.filter(pk__in=profiles_with_prep_levels)
+        if edu_program_groups is not None:
+            profiles_with_edu_group_group = models.Application.objects.filter(
+                directions__plan__education_program_group=edu_program_groups
+            )
+            profiles_with_edu_group_group.values_list('creator')
+            queryset = queryset.filter(pk__in=profiles_with_edu_group_group)
+        if application_date is not None:
+            profiles_with_cur_data_application = models.Application.objects.filter(
+                created=application_date
+            )
+            profiles_with_cur_data_application.values_list('creator')
+            queryset = queryset.filter(pk__in=profiles_with_cur_data_application)
 
         page = self.paginate_queryset(queryset)
         return Response(data=self.serializer_class(page, many=True).data, status=HTTP_200_OK)
@@ -556,4 +534,6 @@ class ModeratorViewSet(ModelViewSet):
         statuses = models.ApplicationStatus.objects.all()
         data = serializers.ApplicationStatusSerializer(statuses, many=True).data
         return Response(data=data, status=HTTP_200_OK)
+
+
 
