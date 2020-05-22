@@ -643,9 +643,8 @@ class ModeratorSerializer(serializers.ModelSerializer):
     class Meta:
         model = Profile
         fields = [
-            'first_name',
-            'last_name',
-            'middle_name',
+            'uid',
+            'full_name',
         ]
 
     def to_representation(self, instance):
