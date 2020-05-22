@@ -27,9 +27,9 @@ urlpatterns = [
 
     path('courses/', views.CourseListView.as_view(), name='cources'),
     path('student_discipline/status/', views.StudentDisciplineStatusListView.as_view(), name='student_discipline_status'),
+    path('upload/', views.upload, name='file_upload')
 ]
 
-#1234544
 router = DefaultRouter()
 router.register(r'nationalities', views.NationalityViewSet)
 router.register(r'citizenship', views.CitizenshipViewSet)

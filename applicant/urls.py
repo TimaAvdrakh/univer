@@ -25,7 +25,7 @@ urlpatterns = router.urls
 
 # endpoint для файлов
 urlpatterns += [
-    path("upload/", viewsets.file_upload, name='upload'),
+    # path("upload/", viewsets.file_upload, name='upload'),
     re_path(
         "activate/(?P<uidb64>[0-9A-Za-z_\-]+)/(?P<token>[0-9A-Za-z]{1,13}-[0-9A-Za-z]{1,20})/",
         viewsets.activate,
