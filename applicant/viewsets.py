@@ -492,7 +492,7 @@ class ModeratorViewSet(ModelViewSet):
         full_name = request.query_params.get('full_name')
         preparation_level = request.query_params.get('preparation_level')
         edu_program_groups = request.query_params.get('edu_program_groups')
-        application_date = request.query_params.get('application_groups')
+        application_date = request.query_params.get('application_date')
 
         if application_status is not None and application_status != applicant_application_statuses['NO_QUESTIONNAIRE']:
             profiles_with_questionnaire = models.Application.objects.filter(status=application_status).values_list('creator')
