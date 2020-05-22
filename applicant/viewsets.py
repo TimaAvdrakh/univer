@@ -504,7 +504,7 @@ class ModeratorViewSet(ModelViewSet):
 
         if full_name is not None:
             lookup = Q(first_name__contains=full_name) | Q(last_name__contains=full_name) | Q(middle_name__contains=full_name)
-            queryset.filter(lookup)
+            queryset = queryset.filter(lookup)
         if preparation_level is not None:
             profiles_with_prep_levels = models.Application.objects.filter(directions__plan__preparaion_level=preparation_level)
             profiles_with_prep_levels.values_list('creator')
