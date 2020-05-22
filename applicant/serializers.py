@@ -655,10 +655,16 @@ class ModeratorSerializer(serializers.ModelSerializer):
             data['citizenship'] = questionnairies.citizenship.name
             if questionnairies.address_of_registration is not None:
                 data['address_of_registration'] = questionnairies.address_of_registration.name
+            else:
+                data['address_of_registration'] = ""
             if questionnairies.address_of_residence is not None:
                 data['address_of_residence'] = questionnairies.address_of_residence.name
+            else:
+                data['address_of_residence'] = ""
             if questionnairies.address_of_temp_reg is not None:
                 data['address_of_temp_reg'] = questionnairies.address_of_temp_reg.name
+            else:
+                data['address_of_temp_reg'] = ""
 
             family_members = models.FamilyMember.objects.filter(profile=instance)
             data['family_members'] = FamilyMemberForModerator(family_members, many=True).data
@@ -669,9 +675,15 @@ class ModeratorSerializer(serializers.ModelSerializer):
                 data['directions'] = OrderedDirectionsForModerator(directions, many=True).data
                 data['status'] = applications.status.code
             except models.Application.DoesNotExist:
+                data['directions'] = []
                 data['status'] = models.ApplicationStatus.objects.get(code='NO_QUESTIONNAIRE').code
-
         except models.Questionnaire.DoesNotExist:
+            data['iin'] = ""
+            data['address_of_registration'] = ""
+            data['address_of_residence'] = ""
+            data['address_of_temp_reg'] = ""
+            data['family_members'] = []
+            data['directions'] = []
             data['status'] = models.ApplicationStatus.objects.get(code='NO_QUESTIONNAIRE').code
 
         return data
