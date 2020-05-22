@@ -527,7 +527,9 @@ class ModeratorViewSet(ModelViewSet):
             queryset = queryset.filter(pk__in=profiles_with_cur_data_application)
 
         page = self.paginate_queryset(queryset)
-        return Response(data=self.serializer_class(page, many=True).data, status=HTTP_200_OK)
+        serializer = self.serializer_class(page, many=True).data
+        paginated_response = self.get_paginated_response(serializer)
+        return Response(data=paginated_response.data, status=HTTP_200_OK)
 
     @action(methods=['get'], detail=False, url_path='statuses', url_name='statuses')
     def get_statuses(self, request, pk=None):
