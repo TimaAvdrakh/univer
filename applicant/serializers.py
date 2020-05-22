@@ -26,7 +26,7 @@ class PrivilegeTypeSerializer(serializers.ModelSerializer):
 
 
 class PrivilegeSerializer(serializers.ModelSerializer):
-    uid = serializers.ReadOnlyField()
+    doc = DocumentSerializer(source='document', read_only=True, required=False)
 
     class Meta:
         model = models.Privilege
@@ -340,19 +340,16 @@ class QuestionnaireSerializer(serializers.ModelSerializer):
                 residence_instance.save(snapshot=True)
                 user_privilege_list = validated_data.pop('privilege_list', None)
                 if user_privilege_list:
+                    uids = instance.privilege_list.privileges.values_list('uid', flat=True)
+                    models.Privilege.objects.filter(pk__in=uids).delete()
                     privileges = user_privilege_list.pop('privileges')
                     for privilege in privileges:
-                        privilege_pk = privilege.get('uid', None)
-                        if privilege_pk:
-                            privilege_instance = models.Privilege.objects.get(pk=privilege_pk)
-                            privilege_instance.update(privilege)
-                            privilege_instance.save(snapshot=True)
-                        else:
-                            models.Privilege.objects.create(
-                                list=instance.privilege_list,
-                                profile=profile,
-                                **privilege
-                            )
+                        p = models.Privilege.objects.create(
+                            **privilege
+                        )
+                        p.profile = profile
+                        p.list = instance.privilege_list
+                        p.save()
                 phone = validated_data.pop('phone')
                 phone_instance = ProfilePhone.objects.get(pk=instance.phone.uid)
                 phone_instance.update(phone)
