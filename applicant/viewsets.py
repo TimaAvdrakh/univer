@@ -3,7 +3,7 @@ from django.conf import settings
 from django.contrib.auth import login
 from django.contrib.auth.models import User
 from django.core.mail import send_mail
-from django.db.models import Q
+from django.db.models import Q, prefetch_related_objects
 from django.http import JsonResponse, HttpResponseBadRequest, HttpResponse
 from django.utils.encoding import force_text
 from django.utils.http import urlsafe_base64_decode
@@ -533,13 +533,18 @@ class AddressViewSet(ModelViewSet):
 
 
 class ModeratorViewSet(ModelViewSet):
-    queryset = Profile.objects.filter(role__is_applicant=True)
+    queryset = Profile.objects.filter(role__is_applicant=True).order_by('last_name')
     serializer_class = serializers.ModeratorSerializer
     pagination_class = CustomPagination
 
     def list(self, request):
         queryset = self.queryset
         application_status = request.query_params.get('status')
+        full_name = request.query_params.get('full_name')
+        preparation_level = request.query_params.get('preparation_level')
+        edu_program_groups = request.query_params.get('edu_program_groups')
+        application_date = request.query_params.get('application_groups')
+
         if application_status is not None and application_status != applicant_application_statuses['NO_QUESTIONNAIRE']:
             profiles_with_questionnaire = models.Application.objects.filter(status=application_status).values_list('creator')
             queryset = queryset.filter(pk__in=profiles_with_questionnaire)
@@ -547,6 +552,22 @@ class ModeratorViewSet(ModelViewSet):
             profiles_with_applications = models.Application.objects.all().values_list('creator')
             queryset_with_application = queryset.filter(pk__in=profiles_with_applications)
             queryset = queryset.difference(queryset_with_application)
+
+        if full_name is not None:
+            lookup = Q(first_name__contains=full_name) | Q(last_name__contains=full_name) | Q(middle_name__contains=full_name)
+            queryset.filter(lookup)
+        if preparation_level is not None:
+            profiles_with_prep_levels = models.Application.objects.filter(directions__plan__preparaion_level=preparation_level)
+            profiles_with_prep_levels.values_list('creator')
+            queryset = queryset.filter(pk__in=profiles_with_prep_levels)
+        if edu_program_groups is not None:
+            profiles_with_edu_group_group = models.Application.objects.filter(directions__plan__education_program_group=edu_program_groups)
+            profiles_with_edu_group_group.values_list('creator')
+            queryset = queryset.filter(pk__in=profiles_with_edu_group_group)
+        if application_date is not None:
+            profiles_with_cur_data_application = models.Application.objects.filter(created=application_date)
+            profiles_with_cur_data_application.values_list('creator')
+            queryset = queryset.filter(pk__in=profiles_with_cur_data_application)
 
         page = self.paginate_queryset(queryset)
         return Response(data=self.serializer_class(page, many=True).data, status=HTTP_200_OK)
@@ -556,4 +577,6 @@ class ModeratorViewSet(ModelViewSet):
         statuses = models.ApplicationStatus.objects.all()
         data = serializers.ApplicationStatusSerializer(statuses, many=True).data
         return Response(data=data, status=HTTP_200_OK)
+
+
 
