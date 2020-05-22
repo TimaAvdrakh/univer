@@ -503,18 +503,26 @@ class ModeratorViewSet(ModelViewSet):
             queryset = queryset.difference(queryset_with_application)
 
         if full_name is not None:
-            lookup = Q(first_name__contains=full_name) | Q(last_name__contains=full_name) | Q(middle_name__contains=full_name)
+            lookup = Q(first_name__contains=full_name) \
+                     | Q(last_name__contains=full_name) \
+                     | Q(middle_name__contains=full_name)
             queryset = queryset.filter(lookup)
         if preparation_level is not None:
-            profiles_with_prep_levels = models.Application.objects.filter(directions__plan__preparaion_level=preparation_level)
+            profiles_with_prep_levels = models.Application.objects.filter(
+                directions__plan__preparaion_level=preparation_level
+            )
             profiles_with_prep_levels.values_list('creator')
             queryset = queryset.filter(pk__in=profiles_with_prep_levels)
         if edu_program_groups is not None:
-            profiles_with_edu_group_group = models.Application.objects.filter(directions__plan__education_program_group=edu_program_groups)
+            profiles_with_edu_group_group = models.Application.objects.filter(
+                directions__plan__education_program_group=edu_program_groups
+            )
             profiles_with_edu_group_group.values_list('creator')
             queryset = queryset.filter(pk__in=profiles_with_edu_group_group)
         if application_date is not None:
-            profiles_with_cur_data_application = models.Application.objects.filter(created=application_date)
+            profiles_with_cur_data_application = models.Application.objects.filter(
+                created=application_date
+            )
             profiles_with_cur_data_application.values_list('creator')
             queryset = queryset.filter(pk__in=profiles_with_cur_data_application)
 
