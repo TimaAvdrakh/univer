@@ -16,6 +16,7 @@ from univer_admin.permissions import IsAdminOrReadOnly
 from portal_users.models import Profile
 from . import models
 from . import serializers
+from portal.curr_settings import applicant_application_statuses
 from .token import token_generator
 
 
@@ -461,20 +462,47 @@ class AddressViewSet(ModelViewSet):
         return Response(data=data, status=HTTP_200_OK)
 
 
-class AdmissionDocumentViewSet(ModelViewSet):
-    queryset = models.AdmissionDocument.objects.all()
-    serializer_class = serializers.AdmissionDocumentSerializer
+# class AdmissionDocumentViewSet(ModelViewSet):
+#     queryset = models.AdmissionDocument.objects.all()
+#     serializer_class = serializers.AdmissionocumentSerializer
+#
+#     def create(self, request, *args, **kwargs):
+#         profile = self.request.user.profile
+#         request.data['creator'] = profile.pk
+#         return super().create(request, *args, **kwargs)
+#
+#     @action(methods=['get'], detail=False, url_name='my', url_path='my')
+#     def get_my_attachments(self, request, pk=None):
+#         profile: Profile = self.request.user.profile
+#         queryset = self.queryset.filter(creator=profile)
+#         if queryset.exists():
+#             return Response(data=serializers.AdmissionDocumentSerializer(queryset.first()).data, status=HTTP_200_OK)
+#         else:
+#             return Response(data=None, status=HTTP_200_OK)
 
-    def create(self, request, *args, **kwargs):
-        profile = self.request.user.profile
-        request.data['creator'] = profile.pk
-        return super().create(request, *args, **kwargs)
 
-    @action(methods=['get'], detail=False, url_name='my', url_path='my')
-    def get_my_attachments(self, request, pk=None):
-        profile: Profile = self.request.user.profile
-        queryset = self.queryset.filter(creator=profile)
-        if queryset.exists():
-            return Response(data=serializers.AdmissionDocumentSerializer(queryset.first()).data, status=HTTP_200_OK)
-        else:
-            return Response(data=None, status=HTTP_200_OK)
+class ModeratorViewSet(ModelViewSet):
+    queryset = Profile.objects.filter(role__is_applicant=True)
+    serializer_class = serializers.ModeratorSerializer
+    pagination_class = CustomPagination
+
+    def list(self, request):
+        queryset = self.queryset
+        application_status = request.query_params.get('status')
+        if application_status is not None and application_status != applicant_application_statuses['NO_QUESTIONNAIRE']:
+            profiles_with_questionnaire = models.Application.objects.filter(status=application_status).values_list('creator')
+            queryset = queryset.filter(pk__in=profiles_with_questionnaire)
+        elif application_status == applicant_application_statuses['NO_QUESTIONNAIRE']:
+            profiles_with_applications = models.Application.objects.all().values_list('creator')
+            queryset_with_application = queryset.filter(pk__in=profiles_with_applications)
+            queryset = queryset.difference(queryset_with_application)
+
+        page = self.paginate_queryset(queryset)
+        return Response(data=self.serializer_class(page, many=True).data, status=HTTP_200_OK)
+
+    @action(methods=['get'], detail=False, url_path='statuses', url_name='statuses')
+    def get_statuses(self, request, pk=None):
+        statuses = models.ApplicationStatus.objects.all()
+        data = serializers.ApplicationStatusSerializer(statuses, many=True).data
+        return Response(data=data, status=HTTP_200_OK)
+

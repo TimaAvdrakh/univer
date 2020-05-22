@@ -601,7 +601,6 @@ class ApplicationLiteSerializer(serializers.ModelSerializer):
 
 
 class OrderedDirectionSerializer(serializers.ModelSerializer):
-
     class Meta:
         model = models.OrderedDirection
         fields = ['plan', 'order_number']
@@ -638,3 +637,72 @@ class AdmissionDocumentSerializer(serializers.ModelSerializer):
         instance.files.set(new_files)
         instance.save()
         return super().update(instance, validated_data)
+
+
+class ModeratorSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Profile
+        fields = [
+            'first_name',
+            'last_name',
+            'middle_name',
+        ]
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance=instance)
+        try:
+            questionnairies = models.Questionnaire.objects.get(creator=instance)
+            data['iin'] = questionnairies.iin # iin В Казахстане означает индивидуальный идентификационный номер
+            data['citizenship'] = questionnairies.citizenship.name
+            if questionnairies.address_of_registration is not None:
+                data['address_of_registration'] = questionnairies.address_of_registration.name
+            if questionnairies.address_of_residence is not None:
+                data['address_of_residence'] = questionnairies.address_of_residence.name
+            if questionnairies.address_of_temp_reg is not None:
+                data['address_of_temp_reg'] = questionnairies.address_of_temp_reg.name
+
+            family_members = models.FamilyMember.objects.filter(profile=instance)
+            data['family_members'] = FamilyMemberForModerator(family_members, many=True).data
+
+            try:
+                applications = models.Application.objects.get(creator=instance)
+                directions = applications.directions.all()
+                data['directions'] = OrderedDirectionsForModerator(directions, many=True).data
+                data['status'] = applications.status.code
+            except models.Application.DoesNotExist:
+                data['status'] = models.ApplicationStatus.objects.get(code='NO_QUESTIONNAIRE').code
+
+        except models.Questionnaire.DoesNotExist:
+            data['status'] = models.ApplicationStatus.objects.get(code='NO_QUESTIONNAIRE').code
+
+        return data
+
+
+class FamilyMemberForModerator(serializers.ModelSerializer):
+    # address = serializers.CharField()
+
+    class Meta:
+        model = models.FamilyMember
+        fields = [
+            'first_name',
+            'last_name',
+            'middle_name',
+            'workplace',
+            # 'phone',
+            # 'address',
+        ]
+
+
+class OrderedDirectionsForModerator(serializers.ModelSerializer):
+    class Meta:
+        model = models.OrderedDirection
+        fields = [
+            'uid',
+        ]
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance=instance)
+        data['education_program'] = instance.plan.education_program.name
+        data['language'] = instance.plan.language.name
+
+        return data

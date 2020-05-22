@@ -6,7 +6,11 @@ from common.models import BaseModel, BaseCatalog, BaseIdModel
 #from django.utils import timezone
 from django.contrib.postgres.fields import ArrayField
 
-
+NEW = "NEW"
+IN_PROGRESS = "IN_PROGRESS"
+DENIED = "DENIED"
+COMPLETED = "COMPLETED"
+OUTDATED = "OUTDATED"
 
 # Сканы документов
 class Example(models.Model):
@@ -74,10 +78,61 @@ class Status(BaseCatalog):
         verbose_name='Ид в 1с',
     )
 
+    code = models.CharField(
+        max_length=255,
+        blank=True,
+        null=True,
+        verbose_name=_("Code of status"),
+    )
+
+    @staticmethod
+    def create_or_update():
+        statuses = [
+            {
+                "name": "New",
+                "name_ru": "Новая",
+                "name_kk": "",
+                "name_en": "New",
+                "code": NEW,
+            },
+            {
+                "name": "In progress",
+                "name_ru": "В обработке",
+                "name_kk": "",
+                "name_en": "In progress",
+                "code": IN_PROGRESS,
+            },
+            {
+                "name": "Denied",
+                "name_ru": "Отказано",
+                "name_kk": "",
+                "name_en": "Denied",
+                "code": DENIED,
+            },
+            {
+                "name": "Completed",
+                "name_ru": "Выполнено",
+                "name_kk": "",
+                "name_en": "Completed",
+                "code": COMPLETED,
+            },
+            {
+                "name": "Outdated",
+                "name_ru": "Истек срок",
+                "name_kk": "",
+                "name_en": "Outdated",
+                "code": OUTDATED,
+            },
+        ]
+        for status in statuses:
+            if Status.objects.filter(code=status["code"]):
+                Status.objects.filter(code=status["code"]).update(**status)
+            else:
+                Status.objects.create(**status)
+
     class Meta:
-        verbose_name = 'Статус заявки'
-        verbose_name_plural = 'Статусы заявок'
-# DEFAULT_STATUS = Status.objects.get(c1_id="1")
+        verbose_name = 'Статус'
+        verbose_name_plural = 'Статусы'
 
 
 class SubType(BaseCatalog):
@@ -196,7 +251,12 @@ class SubApplication(BaseIdModel):
         on_delete=models.DO_NOTHING,
         verbose_name=_("Status"),
         null=True,
-        # default=DEFAULT_STATUS
+    )
+
+    completed_date = models.DateField(
+        null=True,
+        blank=True,
+        verbose_name='Дата выполнения',
     )
 
     comment = models.TextField(
@@ -209,3 +269,7 @@ class SubApplication(BaseIdModel):
     class Meta:
         verbose_name = 'Справка'
         verbose_name_plural = 'Справки'
+
+        unique_together = (
+            'id',
+        )
