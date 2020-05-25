@@ -427,6 +427,8 @@ class InternationalCertTypeSerializer(serializers.ModelSerializer):
 
 
 class InternationalCertSerializer(serializers.ModelSerializer):
+    doc = DocumentSerializer(read_only=True, source='document')
+
     class Meta:
         model = models.InternationalCert
         fields = "__all__"

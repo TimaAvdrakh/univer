@@ -1085,6 +1085,12 @@ class InternationalCert(BaseModel):
         max_length=100,
         verbose_name="Номер сертификата"
     )
+    document = models.ForeignKey(
+        Document,
+        on_delete=models.SET_NULL,
+        null=True,
+        verbose_name='Документ'
+    )
 
     class Meta:
         verbose_name = "Международный сертификат"
@@ -1233,12 +1239,10 @@ class Application(BaseModel):
         on_delete=models.DO_NOTHING,
         verbose_name='Результат теста ЕНТ/КТ'
     )
-    international_cert = models.ForeignKey(
+    international_certs = models.ManyToManyField(
         InternationalCert,
-        on_delete=models.SET_NULL,
         blank=True,
-        null=True,
-        verbose_name='Международный сертификат'
+        verbose_name='Международные сертификаты'
     )
     is_grant_holder = models.BooleanField(
         default=False,

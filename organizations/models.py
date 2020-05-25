@@ -274,11 +274,11 @@ class Education(BaseModel):
         null=True,
         verbose_name='Специальность'
     )
-    is_altyn_belgi_holder = models.BooleanField(
+    is_honorable_graduate = models.BooleanField(
         default=False,
         verbose_name='Держатель знака «Алтын белгі»'
     )
-    is_nerd = models.BooleanField(
+    is_flawless_graduate = models.BooleanField(
         default=False,
         verbose_name='Закончил учебу с отличием'
     )
