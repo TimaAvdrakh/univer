@@ -159,6 +159,7 @@ CRON_CLASSES = [
     "cron_app.cron.ClosePlannedJournalJob",
     "cron_app.cron.GenerateExcelJob",
     # "cron_app.cron.DeleteDuplicateJob",
+    "cron_app.cron.CloseApplicationsJob"
 ]
 
 # SESSION_COOKIE_AGE = 60
