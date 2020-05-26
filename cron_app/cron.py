@@ -17,6 +17,7 @@ from portal_users import models as user_models
 from organizations import models as org_models
 from schedules import models as sh_models
 from datetime import datetime, timedelta
+from django.utils import timezone
 from integration.models import DocumentChangeLog
 from requests.auth import HTTPBasicAuth
 from bot import bot
@@ -641,7 +642,7 @@ class ApplicantVerificationJob(CronJobBase):
 
 class SendApplicationsTo1cJob(CronJobBase):
     """Отправляет заявки студентов в 1С"""
-    RUN_EVERY_MINS = 10  # every 1 min
+    RUN_EVERY_MINS = 10  # every 10 min
 
     schedule = Schedule(run_every_mins=RUN_EVERY_MINS)
     code = 'cron_app.send_student_application'
@@ -757,3 +758,22 @@ class SendApplicationsTo1cJob(CronJobBase):
             for chat_id in BOT_DEV_CHAT_IDS:
                 bot.send_message(chat_id,
                                  message)
+
+
+class CloseApplicationsJob(CronJobBase):
+    """Закрыть доступ к справкам через неделю после выполнения"""
+    RUN_EVERY_MINS = 1440  # every day
+
+    schedule = Schedule(run_every_mins=RUN_EVERY_MINS)
+    code = 'crop_app.close_applications_job' # an unique code
+
+    def do(self):
+        rows = model_aps.SubApplication.objects.filter(
+            status__code=model_aps.COMPLETED,
+            completed_date__lte=(timezone.now() - timedelta(days=7))
+        )
+
+        completed_status = model_aps.Status.objects.get(code=model_aps.OUTDATED)
+        for application in rows:
+            application.status = completed_status
+            application.save()
