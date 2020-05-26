@@ -666,7 +666,7 @@ class ModeratorSerializer(serializers.ModelSerializer):
             else:
                 data['address_of_temp_reg'] = ""
 
-            family_members = models.FamilyMember.objects.filter(profile=instance)
+            family_members = models.FamilyMember.objects.filter(family=questionnairies.family)
             data['family_members'] = FamilyMemberForModerator(family_members, many=True).data
 
             try:
@@ -690,7 +690,7 @@ class ModeratorSerializer(serializers.ModelSerializer):
 
 
 class FamilyMemberForModerator(serializers.ModelSerializer):
-    # address = serializers.CharField()
+    address = serializers.CharField()
 
     class Meta:
         model = models.FamilyMember
@@ -699,8 +699,8 @@ class FamilyMemberForModerator(serializers.ModelSerializer):
             'last_name',
             'middle_name',
             'workplace',
-            # 'phone',
-            # 'address',
+            'phone',
+            'address',
         ]
 
 
