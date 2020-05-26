@@ -47,7 +47,8 @@ class ApplicantViewSet(ModelViewSet):
         import datetime as dt
         validated_data = request.data
         user = User.objects.filter(email=validated_data['email'])
-        if user.exists():
+        applicant = models.Applicant.objects.filter(email=validated_data['email'])
+        if user.exists() or applicant.exists():
             raise ValidationError({
                 'error': {
                     "message": "email_exists"
@@ -258,7 +259,9 @@ class ApplicationViewSet(ModelViewSet):
         campaign: models.AdmissionCampaign = user.applicant.campaign
         directions = validated_data.get('directions')
         if campaign.chosen_directions_max_count < len(directions):
-            raise ValidationError({"error": "direction_max_count_exceeded"})
+            raise ValidationError({"error": {
+                "msg": "max_selected_directions"
+            }})
         is_grant_holder = validated_data.get('is_grant_holder')
         grant = validated_data.get('grant', None)
         if not is_grant_holder and grant:
@@ -275,7 +278,9 @@ class ApplicationViewSet(ModelViewSet):
             if (first_direction.education_program_group != grant_epg) or (
                     first_direction.admission_basis != budget_admission_basis) or (
                     first_direction.study_form != full_time_study_form):
-                raise ValidationError({'error': 'choose_other_first_direction'})
+                raise ValidationError({'error': {
+                    "msg": "direction_and_grant_no_match"
+                }})
         international_cert = validated_data.get('international_cert', None)
         if international_cert and not campaign.inter_cert_foreign_lang:
             validated_data['international_cert'] = None
@@ -443,42 +448,46 @@ class AddressViewSet(ModelViewSet):
     @action(methods=['get'], detail=False, url_path='districts', url_name='districts')
     def get_districts(self, request, pk=None):
         region = models.AddressClassifier.objects.filter(pk=request.query_params.get('region')).first()
-        districts = models.AddressClassifier.objects.filter(address_element_type=2, region_code=region.code)
+        districts = models.AddressClassifier.objects.filter(address_element_type=2, region_code=region.region_code)
         data = serializers.AddressClassifierSerializer(districts, many=True).data
         return Response(data=data, status=HTTP_200_OK)
 
     @action(methods=['get'], detail=False, url_path='cities', url_name='cities')
     def get_cities(self, request, pk=None):
         district = models.AddressClassifier.objects.filter(pk=request.query_params.get('district')).first()
-        cities = models.AddressClassifier.objects.filter(address_element_type=3, district_code=district.code)
+        cities = models.AddressClassifier.objects.filter(address_element_type=3, region_code=district.region_code)
         data = serializers.AddressClassifierSerializer(cities, many=True).data
         return Response(data=data, status=HTTP_200_OK)
 
     @action(methods=['get'], detail=False, url_path='localities', url_name='localities')
     def get_localities(self, request, pk=None):
         district = models.AddressClassifier.objects.filter(pk=request.query_params.get('district')).first()
-        localities = models.AddressClassifier.objects.filter(address_element_type=4, district_code=district.code)
+        localities = models.AddressClassifier.objects.filter(
+            address_element_type=4,
+            region_code=district.region_code,
+            district_code=district.district_code,
+        )
         data = serializers.AddressClassifierSerializer(localities, many=True).data
         return Response(data=data, status=HTTP_200_OK)
 
 
-# class AdmissionDocumentViewSet(ModelViewSet):
-#     queryset = models.AdmissionDocument.objects.all()
-#     serializer_class = serializers.AdmissionocumentSerializer
-#
-#     def create(self, request, *args, **kwargs):
-#         profile = self.request.user.profile
-#         request.data['creator'] = profile.pk
-#         return super().create(request, *args, **kwargs)
-#
-#     @action(methods=['get'], detail=False, url_name='my', url_path='my')
-#     def get_my_attachments(self, request, pk=None):
-#         profile: Profile = self.request.user.profile
-#         queryset = self.queryset.filter(creator=profile)
-#         if queryset.exists():
-#             return Response(data=serializers.AdmissionDocumentSerializer(queryset.first()).data, status=HTTP_200_OK)
-#         else:
-#             return Response(data=None, status=HTTP_200_OK)
+class AdmissionDocumentViewSet(ModelViewSet):
+    queryset = models.AdmissionDocument.objects.all()
+    serializer_class = serializers.AdmissionDocumentSerializer
+
+    def create(self, request, *args, **kwargs):
+        profile = self.request.user.profile
+        request.data['creator'] = profile.pk
+        return super().create(request, *args, **kwargs)
+
+    @action(methods=['get'], detail=False, url_name='my', url_path='my')
+    def get_my_attachments(self, request, pk=None):
+        profile: Profile = self.request.user.profile
+        queryset = self.queryset.filter(creator=profile)
+        if queryset.exists():
+            return Response(data=serializers.AdmissionDocumentSerializer(queryset.first()).data, status=HTTP_200_OK)
+        else:
+            return Response(data=None, status=HTTP_200_OK)
 
 
 class ModeratorViewSet(ModelViewSet):
