@@ -409,6 +409,8 @@ class DisciplineMarkSerializer(serializers.ModelSerializer):
 
 
 class TestCertSerializer(serializers.ModelSerializer):
+    doc = DocumentSerializer(read_only=True, source='document')
+
     class Meta:
         model = models.TestCert
         fields = "__all__"
@@ -441,6 +443,7 @@ class GrantTypeSerializer(serializers.ModelSerializer):
 
 
 class GrantSerializer(serializers.ModelSerializer):
+    doc = DocumentSerializer(source='document', read_only=True)
 
     class Meta:
         model = models.Grant
@@ -457,6 +460,8 @@ class TestResultSerializer(serializers.ModelSerializer):
 
 
 class EducationSerializer(serializers.ModelSerializer):
+    doc = DocumentSerializer(read_only=True, source='document')
+
     class Meta:
         model = models.Education
         exclude = ['profile']
@@ -479,6 +484,49 @@ class ApplicationLiteSerializer(serializers.ModelSerializer):
         send_mail(subject=subject, message=message, from_email='', recipient_list=[recipient])
         return
 
+    def handle_previous_education(self, data, creator_profile):
+        previous_education = Education.objects.create(profile=creator_profile, **data)
+        return previous_education
+
+    def handle_test_results(self, data, creator_profile):
+        # Сертификат теста ЕНТ/КТ
+        test_certificate = models.TestCert.objects.create(
+            profile=creator_profile,
+            **data.get('test_certificate')
+        )
+        # Пройденные дисциплины на тесте
+        disciplines = models.DisciplineMark.objects.bulk_create([
+            models.DisciplineMark(profile=creator_profile, **discipline) for discipline in data.get('disciplines')
+        ])
+        # Результат теста
+        test_result = models.TestResult.objects.create(
+            profile=creator_profile,
+            test_certificate=test_certificate
+        )
+        test_result.disciplines.set(disciplines)
+        test_result.save()
+        return test_result
+
+    def handle_international_certificates(self, data, creator_profile):
+        if len(data) == 0:
+            return models.InternationalCert.objects.none()
+        certs = []
+        for cert in data:
+            certs.append(models.InternationalCert.objects.create(profile=creator_profile, **cert))
+        return certs
+
+    def handle_grant(self, data, creator_profile):
+        if not data:
+            return None
+        grant = models.Grant.objects.create(profile=creator_profile, **data)
+        return grant
+
+    def handle_directions(self, data, creator_profile):
+        directions = models.OrderedDirection.objects.bulk_create([
+            models.OrderedDirection(**direction) for direction in data
+        ])
+        return directions
+
     def create(self, validated_data: dict):
         application = None
         creator: Profile = self.context['request'].user.profile
@@ -489,60 +537,27 @@ class ApplicationLiteSerializer(serializers.ModelSerializer):
                 status = models.AWAITS_VERIFICATION
             else:
                 status = models.NO_QUESTIONNAIRE
-            status = models.ApplicationStatus.objects.get(code=status)
-            # На основании забитых данных абитуриентом создаем его заявление
-            # Предыдущее образование
-            previous_education = Education.objects.create(
-                profile=creator,
-                **validated_data.pop('previous_education')
+            data = {
+                'status': models.ApplicationStatus.objects.get(code=status),
+                'previous_education': self.handle_previous_education(validated_data.pop('previous_education'), creator),
+                'test_result': self.handle_test_results(validated_data.pop('test_result'), creator),
+                'grant': self.handle_grant(validated_data.pop('grant', None), creator),
+                'creator': creator
+            }
+            validated_data.update(data)
+            international_certs = self.handle_international_certificates(
+                validated_data.pop('international_certs', []),
+                creator
             )
-            # Результаты теста ЕНТ/КТ
-            test_result = validated_data.pop('test_result')
-            # Сертификат теста ЕНТ/КТ
-            test_certificate = models.TestCert.objects.create(
-                profile=creator,
-                **test_result.pop('test_certificate')
-            )
-            # Пройденные дисциплины на тесте
-            disciplines = models.DisciplineMark.objects.bulk_create([
-                models.DisciplineMark(profile=creator, **discipline) for discipline in test_result.pop('disciplines')
-            ])
-            # Результат теста
-            test_result = models.TestResult.objects.create(
-                profile=creator,
-                test_certificate=test_certificate
-            )
-            test_result.disciplines.add(*disciplines)
-            test_result.save()
-            # Международный сертификат
-            international_cert = validated_data.pop('international_cert', None)
-            if international_cert:
-                international_cert = models.InternationalCert.objects.create(profile=creator, **international_cert)
-            else:
-                international_cert = None
-            # Грант
-            grant = validated_data.pop('grant', None)
-            if grant:
-                grant = models.Grant.objects.create(profile=creator, **grant)
-            else:
-                grant = None
-            application = models.Application.objects.create(
-                status=status,
-                previous_education=previous_education,
-                test_result=test_result,
-                international_cert=international_cert,
-                grant=grant,
-                creator=creator,
-            )
-            directions = models.OrderedDirection.objects.bulk_create([
-                models.OrderedDirection(**direction) for direction in validated_data.pop('directions')
-            ])
+            directions = self.handle_directions(validated_data.pop('directions'), creator)
+            application = models.Application.objects.create(**validated_data)
+            application.international_certs.set(international_certs)
             application.directions.set(directions)
             application.save()
             try:
                 self.send_on_create(recipient=creator.email)
             except Exception as e:
-                print(e)
+                    print(e)
         except Exception as e:
             if application and isinstance(application, models.Application):
                 application.delete()
@@ -554,20 +569,14 @@ class ApplicationLiteSerializer(serializers.ModelSerializer):
         if profile == instance.creator:
             my_campaign = profile.user.applicant.campaign
             validated_data['status'] = models.ApplicationStatus.objects.get(code=models.AWAITS_VERIFICATION)
-
-            # Обновление предыдущего образования
             previous_education: dict = validated_data.pop('previous_education')
             education = Education.objects.get(pk=instance.previous_education.uid)
-            for key, value in previous_education.items():
-                setattr(education, key, value)
+            education.update(previous_education)
             education.save(snapshot=True)
-
-            # Обновление тестов ЕНТ/КТ
             test_result: dict = validated_data.pop('test_result')
             test_cert: dict = test_result.pop('test_certificate')
             cert = models.TestCert.objects.get(pk=instance.test_result.test_certificate.uid)
-            for key, value in test_cert.items():
-                setattr(cert, key, value)
+            cert.update(test_cert)
             cert.save(snapshot=True)
             instance.test_result.disciplines.all().delete()
             new_disciplines = models.DisciplineMark.objects.bulk_create([
@@ -575,20 +584,18 @@ class ApplicationLiteSerializer(serializers.ModelSerializer):
             ])
             instance.test_result.disciplines.set(new_disciplines)
             instance.test_result.save(snapshot=True)
-
-            # Обновление международного сертификата, если есть
-            international_cert: dict = validated_data.pop('international_cert', None)
-            if international_cert and my_campaign.inter_cert_foreign_lang:
-                inter_cert_model = models.InternationalCert.objects.get(pk=instance.international_cert.uid)
-                for key, value in international_cert.items():
-                    setattr(inter_cert_model, key, value)
-                inter_cert_model.save(snapshot=True)
-            # Обновление гранта, если есть
+            international_certs: list = validated_data.pop('international_certs', [])
+            if international_certs and my_campaign.inter_cert_foreign_lang:
+                instance.international_certs.all().delete()
+                international_certs = models.InternationalCert.objects.bulk_create([
+                    models.InternationalCert(**cert, profile=profile) for cert in international_certs
+                ])
+                instance.international_certs.set(international_certs)
+                instance.save()
             grant: dict = validated_data.pop('grant', None)
             if grant:
                 grant_model: models.Grant = models.Grant.objects.get(pk=instance.grant.uid)
-                for key, value in grant.items():
-                    setattr(grant_model, key, value)
+                grant_model.update(grant)
                 grant_model.save(snapshot=True)
             instance.directions.all().delete()
             directions = models.OrderedDirection.objects.bulk_create([
@@ -611,7 +618,7 @@ class OrderedDirectionSerializer(serializers.ModelSerializer):
 class ApplicationSerializer(ApplicationLiteSerializer):
     previous_education = EducationSerializer(required=True)
     test_result = TestResultSerializer(required=True)
-    international_cert = InternationalCertSerializer(required=False, allow_null=True)
+    international_certs = InternationalCertSerializer(required=False, many=True)
     grant = GrantSerializer(required=False, allow_null=True)
     directions = OrderedDirectionSerializer(required=True, many=True)
 

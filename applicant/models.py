@@ -1353,7 +1353,7 @@ class Application(BaseModel):
     def delete(self, *args, **kwargs):
         previous_education = self.previous_education
         test_result = self.test_result
-        international_cert = self.international_cert
+        international_certs = self.international_certs.all()
         grant = self.grant
         directions = self.directions.all()
         super().delete(*args, **kwargs)
@@ -1364,8 +1364,8 @@ class Application(BaseModel):
                 [discipline.delete() for discipline in test_result.disciplines.all()]
             test_result.delete()
             test_result.test_certificate.delete()
-        if international_cert:
-            international_cert.delete()
+        if international_certs.exists():
+            international_certs.delete()
         if grant:
             grant.delete()
         if directions.exists():
