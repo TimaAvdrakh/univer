@@ -28,8 +28,9 @@ class ApplicationView(generics.ListCreateAPIView):
     serializer_class = serializers.ApplicationSerializer
 
     def get_queryset(self):
-        queryset = self.queryset.filter(profile=self.request.user.profile)
-        return queryset
+        if self.request.user.profile:
+            queryset = self.queryset.filter(profile=self.request.user.profile)
+            return queryset
 
     def create(self, request, *args, **kwargs):
         data = json.loads(request.data["data"])
