@@ -448,21 +448,25 @@ class AddressViewSet(ModelViewSet):
     @action(methods=['get'], detail=False, url_path='districts', url_name='districts')
     def get_districts(self, request, pk=None):
         region = models.AddressClassifier.objects.filter(pk=request.query_params.get('region')).first()
-        districts = models.AddressClassifier.objects.filter(address_element_type=2, region_code=region.code)
+        districts = models.AddressClassifier.objects.filter(address_element_type=2, region_code=region.region_code)
         data = serializers.AddressClassifierSerializer(districts, many=True).data
         return Response(data=data, status=HTTP_200_OK)
 
     @action(methods=['get'], detail=False, url_path='cities', url_name='cities')
     def get_cities(self, request, pk=None):
         district = models.AddressClassifier.objects.filter(pk=request.query_params.get('district')).first()
-        cities = models.AddressClassifier.objects.filter(address_element_type=3, district_code=district.code)
+        cities = models.AddressClassifier.objects.filter(address_element_type=3, region_code=district.region_code)
         data = serializers.AddressClassifierSerializer(cities, many=True).data
         return Response(data=data, status=HTTP_200_OK)
 
     @action(methods=['get'], detail=False, url_path='localities', url_name='localities')
     def get_localities(self, request, pk=None):
         district = models.AddressClassifier.objects.filter(pk=request.query_params.get('district')).first()
-        localities = models.AddressClassifier.objects.filter(address_element_type=4, district_code=district.code)
+        localities = models.AddressClassifier.objects.filter(
+            address_element_type=4,
+            region_code=district.region_code,
+            district_code=district.district_code,
+        )
         data = serializers.AddressClassifierSerializer(localities, many=True).data
         return Response(data=data, status=HTTP_200_OK)
 
