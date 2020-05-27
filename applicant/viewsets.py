@@ -563,7 +563,7 @@ class ModeratorViewSet(ModelViewSet):
     @action(methods=['get'], detail=False, url_path='get_questionnaire', url_name='get_questionnaire')
     def get_questionnaire(self, request, pk=None):
         applicant_uid = self.request.query_params.get('uid')
-        questionnaire = models.Questionnaire.filter(creator=applicant_uid)
+        questionnaire = models.Questionnaire.objects.filter(creator=applicant_uid)
         if questionnaire.exists():
             return Response(data=serializers.QuestionnaireSerializer(questionnaire.first()).data, status=HTTP_200_OK)
         else:
