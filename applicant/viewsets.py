@@ -307,6 +307,7 @@ class ApplicationViewSet(ModelViewSet):
         else:
             return Response(data='inshalla', status=HTTP_200_OK)
 
+
     @action(methods=['post'], detail=True, url_path='apply-action', url_name='apply_action')
     def apply_action(self, request, pk=None):
         """Применение действий модераоторм
@@ -333,6 +334,10 @@ class ApplicationViewSet(ModelViewSet):
                 if not comment:
                     raise ValidationError({'error': 'comment is required'})
                 application.reject(moderator=profile, comment=comment)
+            elif action_type == 'improve':
+                if not comment:
+                    raise ValidationError({'error': 'comment is required'})
+                application.improve(moderator=profile, comment=comment)
             # Отпаравляем заявление на доработку - не заполнил анкету или неправильно заполлнил заявление
             return Response(data={'message': f'successfully applied action: {action_type}'})
         else:
@@ -546,5 +551,22 @@ class ModeratorViewSet(ModelViewSet):
         data = serializers.ApplicationStatusSerializer(statuses, many=True).data
         return Response(data=data, status=HTTP_200_OK)
 
+    @action(methods=['get'], detail=False, url_name='get_application', url_path='get_application')
+    def get_application(self, request, pk=None):
+        applicant_uid = request.query_params.get('uid')
+        application = models.Application.objects.filter(creator=applicant_uid)
+        if application.exists():
+            return Response(data=serializers.ApplicationSerializer(application.first()).data, status=HTTP_200_OK)
+        else:
+            return Response(data=None, status=HTTP_200_OK)
+
+    @action(methods=['get'], detail=False, url_path='get_questionnaire', url_name='get_questionnaire')
+    def get_questionnaire(self, request, pk=None):
+        applicant_uid = self.request.query_params.get('uid')
+        questionnaire = models.Questionnaire.objects.filter(creator=applicant_uid)
+        if questionnaire.exists():
+            return Response(data=serializers.QuestionnaireSerializer(questionnaire.first()).data, status=HTTP_200_OK)
+        else:
+            return Response(data=None, status=HTTP_200_OK)
 
 

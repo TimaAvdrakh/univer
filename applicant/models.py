@@ -40,6 +40,7 @@ APPROVED = "APPROVED"
 REJECTED = "REJECTED"
 AWAITS_VERIFICATION = "AWAITS_VERIFICATION"
 NO_QUESTIONNAIRE = "NO_QUESTIONNAIRE"
+TO_IMPROVE = "TO_IMPROVE"
 
 COND_ORDER = Case(
     When(Q(status__code=AWAITS_VERIFICATION), then=Value(0)),
@@ -547,6 +548,13 @@ class ApplicationStatus(BaseCatalog):
                 "name_en": "No questionnaire",
                 "code": NO_QUESTIONNAIRE,
             },
+            {
+                "name": TO_IMPROVE,
+                "name_ru": "Требует доработки",
+                "name_kk": "Жақсартуды қажет етеді",
+                "name_en": "Needs to be improved",
+                "code": TO_IMPROVE,
+            }
         ]
         for status in statuses:
             match: [ApplicationStatus] = ApplicationStatus.objects.filter(code=status["code"])
@@ -1333,6 +1341,25 @@ class Application(BaseModel):
                 'reason': comment
             })
             subject = 'Ваше заявление отклонено'
+            email = EmailMessage(subject=subject, body=message, to=[self.creator.email])
+            email.send()
+        except Exception as e:
+            print(e)
+        return
+
+    def improve(self, moderator, comment):
+        Comment.objects.create(
+            text=comment,
+            creator=moderator,
+            content_object=self
+        )
+        self.status = ApplicationStatus.objects.get(code=TO_IMPROVE)
+        self.save()
+        try:
+            message = render_to_string('applicant/email/html/application_to_improve.html', {
+                'reason': comment
+            })
+            subject = 'Ваше заявление требует доработки'
             email = EmailMessage(subject=subject, body=message, to=[self.creator.email])
             email.send()
         except Exception as e:
