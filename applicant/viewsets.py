@@ -346,6 +346,10 @@ class ApplicationViewSet(ModelViewSet):
                 if not comment:
                     raise ValidationError({'error': 'comment is required'})
                 application.reject(moderator=profile, comment=comment)
+            elif action_type == 'improve':
+                if not comment:
+                    raise ValidationError({'error': 'comment is required'})
+                application.improve(moderator=profile, comment=comment)
             # Отпаравляем заявление на доработку - не заполнил анкету или неправильно заполлнил заявление
             return Response(data={'message': f'successfully applied action: {action_type}'})
         else:
