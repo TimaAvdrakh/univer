@@ -198,8 +198,8 @@ class QuestionnaireSerializer(serializers.ModelSerializer):
 
     def validate(self, validated_data: dict):
         address_matches: int = validated_data.get('address_matches')
-        address_of_temp_reg: dict = validated_data.pop('address_of_temp_reg')
-        temp_reg_present = any(address_of_temp_reg.values())
+        address_of_temp_reg: dict = validated_data.pop('address_of_temp_reg', None)
+        temp_reg_present = address_of_temp_reg and any(address_of_temp_reg.values())
         if address_matches == models.Questionnaire.MATCH_TMP and not temp_reg_present:
             raise ValidationError({"error": "temp_addr_not_present"})
         family: dict = validated_data.pop('family')
@@ -384,8 +384,8 @@ class QuestionnaireSerializer(serializers.ModelSerializer):
                     uid=instance.address_of_registration.pk,
                     data=validated_data.pop('address_of_registration')
                 )
-                tmp_address: dict = validated_data.pop('address_of_temp_reg')
-                if any(tmp_address.values()):
+                tmp_address: dict = validated_data.pop('address_of_temp_reg', None)
+                if tmp_address and any(tmp_address.values()):
                     self.update_temporary_registration_address(
                         uid=instance.address_of_temp_reg.pk,
                         data=tmp_address
