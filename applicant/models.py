@@ -145,10 +145,12 @@ class Address(BaseCatalog):
         null=True,
         verbose_name='Тип адреса'
     )
-    profiles = models.ManyToManyField(
+    profile = models.ForeignKey(
         Profile,
         blank=True,
-        verbose_name="Профили",
+        null=True,
+        on_delete=models.SET_NULL,
+        verbose_name="Профиль",
         related_name="addresses",
     )
     country = models.ForeignKey(
@@ -229,32 +231,31 @@ class Address(BaseCatalog):
     )
 
     def save(self, *args, **kwargs):
-        if not self.name:
-            if self.region:
-                self.name_en = f"{self.region} region, "
-                self.name_ru = f"область {self.region}, "
-                self.name_kk = f"{self.region} облысы, "
-            if self.city:
-                self.name_en = f"{self.city} city, "
-                self.name_ru = f"г.{self.city}, "
-                self.name_kk = f"{self.city} қ., "
-            if self.street:
-                self.name_en = f"St. {self.street}, "
-                self.name_ru = f"ул. {self.street}, "
-                self.name_kk = f"{self.street} к., "
-            if self.home_number:
-                self.name_en = f"#{self.home_number}, "
-                self.name_ru = f"д. №{self.home_number}, "
-                self.name_kk = f"№{self.home_number} үй, "
-            if self.corpus:
-                self.name_en += f", building {self.corpus}"
-                self.name_ru += f", корпус {self.corpus}"
-                self.name_kk += f", {self.corpus} ғимарат"
-            if self.apartment:
-                self.name_en += f", apartment {self.apartment}"
-                self.name_ru += f", квартира {self.apartment}"
-                self.name_kk += f", {self.apartment} пәтер"
-            self.name = self.name_ru
+        if self.region:
+            self.name_en = f"{self.region} region, "
+            self.name_ru = f"область {self.region}, "
+            self.name_kk = f"{self.region} облысы, "
+        if self.city:
+            self.name_en = f"{self.city} city, "
+            self.name_ru = f"г.{self.city}, "
+            self.name_kk = f"{self.city} қ., "
+        if self.street:
+            self.name_en = f"St. {self.street}, "
+            self.name_ru = f"ул. {self.street}, "
+            self.name_kk = f"{self.street} к., "
+        if self.home_number:
+            self.name_en = f"#{self.home_number}, "
+            self.name_ru = f"д. №{self.home_number}, "
+            self.name_kk = f"№{self.home_number} үй, "
+        if self.corpus:
+            self.name_en += f", building {self.corpus}"
+            self.name_ru += f", корпус {self.corpus}"
+            self.name_kk += f", {self.corpus} ғимарат"
+        if self.apartment:
+            self.name_en += f", apartment {self.apartment}"
+            self.name_ru += f", квартира {self.apartment}"
+            self.name_kk += f", {self.apartment} пәтер"
+        self.name = self.name_ru
         super().save(*args, **kwargs)
 
     class Meta:
@@ -798,11 +799,15 @@ class Privilege(BaseModel):
     )
     serial_number = models.CharField(
         max_length=100,
-        verbose_name="Серийный номер"
+        verbose_name="Серийный номер",
+        blank=True,
+        null=True,
     )
     doc_number = models.CharField(
         max_length=100,
-        verbose_name="Номер документа"
+        verbose_name="Номер документа",
+        blank=True,
+        null=True,
     )
     start_date = models.DateField(
         verbose_name="Дата начала"
@@ -811,11 +816,15 @@ class Privilege(BaseModel):
         verbose_name="Дата окончания"
     )
     issued_at = models.DateField(
-        verbose_name="Дата получения"
+        verbose_name="Дата получения",
+        blank=True,
+        null=True,
     )
     issued_by = models.CharField(
         max_length=200,
-        verbose_name="Кем выдано"
+        verbose_name="Кем выдано",
+        blank=True,
+        null=True,
     )
     document = models.ForeignKey(
         Document,
@@ -1082,6 +1091,12 @@ class InternationalCert(BaseModel):
         LanguageProficiency,
         on_delete=models.DO_NOTHING,
         verbose_name="Владение языком (CERF)"
+    )
+    language = models.ForeignKey(
+        Language,
+        on_delete=models.SET_NULL,
+        null=True,
+        verbose_name='Тест на здачу языка'
     )
     mark = models.FloatField(
         verbose_name="Балл"
