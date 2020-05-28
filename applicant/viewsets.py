@@ -508,10 +508,11 @@ class ModeratorViewSet(ModelViewSet):
         edu_program_groups = request.query_params.get('edu_program_groups')
         application_date = request.query_params.get('application_date')
 
-        if application_status is not None and application_status != applicant_application_statuses['NO_QUESTIONNAIRE']:
-            profiles_with_questionnaire = models.Application.objects.filter(status=application_status).values_list('creator')
+        if application_status is not None and application_status != 'NO_QUESTIONNAIRE':
+            profiles_with_questionnaire = models.Application.objects.filter(
+                status__code=application_status).values_list('creator')
             queryset = queryset.filter(pk__in=profiles_with_questionnaire)
-        elif application_status == applicant_application_statuses['NO_QUESTIONNAIRE']:
+        elif application_status == 'NO_QUESTIONNAIRE':
             profiles_with_applications = models.Application.objects.all().values_list('creator')
             queryset_with_application = queryset.filter(pk__in=profiles_with_applications)
             queryset = queryset.difference(queryset_with_application)
