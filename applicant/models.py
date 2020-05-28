@@ -1404,3 +1404,31 @@ class Application(BaseModel):
             return True
         else:
             return False
+
+
+class ApplicationStatusChangeHistory(BaseModel):
+    creator = models.OneToOneField(
+        Profile,
+        blank=True,
+        null=True,
+        on_delete=models.CASCADE,
+        verbose_name='Заявитель',
+    )
+    status = models.ForeignKey(
+        ApplicationStatus,
+        on_delete=models.DO_NOTHING,
+        verbose_name='Статус',
+        blank=True,
+        null=True
+    )
+    comment = models.ForeignKey(
+        Comment,
+        blank=True,
+        null=True,
+        on_delete=models.CASCADE,
+        verbose_name='Комментарий изменения'
+    )
+
+    class Meta:
+        verbose_name = "История изменения статуса заявления"
+        verbose_name_plural = "История изменения статуса заявлений"

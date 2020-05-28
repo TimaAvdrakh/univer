@@ -10,7 +10,7 @@ from django.utils.encoding import force_bytes
 from django.utils.translation import get_language
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
-from common.models import IdentityDocument
+from common.models import IdentityDocument, Comment
 from common.serializers import DocumentSerializer
 from portal_users.serializers import ProfilePhoneSerializer
 from portal_users.models import Profile, Role, ProfilePhone
@@ -527,6 +527,18 @@ class ApplicationLiteSerializer(serializers.ModelSerializer):
         ])
         return directions
 
+    def save_history_log(self, creator_profile, status):
+        comment = Comment.objects.create(
+            text="Заявление созданно со статусом {}".format(status.name),
+            creator=creator_profile,
+            content_type=self
+        )
+        models.ApplicationStatusChangeHistory.objects.create(
+            creator=creator_profile,
+            status=status,
+            comment=comment,
+        )
+
     def create(self, validated_data: dict):
         application = None
         creator: Profile = self.context['request'].user.profile
@@ -554,6 +566,7 @@ class ApplicationLiteSerializer(serializers.ModelSerializer):
             application.international_certs.set(international_certs)
             application.directions.set(directions)
             application.save()
+            self.save_history_log(creator_profile=creator, status=status)
             try:
                 self.send_on_create(recipient=creator.email)
             except Exception as e:
