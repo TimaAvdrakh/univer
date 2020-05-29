@@ -332,6 +332,11 @@ class QuestionnaireSerializer(serializers.ModelSerializer):
                 application = application.first()
                 application.status = models.ApplicationStatus.objects.get(code=models.AWAITS_VERIFICATION)
                 application.save()
+                self.save_history_log(
+                    creator_profile=creator,
+                    status=application.status,
+                    text='Анкета создана'
+                )
         except Exception as e:
             if isinstance(questionnaire, models.Questionnaire):
                 questionnaire.delete()
@@ -426,11 +431,28 @@ class QuestionnaireSerializer(serializers.ModelSerializer):
                     application = application.first()
                     application.status = models.ApplicationStatus.objects.get(code=models.AWAITS_VERIFICATION)
                     application.save()
+                    self.save_history_log(
+                        creator_profile=profile,
+                        status=application.status,
+                        text='Анкета изменена'
+                    )
                 return instance
             except Exception as e:
                 raise ValidationError({"error": e})
         else:
             raise ValidationError({"error": "access_denied"})
+
+    def save_history_log(self, creator_profile, status, text):
+        comment = Comment.objects.create(
+            text=text,
+            creator=creator_profile,
+            content_type=self
+        )
+        models.ApplicationStatusChangeHistory.objects.create(
+            creator=creator_profile,
+            status=status,
+            comment=comment,
+        )
 
 
 class ApplicationStatusSerializer(serializers.ModelSerializer):
@@ -828,3 +850,26 @@ class Document1CSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Document1C
         fields = '__all__'
+
+
+class CommentsForHistorySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Comment
+        fields = [
+            'text',
+            'creator'
+        ]
+
+
+class ApplicationChangeHistorySerializer(serializers.ModelSerializer):
+    status = serializers.CharField()
+    comment = CommentsForHistorySerializer(required=True)
+
+    class Meta:
+        model = models.ApplicationStatusChangeHistory
+        fields = [
+            'uid',
+            'created',
+            'status',
+            'comment',
+        ]
