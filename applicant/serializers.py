@@ -228,7 +228,11 @@ class QuestionnaireSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         creator = self.context['request'].user.profile
-        questionnaire = None
+        questionnaire = models.Questionnaire.objects.filter(creator=creator)
+        if questionnaire.exists():
+            return questionnaire.first()
+        else:
+            questionnaire = None
         try:
             # Сначала нужно разобраться с адресами
             # Адрес прописки/регистрации
@@ -585,8 +589,12 @@ class ApplicationLiteSerializer(serializers.ModelSerializer):
         return directions
 
     def create(self, validated_data: dict):
-        application = None
         creator: Profile = self.context['request'].user.profile
+        application = models.Application.objects.filter(creator=creator)
+        if application.exists():
+            return application.first()
+        else:
+            application = None
         try:
             # Если есть заполненная анкета, статус будет "Ожидает проверки", иначе - "Без анкеты"
             has_questionnaire: bool = models.Questionnaire.objects.filter(creator=creator).exists()
@@ -689,8 +697,11 @@ class AdmissionDocumentSerializer(serializers.ModelSerializer):
     doc = DocumentSerializer(source='document', read_only=True)
     types = serializers.SerializerMethodField(read_only=True)
 
-    def get_types(self, document: models.AdmissionDocument):
-        return DocumentTypeSerializer(document.types, many=True).data
+    def get_types(self, document):
+        try:
+            return DocumentTypeSerializer(document.types, many=True).data
+        except Exception:
+            return
 
     class Meta:
         model = models.AdmissionDocument
