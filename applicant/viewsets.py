@@ -47,7 +47,8 @@ class ApplicantViewSet(ModelViewSet):
         import datetime as dt
         validated_data = request.data
         user = User.objects.filter(email=validated_data['email'])
-        if user.exists():
+        applicant = models.Applicant.objects.filter(email=validated_data['email'])
+        if user.exists() or applicant.exists():
             raise ValidationError({
                 'error': {
                     "message": "email_exists"
@@ -57,6 +58,12 @@ class ApplicantViewSet(ModelViewSet):
             raise ValidationError({
                 "error": {
                     "message": "id_exists"
+                }
+            })
+        if len(validated_data["doc_num"]) > 16:
+            raise ValidationError({
+                "error": {
+                    "message": "id_number_long"
                 }
             })
         campaign_type = validated_data.get('campaign_type')
@@ -77,19 +84,18 @@ class ApplicantViewSet(ModelViewSet):
                 }
             })
         # Проверка этапов приемной кампан
-        # campaign: models.AdmissionCampaign = validated_data.get('campaign')
-        # stages = campaign.stages.filter(
-        #     prep_level=validated_data['prep_level'],
-        #     start_date__lte=today,
-        #     end_date__gte=today,
-        #     is_active=True
-        # )
-        # if not stages.exists():
-        #     raise ValidationError({
-        #         "error": {
-        #             "message": "no_stages"
-        #         }
-        #     })
+        campaign: models.AdmissionCampaign = campaigns.first()
+        stages = campaign.stages.filter(
+            prep_level=validated_data['prep_level'],
+            start_date__lte=today,
+            end_date__gte=today,
+        )
+        if not stages.exists():
+            raise ValidationError({
+                "error": {
+                    "message": "no_stages"
+                }
+            })
         return super().create(request, *args, **kwargs)
 
     @action(methods=['get'], detail=False, url_path='my-prep-level', url_name='applicant_prep_level')
@@ -258,7 +264,9 @@ class ApplicationViewSet(ModelViewSet):
         campaign: models.AdmissionCampaign = user.applicant.campaign
         directions = validated_data.get('directions')
         if campaign.chosen_directions_max_count < len(directions):
-            raise ValidationError({"error": "direction_max_count_exceeded"})
+            raise ValidationError({"error": {
+                "msg": "max_selected_directions"
+            }})
         is_grant_holder = validated_data.get('is_grant_holder')
         grant = validated_data.get('grant', None)
         if not is_grant_holder and grant:
@@ -275,10 +283,12 @@ class ApplicationViewSet(ModelViewSet):
             if (first_direction.education_program_group != grant_epg) or (
                     first_direction.admission_basis != budget_admission_basis) or (
                     first_direction.study_form != full_time_study_form):
-                raise ValidationError({'error': 'choose_other_first_direction'})
-        international_cert = validated_data.get('international_cert', None)
-        if international_cert and not campaign.inter_cert_foreign_lang:
-            validated_data['international_cert'] = None
+                raise ValidationError({'error': {
+                    "msg": "direction_and_grant_no_match"
+                }})
+        international_certs = validated_data.get('international_certs', None)
+        if international_certs and not campaign.inter_cert_foreign_lang:
+            validated_data['international_certs'] = None
 
     def create(self, request, *args, **kwargs):
         self.validate(request.data, self.request.user)
@@ -300,7 +310,8 @@ class ApplicationViewSet(ModelViewSet):
         if queryset.exists():
             return Response(data=serializers.ApplicationLiteSerializer(queryset.first()).data, status=HTTP_200_OK)
         else:
-            return Response(data='inshalla', status=HTTP_200_OK)
+            return Response(data=None, status=HTTP_200_OK)
+
 
     @action(methods=['post'], detail=True, url_path='apply-action', url_name='apply_action')
     def apply_action(self, request, pk=None):
@@ -328,6 +339,10 @@ class ApplicationViewSet(ModelViewSet):
                 if not comment:
                     raise ValidationError({'error': 'comment is required'})
                 application.reject(moderator=profile, comment=comment)
+            elif action_type == 'improve':
+                if not comment:
+                    raise ValidationError({'error': 'comment is required'})
+                application.improve(moderator=profile, comment=comment)
             # Отпаравляем заявление на доработку - не заполнил анкету или неправильно заполлнил заявление
             return Response(data={'message': f'successfully applied action: {action_type}'})
         else:
@@ -443,42 +458,65 @@ class AddressViewSet(ModelViewSet):
     @action(methods=['get'], detail=False, url_path='districts', url_name='districts')
     def get_districts(self, request, pk=None):
         region = models.AddressClassifier.objects.filter(pk=request.query_params.get('region')).first()
-        districts = models.AddressClassifier.objects.filter(address_element_type=2, region_code=region.code)
+        districts = models.AddressClassifier.objects.filter(address_element_type=2, region_code=region.region_code)
         data = serializers.AddressClassifierSerializer(districts, many=True).data
         return Response(data=data, status=HTTP_200_OK)
 
     @action(methods=['get'], detail=False, url_path='cities', url_name='cities')
     def get_cities(self, request, pk=None):
         district = models.AddressClassifier.objects.filter(pk=request.query_params.get('district')).first()
-        cities = models.AddressClassifier.objects.filter(address_element_type=3, district_code=district.code)
+        cities = models.AddressClassifier.objects.filter(address_element_type=3, region_code=district.region_code)
         data = serializers.AddressClassifierSerializer(cities, many=True).data
         return Response(data=data, status=HTTP_200_OK)
 
     @action(methods=['get'], detail=False, url_path='localities', url_name='localities')
     def get_localities(self, request, pk=None):
         district = models.AddressClassifier.objects.filter(pk=request.query_params.get('district')).first()
-        localities = models.AddressClassifier.objects.filter(address_element_type=4, district_code=district.code)
+        localities = models.AddressClassifier.objects.filter(
+            address_element_type=4,
+            region_code=district.region_code,
+            district_code=district.district_code,
+        )
         data = serializers.AddressClassifierSerializer(localities, many=True).data
         return Response(data=data, status=HTTP_200_OK)
 
 
-# class AdmissionDocumentViewSet(ModelViewSet):
-#     queryset = models.AdmissionDocument.objects.all()
-#     serializer_class = serializers.AdmissionocumentSerializer
-#
-#     def create(self, request, *args, **kwargs):
-#         profile = self.request.user.profile
-#         request.data['creator'] = profile.pk
-#         return super().create(request, *args, **kwargs)
-#
-#     @action(methods=['get'], detail=False, url_name='my', url_path='my')
-#     def get_my_attachments(self, request, pk=None):
-#         profile: Profile = self.request.user.profile
-#         queryset = self.queryset.filter(creator=profile)
-#         if queryset.exists():
-#             return Response(data=serializers.AdmissionDocumentSerializer(queryset.first()).data, status=HTTP_200_OK)
-#         else:
-#             return Response(data=None, status=HTTP_200_OK)
+class AdmissionDocumentViewSet(ModelViewSet):
+    queryset = models.AdmissionDocument.objects.all()
+    serializer_class = serializers.AdmissionDocumentSerializer
+
+    def create(self, request, *args, **kwargs):
+        request.data['creator'] = self.request.user.profile.pk
+        return super().create(request, *args, **kwargs)
+
+    @action(methods=['get'], detail=False, url_name='my', url_path='my')
+    def get_my_attachments(self, request, pk=None):
+        profile: Profile = self.request.user.profile
+        queryset = self.queryset.filter(creator=profile)
+        if queryset.exists():
+            serializer = serializers.AdmissionDocumentSerializer(queryset, many=True)
+            return Response(data=serializer.data, status=HTTP_200_OK)
+        else:
+            return Response(data=None, status=HTTP_200_OK)
+
+    @action(methods=['post'], detail=False, url_name='multiple-create', url_path='multiple-create')
+    def multiple_create(self, request, pk=None):
+        try:
+            creator = self.request.user.profile.pk
+            documents = request.data.get('documents')
+            data = []
+            for document in documents:
+                data.append({
+                    'document_1c': document['uid'],
+                    'document': document['document']['document'],
+                    'creator': creator
+                })
+            models.AdmissionDocument.objects.bulk_create([
+                models.AdmissionDocument(**doc) for doc in data
+            ])
+            return Response(data={"msg": "created"}, status=HTTP_200_OK)
+        except Exception as e:
+            raise ValidationError({"error": {"msg": "something went wrong", "exc": e}})
 
 
 class ModeratorViewSet(ModelViewSet):
@@ -494,10 +532,11 @@ class ModeratorViewSet(ModelViewSet):
         edu_program_groups = request.query_params.get('edu_program_groups')
         application_date = request.query_params.get('application_date')
 
-        if application_status is not None and application_status != applicant_application_statuses['NO_QUESTIONNAIRE']:
-            profiles_with_questionnaire = models.Application.objects.filter(status=application_status).values_list('creator')
+        if application_status is not None and application_status != 'NO_QUESTIONNAIRE':
+            profiles_with_questionnaire = models.Application.objects.filter(
+                status__code=application_status).values_list('creator')
             queryset = queryset.filter(pk__in=profiles_with_questionnaire)
-        elif application_status == applicant_application_statuses['NO_QUESTIONNAIRE']:
+        elif application_status == 'NO_QUESTIONNAIRE':
             profiles_with_applications = models.Application.objects.all().values_list('creator')
             queryset_with_application = queryset.filter(pk__in=profiles_with_applications)
             queryset = queryset.difference(queryset_with_application)
@@ -537,5 +576,37 @@ class ModeratorViewSet(ModelViewSet):
         data = serializers.ApplicationStatusSerializer(statuses, many=True).data
         return Response(data=data, status=HTTP_200_OK)
 
+    @action(methods=['get'], detail=False, url_name='get_application', url_path='get_application')
+    def get_application(self, request, pk=None):
+        applicant_uid = request.query_params.get('uid')
+        application = models.Application.objects.filter(creator=applicant_uid)
+        if application.exists():
+            return Response(data=serializers.ApplicationSerializer(application.first()).data, status=HTTP_200_OK)
+        else:
+            return Response(data=None, status=HTTP_200_OK)
+
+    @action(methods=['get'], detail=False, url_path='get_questionnaire', url_name='get_questionnaire')
+    def get_questionnaire(self, request, pk=None):
+        applicant_uid = self.request.query_params.get('uid')
+        questionnaire = models.Questionnaire.objects.filter(creator=applicant_uid)
+        if questionnaire.exists():
+            return Response(data=serializers.QuestionnaireSerializer(questionnaire.first()).data, status=HTTP_200_OK)
+        else:
+            return Response(data=None, status=HTTP_200_OK)
 
 
+class Document1CViewSet(ModelViewSet):
+    queryset = models.Document1C.objects.order_by('name_ru', 'name_kk', 'name_en').all()
+    serializer_class = serializers.Document1CSerializer
+
+    @action(methods=['get'], detail=False, url_path='campaign-docs', url_name='campaign-docs')
+    def get_current_applicant_campaign_documents(self, request, pk=None):
+        """
+        Получить документы приемной кампании текущего абитуриента
+        """
+        try:
+            campaign = self.request.user.applicant.campaign
+            serializer = serializers.Document1CSerializer(campaign.documents.all(), many=True)
+            return Response(data=serializer.data, status=HTTP_200_OK)
+        except Exception as e:
+            raise ValidationError({"error": {"msg": "something went wrong", "exc": e}})

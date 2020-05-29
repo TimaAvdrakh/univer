@@ -40,6 +40,7 @@ APPROVED = "APPROVED"
 REJECTED = "REJECTED"
 AWAITS_VERIFICATION = "AWAITS_VERIFICATION"
 NO_QUESTIONNAIRE = "NO_QUESTIONNAIRE"
+TO_IMPROVE = "TO_IMPROVE"
 
 COND_ORDER = Case(
     When(Q(status__code=AWAITS_VERIFICATION), then=Value(0)),
@@ -144,10 +145,12 @@ class Address(BaseCatalog):
         null=True,
         verbose_name='Тип адреса'
     )
-    profiles = models.ManyToManyField(
+    profile = models.ForeignKey(
         Profile,
         blank=True,
-        verbose_name="Профили",
+        null=True,
+        on_delete=models.SET_NULL,
+        verbose_name="Профиль",
         related_name="addresses",
     )
     country = models.ForeignKey(
@@ -228,32 +231,31 @@ class Address(BaseCatalog):
     )
 
     def save(self, *args, **kwargs):
-        if not self.name:
-            if self.region:
-                self.name_en = f"{self.region} region, "
-                self.name_ru = f"область {self.region}, "
-                self.name_kk = f"{self.region} облысы, "
-            if self.city:
-                self.name_en = f"{self.city} city, "
-                self.name_ru = f"г.{self.city}, "
-                self.name_kk = f"{self.city} қ., "
-            if self.street:
-                self.name_en = f"St. {self.street}, "
-                self.name_ru = f"ул. {self.street}, "
-                self.name_kk = f"{self.street} к., "
-            if self.home_number:
-                self.name_en = f"#{self.home_number}, "
-                self.name_ru = f"д. №{self.home_number}, "
-                self.name_kk = f"№{self.home_number} үй, "
-            if self.corpus:
-                self.name_en += f", building {self.corpus}"
-                self.name_ru += f", корпус {self.corpus}"
-                self.name_kk += f", {self.corpus} ғимарат"
-            if self.apartment:
-                self.name_en += f", apartment {self.apartment}"
-                self.name_ru += f", квартира {self.apartment}"
-                self.name_kk += f", {self.apartment} пәтер"
-            self.name = self.name_ru
+        if self.region:
+            self.name_en = f"{self.region} region, "
+            self.name_ru = f"область {self.region}, "
+            self.name_kk = f"{self.region} облысы, "
+        if self.city:
+            self.name_en = f"{self.city} city, "
+            self.name_ru = f"г.{self.city}, "
+            self.name_kk = f"{self.city} қ., "
+        if self.street:
+            self.name_en = f"St. {self.street}, "
+            self.name_ru = f"ул. {self.street}, "
+            self.name_kk = f"{self.street} к., "
+        if self.home_number:
+            self.name_en = f"#{self.home_number}, "
+            self.name_ru = f"д. №{self.home_number}, "
+            self.name_kk = f"№{self.home_number} үй, "
+        if self.corpus:
+            self.name_en += f", building {self.corpus}"
+            self.name_ru += f", корпус {self.corpus}"
+            self.name_kk += f", {self.corpus} ғимарат"
+        if self.apartment:
+            self.name_en += f", apartment {self.apartment}"
+            self.name_ru += f", квартира {self.apartment}"
+            self.name_kk += f", {self.apartment} пәтер"
+        self.name = self.name_ru
         super().save(*args, **kwargs)
 
     class Meta:
@@ -547,6 +549,13 @@ class ApplicationStatus(BaseCatalog):
                 "name_en": "No questionnaire",
                 "code": NO_QUESTIONNAIRE,
             },
+            {
+                "name": TO_IMPROVE,
+                "name_ru": "Требует доработки",
+                "name_kk": "Жақсартуды қажет етеді",
+                "name_en": "Needs to be improved",
+                "code": TO_IMPROVE,
+            }
         ]
         for status in statuses:
             match: [ApplicationStatus] = ApplicationStatus.objects.filter(code=status["code"])
@@ -790,11 +799,15 @@ class Privilege(BaseModel):
     )
     serial_number = models.CharField(
         max_length=100,
-        verbose_name="Серийный номер"
+        verbose_name="Серийный номер",
+        blank=True,
+        null=True,
     )
     doc_number = models.CharField(
         max_length=100,
-        verbose_name="Номер документа"
+        verbose_name="Номер документа",
+        blank=True,
+        null=True,
     )
     start_date = models.DateField(
         verbose_name="Дата начала"
@@ -803,11 +816,15 @@ class Privilege(BaseModel):
         verbose_name="Дата окончания"
     )
     issued_at = models.DateField(
-        verbose_name="Дата получения"
+        verbose_name="Дата получения",
+        blank=True,
+        null=True,
     )
     issued_by = models.CharField(
         max_length=200,
-        verbose_name="Кем выдано"
+        verbose_name="Кем выдано",
+        blank=True,
+        null=True,
     )
     document = models.ForeignKey(
         Document,
@@ -943,7 +960,9 @@ class RecruitmentPlan(BaseModel):
     )
     entrance_test_form = models.ForeignKey(
         ControlForm,
-        on_delete=models.DO_NOTHING,
+        on_delete=models.SET_NULL,
+        blank=True,
+        null=True,
         verbose_name="Форма вступительного испытания"
     )
     language = models.ForeignKey(
@@ -1075,6 +1094,12 @@ class InternationalCert(BaseModel):
         on_delete=models.DO_NOTHING,
         verbose_name="Владение языком (CERF)"
     )
+    language = models.ForeignKey(
+        Language,
+        on_delete=models.SET_NULL,
+        null=True,
+        verbose_name='Тест на здачу языка'
+    )
     mark = models.FloatField(
         verbose_name="Балл"
     )
@@ -1084,6 +1109,12 @@ class InternationalCert(BaseModel):
     number = models.CharField(
         max_length=100,
         verbose_name="Номер сертификата"
+    )
+    document = models.ForeignKey(
+        Document,
+        on_delete=models.SET_NULL,
+        null=True,
+        verbose_name='Документ'
     )
 
     class Meta:
@@ -1180,6 +1211,23 @@ class TestResult(BaseModel):
         return f"Результаты теста ЕНТ/КТ пользователя {self.profile.full_name}"
 
 
+class Document1C(BaseCatalog):
+    campaign = models.ForeignKey(
+        AdmissionCampaign,
+        on_delete=models.CASCADE,
+        verbose_name='Приемная кампания',
+        related_name='documents'
+    )
+    types = models.ManyToManyField(
+        DocumentType,
+        verbose_name='Типы документов'
+    )
+
+    class Meta:
+        verbose_name = 'Документ из 1С'
+        verbose_name_plural = 'Документы из 1С'
+
+
 # Документы поступающего
 class AdmissionDocument(BaseModel):
     creator = models.ForeignKey(
@@ -1188,6 +1236,13 @@ class AdmissionDocument(BaseModel):
         verbose_name='Профиль',
         blank=True,
         null=True,
+    )
+    document_1c = models.ForeignKey(
+        Document1C,
+        on_delete=models.SET_NULL,
+        blank=True,
+        null=True,
+        related_name='document'
     )
     document = models.ForeignKey(
         Document,
@@ -1203,6 +1258,13 @@ class AdmissionDocument(BaseModel):
 
     def __str__(self):
         return f"Дополнительные поданные документы пользователя {self.creator.full_name}"
+
+    @property
+    def types(self):
+        try:
+            return self.document_1c.types.all()
+        except AttributeError:
+            return Document1C.objects.none()
 
 
 class OrderedDirection(BaseModel):
@@ -1233,12 +1295,10 @@ class Application(BaseModel):
         on_delete=models.DO_NOTHING,
         verbose_name='Результат теста ЕНТ/КТ'
     )
-    international_cert = models.ForeignKey(
+    international_certs = models.ManyToManyField(
         InternationalCert,
-        on_delete=models.SET_NULL,
         blank=True,
-        null=True,
-        verbose_name='Международный сертификат'
+        verbose_name='Международные сертификаты'
     )
     is_grant_holder = models.BooleanField(
         default=False,
@@ -1335,6 +1395,25 @@ class Application(BaseModel):
             print(e)
         return
 
+    def improve(self, moderator, comment):
+        Comment.objects.create(
+            text=comment,
+            creator=moderator,
+            content_object=self
+        )
+        self.status = ApplicationStatus.objects.get(code=TO_IMPROVE)
+        self.save()
+        try:
+            message = render_to_string('applicant/email/html/application_to_improve.html', {
+                'reason': comment
+            })
+            subject = 'Ваше заявление требует доработки'
+            email = EmailMessage(subject=subject, body=message, to=[self.creator.email])
+            email.send()
+        except Exception as e:
+            print(e)
+        return
+
     @property
     def status_info(self):
         return {
@@ -1349,7 +1428,7 @@ class Application(BaseModel):
     def delete(self, *args, **kwargs):
         previous_education = self.previous_education
         test_result = self.test_result
-        international_cert = self.international_cert
+        international_certs = self.international_certs.all()
         grant = self.grant
         directions = self.directions.all()
         super().delete(*args, **kwargs)
@@ -1360,8 +1439,8 @@ class Application(BaseModel):
                 [discipline.delete() for discipline in test_result.disciplines.all()]
             test_result.delete()
             test_result.test_certificate.delete()
-        if international_cert:
-            international_cert.delete()
+        if international_certs.exists():
+            international_certs.delete()
         if grant:
             grant.delete()
         if directions.exists():

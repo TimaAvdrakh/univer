@@ -19,8 +19,9 @@ router.register(r"applications", viewsets.ApplicationViewSet, "applications")
 router.register(r"campaign-types", viewsets.AdmissionCampaignTypeViewSet, "campaign-types")
 router.register(r"campaigns", viewsets.AdmissionCampaignViewSet, "campaigns")
 router.register(r"addresses", viewsets.AddressViewSet, "addresses")
-#router.register(r"attachments", viewsets.AdmissionDocumentViewSet, "documents")
+router.register(r"attachments", viewsets.AdmissionDocumentViewSet, "applicant_attachments")
 router.register(r"moderator", viewsets.ModeratorViewSet, "moderator")
+router.register(r"documents", viewsets.Document1CViewSet, "documents")
 urlpatterns = router.urls
 
 # endpoint для файлов

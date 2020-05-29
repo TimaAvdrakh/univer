@@ -336,7 +336,7 @@ class StudentDisciplineStatusListView(generics.ListAPIView):
 class NationalityViewSet(ModelViewSet):
     queryset = models.Nationality.objects.order_by(
         "name_ru", "name_en", "name_kk"
-    ).distinct("name_ru", "name_en", "name_kk")
+    ).distinct("name_ru", "name_en", "name_kk").all()
     serializer_class = serializers.NationalitySerializer
     permission_classes = (permissions.AllowAny,)
 
@@ -344,7 +344,7 @@ class NationalityViewSet(ModelViewSet):
 class CitizenshipViewSet(ModelViewSet):
     queryset = models.Citizenship.objects.order_by(
         "name_ru", "name_en", "name_kk"
-    ).distinct("name_ru", "name_en", "name_kk")
+    ).distinct("name_ru", "name_en", "name_kk").all()
     serializer_class = serializers.CitizenshipSerializer
     permission_classes = (permissions.AllowAny,)
 
@@ -357,12 +357,12 @@ class CitizenshipViewSet(ModelViewSet):
 class DocumentTypeViewSet(ModelViewSet):
     queryset = models.DocumentType.objects.order_by(
         "name_ru", "name_en", "name_kk"
-    ).distinct("name_ru", "name_en", "name_kk")
+    ).distinct("name_ru", "name_en", "name_kk").all()
     serializer_class = serializers.DocumentTypeSerializer
     permission_classes = (permissions.AllowAny,)
 
 
 class GovernmentAgencyViewSet(ModelViewSet):
-    queryset = models.GovernmentAgency.objects.order_by("name_ru", "name_en", "name_kk")
+    queryset = models.GovernmentAgency.objects.order_by("name_ru", "name_en", "name_kk").all()
     serializer_class = serializers.GovernmentAgencySerializer
     permission_classes = (permissions.AllowAny,)
