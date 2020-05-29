@@ -501,6 +501,9 @@ class AdmissionDocumentViewSet(ModelViewSet):
 
     @action(methods=['post'], detail=False, url_name='multiple-create', url_path='multiple-create')
     def multiple_create(self, request, pk=None):
+        documents = models.AdmissionDocument.objects.filter(creator=self.request.user.profile)
+        if documents.exists():
+            return Response(data=serializers.AdmissionDocumentSerializer(documents).data, status=HTTP_200_OK)
         try:
             creator = self.request.user.profile.pk
             documents = request.data.get('documents')
