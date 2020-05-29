@@ -7,6 +7,7 @@ from uuid import uuid4
 
 
 class BaseManager(models.Manager):
+    # Эту функцию надо переписать (а лучше не трогать), т.к. неактивные записи также нужны
     def get_queryset(self):
         return super(BaseManager, self).get_queryset().filter(is_active=True)
 

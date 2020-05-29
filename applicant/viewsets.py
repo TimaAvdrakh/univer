@@ -60,6 +60,12 @@ class ApplicantViewSet(ModelViewSet):
                     "message": "id_exists"
                 }
             })
+        if len(validated_data["doc_num"]) > 16:
+            raise ValidationError({
+                "error": {
+                    "message": "id_number_long"
+                }
+            })
         campaign_type = validated_data.get('campaign_type')
         today = dt.date.today()
         campaigns = models.AdmissionCampaign.objects.filter(
@@ -78,19 +84,18 @@ class ApplicantViewSet(ModelViewSet):
                 }
             })
         # Проверка этапов приемной кампан
-        # campaign: models.AdmissionCampaign = validated_data.get('campaign')
-        # stages = campaign.stages.filter(
-        #     prep_level=validated_data['prep_level'],
-        #     start_date__lte=today,
-        #     end_date__gte=today,
-        #     is_active=True
-        # )
-        # if not stages.exists():
-        #     raise ValidationError({
-        #         "error": {
-        #             "message": "no_stages"
-        #         }
-        #     })
+        campaign: models.AdmissionCampaign = campaigns.first()
+        stages = campaign.stages.filter(
+            prep_level=validated_data['prep_level'],
+            start_date__lte=today,
+            end_date__gte=today,
+        )
+        if not stages.exists():
+            raise ValidationError({
+                "error": {
+                    "message": "no_stages"
+                }
+            })
         return super().create(request, *args, **kwargs)
 
     @action(methods=['get'], detail=False, url_path='my-prep-level', url_name='applicant_prep_level')
@@ -281,9 +286,9 @@ class ApplicationViewSet(ModelViewSet):
                 raise ValidationError({'error': {
                     "msg": "direction_and_grant_no_match"
                 }})
-        international_cert = validated_data.get('international_cert', None)
-        if international_cert and not campaign.inter_cert_foreign_lang:
-            validated_data['international_cert'] = None
+        international_certs = validated_data.get('international_certs', None)
+        if international_certs and not campaign.inter_cert_foreign_lang:
+            validated_data['international_certs'] = None
 
     def create(self, request, *args, **kwargs):
         self.validate(request.data, self.request.user)
@@ -305,7 +310,7 @@ class ApplicationViewSet(ModelViewSet):
         if queryset.exists():
             return Response(data=serializers.ApplicationLiteSerializer(queryset.first()).data, status=HTTP_200_OK)
         else:
-            return Response(data='inshalla', status=HTTP_200_OK)
+            return Response(data=None, status=HTTP_200_OK)
 
 
     @action(methods=['post'], detail=True, url_path='apply-action', url_name='apply_action')
@@ -508,10 +513,11 @@ class ModeratorViewSet(ModelViewSet):
         edu_program_groups = request.query_params.get('edu_program_groups')
         application_date = request.query_params.get('application_date')
 
-        if application_status is not None and application_status != applicant_application_statuses['NO_QUESTIONNAIRE']:
-            profiles_with_questionnaire = models.Application.objects.filter(status=application_status).values_list('creator')
+        if application_status is not None and application_status != 'NO_QUESTIONNAIRE':
+            profiles_with_questionnaire = models.Application.objects.filter(
+                status__code=application_status).values_list('creator')
             queryset = queryset.filter(pk__in=profiles_with_questionnaire)
-        elif application_status == applicant_application_statuses['NO_QUESTIONNAIRE']:
+        elif application_status == 'NO_QUESTIONNAIRE':
             profiles_with_applications = models.Application.objects.all().values_list('creator')
             queryset_with_application = queryset.filter(pk__in=profiles_with_applications)
             queryset = queryset.difference(queryset_with_application)
