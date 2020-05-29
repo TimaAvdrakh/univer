@@ -11,7 +11,7 @@ from django.utils.translation import get_language
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 from common.models import IdentityDocument
-from common.serializers import DocumentSerializer
+from common.serializers import DocumentSerializer, DocumentTypeSerializer
 from portal_users.serializers import ProfilePhoneSerializer
 from portal_users.models import Profile, Role, ProfilePhone
 from organizations.models import Education
@@ -689,8 +689,8 @@ class AdmissionDocumentSerializer(serializers.ModelSerializer):
 
     def update(self, instance: models.AdmissionDocument, validated_data):
         new_files = validated_data.pop('files')
-        instance.files.clear()
-        instance.files.set(new_files)
+        instance.document.files.clear()
+        instance.document.files.set(new_files)
         instance.save()
         return super().update(instance, validated_data)
 
@@ -773,3 +773,12 @@ class OrderedDirectionsForModerator(serializers.ModelSerializer):
         data['language'] = instance.plan.language.name
 
         return data
+
+
+class Document1CSerializer(serializers.ModelSerializer):
+    types = DocumentTypeSerializer(many=True)
+    document = AdmissionDocumentSerializer()
+
+    class Meta:
+        model = models.Document1C
+        fields = '__all__'

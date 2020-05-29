@@ -486,8 +486,7 @@ class AdmissionDocumentViewSet(ModelViewSet):
     serializer_class = serializers.AdmissionDocumentSerializer
 
     def create(self, request, *args, **kwargs):
-        profile = self.request.user.profile
-        request.data['creator'] = profile.pk
+        request.data['creator'] = self.request.user.profile.pk
         return super().create(request, *args, **kwargs)
 
     @action(methods=['get'], detail=False, url_name='my', url_path='my')
@@ -495,9 +494,30 @@ class AdmissionDocumentViewSet(ModelViewSet):
         profile: Profile = self.request.user.profile
         queryset = self.queryset.filter(creator=profile)
         if queryset.exists():
-            return Response(data=serializers.AdmissionDocumentSerializer(queryset.first()).data, status=HTTP_200_OK)
+            serializer = serializers.AdmissionDocumentSerializer(queryset, many=True)
+            return Response(data=serializer.data, status=HTTP_200_OK)
         else:
             return Response(data=None, status=HTTP_200_OK)
+
+    @action(methods=['post'], detail=False, url_name='multiple-create', url_path='multiple-create')
+    def multiple_create(self, request, pk=None):
+        try:
+            creator = self.request.user.profile.pk
+            documents = request.data.get('documents')
+            data = []
+            for document in documents:
+                data.append({
+                    'document_1c': document['uid'],
+                    'document': document['document']['document'],
+                    'creator': creator
+                })
+            for item in data:
+                serializer = serializers.AdmissionDocumentSerializer(data=item)
+                serializer.is_valid(raise_exception=True)
+                serializer.save()
+            return Response(data={"msg": "created"}, status=HTTP_200_OK)
+        except Exception as e:
+            raise ValidationError({"error": {"msg": "something went wrong", "exc": e}})
 
 
 class ModeratorViewSet(ModelViewSet):
@@ -576,3 +596,18 @@ class ModeratorViewSet(ModelViewSet):
             return Response(data=None, status=HTTP_200_OK)
 
 
+class Document1CViewSet(ModelViewSet):
+    queryset = models.Document1C.objects.order_by('name_ru', 'name_kk', 'name_en').all()
+    serializer_class = serializers.Document1CSerializer
+
+    @action(methods=['get'], detail=False, url_path='campaign-docs', url_name='campaign-docs')
+    def get_current_applicant_campaign_documents(self, request, pk=None):
+        """
+        Получить документы приемной кампании текущего абитуриента
+        """
+        try:
+            campaign = self.request.user.applicant.campaign
+            serializer = serializers.Document1CSerializer(campaign.documents.all(), many=True)
+            return Response(data=serializer.data, status=HTTP_200_OK)
+        except Exception as e:
+            raise ValidationError({"error": {"msg": "something went wrong", "exc": e}})
