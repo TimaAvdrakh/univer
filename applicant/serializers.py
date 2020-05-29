@@ -12,6 +12,8 @@ from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 from common.models import IdentityDocument, Comment
 from common.serializers import DocumentSerializer
+from common.models import IdentityDocument
+from common.serializers import DocumentSerializer, DocumentTypeSerializer
 from portal_users.serializers import ProfilePhoneSerializer
 from portal_users.models import Profile, Role, ProfilePhone
 from organizations.models import Education
@@ -228,7 +230,11 @@ class QuestionnaireSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         creator = self.context['request'].user.profile
-        questionnaire = None
+        questionnaire = models.Questionnaire.objects.filter(creator=creator)
+        if questionnaire.exists():
+            return questionnaire.first()
+        else:
+            questionnaire = None
         try:
             # Сначала нужно разобраться с адресами
             # Адрес прописки/регистрации
@@ -321,6 +327,11 @@ class QuestionnaireSerializer(serializers.ModelSerializer):
                         profile=creator
                     ) for privilege in privileges
                 ])
+            application = models.Application.objects.filter(creator=creator)
+            if application.exists():
+                application = application.first()
+                application.status = models.ApplicationStatus.objects.get(code=models.AWAITS_VERIFICATION)
+                application.save()
         except Exception as e:
             if isinstance(questionnaire, models.Questionnaire):
                 questionnaire.delete()
@@ -410,6 +421,11 @@ class QuestionnaireSerializer(serializers.ModelSerializer):
                     middle_name=instance.middle_name,
                     email=instance.email
                 )
+                application = models.Application.objects.filter(creator=profile)
+                if application.exists():
+                    application = application.first()
+                    application.status = models.ApplicationStatus.objects.get(code=models.AWAITS_VERIFICATION)
+                    application.save()
                 return instance
             except Exception as e:
                 raise ValidationError({"error": e})
@@ -587,8 +603,12 @@ class ApplicationLiteSerializer(serializers.ModelSerializer):
         )
 
     def create(self, validated_data: dict):
-        application = None
         creator: Profile = self.context['request'].user.profile
+        application = models.Application.objects.filter(creator=creator)
+        if application.exists():
+            return application.first()
+        else:
+            application = None
         try:
             # Если есть заполненная анкета, статус будет "Ожидает проверки", иначе - "Без анкеты"
             has_questionnaire: bool = models.Questionnaire.objects.filter(creator=creator).exists()
@@ -667,6 +687,7 @@ class ApplicationLiteSerializer(serializers.ModelSerializer):
             ])
             instance.directions.set(directions)
             instance.save(snapshot=True)
+            validated_data['status'] = models.ApplicationStatus.objects.get(code=models.AWAITS_VERIFICATION)
             application = super().update(instance, validated_data)
             self.save_history_log(
                 creator_profile=instance.creator,
@@ -697,6 +718,14 @@ class ApplicationSerializer(ApplicationLiteSerializer):
 
 
 class AdmissionDocumentSerializer(serializers.ModelSerializer):
+    doc = DocumentSerializer(source='document', read_only=True)
+    types = serializers.SerializerMethodField(read_only=True)
+
+    def get_types(self, document):
+        try:
+            return DocumentTypeSerializer(document.types, many=True).data
+        except Exception:
+            return
 
     class Meta:
         model = models.AdmissionDocument
@@ -711,25 +740,45 @@ class AdmissionDocumentSerializer(serializers.ModelSerializer):
 
     def update(self, instance: models.AdmissionDocument, validated_data):
         new_files = validated_data.pop('files')
-        instance.files.clear()
-        instance.files.set(new_files)
+        instance.document.files.clear()
+        instance.document.files.set(new_files)
         instance.save()
         return super().update(instance, validated_data)
 
 
-class ModeratorSerializer(serializers.ModelSerializer):
+class OrderedDirectionsForModerator(serializers.ModelSerializer):
     class Meta:
-        model = Profile
+        model = models.OrderedDirection
         fields = [
             'uid',
-            'full_name',
         ]
 
     def to_representation(self, instance):
         data = super().to_representation(instance=instance)
+        data['education_program'] = instance.plan.education_program.name
+        data['language'] = instance.plan.language.name
+
+        return data
+
+
+class ModeratorSerializer(serializers.ModelSerializer):
+    directions = OrderedDirectionsForModerator(required=True, many=True)
+    status = serializers.CharField()
+
+    class Meta:
+        model = models.Application
+        fields = [
+            'uid',
+            'directions',
+            'status',
+        ]
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance=instance)
+        data['full_name'] = instance.creator.full_name
         try:
-            questionnairies = models.Questionnaire.objects.get(creator=instance)
-            data['iin'] = questionnairies.iin # iin В Казахстане означает индивидуальный идентификационный номер
+            questionnairies = models.Questionnaire.objects.get(creator=instance.creator)
+            data['iin'] = questionnairies.iin  # iin В Казахстане означает индивидуальный идентификационный номер
             data['citizenship'] = questionnairies.citizenship.name
             if questionnairies.address_of_registration is not None:
                 data['address_of_registration'] = questionnairies.address_of_registration.name
@@ -747,22 +796,12 @@ class ModeratorSerializer(serializers.ModelSerializer):
             family_members = models.FamilyMember.objects.filter(family=questionnairies.family)
             data['family_members'] = FamilyMemberForModerator(family_members, many=True).data
 
-            try:
-                applications = models.Application.objects.get(creator=instance)
-                directions = applications.directions.all()
-                data['directions'] = OrderedDirectionsForModerator(directions, many=True).data
-                data['status'] = applications.status.name_ru
-            except models.Application.DoesNotExist:
-                data['directions'] = []
-                data['status'] = models.ApplicationStatus.objects.get(code='NO_QUESTIONNAIRE').name_ru
         except models.Questionnaire.DoesNotExist:
             data['iin'] = ""
             data['address_of_registration'] = ""
             data['address_of_residence'] = ""
             data['address_of_temp_reg'] = ""
             data['family_members'] = []
-            data['directions'] = []
-            data['status'] = models.ApplicationStatus.objects.get(code='NO_QUESTIONNAIRE').name_ru
 
         return data
 
@@ -782,16 +821,10 @@ class FamilyMemberForModerator(serializers.ModelSerializer):
         ]
 
 
-class OrderedDirectionsForModerator(serializers.ModelSerializer):
+class Document1CSerializer(serializers.ModelSerializer):
+    types = DocumentTypeSerializer(many=True)
+    document = AdmissionDocumentSerializer()
+
     class Meta:
-        model = models.OrderedDirection
-        fields = [
-            'uid',
-        ]
-
-    def to_representation(self, instance):
-        data = super().to_representation(instance=instance)
-        data['education_program'] = instance.plan.education_program.name
-        data['language'] = instance.plan.language.name
-
-        return data
+        model = models.Document1C
+        fields = '__all__'

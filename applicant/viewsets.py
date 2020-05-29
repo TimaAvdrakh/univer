@@ -486,8 +486,7 @@ class AdmissionDocumentViewSet(ModelViewSet):
     serializer_class = serializers.AdmissionDocumentSerializer
 
     def create(self, request, *args, **kwargs):
-        profile = self.request.user.profile
-        request.data['creator'] = profile.pk
+        request.data['creator'] = self.request.user.profile.pk
         return super().create(request, *args, **kwargs)
 
     @action(methods=['get'], detail=False, url_name='my', url_path='my')
@@ -495,13 +494,36 @@ class AdmissionDocumentViewSet(ModelViewSet):
         profile: Profile = self.request.user.profile
         queryset = self.queryset.filter(creator=profile)
         if queryset.exists():
-            return Response(data=serializers.AdmissionDocumentSerializer(queryset.first()).data, status=HTTP_200_OK)
+            serializer = serializers.AdmissionDocumentSerializer(queryset, many=True)
+            return Response(data=serializer.data, status=HTTP_200_OK)
         else:
             return Response(data=None, status=HTTP_200_OK)
 
+    @action(methods=['post'], detail=False, url_name='multiple-create', url_path='multiple-create')
+    def multiple_create(self, request, pk=None):
+        documents = models.AdmissionDocument.objects.filter(creator=self.request.user.profile)
+        if documents.exists():
+            return Response(data=serializers.AdmissionDocumentSerializer(documents).data, status=HTTP_200_OK)
+        try:
+            creator = self.request.user.profile.pk
+            documents = request.data.get('documents')
+            data = []
+            for document in documents:
+                data.append({
+                    'document_1c': document['uid'],
+                    'document': document['document']['document'],
+                    'creator': creator
+                })
+            models.AdmissionDocument.objects.bulk_create([
+                models.AdmissionDocument(**doc) for doc in data
+            ])
+            return Response(data={"msg": "created"}, status=HTTP_200_OK)
+        except Exception as e:
+            raise ValidationError({"error": {"msg": "something went wrong", "exc": e}})
+
 
 class ModeratorViewSet(ModelViewSet):
-    queryset = Profile.objects.filter(role__is_applicant=True).order_by('last_name')
+    queryset = models.Application.objects.all()
     serializer_class = serializers.ModeratorSerializer
     pagination_class = CustomPagination
 
@@ -513,38 +535,20 @@ class ModeratorViewSet(ModelViewSet):
         edu_program_groups = request.query_params.get('edu_program_groups')
         application_date = request.query_params.get('application_date')
 
-        if application_status is not None and application_status != 'NO_QUESTIONNAIRE':
-            profiles_with_questionnaire = models.Application.objects.filter(
-                status__code=application_status).values_list('creator')
-            queryset = queryset.filter(pk__in=profiles_with_questionnaire)
-        elif application_status == 'NO_QUESTIONNAIRE':
-            profiles_with_applications = models.Application.objects.all().values_list('creator')
-            queryset_with_application = queryset.filter(pk__in=profiles_with_applications)
-            queryset = queryset.difference(queryset_with_application)
+        if application_status is not None:
+            queryset = queryset.filter(status__code=application_status)
 
         if full_name is not None:
-            lookup = Q(first_name__contains=full_name) \
-                     | Q(last_name__contains=full_name) \
-                     | Q(middle_name__contains=full_name)
+            lookup = Q(creator__first_name__contains=full_name) \
+                     | Q(creator__last_name__contains=full_name) \
+                     | Q(creator__middle_name__contains=full_name)
             queryset = queryset.filter(lookup)
         if preparation_level is not None:
-            profiles_with_prep_levels = models.Application.objects.filter(
-                directions__plan__preparaion_level=preparation_level
-            )
-            profiles_with_prep_levels.values_list('creator')
-            queryset = queryset.filter(pk__in=profiles_with_prep_levels)
+            queryset = queryset.filter(directions__plan__preparaion_level=preparation_level)
         if edu_program_groups is not None:
-            profiles_with_edu_group_group = models.Application.objects.filter(
-                directions__plan__education_program_group=edu_program_groups
-            )
-            profiles_with_edu_group_group.values_list('creator')
-            queryset = queryset.filter(pk__in=profiles_with_edu_group_group)
+            queryset = queryset.filter(directions__plan__education_program_group=edu_program_groups)
         if application_date is not None:
-            profiles_with_cur_data_application = models.Application.objects.filter(
-                created=application_date
-            )
-            profiles_with_cur_data_application.values_list('creator')
-            queryset = queryset.filter(pk__in=profiles_with_cur_data_application)
+            queryset = queryset.filter(created=application_date)
 
         page = self.paginate_queryset(queryset)
         serializer = self.serializer_class(page, many=True).data
@@ -559,20 +563,33 @@ class ModeratorViewSet(ModelViewSet):
 
     @action(methods=['get'], detail=False, url_name='get_application', url_path='get_application')
     def get_application(self, request, pk=None):
-        applicant_uid = request.query_params.get('uid')
-        application = models.Application.objects.filter(creator=applicant_uid)
-        if application.exists():
-            return Response(data=serializers.ApplicationSerializer(application.first()).data, status=HTTP_200_OK)
-        else:
-            return Response(data=None, status=HTTP_200_OK)
+        application_uid = request.query_params.get('uid')
+        queryset = self.queryset.filter(pk=application_uid)
+        return Response(data=serializers.ApplicationSerializer(queryset.first()).data, status=HTTP_200_OK)
 
     @action(methods=['get'], detail=False, url_path='get_questionnaire', url_name='get_questionnaire')
     def get_questionnaire(self, request, pk=None):
-        applicant_uid = self.request.query_params.get('uid')
-        questionnaire = models.Questionnaire.objects.filter(creator=applicant_uid)
+        application_uid = self.request.query_params.get('uid')
+        queryset = self.queryset.get(pk=application_uid)
+        questionnaire = models.Questionnaire.objects.filter(creator=queryset.creator)
         if questionnaire.exists():
             return Response(data=serializers.QuestionnaireSerializer(questionnaire.first()).data, status=HTTP_200_OK)
         else:
             return Response(data=None, status=HTTP_200_OK)
 
 
+class Document1CViewSet(ModelViewSet):
+    queryset = models.Document1C.objects.order_by('name_ru', 'name_kk', 'name_en').all()
+    serializer_class = serializers.Document1CSerializer
+
+    @action(methods=['get'], detail=False, url_path='campaign-docs', url_name='campaign-docs')
+    def get_current_applicant_campaign_documents(self, request, pk=None):
+        """
+        Получить документы приемной кампании текущего абитуриента
+        """
+        try:
+            campaign = self.request.user.applicant.campaign
+            serializer = serializers.Document1CSerializer(campaign.documents.all(), many=True)
+            return Response(data=serializer.data, status=HTTP_200_OK)
+        except Exception as e:
+            raise ValidationError({"error": {"msg": "something went wrong", "exc": e}})

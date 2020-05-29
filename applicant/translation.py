@@ -2,6 +2,11 @@ from modeltranslation.translator import register, TranslationOptions
 from .models import *
 
 
+@register(Document1C)
+class Document1CTranslationOptions(TranslationOptions):
+    fields = ('name',)
+
+
 @register(AdmissionCampaign)
 class AdmissionCampaignTranslationOptions(TranslationOptions):
     fields = ('name',)
