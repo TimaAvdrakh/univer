@@ -321,6 +321,11 @@ class QuestionnaireSerializer(serializers.ModelSerializer):
                         profile=creator
                     ) for privilege in privileges
                 ])
+            application = models.Application.objects.filter(creator=creator)
+            if application.exists():
+                application = application.first()
+                application.status = models.ApplicationStatus.objects.get(code=models.AWAITS_VERIFICATION)
+                application.save()
         except Exception as e:
             if isinstance(questionnaire, models.Questionnaire):
                 questionnaire.delete()
@@ -410,6 +415,11 @@ class QuestionnaireSerializer(serializers.ModelSerializer):
                     middle_name=instance.middle_name,
                     email=instance.email
                 )
+                application = models.Application.objects.filter(creator=profile)
+                if application.exists():
+                    application = application.first()
+                    application.status = models.ApplicationStatus.objects.get(code=models.AWAITS_VERIFICATION)
+                    application.save()
                 return instance
             except Exception as e:
                 raise ValidationError({"error": e})
@@ -650,6 +660,7 @@ class ApplicationLiteSerializer(serializers.ModelSerializer):
             ])
             instance.directions.set(directions)
             instance.save(snapshot=True)
+            validated_data['status'] = models.ApplicationStatus.objects.get(code=models.AWAITS_VERIFICATION)
             application = super().update(instance, validated_data)
             return application
         else:
@@ -675,6 +686,11 @@ class ApplicationSerializer(ApplicationLiteSerializer):
 
 
 class AdmissionDocumentSerializer(serializers.ModelSerializer):
+    doc = DocumentSerializer(source='document', read_only=True)
+    types = serializers.SerializerMethodField(read_only=True)
+
+    def get_types(self, document: models.AdmissionDocument):
+        return DocumentTypeSerializer(document.types, many=True).data
 
     class Meta:
         model = models.AdmissionDocument

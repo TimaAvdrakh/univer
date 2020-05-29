@@ -511,10 +511,9 @@ class AdmissionDocumentViewSet(ModelViewSet):
                     'document': document['document']['document'],
                     'creator': creator
                 })
-            for item in data:
-                serializer = serializers.AdmissionDocumentSerializer(data=item)
-                serializer.is_valid(raise_exception=True)
-                serializer.save()
+            models.AdmissionDocument.objects.bulk_create([
+                models.AdmissionDocument(**doc) for doc in data
+            ])
             return Response(data={"msg": "created"}, status=HTTP_200_OK)
         except Exception as e:
             raise ValidationError({"error": {"msg": "something went wrong", "exc": e}})

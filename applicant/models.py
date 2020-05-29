@@ -1259,6 +1259,10 @@ class AdmissionDocument(BaseModel):
     def __str__(self):
         return f"Дополнительные поданные документы пользователя {self.creator.full_name}"
 
+    @property
+    def types(self):
+        return self.document_1c.types.all()
+
 
 class OrderedDirection(BaseModel):
     plan = models.ForeignKey(
