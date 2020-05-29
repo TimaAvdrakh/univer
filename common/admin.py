@@ -129,3 +129,8 @@ class CourseAdmin(admin.ModelAdmin):
         'number',
         'uid'
     )
+
+
+admin.site.register(models.DocumentTypeGroup)
+admin.site.register(models.File)
+admin.site.register(models.Document)
