@@ -29,6 +29,7 @@ models = [
     TestResult,
     Application,
     AdmissionDocument,
+    Document1C,
 ]
 
 admin.site.register(models)

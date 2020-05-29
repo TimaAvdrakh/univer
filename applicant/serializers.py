@@ -11,7 +11,7 @@ from django.utils.translation import get_language
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 from common.models import IdentityDocument
-from common.serializers import DocumentSerializer
+from common.serializers import DocumentSerializer, DocumentTypeSerializer
 from portal_users.serializers import ProfilePhoneSerializer
 from portal_users.models import Profile, Role, ProfilePhone
 from organizations.models import Education
@@ -321,6 +321,11 @@ class QuestionnaireSerializer(serializers.ModelSerializer):
                         profile=creator
                     ) for privilege in privileges
                 ])
+            application = models.Application.objects.filter(creator=creator)
+            if application.exists():
+                application = application.first()
+                application.status = models.ApplicationStatus.objects.get(code=models.AWAITS_VERIFICATION)
+                application.save()
         except Exception as e:
             if isinstance(questionnaire, models.Questionnaire):
                 questionnaire.delete()
@@ -410,6 +415,11 @@ class QuestionnaireSerializer(serializers.ModelSerializer):
                     middle_name=instance.middle_name,
                     email=instance.email
                 )
+                application = models.Application.objects.filter(creator=profile)
+                if application.exists():
+                    application = application.first()
+                    application.status = models.ApplicationStatus.objects.get(code=models.AWAITS_VERIFICATION)
+                    application.save()
                 return instance
             except Exception as e:
                 raise ValidationError({"error": e})
@@ -650,6 +660,7 @@ class ApplicationLiteSerializer(serializers.ModelSerializer):
             ])
             instance.directions.set(directions)
             instance.save(snapshot=True)
+            validated_data['status'] = models.ApplicationStatus.objects.get(code=models.AWAITS_VERIFICATION)
             application = super().update(instance, validated_data)
             return application
         else:
@@ -675,6 +686,11 @@ class ApplicationSerializer(ApplicationLiteSerializer):
 
 
 class AdmissionDocumentSerializer(serializers.ModelSerializer):
+    doc = DocumentSerializer(source='document', read_only=True)
+    types = serializers.SerializerMethodField(read_only=True)
+
+    def get_types(self, document: models.AdmissionDocument):
+        return DocumentTypeSerializer(document.types, many=True).data
 
     class Meta:
         model = models.AdmissionDocument
@@ -689,8 +705,8 @@ class AdmissionDocumentSerializer(serializers.ModelSerializer):
 
     def update(self, instance: models.AdmissionDocument, validated_data):
         new_files = validated_data.pop('files')
-        instance.files.clear()
-        instance.files.set(new_files)
+        instance.document.files.clear()
+        instance.document.files.set(new_files)
         instance.save()
         return super().update(instance, validated_data)
 
@@ -773,3 +789,12 @@ class OrderedDirectionsForModerator(serializers.ModelSerializer):
         data['language'] = instance.plan.language.name
 
         return data
+
+
+class Document1CSerializer(serializers.ModelSerializer):
+    types = DocumentTypeSerializer(many=True)
+    document = AdmissionDocumentSerializer()
+
+    class Meta:
+        model = models.Document1C
+        fields = '__all__'

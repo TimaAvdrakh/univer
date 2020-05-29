@@ -960,7 +960,9 @@ class RecruitmentPlan(BaseModel):
     )
     entrance_test_form = models.ForeignKey(
         ControlForm,
-        on_delete=models.DO_NOTHING,
+        on_delete=models.SET_NULL,
+        blank=True,
+        null=True,
         verbose_name="Форма вступительного испытания"
     )
     language = models.ForeignKey(
@@ -1209,6 +1211,23 @@ class TestResult(BaseModel):
         return f"Результаты теста ЕНТ/КТ пользователя {self.profile.full_name}"
 
 
+class Document1C(BaseCatalog):
+    campaign = models.ForeignKey(
+        AdmissionCampaign,
+        on_delete=models.CASCADE,
+        verbose_name='Приемная кампания',
+        related_name='documents'
+    )
+    types = models.ManyToManyField(
+        DocumentType,
+        verbose_name='Типы документов'
+    )
+
+    class Meta:
+        verbose_name = 'Документ из 1С'
+        verbose_name_plural = 'Документы из 1С'
+
+
 # Документы поступающего
 class AdmissionDocument(BaseModel):
     creator = models.ForeignKey(
@@ -1217,6 +1236,13 @@ class AdmissionDocument(BaseModel):
         verbose_name='Профиль',
         blank=True,
         null=True,
+    )
+    document_1c = models.ForeignKey(
+        Document1C,
+        on_delete=models.SET_NULL,
+        blank=True,
+        null=True,
+        related_name='document'
     )
     document = models.ForeignKey(
         Document,
@@ -1232,6 +1258,10 @@ class AdmissionDocument(BaseModel):
 
     def __str__(self):
         return f"Дополнительные поданные документы пользователя {self.creator.full_name}"
+
+    @property
+    def types(self):
+        return self.document_1c.types.all()
 
 
 class OrderedDirection(BaseModel):
