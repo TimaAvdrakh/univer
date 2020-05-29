@@ -520,7 +520,7 @@ class AdmissionDocumentViewSet(ModelViewSet):
 
 
 class ModeratorViewSet(ModelViewSet):
-    queryset = Profile.objects.filter(role__is_applicant=True).order_by('last_name')
+    queryset = models.Application.objects.all()
     serializer_class = serializers.ModeratorSerializer
     pagination_class = CustomPagination
 
@@ -532,38 +532,20 @@ class ModeratorViewSet(ModelViewSet):
         edu_program_groups = request.query_params.get('edu_program_groups')
         application_date = request.query_params.get('application_date')
 
-        if application_status is not None and application_status != 'NO_QUESTIONNAIRE':
-            profiles_with_questionnaire = models.Application.objects.filter(
-                status__code=application_status).values_list('creator')
-            queryset = queryset.filter(pk__in=profiles_with_questionnaire)
-        elif application_status == 'NO_QUESTIONNAIRE':
-            profiles_with_applications = models.Application.objects.all().values_list('creator')
-            queryset_with_application = queryset.filter(pk__in=profiles_with_applications)
-            queryset = queryset.difference(queryset_with_application)
+        if application_status is not None:
+            queryset = queryset.filter(status__code=application_status)
 
         if full_name is not None:
-            lookup = Q(first_name__contains=full_name) \
-                     | Q(last_name__contains=full_name) \
-                     | Q(middle_name__contains=full_name)
+            lookup = Q(creator__first_name__contains=full_name) \
+                     | Q(creator__last_name__contains=full_name) \
+                     | Q(creator__middle_name__contains=full_name)
             queryset = queryset.filter(lookup)
         if preparation_level is not None:
-            profiles_with_prep_levels = models.Application.objects.filter(
-                directions__plan__preparaion_level=preparation_level
-            )
-            profiles_with_prep_levels.values_list('creator')
-            queryset = queryset.filter(pk__in=profiles_with_prep_levels)
+            queryset = queryset.filter(directions__plan__preparaion_level=preparation_level)
         if edu_program_groups is not None:
-            profiles_with_edu_group_group = models.Application.objects.filter(
-                directions__plan__education_program_group=edu_program_groups
-            )
-            profiles_with_edu_group_group.values_list('creator')
-            queryset = queryset.filter(pk__in=profiles_with_edu_group_group)
+            queryset = queryset.filter(directions__plan__education_program_group=edu_program_groups)
         if application_date is not None:
-            profiles_with_cur_data_application = models.Application.objects.filter(
-                created=application_date
-            )
-            profiles_with_cur_data_application.values_list('creator')
-            queryset = queryset.filter(pk__in=profiles_with_cur_data_application)
+            queryset = queryset.filter(created=application_date)
 
         page = self.paginate_queryset(queryset)
         serializer = self.serializer_class(page, many=True).data

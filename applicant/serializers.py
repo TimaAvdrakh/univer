@@ -711,19 +711,39 @@ class AdmissionDocumentSerializer(serializers.ModelSerializer):
         return super().update(instance, validated_data)
 
 
-class ModeratorSerializer(serializers.ModelSerializer):
+class OrderedDirectionsForModerator(serializers.ModelSerializer):
     class Meta:
-        model = Profile
+        model = models.OrderedDirection
         fields = [
             'uid',
-            'full_name',
         ]
 
     def to_representation(self, instance):
         data = super().to_representation(instance=instance)
+        data['education_program'] = instance.plan.education_program.name
+        data['language'] = instance.plan.language.name
+
+        return data
+
+
+class ModeratorSerializer(serializers.ModelSerializer):
+    directions = OrderedDirectionsForModerator(required=True, many=True)
+    status = serializers.CharField()
+
+    class Meta:
+        model = models.Application
+        fields = [
+            'uid',
+            'directions',
+            'status',
+        ]
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance=instance)
+        data['full_name'] = instance.creator.full_name
         try:
-            questionnairies = models.Questionnaire.objects.get(creator=instance)
-            data['iin'] = questionnairies.iin # iin В Казахстане означает индивидуальный идентификационный номер
+            questionnairies = models.Questionnaire.objects.get(creator=instance.creator)
+            data['iin'] = questionnairies.iin  # iin В Казахстане означает индивидуальный идентификационный номер
             data['citizenship'] = questionnairies.citizenship.name
             if questionnairies.address_of_registration is not None:
                 data['address_of_registration'] = questionnairies.address_of_registration.name
@@ -741,22 +761,12 @@ class ModeratorSerializer(serializers.ModelSerializer):
             family_members = models.FamilyMember.objects.filter(family=questionnairies.family)
             data['family_members'] = FamilyMemberForModerator(family_members, many=True).data
 
-            try:
-                applications = models.Application.objects.get(creator=instance)
-                directions = applications.directions.all()
-                data['directions'] = OrderedDirectionsForModerator(directions, many=True).data
-                data['status'] = applications.status.name_ru
-            except models.Application.DoesNotExist:
-                data['directions'] = []
-                data['status'] = models.ApplicationStatus.objects.get(code='NO_QUESTIONNAIRE').name_ru
         except models.Questionnaire.DoesNotExist:
             data['iin'] = ""
             data['address_of_registration'] = ""
             data['address_of_residence'] = ""
             data['address_of_temp_reg'] = ""
             data['family_members'] = []
-            data['directions'] = []
-            data['status'] = models.ApplicationStatus.objects.get(code='NO_QUESTIONNAIRE').name_ru
 
         return data
 
@@ -774,21 +784,6 @@ class FamilyMemberForModerator(serializers.ModelSerializer):
             'phone',
             'address',
         ]
-
-
-class OrderedDirectionsForModerator(serializers.ModelSerializer):
-    class Meta:
-        model = models.OrderedDirection
-        fields = [
-            'uid',
-        ]
-
-    def to_representation(self, instance):
-        data = super().to_representation(instance=instance)
-        data['education_program'] = instance.plan.education_program.name
-        data['language'] = instance.plan.language.name
-
-        return data
 
 
 class Document1CSerializer(serializers.ModelSerializer):
