@@ -1261,7 +1261,10 @@ class AdmissionDocument(BaseModel):
 
     @property
     def types(self):
-        return self.document_1c.types.all()
+        try:
+            return self.document_1c.types.all()
+        except AttributeError:
+            return Document1C.objects.none()
 
 
 class OrderedDirection(BaseModel):
