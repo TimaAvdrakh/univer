@@ -729,10 +729,10 @@ class ModeratorSerializer(serializers.ModelSerializer):
                 applications = models.Application.objects.get(creator=instance)
                 directions = applications.directions.all()
                 data['directions'] = OrderedDirectionsForModerator(directions, many=True).data
-                data['status'] = applications.status.code
+                data['status'] = applications.status.name_ru
             except models.Application.DoesNotExist:
                 data['directions'] = []
-                data['status'] = models.ApplicationStatus.objects.get(code='NO_QUESTIONNAIRE').code
+                data['status'] = models.ApplicationStatus.objects.get(code='NO_QUESTIONNAIRE').name_ru
         except models.Questionnaire.DoesNotExist:
             data['iin'] = ""
             data['address_of_registration'] = ""
@@ -740,7 +740,7 @@ class ModeratorSerializer(serializers.ModelSerializer):
             data['address_of_temp_reg'] = ""
             data['family_members'] = []
             data['directions'] = []
-            data['status'] = models.ApplicationStatus.objects.get(code='NO_QUESTIONNAIRE').code
+            data['status'] = models.ApplicationStatus.objects.get(code='NO_QUESTIONNAIRE').name_ru
 
         return data
 
