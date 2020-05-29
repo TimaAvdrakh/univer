@@ -505,18 +505,14 @@ class AdmissionDocumentViewSet(ModelViewSet):
         if documents.exists():
             return Response(data=serializers.AdmissionDocumentSerializer(documents).data, status=HTTP_200_OK)
         try:
-            creator = self.request.user.profile.pk
+            creator = self.request.user.profile
             documents = request.data.get('documents')
-            data = []
             for document in documents:
-                data.append({
-                    'document_1c': document['uid'],
-                    'document': document['document']['document'],
-                    'creator': creator
-                })
-            models.AdmissionDocument.objects.bulk_create([
-                models.AdmissionDocument(**doc) for doc in data
-            ])
+                models.AdmissionDocument.objects.create(
+                    document_1c=document['uid'],
+                    document=document['document']['document'],
+                    creator=creator
+                )
             return Response(data={"msg": "created"}, status=HTTP_200_OK)
         except Exception as e:
             raise ValidationError({"error": {"msg": "something went wrong", "exc": e}})
