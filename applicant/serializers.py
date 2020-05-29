@@ -527,9 +527,9 @@ class ApplicationLiteSerializer(serializers.ModelSerializer):
         ])
         return directions
 
-    def save_history_log(self, creator_profile, status):
+    def save_history_log(self, creator_profile, status, text):
         comment = Comment.objects.create(
-            text="Заявление созданно со статусом {}".format(status.name),
+            text=text,
             creator=creator_profile,
             content_type=self
         )
@@ -566,11 +566,15 @@ class ApplicationLiteSerializer(serializers.ModelSerializer):
             application.international_certs.set(international_certs)
             application.directions.set(directions)
             application.save()
-            self.save_history_log(creator_profile=creator, status=status)
+            self.save_history_log(
+                creator_profile=creator,
+                status=status,
+                text=f"Заявление созданно со статусом {status.name}"
+            )
             try:
                 self.send_on_create(recipient=creator.email)
             except Exception as e:
-                    print(e)
+                print(e)
         except Exception as e:
             if application and isinstance(application, models.Application):
                 application.delete()
@@ -617,6 +621,11 @@ class ApplicationLiteSerializer(serializers.ModelSerializer):
             instance.directions.set(directions)
             instance.save(snapshot=True)
             application = super().update(instance, validated_data)
+            self.save_history_log(
+                creator_profile=instance.creator,
+                status=instance.status,
+                text="В заявление внесены изменения"
+            )
             return application
         else:
             raise ValidationError({"error": "access_denied"})
