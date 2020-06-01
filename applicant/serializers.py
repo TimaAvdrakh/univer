@@ -658,7 +658,7 @@ class ApplicationLiteSerializer(serializers.ModelSerializer):
             self.save_history_log(
                 creator_profile=creator,
                 status=status,
-                text=f"Заявление созданно со статусом {status.name}"
+                text=f"Заявление создано со статусом {status.name}"
             )
             try:
                 self.send_on_create(recipient=creator.email)

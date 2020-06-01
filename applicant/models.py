@@ -1418,7 +1418,7 @@ class Application(BaseModel):
 
     def save_to_status_change_log(self, comment=None):
         if comment is None:
-            comment = "Заявление утвержденно"
+            comment = "Заявление утверждено"
         ApplicationStatusChangeHistory.objects.create(
             creator=self.creator,
             comment=comment,
