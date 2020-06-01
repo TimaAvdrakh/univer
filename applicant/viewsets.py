@@ -573,6 +573,18 @@ class ModeratorViewSet(ModelViewSet):
         else:
             return Response(data=None, status=HTTP_200_OK)
 
+    @action(methods=['get'], detail=False, url_path='get_application_status_history',
+            url_name='get_application_status_history')
+    def get_history(self, request, pk=None):
+        application_uid = self.request.query_params.get('uid')
+        queryset = self.queryset.get(pk=application_uid)
+        history = models.ApplicationStatusChangeHistory.objects.filter(creator=queryset.creator)
+        if history.exists():
+            return Response(data=serializers.ApplicationChangeHistorySerializer(history, many=True).data,
+                            status=HTTP_200_OK)
+        else:
+            return Response(data=None, status=HTTP_200_OK)
+
 
 class Document1CViewSet(ModelViewSet):
     queryset = models.Document1C.objects.order_by('name_ru', 'name_kk', 'name_en').all()

@@ -35,7 +35,6 @@ from organizations.models import (
 )
 from organizations.models import DocumentType
 
-
 APPROVED = "APPROVED"
 REJECTED = "REJECTED"
 AWAITS_VERIFICATION = "AWAITS_VERIFICATION"
@@ -1269,9 +1268,9 @@ class AdmissionDocument(BaseModel):
 
 class OrderedDirection(BaseModel):
     plan = models.ForeignKey(
-            RecruitmentPlan,
-            on_delete=models.CASCADE,
-            verbose_name='План набора')
+        RecruitmentPlan,
+        on_delete=models.CASCADE,
+        verbose_name='План набора')
     order_number = models.PositiveSmallIntegerField()
 
     class Meta:
@@ -1358,6 +1357,7 @@ class Application(BaseModel):
             )
         self.status = ApplicationStatus.objects.get(code=APPROVED)
         self.save()
+        self.save_to_status_change_log()
         # TODO на подтверждение заявления модератором импортировать заявление в 1С
         self.import_self_to_1c()
         try:
@@ -1376,13 +1376,14 @@ class Application(BaseModel):
         return
 
     def reject(self, moderator, comment):
-        Comment.objects.create(
+        comment_to_save = Comment.objects.create(
             text=comment,
             creator=moderator,
             content_object=self
         )
         self.status = ApplicationStatus.objects.get(code=REJECTED)
         self.save()
+        self.save_to_status_change_log(comment=comment_to_save)
         try:
             message = render_to_string('applicant/email/html/application_rejected.html', {
                 'rejected_at': dt.datetime.now().strftime('%d.%m.%Y %H:%I'),
@@ -1396,13 +1397,14 @@ class Application(BaseModel):
         return
 
     def improve(self, moderator, comment):
-        Comment.objects.create(
+        comment_to_save = Comment.objects.create(
             text=comment,
             creator=moderator,
             content_object=self
         )
         self.status = ApplicationStatus.objects.get(code=TO_IMPROVE)
         self.save()
+        self.save_to_status_change_log(comment=comment_to_save)
         try:
             message = render_to_string('applicant/email/html/application_to_improve.html', {
                 'reason': comment
@@ -1413,6 +1415,15 @@ class Application(BaseModel):
         except Exception as e:
             print(e)
         return
+
+    def save_to_status_change_log(self, comment=None):
+        if comment is None:
+            comment = "Заявление утверждено"
+        ApplicationStatusChangeHistory.objects.create(
+            creator=self.creator,
+            comment=comment,
+            status=self.status,
+        )
 
     @property
     def status_info(self):
@@ -1452,3 +1463,31 @@ class Application(BaseModel):
             return True
         else:
             return False
+
+
+class ApplicationStatusChangeHistory(BaseModel):
+    creator = models.OneToOneField(
+        Profile,
+        blank=True,
+        null=True,
+        on_delete=models.CASCADE,
+        verbose_name='Заявитель',
+    )
+    status = models.ForeignKey(
+        ApplicationStatus,
+        on_delete=models.DO_NOTHING,
+        verbose_name='Статус',
+        blank=True,
+        null=True
+    )
+    comment = models.ForeignKey(
+        Comment,
+        blank=True,
+        null=True,
+        on_delete=models.CASCADE,
+        verbose_name='Комментарий изменения'
+    )
+
+    class Meta:
+        verbose_name = "История изменения статуса заявления"
+        verbose_name_plural = "История изменения статуса заявлений"

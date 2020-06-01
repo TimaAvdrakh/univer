@@ -10,6 +10,8 @@ from django.utils.encoding import force_bytes
 from django.utils.translation import get_language
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
+from common.models import IdentityDocument, Comment
+from common.serializers import DocumentSerializer
 from common.models import IdentityDocument
 from common.serializers import DocumentSerializer, DocumentTypeSerializer
 from portal_users.serializers import ProfilePhoneSerializer
@@ -330,6 +332,11 @@ class QuestionnaireSerializer(serializers.ModelSerializer):
                 application = application.first()
                 application.status = models.ApplicationStatus.objects.get(code=models.AWAITS_VERIFICATION)
                 application.save()
+                self.save_history_log(
+                    creator_profile=creator,
+                    status=application.status,
+                    text='Анкета создана'
+                )
         except Exception as e:
             if isinstance(questionnaire, models.Questionnaire):
                 questionnaire.delete()
@@ -424,11 +431,28 @@ class QuestionnaireSerializer(serializers.ModelSerializer):
                     application = application.first()
                     application.status = models.ApplicationStatus.objects.get(code=models.AWAITS_VERIFICATION)
                     application.save()
+                    self.save_history_log(
+                        creator_profile=profile,
+                        status=application.status,
+                        text='Анкета изменена'
+                    )
                 return instance
             except Exception as e:
                 raise ValidationError({"error": e})
         else:
             raise ValidationError({"error": "access_denied"})
+
+    def save_history_log(self, creator_profile, status, text):
+        comment = Comment.objects.create(
+            text=text,
+            creator=creator_profile,
+            content_type=self
+        )
+        models.ApplicationStatusChangeHistory.objects.create(
+            creator=creator_profile,
+            status=status,
+            comment=comment,
+        )
 
 
 class ApplicationStatusSerializer(serializers.ModelSerializer):
@@ -588,6 +612,18 @@ class ApplicationLiteSerializer(serializers.ModelSerializer):
         ])
         return directions
 
+    def save_history_log(self, creator_profile, status, text):
+        comment = Comment.objects.create(
+            text=text,
+            creator=creator_profile,
+            content_type=self
+        )
+        models.ApplicationStatusChangeHistory.objects.create(
+            creator=creator_profile,
+            status=status,
+            comment=comment,
+        )
+
     def create(self, validated_data: dict):
         creator: Profile = self.context['request'].user.profile
         application = models.Application.objects.filter(creator=creator)
@@ -619,6 +655,11 @@ class ApplicationLiteSerializer(serializers.ModelSerializer):
             application.international_certs.set(international_certs)
             application.directions.set(directions)
             application.save()
+            self.save_history_log(
+                creator_profile=creator,
+                status=status,
+                text=f"Заявление создано со статусом {status.name}"
+            )
             try:
                 self.send_on_create(recipient=creator.email)
             except Exception as e:
@@ -670,6 +711,11 @@ class ApplicationLiteSerializer(serializers.ModelSerializer):
             instance.save(snapshot=True)
             validated_data['status'] = models.ApplicationStatus.objects.get(code=models.AWAITS_VERIFICATION)
             application = super().update(instance, validated_data)
+            self.save_history_log(
+                creator_profile=instance.creator,
+                status=instance.status,
+                text="В заявление внесены изменения"
+            )
             return application
         else:
             raise ValidationError({"error": "access_denied"})
@@ -804,3 +850,26 @@ class Document1CSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Document1C
         fields = '__all__'
+
+
+class CommentsForHistorySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Comment
+        fields = [
+            'text',
+            'creator'
+        ]
+
+
+class ApplicationChangeHistorySerializer(serializers.ModelSerializer):
+    status = serializers.CharField()
+    comment = CommentsForHistorySerializer(required=True)
+
+    class Meta:
+        model = models.ApplicationStatusChangeHistory
+        fields = [
+            'uid',
+            'created',
+            'status',
+            'comment',
+        ]
