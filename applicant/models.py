@@ -1357,7 +1357,10 @@ class Application(BaseModel):
             )
         self.status = ApplicationStatus.objects.get(code=APPROVED)
         self.save()
-        self.save_to_status_change_log()
+        self.save_to_status_change_log(
+            comment=comment,
+            moderator=moderator,
+        )
         # TODO на подтверждение заявления модератором импортировать заявление в 1С
         self.import_self_to_1c()
         try:
@@ -1404,7 +1407,9 @@ class Application(BaseModel):
         )
         self.status = ApplicationStatus.objects.get(code=TO_IMPROVE)
         self.save()
-        self.save_to_status_change_log(comment=comment_to_save)
+        self.save_to_status_change_log(
+            comment=comment_to_save,
+        )
         try:
             message = render_to_string('applicant/email/html/application_to_improve.html', {
                 'reason': comment
@@ -1416,9 +1421,13 @@ class Application(BaseModel):
             print(e)
         return
 
-    def save_to_status_change_log(self, comment=None):
+    def save_to_status_change_log(self, comment=None, moderator=None):
         if comment is None:
-            comment = "Заявление утверждено"
+            comment = Comment.objects.create(
+                text="Заявление утверждено",
+                creator=moderator,
+                content_object=self,
+            )
         ApplicationStatusChangeHistory.objects.create(
             creator=self.creator,
             comment=comment,
@@ -1466,7 +1475,7 @@ class Application(BaseModel):
 
 
 class ApplicationStatusChangeHistory(BaseModel):
-    creator = models.OneToOneField(
+    creator = models.ForeignKey(
         Profile,
         blank=True,
         null=True,
