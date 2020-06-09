@@ -420,6 +420,20 @@ class ApplicationViewSet(ModelViewSet):
         else:
             raise ValidationError({"error": "access_denied"})
 
+    @action(methods=['get'], detail=False, url_path='my_status', url_name='my_status')
+    def get_my_status(self, request, pk=None):
+        profile = self.request.user.profile
+        queryset = models.Application.objects.filter(creator=profile).first()
+        if queryset is not None:
+            data = serializers.ApplicantMyStatusSerializer(queryset).data
+            return Response(data=data, status=HTTP_200_OK)
+        else:
+            data = {
+                "status": "Составьте заявление",
+                "comment": "",
+            }
+            return Response(data=data, status=HTTP_200_OK)
+
 
 class AdmissionCampaignTypeViewSet(ModelViewSet):
     queryset = models.AdmissionCampaignType.objects.all()
