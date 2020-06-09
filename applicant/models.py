@@ -1481,6 +1481,7 @@ class ApplicationStatusChangeHistory(BaseModel):
         null=True,
         on_delete=models.CASCADE,
         verbose_name='Заявитель',
+        unique=False,
     )
     status = models.ForeignKey(
         ApplicationStatus,

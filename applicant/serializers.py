@@ -873,3 +873,22 @@ class ApplicationChangeHistorySerializer(serializers.ModelSerializer):
             'status',
             'comment',
         ]
+
+
+class ApplicantMyStatusSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.Application
+        fields = [
+            'uid'
+        ]
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance=instance)
+        data['status'] = instance.status.name_ru
+        last_comment = models.ApplicationStatusChangeHistory.objects.filter(creator=instance.creator).order_by(
+            'created').last()
+        if last_comment is not None:
+            data['comment'] = last_comment.comment.text
+        else:
+            data['comment'] = ""
+        return data
