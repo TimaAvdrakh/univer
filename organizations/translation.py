@@ -110,3 +110,9 @@ class DisciplineComponentTranslationOptions(TranslationOptions):
 @register(models.ControlForm)
 class ControlFormTranslationOptions(TranslationOptions):
     fields = ('name',)
+
+
+@register(models.DisciplineGroup)
+class DisciplineGroupTranslationOptions(TranslationOptions):
+    fields = ('name',)
+

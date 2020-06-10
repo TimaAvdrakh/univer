@@ -605,6 +605,10 @@ class Postrequisite(BaseModel):
         )
 
 
+class DisciplineGroup(BaseCatalog):
+    pass
+
+
 class Discipline(BaseCatalog):
     description = models.TextField(
         verbose_name='Описание',
@@ -614,6 +618,15 @@ class Discipline(BaseCatalog):
     is_language = models.BooleanField(
         default=False,
         verbose_name='Языковая дисциплина?'
+    )
+    group = models.ForeignKey(
+        DisciplineGroup,
+        on_delete=models.CASCADE,
+        blank=True,
+        null=True,
+        verbose_name='Группа дисциплин',
+        help_text='Группа, к которой относится данная дисциплина',
+        related_name='disciplines'
     )
 
     class Meta:

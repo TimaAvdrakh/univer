@@ -1,4 +1,3 @@
-from django.conf import settings
 from rest_framework import generics
 from rest_framework import permissions
 from . import serializers
@@ -13,7 +12,7 @@ from portal_users.models import Level, AchievementType
 from datetime import date
 from django.utils.translation import gettext as _
 from django import forms
-from django.http import JsonResponse, HttpResponseBadRequest, HttpResponse
+from django.http import JsonResponse, HttpResponseBadRequest, HttpResponse, Http404
 
 
 class FileForm(forms.ModelForm):
@@ -22,6 +21,33 @@ class FileForm(forms.ModelForm):
     class Meta:
         model = models.File
         fields = ["path"]
+
+
+def replace_file(request, uid):
+    if request.method == 'POST':
+        file = models.File.objects.filter(pk=uid)
+        if not file.exists():
+            return JsonResponse(data={'message': 'not found'}, status=status.HTTP_404_NOT_FOUND)
+        form = FileForm(request.POST, request.FILES)
+        print(form)
+        if form.is_valid():
+            new_file = request.FILES.get('path')
+            models.File.handle(new_file)
+            file.update(
+                name=new_file.name,
+                extension=new_file.name.split('.')[-1],
+                size=new_file.size,
+                content_type=new_file.content_type,
+                path=f'upload/{new_file.name}'
+            )
+            return HttpResponse(status=status.HTTP_200_OK)
+        else:
+            return JsonResponse(data={'message': 'form file is invalid'}, status=status.HTTP_422_UNPROCESSABLE_ENTITY)
+    else:
+        return HttpResponse(
+            content_type=b"application/pdf",
+            content="Replace file"
+        )
 
 
 def upload(request):
@@ -39,7 +65,7 @@ def upload(request):
                                 extension=file.name.split('.')[-1],
                                 size=file.size,
                                 content_type=file.content_type,
-                                path=f'{settings.MEDIA_ROOT}/upload/{file.name}'
+                                path=f'upload/{file.name}'
                             )
 
                             files.append(file_instance.pk)
@@ -66,7 +92,7 @@ def upload(request):
                         form.instance.extension = file.name.split(".")[-1]
                         form.instance.size = file.size
                         form.instance.content_type = file.content_type
-                        form.instance.path = f'{settings.MEDIA_ROOT}/upload/{file.name}'
+                        form.instance.path = f'upload/{file.name}'
                         form.save(commit=True)
                         models.File.handle(file)
                     else:

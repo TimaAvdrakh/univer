@@ -159,7 +159,9 @@ CRON_CLASSES = [
     "cron_app.cron.ClosePlannedJournalJob",
     "cron_app.cron.GenerateExcelJob",
     # "cron_app.cron.DeleteDuplicateJob",
-    "cron_app.cron.CloseApplicationsJob"
+    "cron_app.cron.CloseApplicationsJob",
+    # А почему крона по абитуриентам нет? Я его добавлял.
+    "cron_app.cron.ApplicantVerificationJob"
 ]
 
 # SESSION_COOKIE_AGE = 60

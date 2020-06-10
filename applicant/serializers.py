@@ -132,7 +132,6 @@ class ApplicantSerializer(serializers.ModelSerializer):
             if not order_number:
                 order_number = 0
             elif order_number == 9999:
-                # По ТЗ
                 raise ValidationError({"error": "places_exceeded"})
             applicant.order_number = order_number + 1
             applicant.password = make_password(raw_password)
@@ -320,13 +319,12 @@ class QuestionnaireSerializer(serializers.ModelSerializer):
                     profile=creator,
                     questionnaire=questionnaire
                 )
-                models.Privilege.objects.bulk_create([
+                for privilege in privileges:
                     models.Privilege(
                         **privilege,
                         list=privilege_list,
                         profile=creator
-                    ) for privilege in privileges
-                ])
+                    )
             application = models.Application.objects.filter(creator=creator)
             if application.exists():
                 application = application.first()
@@ -382,9 +380,12 @@ class QuestionnaireSerializer(serializers.ModelSerializer):
         residence_address.update(data)
         residence_address.save(snapshot=True)
 
-    def update_privileges(self, uid, data, creator):
-        user_privilege_list: models.UserPrivilegeList = models.UserPrivilegeList.objects.get(pk=uid)
-        user_privilege_list.privileges.all().delete()
+    def update_privileges(self, data, creator, uid=None):
+        if not uid:
+            user_privilege_list = models.UserPrivilegeList.objects.create()
+        else:
+            user_privilege_list = models.UserPrivilegeList.objects.get(pk=uid)
+            user_privilege_list.privileges.all().delete()
         privileges = data.pop('privileges')
         for privilege in privileges:
             p = models.Privilege.objects.create(**privilege)
@@ -413,9 +414,11 @@ class QuestionnaireSerializer(serializers.ModelSerializer):
                 self.update_family(uid=instance.family.pk, data=validated_data.pop('family'))
                 self.update_id_doc(uid=instance.id_doc.pk, data=validated_data.pop('id_doc'))
                 self.update_phone(uid=instance.phone.pk, data=validated_data.pop('phone'))
+                privilege_list_uid = instance.privilege_list.pk if instance.privilege_list else None
+                privileges = validated_data.pop('privilege_list')
                 self.update_privileges(
-                    uid=instance.privilege_list.pk,
-                    data=validated_data.pop('privilege_list'),
+                    uid=privilege_list_uid,
+                    data=privileges,
                     creator=profile
                 )
                 instance.update(validated_data)

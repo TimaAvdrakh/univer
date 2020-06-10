@@ -630,14 +630,13 @@ class NotifyStudentToRegisterJob(CronJobBase):
 
 
 class ApplicantVerificationJob(CronJobBase):
-    """Работает раз в день. Проверяет """
+    """Работает раз в день"""
     RUN_DAILY = 24 * 60
     schedule = Schedule(run_every_mins=RUN_DAILY)
     code = 'cron_app.applicant_verification_job'
 
     def do(self):
-        time = dt.date.today() + dt.timedelta(days=1)
-        Applicant.objects.filter(created__gte=time, user__is_active=False).delete()
+        Applicant.erase_inactive()
 
 
 class SendApplicationsTo1cJob(CronJobBase):
