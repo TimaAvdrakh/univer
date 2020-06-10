@@ -1442,7 +1442,7 @@ class Application(BaseModel):
                 content_object=self,
             )
         ApplicationStatusChangeHistory.objects.create(
-            creator=self.creator,
+            author=self.creator,
             comment=comment,
             status=self.status,
         )
@@ -1488,13 +1488,12 @@ class Application(BaseModel):
 
 
 class ApplicationStatusChangeHistory(BaseModel):
-    creator = models.ForeignKey(
+    author = models.ForeignKey(
         Profile,
         blank=True,
         null=True,
         on_delete=models.CASCADE,
         verbose_name='Заявитель',
-        unique=False,
     )
     status = models.ForeignKey(
         ApplicationStatus,
