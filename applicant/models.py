@@ -1385,10 +1385,10 @@ class Application(BaseModel):
             )
         except Exception as e:
             print(e)
-        role: Role = Role.objects.get(profile=self.creator)
-        role.is_applicant = False
-        role.is_student = True
-        role.save()
+        # role: Role = Role.objects.get(profile=self.creator)
+        # role.is_applicant = False
+        # role.is_student = True
+        # role.save()
         return
 
     def reject(self, moderator, comment):

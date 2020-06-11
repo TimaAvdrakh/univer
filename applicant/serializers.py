@@ -877,7 +877,6 @@ class ApplicationChangeHistorySerializer(serializers.ModelSerializer):
             'comment',
         ]
 
-
 class ApplicantMyStatusSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Application
