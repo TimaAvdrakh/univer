@@ -776,6 +776,7 @@ class OrderedDirectionsForModerator(serializers.ModelSerializer):
         model = models.OrderedDirection
         fields = [
             'uid',
+            'order_number',
         ]
 
     def to_representation(self, instance):
