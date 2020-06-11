@@ -845,6 +845,12 @@ class FamilyMemberForModerator(serializers.ModelSerializer):
             'address',
         ]
 
+    def to_representation(self, instance):
+        data = super().to_representation(instance=instance)
+        data['membership'] = instance.membership.name
+
+        return data
+
 
 class Document1CSerializer(serializers.ModelSerializer):
     types = DocumentTypeSerializer(many=True)
@@ -876,6 +882,7 @@ class ApplicationChangeHistorySerializer(serializers.ModelSerializer):
             'status',
             'comment',
         ]
+
 
 class ApplicantMyStatusSerializer(serializers.ModelSerializer):
     class Meta:
