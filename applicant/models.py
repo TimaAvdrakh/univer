@@ -436,7 +436,7 @@ class AdmissionCampaign(BaseCatalog):
 class Applicant(BaseModel):
     user = models.OneToOneField(
         User,
-        on_delete=models.DO_NOTHING,
+        on_delete=models.CASCADE,
         related_name="applicant",
         blank=True,
         null=True,
@@ -1230,9 +1230,12 @@ class Document1C(BaseCatalog):
         verbose_name='Приемная кампания',
         related_name='documents'
     )
-    types = models.ManyToManyField(
+    type = models.ForeignKey(
         DocumentType,
-        verbose_name='Типы документов'
+        on_delete=models.SET_NULL,
+        null=True,
+        verbose_name='Тип документа',
+        related_name='documents1c'
     )
 
     class Meta:

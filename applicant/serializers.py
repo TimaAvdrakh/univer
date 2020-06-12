@@ -380,10 +380,12 @@ class QuestionnaireSerializer(serializers.ModelSerializer):
         residence_address.update(data)
         residence_address.save(snapshot=True)
 
-    def update_privileges(self, data, creator, uid=None):
+    def update_privileges(self, data, creator, questionnaire, uid=None,):
         if not uid:
-            user_privilege_list = models.UserPrivilegeList.objects.create()
+            print("not uid")
+            user_privilege_list = models.UserPrivilegeList.objects.create(questionnaire=questionnaire, profile=creator)
         else:
+            print("existing")
             user_privilege_list = models.UserPrivilegeList.objects.get(pk=uid)
             user_privilege_list.privileges.all().delete()
         privileges = data.pop('privileges')
@@ -414,12 +416,16 @@ class QuestionnaireSerializer(serializers.ModelSerializer):
                 self.update_family(uid=instance.family.pk, data=validated_data.pop('family'))
                 self.update_id_doc(uid=instance.id_doc.pk, data=validated_data.pop('id_doc'))
                 self.update_phone(uid=instance.phone.pk, data=validated_data.pop('phone'))
-                privilege_list_uid = instance.privilege_list.pk if instance.privilege_list else None
+                try:
+                    privilege_list_uid = instance.privilege_list.pk
+                except:
+                    privilege_list_uid = None
                 privileges = validated_data.pop('privilege_list')
                 self.update_privileges(
                     uid=privilege_list_uid,
                     data=privileges,
-                    creator=profile
+                    creator=profile,
+                    questionnaire=instance
                 )
                 instance.update(validated_data)
                 instance.save(snapshot=True)
@@ -847,7 +853,7 @@ class FamilyMemberForModerator(serializers.ModelSerializer):
 
 
 class Document1CSerializer(serializers.ModelSerializer):
-    types = DocumentTypeSerializer(many=True)
+    type = DocumentTypeSerializer(read_only=True)
     document = AdmissionDocumentSerializer()
 
     class Meta:

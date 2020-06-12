@@ -360,17 +360,13 @@ class StudentDisciplineStatusListView(generics.ListAPIView):
 
 
 class NationalityViewSet(ModelViewSet):
-    queryset = models.Nationality.objects.order_by(
-        "name_ru", "name_en", "name_kk"
-    ).distinct("name_ru", "name_en", "name_kk").all()
+    queryset = models.Nationality.objects.order_by("name").distinct("name").all()
     serializer_class = serializers.NationalitySerializer
     permission_classes = (permissions.AllowAny,)
 
 
 class CitizenshipViewSet(ModelViewSet):
-    queryset = models.Citizenship.objects.order_by(
-        "name_ru", "name_en", "name_kk"
-    ).distinct("name_ru", "name_en", "name_kk").all()
+    queryset = models.Citizenship.objects.order_by("name").distinct("name").all()
     serializer_class = serializers.CitizenshipSerializer
     permission_classes = (permissions.AllowAny,)
 
@@ -381,14 +377,21 @@ class CitizenshipViewSet(ModelViewSet):
 
 
 class DocumentTypeViewSet(ModelViewSet):
-    queryset = models.DocumentType.objects.order_by(
-        "name_ru", "name_en", "name_kk"
-    ).distinct("name_ru", "name_en", "name_kk").all()
+    queryset = models.DocumentType.objects.order_by("name").distinct("name").all()
     serializer_class = serializers.DocumentTypeSerializer
     permission_classes = (permissions.AllowAny,)
 
+    @action(methods=['get'], detail=False, url_path='group', url_name='get_document_type_by_group_code')
+    def doc_type_grouping(self, request, pk=None):
+        try:
+            group = models.DocumentTypeGroup.objects.get(code=request.query_params.get('code'))
+            serializer = self.serializer_class(group.types.order_by("name_ru").distinct('name_ru').all(), many=True)
+            return Response(data=serializer.data, status=status.HTTP_200_OK)
+        except:
+            return Response(data=self.serializer_class(self.queryset))
+
 
 class GovernmentAgencyViewSet(ModelViewSet):
-    queryset = models.GovernmentAgency.objects.order_by("name_ru", "name_en", "name_kk").all()
+    queryset = models.GovernmentAgency.objects.order_by("name").all()
     serializer_class = serializers.GovernmentAgencySerializer
     permission_classes = (permissions.AllowAny,)

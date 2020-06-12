@@ -553,3 +553,4 @@ class DisciplineCreditControlFormAdmin(admin.ModelAdmin):
     ]
 
 admin.site.register(models.EroroText)
+admin.site.register(models.DisciplineGroup)
