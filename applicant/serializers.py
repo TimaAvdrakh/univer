@@ -458,7 +458,7 @@ class QuestionnaireSerializer(serializers.ModelSerializer):
             content_type=self
         )
         models.ApplicationStatusChangeHistory.objects.create(
-            creator=creator_profile,
+            author=creator_profile,
             status=status,
             comment=comment,
         )
@@ -628,7 +628,7 @@ class ApplicationLiteSerializer(serializers.ModelSerializer):
             content_type=self
         )
         models.ApplicationStatusChangeHistory.objects.create(
-            creator=creator_profile,
+            author=creator_profile,
             status=status,
             comment=comment,
         )
@@ -784,6 +784,7 @@ class OrderedDirectionsForModerator(serializers.ModelSerializer):
         model = models.OrderedDirection
         fields = [
             'uid',
+            'order_number',
         ]
 
     def to_representation(self, instance):
@@ -853,6 +854,12 @@ class FamilyMemberForModerator(serializers.ModelSerializer):
             'address',
         ]
 
+    def to_representation(self, instance):
+        data = super().to_representation(instance=instance)
+        data['membership'] = instance.membership.name
+
+        return data
+
 
 class Document1CSerializer(serializers.ModelSerializer):
     type = DocumentTypeSerializer(read_only=True)
@@ -896,7 +903,7 @@ class ApplicantMyStatusSerializer(serializers.ModelSerializer):
     def to_representation(self, instance):
         data = super().to_representation(instance=instance)
         data['status'] = instance.status.name_ru
-        last_comment = models.ApplicationStatusChangeHistory.objects.filter(creator=instance.creator).order_by(
+        last_comment = models.ApplicationStatusChangeHistory.objects.filter(author=instance.creator).order_by(
             'created').last()
         if last_comment is not None:
             data['comment'] = last_comment.comment.text

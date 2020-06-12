@@ -1389,10 +1389,10 @@ class Application(BaseModel):
             )
         except Exception as e:
             print(e)
-        role: Role = Role.objects.get(profile=self.creator)
-        role.is_applicant = False
-        role.is_student = True
-        role.save()
+        # role: Role = Role.objects.get(profile=self.creator)
+        # role.is_applicant = False
+        # role.is_student = True
+        # role.save()
         return
 
     def reject(self, moderator, comment):
@@ -1446,7 +1446,7 @@ class Application(BaseModel):
                 content_object=self,
             )
         ApplicationStatusChangeHistory.objects.create(
-            creator=self.creator,
+            author=self.creator,
             comment=comment,
             status=self.status,
         )
@@ -1492,13 +1492,12 @@ class Application(BaseModel):
 
 
 class ApplicationStatusChangeHistory(BaseModel):
-    creator = models.ForeignKey(
+    author = models.ForeignKey(
         Profile,
         blank=True,
         null=True,
         on_delete=models.CASCADE,
         verbose_name='Заявитель',
-        unique=False,
     )
     status = models.ForeignKey(
         ApplicationStatus,

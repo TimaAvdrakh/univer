@@ -592,7 +592,7 @@ class ModeratorViewSet(ModelViewSet):
     def get_history(self, request, pk=None):
         application_uid = self.request.query_params.get('uid')
         queryset = self.queryset.get(pk=application_uid)
-        history = models.ApplicationStatusChangeHistory.objects.filter(creator=queryset.creator)
+        history = models.ApplicationStatusChangeHistory.objects.filter(author=queryset.creator)
         if history.exists():
             return Response(data=serializers.ApplicationChangeHistorySerializer(history, many=True).data,
                             status=HTTP_200_OK)
