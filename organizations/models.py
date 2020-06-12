@@ -606,7 +606,9 @@ class Postrequisite(BaseModel):
 
 
 class DisciplineGroup(BaseCatalog):
-    pass
+    class Meta:
+        verbose_name = 'Группа дисциплин'
+        verbose_name_plural = 'Группы дисциплин'
 
 
 class Discipline(BaseCatalog):
