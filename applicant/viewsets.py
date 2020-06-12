@@ -393,18 +393,14 @@ class ApplicationViewSet(ModelViewSet):
         if role.is_mod:
             application: models.Application = self.get_object()
             directions = request.data.pop('directions')
-            directions = models.DirectionChoice.objects.bulk_create([
-                models.DirectionChoice(
-                    prep_level_id=direction['prep_level'],
-                    study_form_id=direction['study_form'],
-                    education_language_id=direction['education_language'],
-                    education_program_id=direction['info']['education_program']['uid'],
-                    education_program_group_id=direction['info']['education_program_group']['uid'],
-                    education_base_id=direction['info']['education_base']['uid']
-                ) for direction in directions
-            ])
+            directions_set_by_moderator = []
+            for direction in directions:
+                directions_set_by_moderator.append(models.OrderedDirection.objects.create(
+                    plan=models.RecruitmentPlan.objects.get(pk=direction['plan']),
+                    order_number=direction['order_number']
+                ))
             application.directions.all().delete()
-            application.directions.add(*directions)
+            application.directions.add(*directions_set_by_moderator)
             application.save()
             # Почта может не работать, как у меня на локали
             try:

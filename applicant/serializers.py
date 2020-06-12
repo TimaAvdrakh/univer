@@ -621,7 +621,7 @@ class ApplicationLiteSerializer(serializers.ModelSerializer):
         ])
         return directions
 
-    def save_history_log(self, creator_profile, status, text):
+    def save_history_log(self, creator_profile, status, text=""):
         comment = Comment.objects.create(
             text=text,
             creator=creator_profile,
