@@ -175,6 +175,7 @@ class DocumentType(BaseCatalog):
         on_delete=models.SET_NULL,
         null=True,
         verbose_name='Группа типов',
+        related_name='types'
     )
 
     class Meta:

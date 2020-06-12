@@ -380,10 +380,12 @@ class QuestionnaireSerializer(serializers.ModelSerializer):
         residence_address.update(data)
         residence_address.save(snapshot=True)
 
-    def update_privileges(self, data, creator, uid=None):
+    def update_privileges(self, data, creator, questionnaire, uid=None,):
         if not uid:
-            user_privilege_list = models.UserPrivilegeList.objects.create()
+            print("not uid")
+            user_privilege_list = models.UserPrivilegeList.objects.create(questionnaire=questionnaire, profile=creator)
         else:
+            print("existing")
             user_privilege_list = models.UserPrivilegeList.objects.get(pk=uid)
             user_privilege_list.privileges.all().delete()
         privileges = data.pop('privileges')
@@ -414,12 +416,16 @@ class QuestionnaireSerializer(serializers.ModelSerializer):
                 self.update_family(uid=instance.family.pk, data=validated_data.pop('family'))
                 self.update_id_doc(uid=instance.id_doc.pk, data=validated_data.pop('id_doc'))
                 self.update_phone(uid=instance.phone.pk, data=validated_data.pop('phone'))
-                privilege_list_uid = instance.privilege_list.pk if instance.privilege_list else None
+                try:
+                    privilege_list_uid = instance.privilege_list.pk
+                except:
+                    privilege_list_uid = None
                 privileges = validated_data.pop('privilege_list')
                 self.update_privileges(
                     uid=privilege_list_uid,
                     data=privileges,
-                    creator=profile
+                    creator=profile,
+                    questionnaire=instance
                 )
                 instance.update(validated_data)
                 instance.save(snapshot=True)
@@ -475,14 +481,14 @@ class RecruitmentPlanSerializer(serializers.ModelSerializer):
 
     def get_info(self, plan: models.RecruitmentPlan):
         return {
-            "prep_level": plan.prep_level.name,
-            "study_form": plan.study_form.name,
-            "language": plan.language.name,
-            "admission_basis": plan.admission_basis.name,
-            "education_program_group": f'{plan.education_program_group.code} {plan.education_program_group.name}',
-            "education_program": f'{plan.education_program.code} {plan.education_program.name}',
-            "study_period": plan.study_period.repr_name,
-            "test_form": plan.entrance_test_form.name,
+            "prep_level": getattr(plan.prep_level, 'name', ''),
+            "study_form": getattr(plan.study_form, 'name', ''),
+            "language": getattr(plan.language, 'name', ''),
+            "admission_basis": getattr(plan.admission_basis, 'name', ''),
+            "education_program_group": f'{getattr(plan.education_program_group, "code", "")} {getattr(plan.education_program_group, "name", "")}',
+            "education_program": f'{getattr(plan.education_program, "code", "")} {getattr(plan.education_program, "name", "")}',
+            "study_period": getattr(plan.study_period, "repr_name", ""),
+            "test_form": getattr(plan.entrance_test_form, "name", ""),
         }
 
     class Meta:
@@ -658,11 +664,13 @@ class ApplicationLiteSerializer(serializers.ModelSerializer):
             application.international_certs.set(international_certs)
             application.directions.set(directions)
             application.save()
-            self.save_history_log(
-                creator_profile=creator,
-                status=status,
-                text=f"Заявление создано со статусом {status.name}"
-            )
+            # У меня не создается заявление из-за этого
+            # self.save_history_log(
+            #     creator_profile=creator,
+            #     status=status,
+            #     # Посмотри на переменную status сверху и узнай есть ли у нее атрибут name.
+            #     text=f"Заявление создано со статусом {data['status'].name}"
+            # )
             try:
                 self.send_on_create(recipient=creator.email)
             except Exception as e:
@@ -854,7 +862,7 @@ class FamilyMemberForModerator(serializers.ModelSerializer):
 
 
 class Document1CSerializer(serializers.ModelSerializer):
-    types = DocumentTypeSerializer(many=True)
+    type = DocumentTypeSerializer(read_only=True)
     document = AdmissionDocumentSerializer()
 
     class Meta:

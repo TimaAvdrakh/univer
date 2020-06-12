@@ -436,7 +436,7 @@ class AdmissionCampaign(BaseCatalog):
 class Applicant(BaseModel):
     user = models.OneToOneField(
         User,
-        on_delete=models.DO_NOTHING,
+        on_delete=models.CASCADE,
         related_name="applicant",
         blank=True,
         null=True,
@@ -517,8 +517,9 @@ class Applicant(BaseModel):
         # Тащим первых 20 абитуриентов не активировавшие учтеки, чтобы не грузить сервак
         selected_accounts = Applicant.objects.filter(lookup)[:20]
         # Сплайс не имеет методов Queryset
+        inactive_account: Applicant
         for inactive_account in selected_accounts:
-            inactive_account.delete()
+            inactive_account.user.delete()
 
 
 # Статус заявки
@@ -1230,9 +1231,12 @@ class Document1C(BaseCatalog):
         verbose_name='Приемная кампания',
         related_name='documents'
     )
-    types = models.ManyToManyField(
+    type = models.ForeignKey(
         DocumentType,
-        verbose_name='Типы документов'
+        on_delete=models.SET_NULL,
+        null=True,
+        verbose_name='Тип документа',
+        related_name='documents1c'
     )
 
     class Meta:
