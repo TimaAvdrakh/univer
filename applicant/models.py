@@ -517,8 +517,9 @@ class Applicant(BaseModel):
         # Тащим первых 20 абитуриентов не активировавшие учтеки, чтобы не грузить сервак
         selected_accounts = Applicant.objects.filter(lookup)[:20]
         # Сплайс не имеет методов Queryset
+        inactive_account: Applicant
         for inactive_account in selected_accounts:
-            inactive_account.delete()
+            inactive_account.user.delete()
 
 
 # Статус заявки

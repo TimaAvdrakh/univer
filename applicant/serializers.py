@@ -481,14 +481,14 @@ class RecruitmentPlanSerializer(serializers.ModelSerializer):
 
     def get_info(self, plan: models.RecruitmentPlan):
         return {
-            "prep_level": plan.prep_level.name,
-            "study_form": plan.study_form.name,
-            "language": plan.language.name,
-            "admission_basis": plan.admission_basis.name,
-            "education_program_group": f'{plan.education_program_group.code} {plan.education_program_group.name}',
-            "education_program": f'{plan.education_program.code} {plan.education_program.name}',
-            "study_period": plan.study_period.repr_name,
-            "test_form": plan.entrance_test_form.name,
+            "prep_level": getattr(plan.prep_level, 'name', ''),
+            "study_form": getattr(plan.study_form, 'name', ''),
+            "language": getattr(plan.language, 'name', ''),
+            "admission_basis": getattr(plan.admission_basis, 'name', ''),
+            "education_program_group": f'{getattr(plan.education_program_group, "code", "")} {getattr(plan.education_program_group, "name", "")}',
+            "education_program": f'{getattr(plan.education_program, "code", "")} {getattr(plan.education_program, "name", "")}',
+            "study_period": getattr(plan.study_period, "repr_name", ""),
+            "test_form": getattr(plan.entrance_test_form, "name", ""),
         }
 
     class Meta:
@@ -664,11 +664,13 @@ class ApplicationLiteSerializer(serializers.ModelSerializer):
             application.international_certs.set(international_certs)
             application.directions.set(directions)
             application.save()
-            self.save_history_log(
-                creator_profile=creator,
-                status=status,
-                text=f"Заявление создано со статусом {status.name}"
-            )
+            # У меня не создается заявление из-за этого
+            # self.save_history_log(
+            #     creator_profile=creator,
+            #     status=status,
+            #     # Посмотри на переменную status сверху и узнай есть ли у нее атрибут name.
+            #     text=f"Заявление создано со статусом {data['status'].name}"
+            # )
             try:
                 self.send_on_create(recipient=creator.email)
             except Exception as e:
