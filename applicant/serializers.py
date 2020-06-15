@@ -752,11 +752,11 @@ class ApplicationSerializer(ApplicationLiteSerializer):
 
 class AdmissionDocumentSerializer(serializers.ModelSerializer):
     doc = DocumentSerializer(source='document', read_only=True)
-    types = serializers.SerializerMethodField(read_only=True)
+    type = serializers.SerializerMethodField(read_only=True)
 
-    def get_types(self, document):
+    def get_type(self, document: models.AdmissionDocument):
         try:
-            return DocumentTypeSerializer(document.types, many=True).data
+            return document.document_1c.type.name
         except Exception:
             return
 

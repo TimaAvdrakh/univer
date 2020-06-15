@@ -515,16 +515,13 @@ class AdmissionDocumentViewSet(ModelViewSet):
 
     @action(methods=['post'], detail=False, url_name='multiple-create', url_path='multiple-create')
     def multiple_create(self, request, pk=None):
-        documents = models.AdmissionDocument.objects.filter(creator=self.request.user.profile)
-        if documents.exists():
-            return Response(data=serializers.AdmissionDocumentSerializer(documents).data, status=HTTP_200_OK)
         try:
             creator = self.request.user.profile
             documents = request.data.get('documents')
             for document in documents:
                 models.AdmissionDocument.objects.create(
-                    document_1c=document['uid'],
-                    document=document['document']['document'],
+                    document_1c=models.Document1C.objects.get(pk=document['uid']),
+                    document=models.Document.objects.get(pk=document['document']['document']),
                     creator=creator
                 )
             return Response(data={"msg": "created"}, status=HTTP_200_OK)
