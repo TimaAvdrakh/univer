@@ -441,11 +441,11 @@ class QuestionnaireSerializer(serializers.ModelSerializer):
                     application = application.first()
                     application.status = models.ApplicationStatus.objects.get(code=models.AWAITS_VERIFICATION)
                     application.save()
-                    self.save_history_log(
-                        creator_profile=profile,
-                        status=application.status,
-                        text='Анкета изменена'
-                    )
+                    # self.save_history_log(
+                    #     creator_profile=profile,
+                    #     status=application.status,
+                    #     text='Анкета изменена'
+                    # )
                 return instance
             except Exception as e:
                 raise ValidationError({"error": e})
@@ -723,11 +723,11 @@ class ApplicationLiteSerializer(serializers.ModelSerializer):
             instance.save(snapshot=True)
             validated_data['status'] = models.ApplicationStatus.objects.get(code=models.AWAITS_VERIFICATION)
             application = super().update(instance, validated_data)
-            self.save_history_log(
-                creator_profile=instance.creator,
-                status=instance.status,
-                text="В заявление внесены изменения"
-            )
+            # self.save_history_log(
+            #     creator_profile=instance.creator,
+            #     status=instance.status,
+            #     text="В заявление внесены изменения"
+            # )
             return application
         else:
             raise ValidationError({"error": "access_denied"})
