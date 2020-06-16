@@ -312,15 +312,16 @@ class QuestionnaireSerializer(serializers.ModelSerializer):
                 phone=phone,
                 **validated_data
             )
-            if privilege_list and is_privileged:
+            if is_privileged:
                 privileges = privilege_list.pop('privileges')
+                print(privileges)
                 privilege_list = models.UserPrivilegeList.objects.create(
                     **privilege_list,
                     profile=creator,
                     questionnaire=questionnaire
                 )
                 for privilege in privileges:
-                    models.Privilege(
+                    models.Privilege.objects.create(
                         **privilege,
                         list=privilege_list,
                         profile=creator
@@ -330,13 +331,13 @@ class QuestionnaireSerializer(serializers.ModelSerializer):
                 application = application.first()
                 application.status = models.ApplicationStatus.objects.get(code=models.AWAITS_VERIFICATION)
                 application.save()
-                self.save_history_log(
-                    creator_profile=creator,
-                    status=application.status,
-                    text='Анкета создана'
-                )
+                # self.save_history_log(
+                #     creator_profile=creator,
+                #     status=application.status,
+                #     text='Анкета создана'
+                # )
         except Exception as e:
-            if isinstance(questionnaire, models.Questionnaire):
+            if questionnaire and isinstance(questionnaire, models.Questionnaire):
                 questionnaire.delete()
             raise ValidationError({'error': e})
         return questionnaire

@@ -772,8 +772,34 @@ class Questionnaire(BaseModel):
         else:
             return f"Абитуриент {self.first_name_en} {self.last_name_en}"
 
+    def delete(self, *args, **kwargs):
+        id_doc = self.id_doc
+        phone = self.phone
+        reg = self.address_of_registration
+        tmp = self.address_of_temp_reg
+        res = self.address_of_residence
+        family = self.family
+        privilege_list = self.privilege_list
+        privilege_list.privileges.all().delete()
+        privilege_list.delete()
+        super(Questionnaire, self).delete(*args, **kwargs)
+        for member in family.members.all():
+            profile = member.profile
+            user = profile.user
+            member.delete()
+            profile.delete()
+            user.delete()
+        id_doc.delete()
+        phone.delete()
+        reg.delete()
+        res.delete()
+        try:
+            tmp.delete()
+        except:
+            print('ok')
 
-# Список льгот пользователей
+
+        # Список льгот пользователей
 class UserPrivilegeList(BaseModel):
     questionnaire = models.OneToOneField(
         Questionnaire,
