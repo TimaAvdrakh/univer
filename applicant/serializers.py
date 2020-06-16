@@ -702,19 +702,23 @@ class ApplicationLiteSerializer(serializers.ModelSerializer):
             ])
             instance.test_result.disciplines.set(new_disciplines)
             instance.test_result.save(snapshot=True)
+            is_cert_holder = bool = validated_data.get('is_cert_holder', False)
             international_certs: list = validated_data.pop('international_certs', [])
-            if international_certs and my_campaign.inter_cert_foreign_lang:
+            if is_cert_holder and my_campaign.inter_cert_foreign_lang:
                 instance.international_certs.all().delete()
                 international_certs = models.InternationalCert.objects.bulk_create([
                     models.InternationalCert(**cert) for cert in international_certs
                 ])
                 instance.international_certs.set(international_certs)
                 instance.save()
+            is_grant_holder: bool = validated_data.get('is_grant_holder', False)
             grant: dict = validated_data.pop('grant', None)
-            if grant:
+            if is_grant_holder:
                 grant_model: models.Grant = models.Grant.objects.get(pk=instance.grant.uid)
                 grant_model.update(grant)
                 grant_model.save(snapshot=True)
+            # if instance.is_grant_holder and not is_grant_holder:
+            #     instance.grant.delete()
             instance.directions.all().delete()
             directions = models.OrderedDirection.objects.bulk_create([
                 models.OrderedDirection(**direction) for direction in validated_data.pop('directions')
