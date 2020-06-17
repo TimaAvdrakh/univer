@@ -779,9 +779,9 @@ class Questionnaire(BaseModel):
         tmp = self.address_of_temp_reg
         res = self.address_of_residence
         family = self.family
-        privilege_list = self.privilege_list
-        privilege_list.privileges.all().delete()
-        privilege_list.delete()
+        if self.is_privileged:
+            self.privilege_list.privileges.all().delete()
+            self.privilege_list.delete()
         super(Questionnaire, self).delete(*args, **kwargs)
         for member in family.members.all():
             profile = member.profile

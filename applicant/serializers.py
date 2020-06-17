@@ -259,13 +259,7 @@ class QuestionnaireSerializer(serializers.ModelSerializer):
             family = models.Family.objects.create(**family, profile=creator)
             for member in members:
                 member['family'] = family
-                # Если родственники подают одновременно в один и тот же универ и ту же кмпанию,
-                # они могут указать одного и того же родителя
                 email = member['email']
-                user = User.objects.filter(username=email)
-                if user.exists():
-                    continue
-                # Иначе создать юзера и его профиль
                 user = User.objects.create(username=email, email=email)
                 user.set_password(member['email'])
                 profile = Profile.objects.create(
@@ -644,10 +638,11 @@ class ApplicationLiteSerializer(serializers.ModelSerializer):
         try:
             data = {
                 'previous_education': self.handle_previous_education(validated_data.pop('previous_education'), creator),
-                'test_result': self.handle_test_results(validated_data.pop('test_result'), creator),
                 'grant': self.handle_grant(validated_data.pop('grant', None), creator),
                 'creator': creator
             }
+            if not validated_data.get('unpassed_test'):
+                data['test_result'] = self.handle_test_results(validated_data.pop('test_result'), creator)
             validated_data.update(data)
             international_certs = self.handle_international_certificates(
                 validated_data.pop('international_certs', []),
@@ -738,7 +733,7 @@ class OrderedDirectionSerializer(serializers.ModelSerializer):
 
 class ApplicationSerializer(ApplicationLiteSerializer):
     previous_education = EducationSerializer(required=True)
-    test_result = TestResultSerializer(required=True)
+    test_result = TestResultSerializer(required=False)
     international_certs = InternationalCertSerializer(required=False, many=True)
     grant = GrantSerializer(required=False, allow_null=True)
     directions = OrderedDirectionSerializer(required=True, many=True)
@@ -900,7 +895,8 @@ class ApplicantMyStatusSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         data = super().to_representation(instance=instance)
-        data['status'] = instance.status.name_ru
+        data['status'] = instance.status and instance.status.name_ru
+        data['status_code'] = instance.status and instance.status.code
         last_comment = models.ApplicationStatusChangeHistory.objects.filter(author=instance.creator).order_by(
             'created').last()
         if last_comment is not None:
