@@ -242,24 +242,31 @@ class ApplicationViewSet(ModelViewSet):
     serializer_class = serializers.ApplicationSerializer
     pagination_class = CustomPagination
 
-    def done(self, profile):
+    def check_done(self, profile):
+        questionnaire = models.Questionnaire.objects.filter(creator=profile).exists()
+        application = models.Application.objects.filter(creator=profile).exists()
+        attachments = models.AdmissionDocument.objects.filter(creator=profile).exists()
         done = [
-            models.Questionnaire.objects.filter(creator=profile).exists(),
-            models.Application.objects.filter(creator=profile).exists(),
-            models.AdmissionDocument.objects.filter(creator=profile).exists()
+            questionnaire, application, attachments
         ]
-        return all(done)
+        data = {
+            'questionnaire': questionnaire,
+            'application': application,
+            'attachments': attachments,
+            'done': all(done)
+        }
+        return data
 
     @action(methods=['get'], detail=False, url_path='done', url_name='legit')
     def is_done(self, request, pk=None):
         """Проверяет, что у абитуриента заполнены все 3 шага"""
-        return Response(data={'done': self.done(self.request.user.profile)}, status=HTTP_200_OK)
+        return Response(data={'data': self.check_done(self.request.user.profile)}, status=HTTP_200_OK)
 
     @action(methods=['post'], detail=False, url_path='submit', url_name='submit_to_moderator')
     def submit_to_moderator(self, request, pk=None):
         """Если все 3 шага заполнены, сменить статус на ожидает проверки. Тогда он появится у модератора."""
         profile = self.request.user.profile
-        done = self.done(profile)
+        done = self.check_done(profile)['done']
         if done:
             application: models.Application = profile.application
             application.status = models.ApplicationStatus.objects.get(code=models.AWAITS_VERIFICATION)
