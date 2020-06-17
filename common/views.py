@@ -40,7 +40,7 @@ def replace_file(request, uid):
                 content_type=new_file.content_type,
                 path=f'upload/{new_file.name}'
             )
-            return HttpResponse(status=status.HTTP_200_OK)
+            return JsonResponse(data={'path': file.path, 'name': file.name}, status=status.HTTP_200_OK)
         else:
             return JsonResponse(data={'message': 'form file is invalid'}, status=status.HTTP_422_UNPROCESSABLE_ENTITY)
     else:

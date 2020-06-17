@@ -642,14 +642,7 @@ class ApplicationLiteSerializer(serializers.ModelSerializer):
         else:
             application = None
         try:
-            # Если есть заполненная анкета, статус будет "Ожидает проверки", иначе - "Без анкеты"
-            has_questionnaire: bool = models.Questionnaire.objects.filter(creator=creator).exists()
-            if has_questionnaire:
-                status = models.AWAITS_VERIFICATION
-            else:
-                status = models.NO_QUESTIONNAIRE
             data = {
-                'status': models.ApplicationStatus.objects.get(code=status),
                 'previous_education': self.handle_previous_education(validated_data.pop('previous_education'), creator),
                 'test_result': self.handle_test_results(validated_data.pop('test_result'), creator),
                 'grant': self.handle_grant(validated_data.pop('grant', None), creator),

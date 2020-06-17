@@ -1332,9 +1332,16 @@ class Application(BaseModel):
         on_delete=models.DO_NOTHING,
         verbose_name='Предыдущее образование'
     )
+    # В основном все проходят тестирование, поэтому True
+    unpassed_test = models.BooleanField(
+        default=False,
+        verbose_name='Не прошел ЕНТ или КТ'
+    )
     test_result = models.ForeignKey(
         TestResult,
-        on_delete=models.DO_NOTHING,
+        on_delete=models.SET_NULL,
+        blank=True,
+        null=True,
         verbose_name='Результат теста ЕНТ/КТ'
     )
     international_certs = models.ManyToManyField(
