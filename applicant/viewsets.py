@@ -242,6 +242,32 @@ class ApplicationViewSet(ModelViewSet):
     serializer_class = serializers.ApplicationSerializer
     pagination_class = CustomPagination
 
+    def done(self, profile):
+        done = [
+            models.Questionnaire.objects.filter(creator=profile).exists(),
+            models.Application.objects.filter(creator=profile).exists(),
+            models.AdmissionDocument.objects.filter(creator=profile).exists()
+        ]
+        return all(done)
+
+    @action(methods=['get'], detail=False, url_path='done', url_name='legit')
+    def is_done(self, request, pk=None):
+        """Проверяет, что у абитуриента заполнены все 3 шага"""
+        return Response(data={'done': self.done(self.request.user.profile)}, status=HTTP_200_OK)
+
+    @action(methods=['post'], detail=False, url_path='submit', url_name='submit_to_moderator')
+    def submit_to_moderator(self, request, pk=None):
+        """Если все 3 шага заполнены, сменить статус на ожидает проверки. Тогда он появится у модератора."""
+        profile = self.request.user.profile
+        done = self.done(profile)
+        if done:
+            application: models.Application = profile.application
+            application.status = models.ApplicationStatus.objects.get(code=models.AWAITS_VERIFICATION)
+            application.save()
+            return Response(data={'ok': True}, status=HTTP_200_OK)
+        else:
+            raise ValidationError({'error': {'msg': 'all 3 steps not done'}})
+
     def retrieve(self, request, *args, **kwargs):
         application = self.get_object()
         profile = application.creator
