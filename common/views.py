@@ -25,7 +25,7 @@ class FileForm(forms.ModelForm):
 
 def replace_file(request, uid):
     if request.method == 'POST':
-        file = models.File.objects.filter(pk=uid)
+        file = models.File.objects.get(pk=uid)
         if not file.exists():
             return JsonResponse(data={'message': 'not found'}, status=status.HTTP_404_NOT_FOUND)
         form = FileForm(request.POST, request.FILES)
@@ -33,13 +33,12 @@ def replace_file(request, uid):
         if form.is_valid():
             new_file = request.FILES.get('path')
             models.File.handle(new_file)
-            file.update(
-                name=new_file.name,
-                extension=new_file.name.split('.')[-1],
-                size=new_file.size,
-                content_type=new_file.content_type,
-                path=f'upload/{new_file.name}'
-            )
+            file.name = new_file.name,
+            file.extension = new_file.name.split('.')[-1],
+            file.size = new_file.size,
+            file.content_type = new_file.content_type,
+            file.path = f'upload/{new_file.name}'
+            file.save()
             return JsonResponse(data={'path': file.path, 'name': file.name}, status=status.HTTP_200_OK)
         else:
             return JsonResponse(data={'message': 'form file is invalid'}, status=status.HTTP_422_UNPROCESSABLE_ENTITY)
