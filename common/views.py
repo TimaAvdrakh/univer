@@ -26,10 +26,7 @@ class FileForm(forms.ModelForm):
 def replace_file(request, uid):
     if request.method == 'POST':
         file = models.File.objects.get(pk=uid)
-        if not file.exists():
-            return JsonResponse(data={'message': 'not found'}, status=status.HTTP_404_NOT_FOUND)
         form = FileForm(request.POST, request.FILES)
-        print(form)
         if form.is_valid():
             new_file = request.FILES.get('path')
             models.File.handle(new_file)
