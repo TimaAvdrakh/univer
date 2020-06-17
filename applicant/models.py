@@ -231,25 +231,25 @@ class Address(BaseCatalog):
 
     def save(self, *args, **kwargs):
         if self.country:
-            self.name_en = f"{self.country.name_en}, "
-            self.name_ru = f"{self.country.name_ru}, "
-            self.name_kk = f"{self.country.name_kk}, "
+            self.name_en = f"{self.country.name_en}"
+            self.name_ru = f"{self.country.name_ru}"
+            self.name_kk = f"{self.country.name_kk}"
         if self.region:
-            self.name_en += f"{self.region.name_en} region, "
-            self.name_ru += f"область {self.region.name_ru}, "
-            self.name_kk += f"{self.region.name_kk} облысы, "
+            self.name_en += f", {self.region.name_en} region"
+            self.name_ru += f", область {self.region.name_ru}"
+            self.name_kk += f", {self.region.name_kk} облысы"
         if self.city:
-            self.name_en += f"{self.city.name_en} city, "
-            self.name_ru += f"г.{self.city.name_ru}, "
-            self.name_kk += f"{self.city.name_kk} қ., "
+            self.name_en += f", {self.city.name_en} city, "
+            self.name_ru += f", г.{self.city.name_ru}, "
+            self.name_kk += f", {self.city.name_kk} қ., "
         if self.street:
-            self.name_en += f"St. {self.street}, "
-            self.name_ru += f"ул. {self.street}, "
-            self.name_kk += f"{self.street} к., "
+            self.name_en += f", St. {self.street}"
+            self.name_ru += f", ул. {self.street}"
+            self.name_kk += f", {self.street} к."
         if self.home_number:
-            self.name_en += f"#{self.home_number}, "
-            self.name_ru += f"д. №{self.home_number}, "
-            self.name_kk += f"№{self.home_number} үй, "
+            self.name_en += f", #{self.home_number}"
+            self.name_ru += f", д. №{self.home_number}"
+            self.name_kk += f", №{self.home_number} үй"
         if self.corpus:
             self.name_en += f", building {self.corpus}"
             self.name_ru += f", корпус {self.corpus}"
