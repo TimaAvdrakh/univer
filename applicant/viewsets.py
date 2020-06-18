@@ -548,10 +548,12 @@ class AdmissionDocumentViewSet(ModelViewSet):
         try:
             creator = self.request.user.profile
             documents = request.data.get('documents')
+            creator.admissiondocument_set.all().delete()
             for document in documents:
+                print(document)
                 models.AdmissionDocument.objects.create(
-                    document_1c=models.Document1C.objects.get(pk=document['uid']),
-                    document=models.Document.objects.get(pk=document['document']['document']),
+                    document_1c=models.Document1C.objects.get(pk=document['doc1c']),
+                    document=models.Document.objects.get(pk=document['document']),
                     creator=creator
                 )
             return Response(data={"msg": "created"}, status=HTTP_200_OK)
