@@ -723,7 +723,9 @@ class ApplicationLiteSerializer(serializers.ModelSerializer):
             is_grant_holder: bool = validated_data.get('is_grant_holder', False)
             grant: dict = validated_data.pop('grant', None)
             if not instance.is_grant_holder and is_grant_holder:
-                grant_model = models.Grant.objects.create(**grant)
+                grant_model = models.Grant.objects.create(**grant, profile=profile)
+                grant_model.application_set.add(instance)
+                grant_model.save()
             elif is_grant_holder:
                 grant_model: models.Grant = models.Grant.objects.get(pk=instance.grant.uid)
                 grant_model.update(grant)
