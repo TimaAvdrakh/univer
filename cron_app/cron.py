@@ -630,8 +630,12 @@ class NotifyStudentToRegisterJob(CronJobBase):
 
 
 class ApplicantVerificationJob(CronJobBase):
-    """Работает раз в день"""
+    """
+    Удаляет неактивных абитуриентов, которые не подтвердили свою регистрацию по почте
+    """
     RUN_DAILY = 24 * 60
+    RUN_AT_TIMES = ['00:00']
+
     schedule = Schedule(run_every_mins=RUN_DAILY)
     code = 'cron_app.applicant_verification_job'
 

@@ -301,10 +301,8 @@ class ApplicationViewSet(ModelViewSet):
                 "msg": "max_selected_directions"
             }})
         is_grant_holder = validated_data.get('is_grant_holder')
-        grant = validated_data.get('grant', None)
-        if not is_grant_holder and grant:
-            validated_data.pop('grant')
-        else:
+        if is_grant_holder:
+            grant = validated_data.get('grant', None)
             grant_epg = models.EducationProgramGroup.objects.get(pk=grant.get('edu_program_group'))
             # Если грантник, то первое направление должно соответствовать группе обр. программ в гранте,
             # бюджетному основанию поступления и очной форме обучения
@@ -322,6 +320,9 @@ class ApplicationViewSet(ModelViewSet):
         international_certs = validated_data.get('international_certs', None)
         if international_certs and not campaign.inter_cert_foreign_lang:
             validated_data['international_certs'] = None
+        unpassed_test = validated_data.get('unpassed_test', False)
+        if unpassed_test:
+            validated_data.pop('test_result', None)
 
     def create(self, request, *args, **kwargs):
         self.validate(request.data, self.request.user)
