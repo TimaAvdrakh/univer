@@ -221,6 +221,9 @@ class QuestionnaireSerializer(serializers.ModelSerializer):
         if temp_reg_present:
             address_of_temp_reg['type'] = models.Address.TMP
         address_of_residence['type'] = models.Address.RES
+        is_privileged = validated_data.get('is_privileged')
+        if not is_privileged:
+            validated_data.pop('privilege_list', None)
         validated_data['address_of_registration'] = address_of_registration
         validated_data['address_of_temp_reg'] = address_of_temp_reg if temp_reg_present else None
         validated_data['address_of_residence'] = address_of_residence
@@ -719,12 +722,12 @@ class ApplicationLiteSerializer(serializers.ModelSerializer):
                 instance.save()
             is_grant_holder: bool = validated_data.get('is_grant_holder', False)
             grant: dict = validated_data.pop('grant', None)
-            if is_grant_holder:
+            if not instance.is_grant_holder and is_grant_holder:
+                grant_model = models.Grant.objects.create(**grant)
+            elif is_grant_holder:
                 grant_model: models.Grant = models.Grant.objects.get(pk=instance.grant.uid)
                 grant_model.update(grant)
                 grant_model.save(snapshot=True)
-            # if instance.is_grant_holder and not is_grant_holder:
-            #     instance.grant.delete()
             instance.directions.all().delete()
             directions = models.OrderedDirection.objects.bulk_create([
                 models.OrderedDirection(**direction) for direction in validated_data.pop('directions')
