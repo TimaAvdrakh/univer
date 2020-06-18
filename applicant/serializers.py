@@ -630,18 +630,16 @@ class ApplicationLiteSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data: dict):
         creator: Profile = self.context['request'].user.profile
-        application = models.Application.objects.filter(creator=creator)
-        if application.exists():
-            return application.first()
-        else:
-            application = None
         try:
             data = {
                 'previous_education': self.handle_previous_education(validated_data.pop('previous_education'), creator),
                 'grant': self.handle_grant(validated_data.pop('grant', None), creator),
                 'creator': creator
             }
-            if not validated_data.get('unpassed_test'):
+            unpassed_test = validated_data.get('unpassed_test')
+            if unpassed_test:
+                validated_data.pop('test_result', None)
+            else:
                 data['test_result'] = self.handle_test_results(validated_data.pop('test_result'), creator)
             validated_data.update(data)
             international_certs = self.handle_international_certificates(
@@ -679,17 +677,37 @@ class ApplicationLiteSerializer(serializers.ModelSerializer):
             education = Education.objects.get(pk=instance.previous_education.uid)
             education.update(previous_education)
             education.save(snapshot=True)
-            test_result: dict = validated_data.pop('test_result')
-            test_cert: dict = test_result.pop('test_certificate')
-            cert = models.TestCert.objects.get(pk=instance.test_result.test_certificate.uid)
-            cert.update(test_cert)
-            cert.save(snapshot=True)
-            instance.test_result.disciplines.all().delete()
-            new_disciplines = models.DisciplineMark.objects.bulk_create([
-                models.DisciplineMark(**discipline) for discipline in test_result.pop('disciplines')
-            ])
-            instance.test_result.disciplines.set(new_disciplines)
-            instance.test_result.save(snapshot=True)
+            if instance.test_result:
+                test_result: dict = validated_data.pop('test_result')
+                test_cert: dict = test_result.pop('test_certificate')
+                cert = models.TestCert.objects.get(pk=instance.test_result.test_certificate.uid)
+                cert.update(test_cert)
+                cert.save(snapshot=True)
+                instance.test_result.disciplines.all().delete()
+                new_disciplines = models.DisciplineMark.objects.bulk_create([
+                    models.DisciplineMark(**discipline) for discipline in test_result.pop('disciplines')
+                ])
+                instance.test_result.disciplines.set(new_disciplines)
+                instance.test_result.save(snapshot=True)
+            else:
+                test_result = validated_data.pop('test_result')
+                test_certificate = models.TestCert.objects.create(
+                    profile=profile,
+                    **test_result.get('test_certificate')
+                )
+                disciplines = models.DisciplineMark.objects.bulk_create([
+                    models.DisciplineMark(profile=profile, **discipline) for discipline in
+                    test_result.get('disciplines')
+                ])
+                # Результат теста
+                test_result = models.TestResult.objects.create(
+                    profile=profile,
+                    test_certificate=test_certificate
+                )
+                test_result.disciplines.set(disciplines)
+                test_result.save()
+                instance.test_result = test_result
+                instance.save()
             is_cert_holder = bool = validated_data.get('is_cert_holder', False)
             international_certs: list = validated_data.pop('international_certs', [])
             if is_cert_holder and my_campaign.inter_cert_foreign_lang:

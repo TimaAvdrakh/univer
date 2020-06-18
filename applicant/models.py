@@ -513,8 +513,7 @@ class Applicant(BaseModel):
 
     @staticmethod
     def erase_inactive():
-        lookup = Q(user__is_active=False) & Q(created__date__lt=dt.datetime.now().date())
-        # Тащим первых 20 абитуриентов не активировавшие учтеки, чтобы не грузить сервак
+        lookup = Q(user__is_active=False) & Q(created__date__gte=dt.datetime.now() - dt.timedelta(days=1))
         selected_accounts = Applicant.objects.filter(lookup)[:20]
         # Сплайс не имеет методов Queryset
         inactive_account: Applicant
