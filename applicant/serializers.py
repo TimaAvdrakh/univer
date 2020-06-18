@@ -323,16 +323,6 @@ class QuestionnaireSerializer(serializers.ModelSerializer):
                         list=privilege_list,
                         profile=creator
                     )
-            application = models.Application.objects.filter(creator=creator)
-            if application.exists():
-                application = application.first()
-                application.status = models.ApplicationStatus.objects.get(code=models.AWAITS_VERIFICATION)
-                application.save()
-                # self.save_history_log(
-                #     creator_profile=creator,
-                #     status=application.status,
-                #     text='Анкета создана'
-                # )
         except Exception as e:
             if questionnaire and isinstance(questionnaire, models.Questionnaire):
                 questionnaire.delete()
@@ -433,16 +423,6 @@ class QuestionnaireSerializer(serializers.ModelSerializer):
                     middle_name=instance.middle_name,
                     email=instance.email
                 )
-                application = models.Application.objects.filter(creator=profile)
-                if application.exists():
-                    application = application.first()
-                    application.status = models.ApplicationStatus.objects.get(code=models.AWAITS_VERIFICATION)
-                    application.save()
-                    # self.save_history_log(
-                    #     creator_profile=profile,
-                    #     status=application.status,
-                    #     text='Анкета изменена'
-                    # )
                 return instance
             except Exception as e:
                 raise ValidationError({"error": e})
@@ -675,7 +655,6 @@ class ApplicationLiteSerializer(serializers.ModelSerializer):
         profile = self.context['request'].user.profile
         if profile == instance.creator:
             my_campaign = profile.user.applicant.campaign
-            validated_data['status'] = models.ApplicationStatus.objects.get(code=models.AWAITS_VERIFICATION)
             previous_education: dict = validated_data.pop('previous_education')
             education = Education.objects.get(pk=instance.previous_education.uid)
             education.update(previous_education)
@@ -723,7 +702,9 @@ class ApplicationLiteSerializer(serializers.ModelSerializer):
             is_grant_holder: bool = validated_data.get('is_grant_holder', False)
             grant: dict = validated_data.pop('grant', None)
             if not instance.is_grant_holder and is_grant_holder:
-                grant_model = models.Grant.objects.create(**grant)
+                grant_model = models.Grant.objects.create(**grant, profile=profile)
+                grant_model.application_set.add(instance)
+                grant_model.save()
             elif is_grant_holder:
                 grant_model: models.Grant = models.Grant.objects.get(pk=instance.grant.uid)
                 grant_model.update(grant)
@@ -734,7 +715,6 @@ class ApplicationLiteSerializer(serializers.ModelSerializer):
             ])
             instance.directions.set(directions)
             instance.save(snapshot=True)
-            validated_data['status'] = models.ApplicationStatus.objects.get(code=models.AWAITS_VERIFICATION)
             application = super().update(instance, validated_data)
             # self.save_history_log(
             #     creator_profile=instance.creator,
