@@ -1269,6 +1269,7 @@ class Document1C(BaseCatalog):
     class Meta:
         verbose_name = 'Документ из 1С'
         verbose_name_plural = 'Документы из 1С'
+        unique_together = ['campaign', 'type']
 
 
 # Документы поступающего
