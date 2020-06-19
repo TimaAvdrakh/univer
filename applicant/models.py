@@ -968,6 +968,8 @@ class RecruitmentPlan(BaseModel):
     )
     graduating_cathedra = models.ForeignKey(
         Cathedra,
+        blank=True,
+        null=True,
         on_delete=models.DO_NOTHING,
         verbose_name="Выпускающая кафедра"
     )
