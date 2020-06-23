@@ -799,6 +799,7 @@ class ModeratorSerializer(serializers.ModelSerializer):
             'uid',
             'directions',
             'status',
+            'status_action',
         ]
 
     def to_representation(self, instance):

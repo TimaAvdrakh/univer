@@ -1412,6 +1412,7 @@ class Application(BaseModel):
                 content_object=self
             )
         self.status = ApplicationStatus.objects.get(code=APPROVED)
+        self.status_action = True
         self.save()
         self.save_to_status_change_log(
             comment=comment,
@@ -1441,6 +1442,7 @@ class Application(BaseModel):
             content_object=self
         )
         self.status = ApplicationStatus.objects.get(code=REJECTED)
+        self.status_action = True
         self.save()
         self.save_to_status_change_log(comment=comment_to_save)
         try:
