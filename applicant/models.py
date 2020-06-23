@@ -1384,6 +1384,10 @@ class Application(BaseModel):
         on_delete=models.CASCADE,
         verbose_name='Заявитель',
     )
+    status_action = models.BooleanField(
+        default=False,
+        verbose_name='Статус действия модератором',
+    )
 
     class Meta:
         verbose_name = "Заявление"
