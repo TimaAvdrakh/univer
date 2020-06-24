@@ -54,7 +54,9 @@ class ApplicantViewSet(ModelViewSet):
                     "message": "email_exists"
                 }
             })
-        if models.IdentityDocument.objects.filter(number=validated_data["doc_num"]).exists():
+        id_doc = models.IdentityDocument.objects.filter(number=validated_data["doc_num"])
+        doc_num = models.Applicant.objects.filter(doc_num=validated_data['doc_num'])
+        if id_doc.exists() or doc_num.exists():
             raise ValidationError({
                 "error": {
                     "message": "id_exists"
@@ -477,7 +479,7 @@ class AdmissionCampaignViewSet(ModelViewSet):
     permission_classes = (IsAdminOrReadOnly,)
 
     @action(methods=['get'], detail=False, url_path='open', url_name='open_campaigns')
-    def campaigns_open(self, request, pk=None):
+    def get_open_campaigns(self, request, pk=None):
         import datetime as dt
         today = dt.date.today()
         campaigns = self.queryset.filter(
@@ -487,6 +489,13 @@ class AdmissionCampaignViewSet(ModelViewSet):
             & Q(year=today.year)
         )
         return Response({'open': campaigns.exists()}, status=HTTP_200_OK)
+
+    @action(methods=['get'], detail=False, url_path='open-prep-levels', url_name='open_prep_levels')
+    def get_open_prep_levels(self, request, pk=None):
+        prep_levels = models.PreparationLevel.objects.filter(
+            pk__in=self.queryset.values_list('type__prep_levels')).distinct()
+        prep_levels = list(map(lambda x: {'uid': x.uid, 'name': x.name}, prep_levels))
+        return Response(data=prep_levels, status=HTTP_200_OK)
 
 
 class AddressViewSet(ModelViewSet):

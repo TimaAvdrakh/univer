@@ -732,6 +732,10 @@ class Questionnaire(BaseModel):
         null=True,
         related_name="temporary_addresses",
     )
+    is_orphan = models.BooleanField(
+        default=False,
+        verbose_name='Является сиротой'
+    )
     family = models.OneToOneField(
         Family,
         on_delete=models.DO_NOTHING,

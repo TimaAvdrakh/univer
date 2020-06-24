@@ -184,7 +184,7 @@ class QuestionnaireLiteSerializer(serializers.ModelSerializer):
 
 
 class QuestionnaireSerializer(serializers.ModelSerializer):
-    family = FamilySerializer(required=True)
+    family = FamilySerializer(required=False)
     id_doc = IdentityDocumentSerializer(required=True)
     address_of_registration = AddressSerializer(required=False)
     address_of_temp_reg = AddressSerializer(required=False, allow_null=True)
@@ -203,12 +203,16 @@ class QuestionnaireSerializer(serializers.ModelSerializer):
         temp_reg_present = address_of_temp_reg and any(address_of_temp_reg.values())
         if address_matches == models.Questionnaire.MATCH_TMP and not temp_reg_present:
             raise ValidationError({"error": "temp_addr_not_present"})
-        family: dict = validated_data.pop('family')
-        members: list = family.pop('members')
-        members_with_temp_reg = any(map(lambda member: member['address_matches'] == models.Address.TMP, members))
-        if members_with_temp_reg and not temp_reg_present:
-            raise ValidationError({"error": "member_addr_empty_temp_reg"})
-        family['members'] = members
+        is_orphan = validated_data.get('is_orphan')
+        if is_orphan:
+            validated_data.pop('family', None)
+        else:
+            family: dict = validated_data.pop('family')
+            members: list = family.pop('members')
+            members_with_temp_reg = any(map(lambda member: member['address_matches'] == models.Address.TMP, members))
+            if members_with_temp_reg and not temp_reg_present:
+                raise ValidationError({"error": "member_addr_empty_temp_reg"})
+            family['members'] = members
         address_of_registration = validated_data.pop('address_of_registration')
         address_of_residence = validated_data.pop('address_of_residence')
         if address_matches == models.Questionnaire.MATCH_REG:
@@ -257,41 +261,43 @@ class QuestionnaireSerializer(serializers.ModelSerializer):
                 profile=creator
             )
             # Обработка данных семьи и ее членов
-            family = validated_data.pop('family')
-            members = family.pop('members')
-            family = models.Family.objects.create(**family, profile=creator)
-            for member in members:
-                member['family'] = family
-                email = member['email']
-                user = User.objects.create(username=email, email=email)
-                user.set_password(member['email'])
-                profile = Profile.objects.create(
-                    first_name=member['first_name'],
-                    last_name=member['last_name'],
-                    middle_name=member['middle_name'],
-                    user=user
-                )
-                member['profile'] = profile
-                address_matches = member['address_matches']
-                if address_matches == models.FamilyMember.MATCH_REG:
-                    registration_copy = models.Address.objects.filter(pk=address_of_registration.pk).first()
-                    registration_copy.pk = None
-                    registration_copy.save()
-                    member['address'] = registration_copy
-                elif address_matches == models.FamilyMember.MATCH_TMP:
-                    temporary_copy = models.Address.objects.filter(pk=address_of_temp_reg.pk).first()
-                    temporary_copy.pk = None
-                    temporary_copy.save()
-                    member['address'] = temporary_copy
-                elif address_matches == models.FamilyMember.MATCH_RES:
-                    residence_copy = models.Address.objects.filter(pk=address_of_residence.pk).first()
-                    residence_copy.pk = None
-                    residence_copy.save()
-                    member['address'] = residence_copy
-                elif address_matches == models.FamilyMember.MATCH_NOT:
-                    address = models.Address.objects.create(**member['address'], profile=profile)
-                    member['address'] = address
-                models.FamilyMember.objects.create(**member)
+            is_orphan = validated_data.get('is_orphan', False)
+            if not is_orphan:
+                family = validated_data.pop('family')
+                members = family.pop('members')
+                family = models.Family.objects.create(**family, profile=creator)
+                for member in members:
+                    member['family'] = family
+                    email = member['email']
+                    user = User.objects.create(username=email, email=email)
+                    user.set_password(member['email'])
+                    profile = Profile.objects.create(
+                        first_name=member['first_name'],
+                        last_name=member['last_name'],
+                        middle_name=member['middle_name'],
+                        user=user
+                    )
+                    member['profile'] = profile
+                    address_matches = member['address_matches']
+                    if address_matches == models.FamilyMember.MATCH_REG:
+                        registration_copy = models.Address.objects.filter(pk=address_of_registration.pk).first()
+                        registration_copy.pk = None
+                        registration_copy.save()
+                        member['address'] = registration_copy
+                    elif address_matches == models.FamilyMember.MATCH_TMP:
+                        temporary_copy = models.Address.objects.filter(pk=address_of_temp_reg.pk).first()
+                        temporary_copy.pk = None
+                        temporary_copy.save()
+                        member['address'] = temporary_copy
+                    elif address_matches == models.FamilyMember.MATCH_RES:
+                        residence_copy = models.Address.objects.filter(pk=address_of_residence.pk).first()
+                        residence_copy.pk = None
+                        residence_copy.save()
+                        member['address'] = residence_copy
+                    elif address_matches == models.FamilyMember.MATCH_NOT:
+                        address = models.Address.objects.create(**member['address'], profile=profile)
+                        member['address'] = address
+                    models.FamilyMember.objects.create(**member)
             # Докумуент удостоверяющий личность
             id_doc = IdentityDocument.objects.create(**validated_data.pop('id_doc'))
             # Телефон
@@ -401,7 +407,8 @@ class QuestionnaireSerializer(serializers.ModelSerializer):
                     uid=instance.address_of_residence.pk,
                     data=validated_data.pop('address_of_residence')
                 )
-                self.update_family(uid=instance.family.pk, data=validated_data.pop('family'))
+                if not instance.is_orphan:
+                    self.update_family(uid=instance.family.pk, data=validated_data.pop('family'))
                 self.update_id_doc(uid=instance.id_doc.pk, data=validated_data.pop('id_doc'))
                 self.update_phone(uid=instance.phone.pk, data=validated_data.pop('phone'))
                 try:
