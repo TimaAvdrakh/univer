@@ -11,9 +11,9 @@ from django.utils.translation import get_language
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 from common.models import IdentityDocument, Comment
-from common.serializers import DocumentSerializer
 from common.models import IdentityDocument
 from common.serializers import DocumentSerializer, DocumentTypeSerializer
+from portal.local_settings import EMAIL_HOST_USER
 from portal_users.serializers import ProfilePhoneSerializer
 from portal_users.models import Profile, Role, ProfilePhone
 from organizations.models import Education
@@ -117,7 +117,7 @@ class ApplicantSerializer(serializers.ModelSerializer):
             'uid': urlsafe_base64_encode(force_bytes(user.pk)),
             'token': token_generator.make_token(user)
         })
-        email = EmailMessage(subject=subject, body=message, to=to_email)
+        email = EmailMessage(subject=subject, body=message, to=to_email, from_email=EMAIL_HOST_USER)
         email.send()
         return
 
@@ -607,7 +607,7 @@ class ApplicationLiteSerializer(serializers.ModelSerializer):
         subject = 'Заявление поступило на проверку'
         message = f'Ваше заявление на поступление от {today} отправлено на проверку модератору. ' \
                   f'Ожидайте дальнейших действий'
-        send_mail(subject=subject, message=message, from_email='', recipient_list=[recipient])
+        send_mail(subject=subject, message=message, from_email=EMAIL_HOST_USER, recipient_list=[recipient])
         return
 
     def handle_previous_education(self, data, creator_profile):
