@@ -1390,6 +1390,10 @@ class Application(BaseModel):
         on_delete=models.CASCADE,
         verbose_name='Заявитель',
     )
+    status_action = models.BooleanField(
+        default=False,
+        verbose_name='Статус действия модератором',
+    )
 
     class Meta:
         verbose_name = "Заявление"
@@ -1414,6 +1418,7 @@ class Application(BaseModel):
                 content_object=self
             )
         self.status = ApplicationStatus.objects.get(code=APPROVED)
+        self.status_action = True
         self.save()
         self.save_to_status_change_log(
             comment=comment,
@@ -1443,6 +1448,7 @@ class Application(BaseModel):
             content_object=self
         )
         self.status = ApplicationStatus.objects.get(code=REJECTED)
+        self.status_action = True
         self.save()
         self.save_to_status_change_log(comment=comment_to_save)
         try:

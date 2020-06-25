@@ -192,7 +192,10 @@ class RecruitmentPlanViewSet(ModelViewSet):
     def search(self, request, pk=None):
         params = request.query_params
         user = self.request.user
-        lookup = Q(campaign=user.applicant.campaign) & Q(prep_level=user.applicant.prep_level)
+        if user.profile.role.is_mod:
+            lookup = Q()
+        elif user.profile.role.is_applicant:
+            lookup = Q(campaign=user.applicant.campaign) & Q(prep_level=user.applicant.prep_level)
         study_form = params.get('sf')
         if study_form:
             lookup = lookup & Q(study_form=study_form)
