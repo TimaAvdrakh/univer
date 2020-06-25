@@ -40,7 +40,8 @@ class RoleSerializer(serializers.ModelSerializer):
             "is_org_admin",
             "is_supervisor",
             "is_applicant",
-            "is_mod"
+            "is_mod",
+            "is_mod_can_edit",
         )
 
 
