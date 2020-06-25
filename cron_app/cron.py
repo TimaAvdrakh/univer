@@ -10,6 +10,7 @@ from portal.curr_settings import (
     SEND_APPLICATIONS_TO_1C_URL,
     BOT_DEV_CHAT_IDS
 )
+from portal.local_settings import EMAIL_HOST_USER
 from django.core.mail import send_mail
 from django.template.loader import render_to_string
 from portal.curr_settings import current_site
@@ -63,7 +64,7 @@ class PasswordResetUrlSendJob(CronJobBase):
             send_mail(
                 'Восстановление пароля',
                 msg_plain,
-                'avtoexpertastana@gmail.com',
+                EMAIL_HOST_USER,
                 [reset_password.email],
                 html_message=msg_html,
             )
