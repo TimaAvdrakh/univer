@@ -738,6 +738,8 @@ class Questionnaire(BaseModel):
     )
     family = models.OneToOneField(
         Family,
+        blank=True,
+        null=True,
         on_delete=models.DO_NOTHING,
         verbose_name="Семья",
         related_name="questionnaires",
