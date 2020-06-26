@@ -724,28 +724,28 @@ class ApplicationLiteSerializer(serializers.ModelSerializer):
             unpassed_test = validated_data.get('unpassed_test')
             if not unpassed_test:
                 try:
-                    tr = validated_data.pop('test_result')
-                    ts = tr.test_result.pop('test_certificate')
-                    disciplines = tr.get('disciplines')
-                    if disciplines.__len__() > 0:
-                        has_tr = True
+                    tr = validated_data.get('test_result')
+                    ts = tr.get('test_certificate')
+                    disciplines_from_val_data = tr.get('disciplines')
+                    if disciplines_from_val_data.__len__() <= 0:
+                        raise Exception
                 except:
                     raise ValidationError({"error": "test_result_not_specified"})
                 if instance.test_result:
-                    test_result: dict = validated_data.pop('test_result')
-                    test_cert: dict = test_result.pop('test_certificate')
+                    test_result: dict = tr
+                    test_cert: dict = ts
                     cert = models.TestCert.objects.get(pk=instance.test_result.test_certificate.uid)
                     cert.update(test_cert)
                     cert.save(snapshot=True)
                     instance.test_result.disciplines.all().delete()
                     new_disciplines = models.DisciplineMark.objects.bulk_create([
-                    models.DisciplineMark(**discipline) for discipline in test_result.pop('disciplines')])
+                    models.DisciplineMark(**discipline) for discipline in disciplines_from_val_data])
                     instance.test_result.disciplines.set(new_disciplines)
                     instance.test_result.save(snapshot=True)
                 else:
-                    test_result = validated_data.pop('test_result')
-                    test_certificate = models.TestCert.objects.create(profile=profile,**test_result.get('test_certificate'))
-                    disciplines = models.DisciplineMark.objects.bulk_create([models.DisciplineMark(profile=profile, **discipline) for discipline in test_result.get('disciplines')])
+                    test_result = tr
+                    test_certificate = models.TestCert.objects.create(profile=profile,**ts)
+                    disciplines = models.DisciplineMark.objects.bulk_create([models.DisciplineMark(profile=profile, **discipline) for discipline in disciplines_from_val_data])
                     # Результат теста
                     test_result = models.TestResult.objects.create(profile=profile,test_certificate=test_certificate)
                     test_result.disciplines.set(disciplines)
