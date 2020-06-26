@@ -724,7 +724,7 @@ class ApplicationLiteSerializer(serializers.ModelSerializer):
             unpassed_test = validated_data.get('unpassed_test')
             if not unpassed_test:
                 try:
-                    tr = validated_data.get('test_result')
+                    tr = validated_data.pop('test_result')
                     ts = tr.get('test_certificate')
                     disciplines_from_val_data = tr.get('disciplines')
                     if disciplines_from_val_data.__len__() <= 0:
