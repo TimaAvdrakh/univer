@@ -721,7 +721,7 @@ class ApplicationLiteSerializer(serializers.ModelSerializer):
             education = Education.objects.get(pk=instance.previous_education.uid)
             education.update(previous_education)
             education.save(snapshot=True)
-            unpassed_test = validated_data.pop('unpassed_test')
+            unpassed_test = validated_data.get('unpassed_test')
             if not unpassed_test:
                 try:
                     tr = validated_data.pop('test_result')
