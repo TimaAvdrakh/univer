@@ -40,7 +40,7 @@ class RoleSerializer(serializers.ModelSerializer):
             "is_org_admin",
             "is_supervisor",
             "is_applicant",
-            "is_mod"
+            "is_mod",
         )
 
 
@@ -306,6 +306,7 @@ class ProfileDetailSerializer(serializers.ModelSerializer):
         role = models.Role.objects.filter(profile=instance).first()
         role_serializer = RoleSerializer(instance=role)
         data["role"] = role_serializer.data
+        data['is_mod_can_edit'] = role.is_mod_can_edit
 
         if data["avatar"] is not None:
             data["avatar"] = current_site + data["avatar"]

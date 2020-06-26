@@ -423,7 +423,11 @@ class QuestionnaireSerializer(serializers.ModelSerializer):
 
     def update(self, instance: models.Questionnaire, validated_data: dict):
         profile = self.context['request'].user.profile
-        if profile == instance.creator:
+        role = profile.role
+        mod_can_edit = False
+        if role.is_mod and role.is_mod_can_edit:
+            mod_can_edit = True
+        if profile == instance.creator or mod_can_edit:
             try:
                 self.update_registration_address(
                     uid=instance.address_of_registration.pk,
@@ -707,43 +711,49 @@ class ApplicationLiteSerializer(serializers.ModelSerializer):
 
     def update(self, instance: models.Application, validated_data: dict):
         profile = self.context['request'].user.profile
-        if profile == instance.creator:
+        role = profile.role
+        mod_can_edit = False
+        if role.is_mod and role.is_mod_can_edit:
+            mod_can_edit = True
+        if profile == instance.creator or mod_can_edit:
             my_campaign = profile.user.applicant.campaign
             previous_education: dict = validated_data.pop('previous_education')
             education = Education.objects.get(pk=instance.previous_education.uid)
             education.update(previous_education)
             education.save(snapshot=True)
-            if instance.test_result:
-                test_result: dict = validated_data.pop('test_result')
-                test_cert: dict = test_result.pop('test_certificate')
-                cert = models.TestCert.objects.get(pk=instance.test_result.test_certificate.uid)
-                cert.update(test_cert)
-                cert.save(snapshot=True)
-                instance.test_result.disciplines.all().delete()
-                new_disciplines = models.DisciplineMark.objects.bulk_create([
-                    models.DisciplineMark(**discipline) for discipline in test_result.pop('disciplines')
-                ])
-                instance.test_result.disciplines.set(new_disciplines)
-                instance.test_result.save(snapshot=True)
-            else:
-                test_result = validated_data.pop('test_result')
-                test_certificate = models.TestCert.objects.create(
-                    profile=profile,
-                    **test_result.get('test_certificate')
-                )
-                disciplines = models.DisciplineMark.objects.bulk_create([
-                    models.DisciplineMark(profile=profile, **discipline) for discipline in
-                    test_result.get('disciplines')
-                ])
-                # Результат теста
-                test_result = models.TestResult.objects.create(
-                    profile=profile,
-                    test_certificate=test_certificate
-                )
-                test_result.disciplines.set(disciplines)
-                test_result.save()
-                instance.test_result = test_result
-                instance.save()
+            unpassed_test = validated_data.get('unpassed_test')
+            if not unpassed_test:
+                try:
+                    tr = validated_data.pop('test_result')
+                    ts = tr.test_result.pop('test_certificate')
+                    disciplines = tr.get('disciplines')
+                    if disciplines.__len__() > 0:
+                        has_tr = True
+                except:
+                    raise ValidationError({"error": "test_result_not_specified"})
+                if instance.test_result:
+                    test_result: dict = validated_data.pop('test_result')
+                    test_cert: dict = test_result.pop('test_certificate')
+                    cert = models.TestCert.objects.get(pk=instance.test_result.test_certificate.uid)
+                    cert.update(test_cert)
+                    cert.save(snapshot=True)
+                    instance.test_result.disciplines.all().delete()
+                    new_disciplines = models.DisciplineMark.objects.bulk_create([
+                    models.DisciplineMark(**discipline) for discipline in test_result.pop('disciplines')])
+                    instance.test_result.disciplines.set(new_disciplines)
+                    instance.test_result.save(snapshot=True)
+                else:
+                    test_result = validated_data.pop('test_result')
+                    test_certificate = models.TestCert.objects.create(profile=profile,**test_result.get('test_certificate'))
+                    disciplines = models.DisciplineMark.objects.bulk_create([models.DisciplineMark(profile=profile, **discipline) for discipline in test_result.get('disciplines')])
+                    # Результат теста
+                    test_result = models.TestResult.objects.create(profile=profile,test_certificate=test_certificate)
+                    test_result.disciplines.set(disciplines)
+                    test_result.save()
+                    instance.test_result = test_result
+                    instance.save()
+
+
             is_cert_holder = bool = validated_data.get('is_cert_holder', False)
             international_certs: list = validated_data.pop('international_certs', [])
             if is_cert_holder and my_campaign.inter_cert_foreign_lang:
