@@ -293,7 +293,7 @@ class ApplicationViewSet(ModelViewSet):
             data['questionnaire'] = None
         attachments = models.AdmissionDocument.objects.filter(creator=profile)
         if attachments.exists():
-            data['attachments'] = serializers.AdmissionDocumentSerializer(attachments.first()).data
+            data['attachments'] = serializers.AdmissionDocumentSerializer(attachments, many=True).data
         else:
             data['attachments'] = None
         return Response(data=data, status=HTTP_200_OK)
