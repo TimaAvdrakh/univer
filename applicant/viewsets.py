@@ -585,15 +585,21 @@ class ModeratorViewSet(ModelViewSet):
         preparation_level = request.query_params.get('preparation_level')
         edu_program_groups = request.query_params.get('edu_program_groups')
         application_date = request.query_params.get('application_date')
+        without_applications = request.query_params.get('without_applications')
+
+        if without_applications:
+            questionnaire_query = models.Questionnaire.objects.filter(creator__application=None)
+            questionnaire_serializer = serializers.ModeratorQuestionnaireSerializer
+            page = self.paginate_queryset(questionnaire_query)
+            serializer = questionnaire_serializer(page, many=True).data
+            paginated_response = self.get_paginated_response(serializer)
+            return Response(data=paginated_response.data, status=HTTP_200_OK)
+
+
 
         if application_status is not None:
             if application_status == models.NO_QUESTIONNAIRE:
-                questionnaire_query = models.Questionnaire.objects.filter(creator__application=None)
-                questionnaire_serializer = serializers.ModeratorQuestionnaireSerializer
-                page = self.paginate_queryset(questionnaire_query)
-                serializer = questionnaire_serializer(page, many=True).data
-                paginated_response = self.get_paginated_response(serializer)
-                return Response(data=paginated_response.data, status=HTTP_200_OK)
+               queryset = queryset.filter(status=None)
             else:
                 queryset = queryset.filter(status__code=application_status)
 
