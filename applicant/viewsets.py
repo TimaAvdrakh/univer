@@ -599,7 +599,7 @@ class ModeratorViewSet(ModelViewSet):
 
         if application_status is not None:
             if application_status == models.NO_QUESTIONNAIRE:
-               queryset = queryset.filter(status=None)
+                queryset = queryset.filter(status=None)
             else:
                 queryset = queryset.filter(status__code=application_status)
 
