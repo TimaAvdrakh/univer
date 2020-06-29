@@ -587,7 +587,16 @@ class ModeratorViewSet(ModelViewSet):
         application_date = request.query_params.get('application_date')
 
         if application_status is not None:
-            queryset = queryset.filter(status__code=application_status)
+            if application_status == models.NO_QUESTIONNAIRE:
+                questionnaire_query = models.Questionnaire.objects.filter(creator__application=None)
+                questionnaire_serializer = serializers.ModeratorQuestionnaireSerializer
+                page = self.paginate_queryset(questionnaire_query)
+                serializer = questionnaire_serializer(page, many=True).data
+                paginated_response = self.get_paginated_response(serializer)
+                return Response(data=paginated_response.data, status=HTTP_200_OK)
+            else:
+                queryset = queryset.filter(status__code=application_status)
+
 
         if full_name is not None:
             lookup = Q(creator__first_name__contains=full_name) \
