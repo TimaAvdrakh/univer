@@ -898,6 +898,49 @@ class ModeratorSerializer(serializers.ModelSerializer):
 
         return data
 
+class ModeratorQuestionnaireSerializer(serializers.ModelSerializer):
+    directions = OrderedDirectionsForModerator(required=True, many=True,allow_null=True)
+    status = serializers.CharField(allow_null=True)
+
+    class Meta:
+        model = models.Questionnaire
+        fields = [
+            'uid',
+            'status',
+            'directions',
+        ]
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance=instance)
+        data['full_name'] = instance.creator.full_name
+        try:
+            questionnairies = models.Questionnaire.objects.get(creator=instance.creator)
+            data['iin'] = questionnairies.iin  # iin В Казахстане означает индивидуальный идентификационный номер
+            data['citizenship'] = questionnairies.citizenship.name
+            if questionnairies.address_of_registration is not None:
+                data['address_of_registration'] = questionnairies.address_of_registration.name
+            else:
+                data['address_of_registration'] = ""
+            if questionnairies.address_of_residence is not None:
+                data['address_of_residence'] = questionnairies.address_of_residence.name
+            else:
+                data['address_of_residence'] = ""
+            if questionnairies.address_of_temp_reg is not None:
+                data['address_of_temp_reg'] = questionnairies.address_of_temp_reg.name
+            else:
+                data['address_of_temp_reg'] = ""
+
+            family_members = models.FamilyMember.objects.filter(family=questionnairies.family)
+            data['family_members'] = FamilyMemberForModerator(family_members, many=True).data
+
+        except models.Questionnaire.DoesNotExist:
+            data['iin'] = ""
+            data['address_of_registration'] = ""
+            data['address_of_residence'] = ""
+            data['address_of_temp_reg'] = ""
+            data['family_members'] = []
+
+        return data
 
 class FamilyMemberForModerator(serializers.ModelSerializer):
     address = serializers.CharField()
