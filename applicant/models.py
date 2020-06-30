@@ -1400,7 +1400,10 @@ class Application(BaseModel):
         verbose_name_plural = "Заявления"
 
     def __str__(self):
-        return f'Заявление абитуриента {self.applicant}. {self.status.name}'
+        if self.status is None:
+            return f'Заявление абитуриента {self.applicant}. Без статуса'
+        else:
+            return f'Заявление абитуриента {self.applicant}. {self.status.name}'
 
     @property
     def max_choices(self):
