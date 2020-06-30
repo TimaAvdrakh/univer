@@ -113,7 +113,6 @@ class BaseCatalog(BaseModel):
     )
     code = models.CharField(
         max_length=100,
-        editable=False,
         blank=True,
         null=True
     )
