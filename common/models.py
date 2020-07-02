@@ -494,3 +494,18 @@ class Document(BaseCatalog):
     class Meta:
         verbose_name = 'Документы'
         verbose_name_plural = 'Документы'
+
+
+class InstitutionConfig(BaseModel):
+    """Настройки образовательного учреждения."""
+    bg_image = models.FileField(
+        upload_to='upload',
+        verbose_name='Задний фон',
+    )
+
+    class Meta:
+        verbose_name = 'Настройки образовательного учреждения'
+        verbose_name_plural = 'Настройки образовательных учреждений'
+
+    def __str__(self):
+        return 'Настройки ОУ'

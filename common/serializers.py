@@ -179,3 +179,9 @@ class GovernmentAgencySerializer(serializers.ModelSerializer):
     class Meta:
         model = models.GovernmentAgency
         fields = ['uid', 'name']
+
+
+class InstitutionConfigSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.InstitutionConfig
+        fields = '__all__'
