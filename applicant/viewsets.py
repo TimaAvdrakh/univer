@@ -42,7 +42,7 @@ class ApplicantViewSet(ModelViewSet):
     serializer_class = serializers.ApplicantSerializer
     permission_classes = (AllowAny,)
     pagination_class = CustomPagination
-
+    #sdfsdf
     def create(self, request, *args, **kwargs):
         import datetime as dt
         validated_data = request.data
@@ -215,7 +215,7 @@ class RecruitmentPlanViewSet(ModelViewSet):
             return self.get_paginated_response(recruitment_plans)
         serializer = self.get_serializer(recruitment_plans, many=True)
         return Response(data={'results': serializer.data}, status=HTTP_200_OK)
-
+        #hello
 
 class LanguageProficiencyViewSet(ModelViewSet):
     queryset = models.LanguageProficiency.objects.exclude(parent=None)
