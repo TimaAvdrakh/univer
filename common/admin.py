@@ -134,3 +134,4 @@ class CourseAdmin(admin.ModelAdmin):
 admin.site.register(models.DocumentTypeGroup)
 admin.site.register(models.File)
 admin.site.register(models.Document)
+admin.site.register(models.InstitutionConfig)

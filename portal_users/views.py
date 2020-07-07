@@ -100,8 +100,8 @@ class ForgetPasswordView(generics.CreateAPIView):
 class ResetPasswordView(generics.CreateAPIView):
     """Восстановить пароль"""
 
-    # permission_classes = ()
-    # authentication_classes = ()
+    permission_classes = ()
+    authentication_classes = ()
     serializer_class = serializers.ResetPasswordSerializer
 
     def create(self, request, *args, **kwargs):

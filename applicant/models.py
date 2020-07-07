@@ -732,8 +732,14 @@ class Questionnaire(BaseModel):
         null=True,
         related_name="temporary_addresses",
     )
+    is_orphan = models.BooleanField(
+        default=False,
+        verbose_name='Является сиротой'
+    )
     family = models.OneToOneField(
         Family,
+        blank=True,
+        null=True,
         on_delete=models.DO_NOTHING,
         verbose_name="Семья",
         related_name="questionnaires",
@@ -1394,7 +1400,10 @@ class Application(BaseModel):
         verbose_name_plural = "Заявления"
 
     def __str__(self):
-        return f'Заявление абитуриента {self.applicant}. {self.status.name}'
+        if self.status is None:
+            return f'Заявление абитуриента {self.applicant}. Без статуса'
+        else:
+            return f'Заявление абитуриента {self.applicant}. {self.status.name}'
 
     @property
     def max_choices(self):

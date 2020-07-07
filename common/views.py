@@ -390,3 +390,10 @@ class GovernmentAgencyViewSet(ModelViewSet):
     queryset = models.GovernmentAgency.objects.order_by("name").all()
     serializer_class = serializers.GovernmentAgencySerializer
     permission_classes = (permissions.AllowAny,)
+
+
+class InstitutionConfigViewSet(ModelViewSet):
+    authentication_classes = ()
+    permission_classes = ()
+    queryset = models.InstitutionConfig.objects.all()
+    serializer_class = serializers.InstitutionConfigSerializer
