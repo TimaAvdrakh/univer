@@ -88,7 +88,7 @@ def make_register_result_rxcel(task):
 
     query = dict()
     query['status_id'] = student_discipline_status['confirmed']
-    query['study_plan__advisor_id'] = profile.id
+    query['study_plan__advisor_id'] = profile and profile.id
 
     # queryset = queryset.filter(
     #     status_id=student_discipline_status['confirmed'],

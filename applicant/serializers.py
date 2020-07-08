@@ -3,6 +3,7 @@ from django.core.mail import EmailMessage, send_mail
 from django.contrib.auth.models import User
 from django.contrib.auth.hashers import make_password
 from django.contrib.sites.shortcuts import get_current_site
+from django.conf import settings
 from django.db.models import Max
 from django.template.loader import render_to_string
 from django.utils.http import urlsafe_base64_encode
@@ -424,9 +425,7 @@ class QuestionnaireSerializer(serializers.ModelSerializer):
     def update(self, instance: models.Questionnaire, validated_data: dict):
         profile = self.context['request'].user.profile
         role = profile.role
-        mod_can_edit = False
-        if role.is_mod and role.is_mod_can_edit:
-            mod_can_edit = True
+        mod_can_edit = settings.MODERATOR_CAN_EDIT and role.is_mod
         if profile == instance.creator or mod_can_edit:
             try:
                 self.update_registration_address(
@@ -712,9 +711,7 @@ class ApplicationLiteSerializer(serializers.ModelSerializer):
     def update(self, instance: models.Application, validated_data: dict):
         profile = self.context['request'].user.profile
         role = profile.role
-        mod_can_edit = False
-        if role.is_mod and role.is_mod_can_edit:
-            mod_can_edit = True
+        mod_can_edit = settings.MODERATOR_CAN_EDIT and role.is_mod
         if profile == instance.creator or mod_can_edit:
             my_campaign = profile.user.applicant.campaign
             previous_education: dict = validated_data.pop('previous_education')
