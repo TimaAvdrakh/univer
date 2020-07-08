@@ -39,7 +39,14 @@ class EmailCronJob(CronJobBase):
     code = 'crop_app.my_cron_job'  # a unique code
 
     def do(self):
-        pass
+        emails = models.EmailTask.objects.filter(is_success=False)[:20]
+        for email in emails:
+            send_mail(
+                subject=email.subject,
+                message=email.message,
+                from_email=EMAIL_HOST_USER,
+                recipient_list=[email.to]
+            )
 
 
 class PasswordResetUrlSendJob(CronJobBase):
@@ -630,7 +637,7 @@ class NotifyStudentToRegisterJob(CronJobBase):
         # org_models.StudentDiscipline.objects.filter(study)
 
 
-class ApplicantVerificationJob(CronJobBase):
+class DeleteInactiveApplicants(CronJobBase):
     """
     Удаляет неактивных абитуриентов, которые не подтвердили свою регистрацию по почте
     """

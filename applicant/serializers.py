@@ -1,19 +1,18 @@
 import datetime as dt
-from django.core.mail import EmailMessage, send_mail
+from django.core.mail import send_mail
 from django.contrib.auth.models import User
 from django.contrib.auth.hashers import make_password
 from django.contrib.sites.shortcuts import get_current_site
 from django.conf import settings
 from django.db.models import Max
-from django.template.loader import render_to_string
 from django.utils.http import urlsafe_base64_encode
 from django.utils.encoding import force_bytes
 from django.utils.translation import get_language
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 from common.models import IdentityDocument, Comment
-from common.models import IdentityDocument
 from common.serializers import DocumentSerializer, DocumentTypeSerializer
+from mail.models import EmailTemplate
 from portal.local_settings import EMAIL_HOST_USER
 from portal_users.serializers import ProfilePhoneSerializer
 from portal_users.models import Profile, Role, ProfilePhone
@@ -106,20 +105,16 @@ class ApplicantSerializer(serializers.ModelSerializer):
         [fields.pop(field) for field in ['password', 'confirm_password']]
         return fields
 
-    def send_verification_email(self, user: User, to_email: list, password: str):
-        subject = 'Подтвердите регистрацию'
-        current_site = get_current_site(self.context['request'])
-        current_lang = get_language() or 'ru'
-        message = render_to_string('applicant/email/html/verify_email.html', {
+    def send_verification_email(self, user: User, password: str):
+        data = {
             'username': user.username,
             'password': password,
-            'domain': current_site.domain,
-            'lang': current_lang,
+            'domain': get_current_site(self.context['request']).domain,
+            'lang': get_language() or 'ru',
             'uid': urlsafe_base64_encode(force_bytes(user.pk)),
             'token': token_generator.make_token(user)
-        })
-        email = EmailMessage(subject=subject, body=message, to=to_email, from_email=EMAIL_HOST_USER)
-        email.send()
+        }
+        EmailTemplate.put_in_cron_queue('REGISTRATION_VERIFICATION', user.email, **data)
         return
 
     def create(self, validated_data):
@@ -155,13 +150,7 @@ class ApplicantSerializer(serializers.ModelSerializer):
                 email=applicant.email
             )
             Role.objects.create(is_applicant=True, profile=profile)
-            # Отправить письмо с верификацией
-            try:
-                self.send_verification_email(user, [user.email], raw_password)
-            except Exception as e:
-                # Почтовый сервер может не работать
-                # applicant.delete()
-                print(e)
+            self.send_verification_email(user, raw_password)
             # Возвращаем экземпляр абитуриента
             return applicant
         except Exception as e:
