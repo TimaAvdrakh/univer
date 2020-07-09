@@ -49,26 +49,96 @@ def upload(request):
     """Эндпоинт по принятию файлов от пользователей
     Принимет один файл за раз
     """
-    if request.method == "POST" and request.FILES:
-        form = FileForm(request.POST, request.FILES)
-        if form.is_valid():
-            file = request.FILES.get("path")
-            form.instance.name = file.name
-            form.instance.extension = file.name.split(".")[-1]
-            form.instance.size = file.size
-            form.instance.content_type = file.content_type
-            form.instance.path = f'upload/{file.name}'
-            form.save(commit=True)
-            models.File.handle(file)
+    # if request.method == "POST" and request.FILES:
+    #     form = FileForm(request.POST, request.FILES)
+    #     if form.is_valid():
+    #         file = request.FILES.get("path")
+    #         form.instance.name = file.name
+    #         form.instance.extension = file.name.split(".")[-1]
+    #         form.instance.size = file.size
+    #         form.instance.content_type = file.content_type
+    #         form.instance.path = f'upload/{file.name}'
+    #         form.save(commit=True)
+    #         models.File.handle(file)
+    #     else:
+    #         raise ValidationError(
+    #             {
+    #                 "error": {
+    #                     "msg": "form is invalid"
+    #                 }
+    #             }
+    #         )
+    #     return JsonResponse({"pk": [form.instance.pk]}, status=status.HTTP_200_OK)
+    if request.method == "POST":
+        if request.FILES:
+            path = request.FILES.getlist("path")
+            if len(path) > 1:
+                files = []
+                try:
+                    form = FileForm(request.POST, request.FILES)
+                    if form.is_valid():
+                        for file in path:
+                            file_instance = models.File.objects.create(
+                                name=file.name,
+                                extension=file.name.split('.')[-1],
+                                size=file.size,
+                                content_type=file.content_type,
+                                path=f'upload/{file.name}'
+                            )
+
+                            files.append(file_instance.pk)
+                            models.File.handle(file)
+                    return JsonResponse({"pk": files}, status=status.HTTP_200_OK)
+                except Exception as e:
+                    raise ValidationError(
+                        {
+                            "error": {
+                                "msg": "an error occurred",
+                                "exc": e
+                            }
+                        }
+                    )
+            else:
+                try:
+                    form = FileForm(request.POST, request.FILES)
+                    if form.is_valid():
+                        file = request.FILES.get("path")
+                        form.instance.name = file.name
+                        form.instance.extension = file.name.split(".")[-1]
+                        form.instance.size = file.size
+                        form.instance.content_type = file.content_type
+                        form.instance.path = f'upload/{file.name}'
+                        form.save(commit=True)
+                        models.File.handle(file)
+                    else:
+                        raise ValidationError(
+                            {
+                                "error": {
+                                    "msg": "form is invalid"
+                                }
+                            }
+                        )
+
+                    return JsonResponse({"pk": [form.instance.pk]}, status=status.HTTP_200_OK)
+                except Exception as e:
+                    raise ValidationError(
+                        {
+                            "error": {
+                                "msg": "an error occurred",
+                                "exc": e
+                            }
+                        }
+                    )
         else:
-            raise ValidationError(
-                {
-                    "error": {
-                        "msg": "form is invalid"
-                    }
-                }
+            return HttpResponseBadRequest(
+                content_type=b"application/pdf",
+                content="Send files"
             )
-        return JsonResponse({"pk": [form.instance.pk]}, status=status.HTTP_200_OK)
+    else:
+        return HttpResponse(
+            content_type=b"application/pdf",
+            content="Send files"
+        )
 
 
 class AcadPeriodListView(generics.ListAPIView):
