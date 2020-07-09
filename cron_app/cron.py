@@ -1,4 +1,5 @@
 import datetime as dt
+import logging
 from django_cron import CronJobBase, Schedule
 from . import models
 import requests
@@ -30,6 +31,9 @@ import urllib3
 import certifi
 from applicant.models import Applicant
 from applications import models as model_aps
+
+
+logger = logging.getLogger(__name__)
 
 
 class EmailCronJob(CronJobBase):
@@ -67,16 +71,18 @@ class PasswordResetUrlSendJob(CronJobBase):
             msg_html = render_to_string('emails/reset_password/reset_password.html', {'uid': reset_password.uuid,
                                                                                       'lang': task.lang_code,
                                                                                       'site': current_site})
-
-            send_mail(
-                'Восстановление пароля',
-                msg_plain,
-                EMAIL_HOST_USER,
-                [reset_password.email],
-                html_message=msg_html,
-            )
-            task.is_success = True
-            task.save()
+            try:
+                send_mail(
+                    'Восстановление пароля',
+                    msg_plain,
+                    EMAIL_HOST_USER,
+                    [reset_password.email],
+                    html_message=msg_html,
+                )
+                task.is_success = True
+                task.save()
+            except Exception as e:
+                logger.error("Password reset error", e)
 
             # data = {
             #     'email': reset_password.email,
