@@ -33,7 +33,7 @@ from applicant.models import Applicant
 from applications import models as model_aps
 
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger('django')
 
 
 class EmailCronJob(CronJobBase):
@@ -62,15 +62,17 @@ class PasswordResetUrlSendJob(CronJobBase):
 
     def do(self):
         tasks = models.ResetPasswordUrlSendTask.objects.filter(is_success=False)
+        logger.warning('Reset task count', tasks.count())
         for task in tasks:
             reset_password = task.reset_password
-
+            logger.warning('ResetPassword instance', reset_password)
             msg_plain = render_to_string('emails/reset_password/reset_password.txt', {'uid': reset_password.uuid,
                                                                                       'lang': task.lang_code,
                                                                                       'site': current_site})
             msg_html = render_to_string('emails/reset_password/reset_password.html', {'uid': reset_password.uuid,
                                                                                       'lang': task.lang_code,
                                                                                       'site': current_site})
+            logger.warning(f'Rendered messages,  {msg_html}, {msg_plain}')
             try:
                 send_mail(
                     'Восстановление пароля',
