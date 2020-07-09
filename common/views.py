@@ -46,81 +46,29 @@ def replace_file(request, uid):
 
 
 def upload(request):
-    if request.method == "POST":
-        if request.FILES:
-            path = request.FILES.getlist("path")
-            if len(path) > 1:
-                files = []
-                try:
-                    form = FileForm(request.POST, request.FILES)
-                    if form.is_valid():
-                        for file in path:
-                            file_instance = models.File.objects.create(
-                                name=file.name,
-                                extension=file.name.split('.')[-1],
-                                size=file.size,
-                                content_type=file.content_type,
-                                path=f'upload/{file.name}'
-                            )
-
-                            files.append(file_instance.pk)
-                            models.File.handle(file)
-                    document: models.Document = models.Document.objects.create()
-                    document.files.set(files)
-                    document.save()
-                    return JsonResponse({"pk": document.pk}, status=status.HTTP_200_OK)
-                except Exception as e:
-                    raise ValidationError(
-                        {
-                            "error": {
-                                "msg": "an error occurred",
-                                "exc": e
-                            }
-                        }
-                    )
-            else:
-                try:
-                    form = FileForm(request.POST, request.FILES)
-                    if form.is_valid():
-                        file = request.FILES.get("path")
-                        form.instance.name = file.name
-                        form.instance.extension = file.name.split(".")[-1]
-                        form.instance.size = file.size
-                        form.instance.content_type = file.content_type
-                        form.instance.path = f'upload/{file.name}'
-                        form.save(commit=True)
-                        models.File.handle(file)
-                    else:
-                        raise ValidationError(
-                            {
-                                "error": {
-                                    "msg": "form is invalid"
-                                }
-                            }
-                        )
-                    document: models.Document = models.Document.objects.create()
-                    document.files.add(form.instance.pk)
-                    document.save()
-                    return JsonResponse({"pk": document.pk})
-                except Exception as e:
-                    raise ValidationError(
-                        {
-                            "error": {
-                                "msg": "an error occurred",
-                                "exc": e
-                            }
-                        }
-                    )
+    """Эндпоинт по принятию файлов от пользователей
+    Принимет один файл за раз
+    """
+    if request.method == "POST" and request.FILES:
+        form = FileForm(request.POST, request.FILES)
+        if form.is_valid():
+            file = request.FILES.get("path")
+            form.instance.name = file.name
+            form.instance.extension = file.name.split(".")[-1]
+            form.instance.size = file.size
+            form.instance.content_type = file.content_type
+            form.instance.path = f'upload/{file.name}'
+            form.save(commit=True)
+            models.File.handle(file)
         else:
-            return HttpResponseBadRequest(
-                content_type=b"application/pdf",
-                content="Send files"
+            raise ValidationError(
+                {
+                    "error": {
+                        "msg": "form is invalid"
+                    }
+                }
             )
-    else:
-        return HttpResponse(
-            content_type=b"application/pdf",
-            content="Send files"
-        )
+        return JsonResponse({"pk": [form.instance.pk]}, status=status.HTTP_200_OK)
 
 
 class AcadPeriodListView(generics.ListAPIView):
@@ -397,3 +345,13 @@ class InstitutionConfigViewSet(ModelViewSet):
     permission_classes = ()
     queryset = models.InstitutionConfig.objects.all()
     serializer_class = serializers.InstitutionConfigSerializer
+
+    # Любые ReST-запросы (кроме GET) запрещены
+    def create(self, request, *args, **kwargs):
+        return Response(data={'msg': 'config creation forbidden'}, status=status.HTTP_403_FORBIDDEN)
+
+    def update(self, request, *args, **kwargs):
+        return Response(data={'msg': 'config editing forbidden'}, status=status.HTTP_403_FORBIDDEN)
+
+    def destroy(self, request, *args, **kwargs):
+        return Response(data={'msg': 'config deletion forbidden'}, status=status.HTTP_403_FORBIDDEN)
