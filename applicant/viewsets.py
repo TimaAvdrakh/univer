@@ -1,3 +1,5 @@
+import datetime as dt
+import logging
 from django.contrib.auth import login
 from django.contrib.auth.models import User
 from django.core.mail import send_mail
@@ -18,6 +20,9 @@ from . import models
 from . import serializers
 from portal.curr_settings import applicant_application_statuses
 from .token import token_generator
+
+
+logger = logging.getLogger('django')
 
 
 # Активация аккаунта
@@ -483,7 +488,6 @@ class AdmissionCampaignViewSet(ModelViewSet):
 
     @action(methods=['get'], detail=False, url_path='open', url_name='open_campaigns')
     def get_open_campaigns(self, request, pk=None):
-        import datetime as dt
         today = dt.date.today()
         campaigns = self.queryset.filter(
             Q(start_date__lte=today)
@@ -491,6 +495,7 @@ class AdmissionCampaignViewSet(ModelViewSet):
             & Q(is_active=True)
             & Q(year=today.year)
         )
+        logger.info('campaigns')
         return Response({'open': campaigns.exists()}, status=HTTP_200_OK)
 
     @action(methods=['get'], detail=False, url_path='open-prep-levels', url_name='open_prep_levels')
