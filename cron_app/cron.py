@@ -1,4 +1,5 @@
 import datetime as dt
+import logging
 from django_cron import CronJobBase, Schedule
 from . import models
 import requests
@@ -32,6 +33,9 @@ from applicant.models import Applicant
 from applications import models as model_aps
 
 
+logger = logging.getLogger('django')
+
+
 class EmailCronJob(CronJobBase):
     RUN_EVERY_MINS = 1  # every 1 min
 
@@ -39,7 +43,14 @@ class EmailCronJob(CronJobBase):
     code = 'crop_app.my_cron_job'  # a unique code
 
     def do(self):
-        pass
+        emails = models.EmailTask.objects.filter(is_success=False)[:20]
+        for email in emails:
+            send_mail(
+                subject=email.subject,
+                message=email.message,
+                from_email=EMAIL_HOST_USER,
+                recipient_list=[email.to]
+            )
 
 
 class PasswordResetUrlSendJob(CronJobBase):
@@ -51,25 +62,29 @@ class PasswordResetUrlSendJob(CronJobBase):
 
     def do(self):
         tasks = models.ResetPasswordUrlSendTask.objects.filter(is_success=False)
+        logger.warning(f'Reset task count {tasks.count()}')
         for task in tasks:
             reset_password = task.reset_password
-
+            logger.warning(f'ResetPassword instance {reset_password}')
             msg_plain = render_to_string('emails/reset_password/reset_password.txt', {'uid': reset_password.uuid,
                                                                                       'lang': task.lang_code,
                                                                                       'site': current_site})
             msg_html = render_to_string('emails/reset_password/reset_password.html', {'uid': reset_password.uuid,
                                                                                       'lang': task.lang_code,
                                                                                       'site': current_site})
-
-            send_mail(
-                'Восстановление пароля',
-                msg_plain,
-                EMAIL_HOST_USER,
-                [reset_password.email],
-                html_message=msg_html,
-            )
-            task.is_success = True
-            task.save()
+            logger.warning(f'Rendered messages,  {msg_html}, {msg_plain}')
+            try:
+                send_mail(
+                    'Восстановление пароля',
+                    msg_plain,
+                    EMAIL_HOST_USER,
+                    [reset_password.email],
+                    html_message=msg_html,
+                )
+                task.is_success = True
+                task.save()
+            except Exception as e:
+                logger.error(f"Password reset error {e}")
 
             # data = {
             #     'email': reset_password.email,
@@ -630,7 +645,7 @@ class NotifyStudentToRegisterJob(CronJobBase):
         # org_models.StudentDiscipline.objects.filter(study)
 
 
-class ApplicantVerificationJob(CronJobBase):
+class DeleteInactiveApplicants(CronJobBase):
     """
     Удаляет неактивных абитуриентов, которые не подтвердили свою регистрацию по почте
     """

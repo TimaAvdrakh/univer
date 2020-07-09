@@ -41,6 +41,8 @@ INSTALLED_APPS = [
     'applicant',
     'applications',
     'calendar_api',
+    'applications',
+    'mail'
 ]
 
 MIDDLEWARE = [
@@ -161,8 +163,7 @@ CRON_CLASSES = [
     "cron_app.cron.GenerateExcelJob",
     # "cron_app.cron.DeleteDuplicateJob",
     "cron_app.cron.CloseApplicationsJob",
-    # А почему крона по абитуриентам нет? Я его добавлял.
-    "cron_app.cron.ApplicantVerificationJob"
+    "cron_app.cron.DeleteInactiveApplicants"
 ]
 
 # SESSION_COOKIE_AGE = 60
@@ -170,3 +171,28 @@ CRON_CLASSES = [
 LOCALE_PATHS = [
     os.path.join(BASE_DIR, 'locale'),
 ]
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '{levelname} | {asctime} | {module} | {process:d} | {thread:d} {message}',
+            'style': '{'
+        }
+    },
+    'handlers': {
+        'file': {
+            'level': 'WARNING',
+            'class': 'logging.FileHandler',
+            'filename': '/tmp/back.log',
+            'formatter': 'verbose'
+        }
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['file'],
+            'propagate': True,
+        }
+    }
+}

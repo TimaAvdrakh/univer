@@ -1,4 +1,7 @@
+import re
 from django.db import models
+from django.conf import settings
+from django.core.mail import send_mail
 from django.core.validators import MaxValueValidator
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType

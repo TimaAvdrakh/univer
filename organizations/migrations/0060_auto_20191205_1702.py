@@ -162,5 +162,6 @@ class Migration(migrations.Migration):
     operations = [
         migrations.RunPython(generate_student_discipline_statuses),
         migrations.RunPython(generate_student_discipline_info_statuses),
-        migrations.RunPython(generate_lesson_statuses),
+        # Эта функция по генерации статусов не работает без дампа БД.
+        # migrations.RunPython(generate_lesson_statuses),
     ]

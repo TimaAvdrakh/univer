@@ -19,12 +19,11 @@ class EmailTask(BaseTask):
         verbose_name='Email',
     )
     subject = models.CharField(
-        max_length=50,
+        max_length=255,
         null=True,
         verbose_name='Заголовок',
     )
-    message = models.CharField(
-        max_length=100,
+    message = models.TextField(
         null=True,
         verbose_name='Сообщение',
     )
