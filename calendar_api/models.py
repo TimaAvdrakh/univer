@@ -28,9 +28,10 @@ from schedules.models import (
 class RepetitionTypes(BaseCatalog):
     class Meta:
         verbose_name = 'Тип повторения события',
+        verbose_name_plural = 'Тип повторения событий',
 
     def __str__(self):
-        return f'{self.name}'
+        return self.name
 
 
 class Events(BaseCatalog):
@@ -60,6 +61,7 @@ class Events(BaseCatalog):
         Profile,
         verbose_name='Участники события',
         related_name='events_participants',
+        blank=True,
 
     )
     notification = models.BooleanField(
@@ -92,4 +94,4 @@ class Events(BaseCatalog):
         verbose_name_plural = 'События'
 
     def __str__(self):
-        return f'{self.name} созданно {self.creator.name}'
+        return f'{self.name} созданно {self.creator.full_name}'

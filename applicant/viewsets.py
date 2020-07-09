@@ -595,14 +595,11 @@ class ModeratorViewSet(ModelViewSet):
             paginated_response = self.get_paginated_response(serializer)
             return Response(data=paginated_response.data, status=HTTP_200_OK)
 
-
-
         if application_status is not None:
             if application_status == models.NO_QUESTIONNAIRE:
                 queryset = queryset.filter(status=None)
             else:
                 queryset = queryset.filter(status__code=application_status)
-
 
         if full_name is not None:
             lookup = Q(creator__first_name__contains=full_name) \
