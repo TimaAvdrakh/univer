@@ -6,6 +6,25 @@ from cron_app.models import EmailTask
 
 
 class EmailTemplate(BaseModel):
+    """Шаблонизатор писем
+    Шаблон письма - это письмо, содержащее в себе какой-нибудь placeholder.
+    Это требуется тогда, когда письмо должно быть одинаковым, но иметь некоторые данные для определенного юзера.
+
+    Например, письмо о подтверждении регистрации должно содержать в себе юзернейм пользователя,
+    его пароль (который он указал во время заполнения регистрационной формы) и ссылку на активацию.
+    Эти 3 составляющие меняются от пользователя к пользователю. Поэтому в шаблоне используются переменные с
+    нотацией HTML-шаблонизатора Django -> {{ username }}, {{ password }}, {{ verification }}.
+
+    При передаче kwargs параметров в put_in_cron_queue должны быть все переменные, указанные в шаблоне
+    """
+
+    APP_REJECTED = 'APP_REJECTED'
+    APP_ON_VERIFICATION = 'APP_ON_VERIFICATION'
+    APP_APPROVED = 'APP_APPROVED'
+    APP_ON_IMPROVEMENT = 'APP_ON_IMPROVEMENT'
+    REGISTRATION_VERIFICATION = 'REGISTRATION_VERIFICATION',
+    PASS_RESET = 'PASS_RESET'
+
     config = models.ForeignKey(
         InstitutionConfig,
         on_delete=models.PROTECT,
