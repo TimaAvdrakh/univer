@@ -62,10 +62,10 @@ class PasswordResetUrlSendJob(CronJobBase):
 
     def do(self):
         tasks = models.ResetPasswordUrlSendTask.objects.filter(is_success=False)
-        logger.warning('Reset task count', tasks.count())
+        logger.warning(f'Reset task count {tasks.count()}')
         for task in tasks:
             reset_password = task.reset_password
-            logger.warning('ResetPassword instance', reset_password)
+            logger.warning(f'ResetPassword instance {reset_password}')
             msg_plain = render_to_string('emails/reset_password/reset_password.txt', {'uid': reset_password.uuid,
                                                                                       'lang': task.lang_code,
                                                                                       'site': current_site})
@@ -84,7 +84,7 @@ class PasswordResetUrlSendJob(CronJobBase):
                 task.is_success = True
                 task.save()
             except Exception as e:
-                logger.error("Password reset error", e)
+                logger.error(f"Password reset error {e}")
 
             # data = {
             #     'email': reset_password.email,
