@@ -345,3 +345,13 @@ class InstitutionConfigViewSet(ModelViewSet):
     permission_classes = ()
     queryset = models.InstitutionConfig.objects.all()
     serializer_class = serializers.InstitutionConfigSerializer
+
+    # Любые ReST-запросы (кроме GET) запрещены
+    def create(self, request, *args, **kwargs):
+        return Response(data={'msg': 'config creation forbidden'}, status=status.HTTP_403_FORBIDDEN)
+
+    def update(self, request, *args, **kwargs):
+        return Response(data={'msg': 'config editing forbidden'}, status=status.HTTP_403_FORBIDDEN)
+
+    def destroy(self, request, *args, **kwargs):
+        return Response(data={'msg': 'config deletion forbidden'}, status=status.HTTP_403_FORBIDDEN)
