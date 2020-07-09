@@ -47,7 +47,7 @@ class ApplicantViewSet(ModelViewSet):
     serializer_class = serializers.ApplicantSerializer
     permission_classes = (AllowAny,)
     pagination_class = CustomPagination
-
+    #sdfsdf
     def create(self, request, *args, **kwargs):
         import datetime as dt
         validated_data = request.data
@@ -222,7 +222,7 @@ class RecruitmentPlanViewSet(ModelViewSet):
             return self.get_paginated_response(recruitment_plans)
         serializer = self.get_serializer(recruitment_plans, many=True)
         return Response(data={'results': serializer.data}, status=HTTP_200_OK)
-
+        #hello
 
 class LanguageProficiencyViewSet(ModelViewSet):
     queryset = models.LanguageProficiency.objects.exclude(parent=None)
@@ -600,14 +600,11 @@ class ModeratorViewSet(ModelViewSet):
             paginated_response = self.get_paginated_response(serializer)
             return Response(data=paginated_response.data, status=HTTP_200_OK)
 
-
-
         if application_status is not None:
             if application_status == models.NO_QUESTIONNAIRE:
                 queryset = queryset.filter(status=None)
             else:
                 queryset = queryset.filter(status__code=application_status)
-
 
         if full_name is not None:
             lookup = Q(creator__first_name__contains=full_name) \

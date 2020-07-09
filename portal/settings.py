@@ -40,6 +40,8 @@ INSTALLED_APPS = [
     'integration',
     'applicant',
     'applications',
+    'calendar_api',
+    'applications',
     'mail'
 ]
 
