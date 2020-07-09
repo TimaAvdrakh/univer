@@ -114,7 +114,11 @@ class ApplicantSerializer(serializers.ModelSerializer):
             'uid': urlsafe_base64_encode(force_bytes(user.pk)),
             'token': token_generator.make_token(user)
         }
-        EmailTemplate.put_in_cron_queue('REGISTRATION_VERIFICATION', user.email, **data)
+        EmailTemplate.put_in_cron_queue(
+            EmailTemplate.REGISTRATION_VERIFICATION,
+            user.email,
+            **data
+        )
         return
 
     def create(self, validated_data):
