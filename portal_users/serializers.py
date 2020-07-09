@@ -437,7 +437,7 @@ class ForgetPasswordSerializer(serializers.ModelSerializer):
         username = validated_data.get("username")
 
         user = User.objects.get(username=username, is_active=True)
-        email = user.profile.email
+        email = user.email
         if len(email) == 0 or not validate_email(email):
             raise CustomException(detail=3)  # has_not_email_or_invalid_email
 
