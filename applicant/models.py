@@ -13,9 +13,11 @@ from common.models import (
     IdentityDocument,
     Citizenship,
     Nationality,
+    Changelog,
+    Document,
     File,
 )
-from portal_users.models import Profile, ProfilePhone, Gender, MaritalStatus, Role
+from portal_users.models import Profile, ProfilePhone, Gender, MaritalStatus
 from organizations.models import (
     PreparationLevel,
     Speciality,
@@ -693,9 +695,17 @@ class Questionnaire(BaseModel):
         null=True,
         verbose_name='ИИН'
     )
-    id_document = models.ManyToManyField(
+    files = models.ManyToManyField(
         File,
-        verbose_name='сканы',
+        blank=True,
+        verbose_name='Сканы'
+    )
+    id_document = models.ForeignKey(
+        Document,
+        null=True,
+        on_delete=models.SET_NULL,
+        verbose_name="Удо скан",
+        related_name="application_id_doc",
     )
     phone = models.ForeignKey(
         ProfilePhone,
@@ -799,7 +809,7 @@ class Questionnaire(BaseModel):
             print('ok')
 
 
-        # Список льгот пользователей
+# Список льгот пользователей
 class UserPrivilegeList(BaseModel):
     questionnaire = models.OneToOneField(
         Questionnaire,
@@ -865,9 +875,16 @@ class Privilege(BaseModel):
         blank=True,
         null=True,
     )
-    document = models.ManyToManyField(
+    files = models.ManyToManyField(
         File,
-        verbose_name='сканы',
+        blank=True,
+        verbose_name='Сканы'
+    )
+    document = models.ForeignKey(
+        Document,
+        null=True,
+        on_delete=models.SET_NULL,
+        verbose_name="Скан документа"
     )
     list = models.ForeignKey(
         UserPrivilegeList,
@@ -1064,9 +1081,16 @@ class TestCert(BaseModel):
         default=False,
         verbose_name="Подтверждающий документ предоставлен"
     )
-    document = models.ManyToManyField(
+    files = models.ManyToManyField(
         File,
-        verbose_name='сканы',
+        blank=True,
+        verbose_name='Сканы'
+    )
+    document = models.ForeignKey(
+        Document,
+        null=True,
+        on_delete=models.DO_NOTHING,
+        verbose_name="Скан сертификата"
     )
     profile = models.ForeignKey(
         Profile,
@@ -1147,10 +1171,18 @@ class InternationalCert(BaseModel):
         max_length=100,
         verbose_name="Номер сертификата"
     )
-    document = models.ManyToManyField(
+    files = models.ManyToManyField(
         File,
-        verbose_name='сканы',
+        blank=True,
+        verbose_name='Сканы'
     )
+    document = models.ForeignKey(
+        Document,
+        on_delete=models.SET_NULL,
+        null=True,
+        verbose_name='Документ'
+    )
+
     class Meta:
         verbose_name = "Международный сертификат"
         verbose_name_plural = "Международные сертификаты"
@@ -1204,9 +1236,16 @@ class Grant(BaseModel):
         on_delete=models.SET_NULL,
         verbose_name='Группа образовательных программ'
     )
-    document = models.ManyToManyField(
+    files = models.ManyToManyField(
         File,
-        verbose_name='сканы',
+        blank=True,
+        verbose_name='Сканы'
+    )
+    document = models.ForeignKey(
+        Document,
+        null=True,
+        on_delete=models.SET_NULL,
+        verbose_name='Скан'
     )
 
     class Meta:
@@ -1280,9 +1319,17 @@ class AdmissionDocument(BaseModel):
         null=True,
         related_name='document'
     )
-    document = models.ManyToManyField(
+    files = models.ManyToManyField(
         File,
-        verbose_name='сканы',
+        blank=True,
+        verbose_name='Сканы'
+    )
+    document = models.ForeignKey(
+        Document,
+        blank=True,
+        null=True,
+        on_delete=models.SET_NULL,
+        verbose_name='Сканы документов'
     )
 
     class Meta:
@@ -1383,10 +1430,7 @@ class Application(BaseModel):
         verbose_name_plural = "Заявления"
 
     def __str__(self):
-        if self.status is None:
-            return f'Заявление абитуриента {self.applicant}. Без статуса'
-        else:
-            return f'Заявление абитуриента {self.applicant}. {self.status.name}'
+        return f'Заявление абитуриента {self.applicant}. {self.status.name}'
 
     @property
     def max_choices(self):
