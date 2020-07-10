@@ -41,7 +41,6 @@ INSTALLED_APPS = [
     'applicant',
     'calendar_api',
     'applications',
-    'calendar_api',
     'mail'
 ]
 
