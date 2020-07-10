@@ -11,7 +11,7 @@ from django.utils.translation import get_language
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 from common.models import IdentityDocument, Comment
-from common.serializers import DocumentSerializer, DocumentTypeSerializer
+from common.serializers import DocumentSerializer, DocumentTypeSerializer, FileSerializer
 from mail.models import EmailTemplate
 from portal.local_settings import EMAIL_HOST_USER
 from portal_users.serializers import ProfilePhoneSerializer
@@ -955,7 +955,15 @@ class FamilyMemberForModerator(serializers.ModelSerializer):
 
 class Document1CSerializer(serializers.ModelSerializer):
     type = DocumentTypeSerializer(read_only=True)
-    document = AdmissionDocumentSerializer()
+    files = serializers.SerializerMethodField(required=False)
+
+    def get_files(self, d1c: models.Document1C):
+        try:
+            profile = self.context['request'].user.profile
+            admission_documents = d1c.document.filter(creator=profile)
+            return AdmissionDocumentSerializer(admission_documents, many=True).data
+        except:
+            return []
 
     class Meta:
         model = models.Document1C
