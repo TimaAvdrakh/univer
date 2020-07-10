@@ -7,6 +7,30 @@ from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 from . import models
 from portal_users.models import Profile, Role
+from schedules.models import Room
+
+
+class EventsRepetitionTypeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.RepetitionTypes
+        fields = [
+            'uid',
+            'name',
+            'code',
+        ]
+
+
+class ReserveRoomSerializer(serializers.ModelSerializer):
+    type = serializers.CharField()
+
+    class Meta:
+        model = Room
+        fields = [
+            'uid',
+            'name',
+            'type',
+            'capacity',
+        ]
 
 
 class EventsRepetitionTypeSerializer(serializers.ModelSerializer):
