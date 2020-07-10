@@ -51,6 +51,8 @@ class EmailCronJob(CronJobBase):
                 from_email=EMAIL_HOST_USER,
                 recipient_list=[email.to]
             )
+            email.is_success = True
+            email.save()
 
 
 class PasswordResetUrlSendJob(CronJobBase):

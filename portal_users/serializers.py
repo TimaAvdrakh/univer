@@ -1,19 +1,21 @@
 from rest_framework import serializers
 from . import models
-from rest_framework_recaptcha.fields import ReCaptchaField
 from django.contrib.auth.models import User
 from common.exceptions import CustomException
 from django.contrib.auth import password_validation
 from cron_app.models import (
-    ResetPasswordUrlSendTask,
     CredentialsEmailTask,
     NotifyAdvisorTask,
 )
 from common.utils import password_generator
 from organizations import models as org_models
-from organizations import serializers as org_serializers
-from portal.curr_settings import student_discipline_status, student_discipline_info_status, language_multilingual_id, \
-    not_choosing_load_types2
+from portal.curr_settings import (
+    student_discipline_status,
+    student_discipline_info_status,
+    language_multilingual_id,
+    not_choosing_load_types2,
+    current_site
+)
 from django.db.models import Q
 from common import serializers as common_serializers
 from uuid import uuid4
@@ -23,6 +25,7 @@ from validate_email import validate_email
 from datetime import date
 from common import models as common_models
 from django.utils.translation import ugettext as _
+from mail.models import EmailTemplate
 
 
 class LoginSerializer(serializers.Serializer):
@@ -434,19 +437,18 @@ class ForgetPasswordSerializer(serializers.ModelSerializer):
         username = validated_data.get("username")
 
         user = User.objects.get(username=username, is_active=True)
-        email = user.profile.email
+        email = user.email
         if len(email) == 0 or not validate_email(email):
             raise CustomException(detail=3)  # has_not_email_or_invalid_email
 
         reset = models.ResetPassword.objects.create(
             username=username, user=user, email=email,
         )
-
-        # Создаем задачу для крон
-        ResetPasswordUrlSendTask.objects.create(
-            reset_password=reset, lang_code=request.LANGUAGE_CODE,
+        EmailTemplate.put_in_cron_queue(
+            EmailTemplate.PASS_RESET,
+            email,
+            **{'site': current_site, 'lang': 'ru', 'uid': reset.pk}
         )
-
         return reset
 
 

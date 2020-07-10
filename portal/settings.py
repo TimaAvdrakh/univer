@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     'student_journal',
     'integration',
     'applicant',
+    'calendar_api',
     'applications',
     'calendar_api',
     'mail'

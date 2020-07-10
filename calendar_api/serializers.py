@@ -73,4 +73,3 @@ class EventSerializer(serializers.ModelSerializer):
 
 
 
-
