@@ -1,6 +1,5 @@
 import datetime as dt
 from django.contrib.auth.models import User
-from django.contrib.contenttypes.models import ContentType
 from django.core.mail import EmailMessage, send_mail
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
@@ -14,8 +13,7 @@ from common.models import (
     IdentityDocument,
     Citizenship,
     Nationality,
-    Changelog,
-    Document,
+    File,
 )
 from portal_users.models import Profile, ProfilePhone, Gender, MaritalStatus, Role
 from organizations.models import (
@@ -695,12 +693,9 @@ class Questionnaire(BaseModel):
         null=True,
         verbose_name='ИИН'
     )
-    id_document = models.ForeignKey(
-        Document,
-        null=True,
-        on_delete=models.SET_NULL,
-        verbose_name="Удо скан",
-        related_name="application_id_doc",
+    id_document = models.ManyToManyField(
+        File,
+        verbose_name='сканы',
     )
     phone = models.ForeignKey(
         ProfilePhone,
@@ -870,11 +865,9 @@ class Privilege(BaseModel):
         blank=True,
         null=True,
     )
-    document = models.ForeignKey(
-        Document,
-        null=True,
-        on_delete=models.SET_NULL,
-        verbose_name="Скан документа"
+    document = models.ManyToManyField(
+        File,
+        verbose_name='сканы',
     )
     list = models.ForeignKey(
         UserPrivilegeList,
@@ -1071,11 +1064,9 @@ class TestCert(BaseModel):
         default=False,
         verbose_name="Подтверждающий документ предоставлен"
     )
-    document = models.ForeignKey(
-        Document,
-        null=True,
-        on_delete=models.DO_NOTHING,
-        verbose_name="Скан сертификата"
+    document = models.ManyToManyField(
+        File,
+        verbose_name='сканы',
     )
     profile = models.ForeignKey(
         Profile,
@@ -1156,13 +1147,10 @@ class InternationalCert(BaseModel):
         max_length=100,
         verbose_name="Номер сертификата"
     )
-    document = models.ForeignKey(
-        Document,
-        on_delete=models.SET_NULL,
-        null=True,
-        verbose_name='Документ'
+    document = models.ManyToManyField(
+        File,
+        verbose_name='сканы',
     )
-
     class Meta:
         verbose_name = "Международный сертификат"
         verbose_name_plural = "Международные сертификаты"
@@ -1216,11 +1204,9 @@ class Grant(BaseModel):
         on_delete=models.SET_NULL,
         verbose_name='Группа образовательных программ'
     )
-    document = models.ForeignKey(
-        Document,
-        null=True,
-        on_delete=models.SET_NULL,
-        verbose_name='Скан'
+    document = models.ManyToManyField(
+        File,
+        verbose_name='сканы',
     )
 
     class Meta:
@@ -1294,12 +1280,9 @@ class AdmissionDocument(BaseModel):
         null=True,
         related_name='document'
     )
-    document = models.ForeignKey(
-        Document,
-        blank=True,
-        null=True,
-        on_delete=models.SET_NULL,
-        verbose_name='Сканы документов'
+    document = models.ManyToManyField(
+        File,
+        verbose_name='сканы',
     )
 
     class Meta:
