@@ -14,3 +14,4 @@ local_settings.txt
 curr_settings.txt
 test_settings.py
 *.iml
+*.log

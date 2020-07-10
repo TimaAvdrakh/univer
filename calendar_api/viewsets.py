@@ -13,6 +13,7 @@ from rest_framework.status import HTTP_200_OK
 from rest_framework.viewsets import ModelViewSet
 from common.paginators import CustomPagination
 from portal_users.models import Profile
+from univer_admin.permissions import IsAdminOrReadOnly, AdminPermission
 from . import models
 from . import serializers
 
@@ -30,3 +31,8 @@ class EventsViewSet(ModelViewSet):
         paginated_response = self.get_paginated_response(serializer)
         return Response(data=paginated_response.data, status=HTTP_200_OK)
 
+
+class EventsRepetitionTypeViewSet(ModelViewSet):
+    queryset = models.RepetitionTypes.objects.all()
+    serializer_class = serializers.EventsRepetitionTypeSerializer
+    permission_classes = (IsAdminOrReadOnly, )
