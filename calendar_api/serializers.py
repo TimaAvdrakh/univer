@@ -9,6 +9,16 @@ from . import models
 from portal_users.models import Profile, Role
 
 
+class EventsRepetitionTypeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.RepetitionTypes
+        fields = [
+            'uid',
+            'name',
+            'code',
+        ]
+
+
 class EventSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Events

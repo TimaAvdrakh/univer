@@ -184,7 +184,7 @@ LOGGING = {
         'file': {
             'level': 'WARNING',
             'class': 'logging.FileHandler',
-            'filename': '/tmp/back.log',
+            'filename': './back.log',
             'formatter': 'verbose'
         }
     },
