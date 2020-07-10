@@ -33,6 +33,16 @@ class ReserveRoomSerializer(serializers.ModelSerializer):
         ]
 
 
+class EventsRepetitionTypeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.RepetitionTypes
+        fields = [
+            'uid',
+            'name',
+            'code',
+        ]
+
+
 class EventSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Events

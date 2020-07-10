@@ -1,6 +1,5 @@
 import datetime as dt
 from django.contrib.auth.models import User
-from django.contrib.contenttypes.models import ContentType
 from django.core.mail import EmailMessage, send_mail
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
@@ -16,8 +15,9 @@ from common.models import (
     Nationality,
     Changelog,
     Document,
+    File,
 )
-from portal_users.models import Profile, ProfilePhone, Gender, MaritalStatus, Role
+from portal_users.models import Profile, ProfilePhone, Gender, MaritalStatus
 from organizations.models import (
     PreparationLevel,
     Speciality,
@@ -695,6 +695,11 @@ class Questionnaire(BaseModel):
         null=True,
         verbose_name='ИИН'
     )
+    files = models.ManyToManyField(
+        File,
+        blank=True,
+        verbose_name='Сканы'
+    )
     id_document = models.ForeignKey(
         Document,
         null=True,
@@ -804,7 +809,7 @@ class Questionnaire(BaseModel):
             print('ok')
 
 
-        # Список льгот пользователей
+# Список льгот пользователей
 class UserPrivilegeList(BaseModel):
     questionnaire = models.OneToOneField(
         Questionnaire,
@@ -869,6 +874,11 @@ class Privilege(BaseModel):
         verbose_name="Кем выдано",
         blank=True,
         null=True,
+    )
+    files = models.ManyToManyField(
+        File,
+        blank=True,
+        verbose_name='Сканы'
     )
     document = models.ForeignKey(
         Document,
@@ -1071,6 +1081,11 @@ class TestCert(BaseModel):
         default=False,
         verbose_name="Подтверждающий документ предоставлен"
     )
+    files = models.ManyToManyField(
+        File,
+        blank=True,
+        verbose_name='Сканы'
+    )
     document = models.ForeignKey(
         Document,
         null=True,
@@ -1156,6 +1171,11 @@ class InternationalCert(BaseModel):
         max_length=100,
         verbose_name="Номер сертификата"
     )
+    files = models.ManyToManyField(
+        File,
+        blank=True,
+        verbose_name='Сканы'
+    )
     document = models.ForeignKey(
         Document,
         on_delete=models.SET_NULL,
@@ -1215,6 +1235,11 @@ class Grant(BaseModel):
         null=True,
         on_delete=models.SET_NULL,
         verbose_name='Группа образовательных программ'
+    )
+    files = models.ManyToManyField(
+        File,
+        blank=True,
+        verbose_name='Сканы'
     )
     document = models.ForeignKey(
         Document,
@@ -1293,6 +1318,11 @@ class AdmissionDocument(BaseModel):
         blank=True,
         null=True,
         related_name='document'
+    )
+    files = models.ManyToManyField(
+        File,
+        blank=True,
+        verbose_name='Сканы'
     )
     document = models.ForeignKey(
         Document,
@@ -1400,10 +1430,7 @@ class Application(BaseModel):
         verbose_name_plural = "Заявления"
 
     def __str__(self):
-        if self.status is None:
-            return f'Заявление абитуриента {self.applicant}. Без статуса'
-        else:
-            return f'Заявление абитуриента {self.applicant}. {self.status.name}'
+        return f'Заявление абитуриента {self.applicant}. {self.status.name}'
 
     @property
     def max_choices(self):
