@@ -799,8 +799,8 @@ class ApplicationSerializer(ApplicationLiteSerializer):
 
 
 class AdmissionDocumentSerializer(serializers.ModelSerializer):
+    doc = DocumentSerializer(source='document', read_only=True)
     type = serializers.SerializerMethodField(read_only=True)
-    files = FileSerializer()
 
     def get_type(self, document: models.AdmissionDocument):
         try:
