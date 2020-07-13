@@ -185,7 +185,6 @@ class QuestionnaireSerializer(serializers.ModelSerializer):
     address_of_residence = AddressSerializer(required=True)
     privilege_list = UserPrivilegeListSerializer(required=False, many=False)
     phone = ProfilePhoneSerializer(required=True)
-    document = DocumentSerializer(source='id_document', required=False)
 
     class Meta:
         model = models.Questionnaire
@@ -402,14 +401,13 @@ class QuestionnaireSerializer(serializers.ModelSerializer):
 
     def update_privileges(self, data, creator, questionnaire, uid=None,):
         if not uid:
-            print("not uid")
             user_privilege_list = models.UserPrivilegeList.objects.create(questionnaire=questionnaire, profile=creator)
         else:
-            print("existing")
             user_privilege_list = models.UserPrivilegeList.objects.get(pk=uid)
             user_privilege_list.privileges.all().delete()
         privileges = data.pop('privileges')
         for privilege in privileges:
+            privilege.pop('files', None)
             p = models.Privilege.objects.create(**privilege)
             p.profile = creator
             p.list = user_privilege_list
@@ -421,6 +419,7 @@ class QuestionnaireSerializer(serializers.ModelSerializer):
         mod_can_edit = settings.MODERATOR_CAN_EDIT and role.is_mod
         if profile == instance.creator or mod_can_edit:
             try:
+                validated_data.pop('files', None)
                 self.update_registration_address(
                     uid=instance.address_of_registration.pk,
                     data=validated_data.pop('address_of_registration')
