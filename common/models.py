@@ -1,8 +1,6 @@
-import re
 from django.db import models
-from django.conf import settings
-from django.core.mail import send_mail
 from django.core.validators import MaxValueValidator
+from django.contrib.auth.models import User
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from django.forms.models import model_to_dict
@@ -477,6 +475,18 @@ class File(BaseModel):
         null=True,
         verbose_name="Тип контента"
     )
+    # generated_uid = models.CharField(
+    #     max_length=36,
+    #     blank=True,
+    #     null=True,
+    #     verbose_name='сгенерированный UID'
+    # )
+    # field_name = models.CharField(
+    #     max_length=255,
+    #     blank=True,
+    #     null=True,
+    #     verbose_name='Имя поля'
+    # )
 
     @staticmethod
     # Запись в media

@@ -702,6 +702,7 @@ class Questionnaire(BaseModel):
     )
     id_document = models.ForeignKey(
         Document,
+        blank=True,
         null=True,
         on_delete=models.SET_NULL,
         verbose_name="Удо скан",
@@ -882,6 +883,7 @@ class Privilege(BaseModel):
     )
     document = models.ForeignKey(
         Document,
+        blank=True,
         null=True,
         on_delete=models.SET_NULL,
         verbose_name="Скан документа"
@@ -1088,6 +1090,7 @@ class TestCert(BaseModel):
     )
     document = models.ForeignKey(
         Document,
+        blank=True,
         null=True,
         on_delete=models.DO_NOTHING,
         verbose_name="Скан сертификата"
@@ -1180,6 +1183,7 @@ class InternationalCert(BaseModel):
         Document,
         on_delete=models.SET_NULL,
         null=True,
+        blank=True,
         verbose_name='Документ'
     )
 
@@ -1243,6 +1247,7 @@ class Grant(BaseModel):
     )
     document = models.ForeignKey(
         Document,
+        blank=True,
         null=True,
         on_delete=models.SET_NULL,
         verbose_name='Скан'

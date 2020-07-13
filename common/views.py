@@ -7,12 +7,11 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.viewsets import ModelViewSet
 from rest_framework.decorators import action
-from rest_framework.exceptions import ValidationError
 from portal_users.models import Level, AchievementType
 from datetime import date
 from django.utils.translation import gettext as _
 from django import forms
-from django.http import JsonResponse, HttpResponseBadRequest, HttpResponse, Http404
+from django.http import JsonResponse, HttpResponse
 
 
 class FileForm(forms.ModelForm):
@@ -46,99 +45,27 @@ def replace_file(request, uid):
 
 
 def upload(request):
-    """Эндпоинт по принятию файлов от пользователей
-    Принимет один файл за раз
+    """Эндпоинт загрузки файлов
+    Принимает uid'ы и файлы
+    params
+    uid -
+    file|files - бинарные файлы
     """
-    # if request.method == "POST" and request.FILES:
-    #     form = FileForm(request.POST, request.FILES)
-    #     if form.is_valid():
-    #         file = request.FILES.get("path")
-    #         form.instance.name = file.name
-    #         form.instance.extension = file.name.split(".")[-1]
-    #         form.instance.size = file.size
-    #         form.instance.content_type = file.content_type
-    #         form.instance.path = f'upload/{file.name}'
-    #         form.save(commit=True)
-    #         models.File.handle(file)
-    #     else:
-    #         raise ValidationError(
-    #             {
-    #                 "error": {
-    #                     "msg": "form is invalid"
-    #                 }
-    #             }
-    #         )
-    #     return JsonResponse({"pk": [form.instance.pk]}, status=status.HTTP_200_OK)
-    if request.method == "POST":
-        if request.FILES:
-            path = request.FILES.getlist("path")
-            if len(path) > 1:
-                files = []
-                try:
-                    form = FileForm(request.POST, request.FILES)
-                    if form.is_valid():
-                        for file in path:
-                            file_instance = models.File.objects.create(
-                                name=file.name,
-                                extension=file.name.split('.')[-1],
-                                size=file.size,
-                                content_type=file.content_type,
-                                path=f'upload/{file.name}'
-                            )
+    print(request.POST, request.FILES)
+    if request.POST and request.FILES:
+        uid = request.POST.get('uid')
+        field_name = request.POST.get('field_name')
 
-                            files.append(file_instance.pk)
-                            models.File.handle(file)
-                    return JsonResponse({"pk": files}, status=status.HTTP_200_OK)
-                except Exception as e:
-                    raise ValidationError(
-                        {
-                            "error": {
-                                "msg": "an error occurred",
-                                "exc": e
-                            }
-                        }
-                    )
-            else:
-                try:
-                    form = FileForm(request.POST, request.FILES)
-                    if form.is_valid():
-                        file = request.FILES.get("path")
-                        form.instance.name = file.name
-                        form.instance.extension = file.name.split(".")[-1]
-                        form.instance.size = file.size
-                        form.instance.content_type = file.content_type
-                        form.instance.path = f'upload/{file.name}'
-                        form.save(commit=True)
-                        models.File.handle(file)
-                    else:
-                        raise ValidationError(
-                            {
-                                "error": {
-                                    "msg": "form is invalid"
-                                }
-                            }
-                        )
-
-                    return JsonResponse({"pk": [form.instance.pk]}, status=status.HTTP_200_OK)
-                except Exception as e:
-                    raise ValidationError(
-                        {
-                            "error": {
-                                "msg": "an error occurred",
-                                "exc": e
-                            }
-                        }
-                    )
-        else:
-            return HttpResponseBadRequest(
-                content_type=b"application/pdf",
-                content="Send files"
-            )
+        print(uid, field_name)
+        return JsonResponse(data={'msg': 'ok'})
     else:
-        return HttpResponse(
-            content_type=b"application/pdf",
-            content="Send files"
-        )
+        return JsonResponse(data={'msg': 'not allowed'})
+
+
+def generate_document_uid(request):
+    from uuid import uuid4
+    uid = uuid4()
+    return JsonResponse(data={'uid': uid}, status=status.HTTP_200_OK)
 
 
 class AcadPeriodListView(generics.ListAPIView):
