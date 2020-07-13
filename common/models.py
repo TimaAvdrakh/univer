@@ -475,18 +475,26 @@ class File(BaseModel):
         null=True,
         verbose_name="Тип контента"
     )
-    # generated_uid = models.CharField(
-    #     max_length=36,
-    #     blank=True,
-    #     null=True,
-    #     verbose_name='сгенерированный UID'
-    # )
-    # field_name = models.CharField(
-    #     max_length=255,
-    #     blank=True,
-    #     null=True,
-    #     verbose_name='Имя поля'
-    # )
+    gen_uid = models.CharField(
+        max_length=36,
+        blank=True,
+        null=True,
+        verbose_name='сгенерированный UID'
+    )
+    field_name = models.CharField(
+        max_length=255,
+        blank=True,
+        null=True,
+        verbose_name='Имя поля'
+    )
+    user = models.ForeignKey(
+        User,
+        on_delete=models.PROTECT,
+        blank=True,
+        null=True,
+        verbose_name='Кто выгрузил',
+        related_name='files'
+    )
 
     @staticmethod
     # Запись в media
@@ -495,6 +503,16 @@ class File(BaseModel):
         with open(f"{settings.MEDIA_ROOT}/upload/{file.name}", "wb+") as destination:
             for chunk in file.chunks():
                 destination.write(chunk)
+
+    @staticmethod
+    def get_data(file):
+        return {
+            'name': file.name,
+            'extension': file.name.split('.')[-1],
+            'size': file.size,
+            'content_type': file.content_type,
+            'path': f'upload/{file.name}'
+        }
 
 
 class Document(BaseCatalog):
@@ -522,3 +540,15 @@ class InstitutionConfig(BaseModel):
 
     def __str__(self):
         return 'Настройки ОУ'
+
+
+class ReservedUID(BaseModel):
+    user = models.ForeignKey(
+        User,
+        on_delete=models.PROTECT,
+        editable=False,
+    )
+
+    class Meta:
+        verbose_name = 'Резервированный UID'
+        verbose_name_plural = 'Резервированные UID\'ы'

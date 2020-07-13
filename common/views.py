@@ -1,5 +1,6 @@
 from rest_framework import generics
 from rest_framework import permissions
+from rest_framework.exceptions import ValidationError
 from . import serializers
 from . import models
 from organizations import models as org_models
@@ -10,62 +11,64 @@ from rest_framework.decorators import action
 from portal_users.models import Level, AchievementType
 from datetime import date
 from django.utils.translation import gettext as _
-from django import forms
 from django.http import JsonResponse, HttpResponse
-
-
-class FileForm(forms.ModelForm):
-    path = forms.FileField(widget=forms.ClearableFileInput(attrs={'multiple': True}))
-
-    class Meta:
-        model = models.File
-        fields = ["path"]
 
 
 def replace_file(request, uid):
     if request.method == 'POST':
-        file = models.File.objects.get(pk=uid)
-        form = FileForm(request.POST, request.FILES)
-        if form.is_valid():
-            new_file = request.FILES.get('path')
-            file.name = new_file.name
-            file.extension = new_file.name.split('.')[-1]
-            file.size = new_file.size
-            file.content_type = new_file.content_type
-            file.path = f'upload/{new_file.name}'
-            file.save()
-            return JsonResponse(data={'path': f'media/{file.path.name}', 'name': file.name}, status=status.HTTP_200_OK)
-        else:
-            return JsonResponse(data={'message': 'form file is invalid'}, status=status.HTTP_422_UNPROCESSABLE_ENTITY)
+        file = models.File.objects.filter(pk=uid)
+        if not file.exists():
+            raise ValidationError({'error': 'file doesn\'t exists'})
+        binary_file = request.FILES.get('path')
+        binary_file_data = models.File.get_data(binary_file)
+        file.update(**binary_file_data)
+        models.File.handle(binary_file)
+        return JsonResponse(data=serializers.FileSerializer(file.first()).data, status=status.HTTP_200_OK)
     else:
-        return HttpResponse(
-            content_type=b"application/pdf",
-            content="Replace file"
-        )
+        return HttpResponse(content_type=b"application/pdf", content="Replace file")
 
 
 def upload(request):
     """Эндпоинт загрузки файлов
-    Принимает uid'ы и файлы
-    params
-    uid -
-    file|files - бинарные файлы
+    Принимает uid'ы, имена полей и бинарные файлы
+    :params:
+    uid: str- сгенерированный uid для текущего пользователя
+    field_name: str - имя поля объекта, к которому относится файл
+    file|files: FormData - бинарный файл|бинарные файлы
+    :returns:
+    List[Dict{File}]
     """
-    print(request.POST, request.FILES)
-    if request.POST and request.FILES:
+    if request.method == 'POST' and request.FILES:
+        files = request.FILES.getlist('path')
         uid = request.POST.get('uid')
         field_name = request.POST.get('field_name')
-
-        print(uid, field_name)
-        return JsonResponse(data={'msg': 'ok'})
+        reserved_uid = models.ReservedUID.objects.filter(pk=uid, user=request.user)
+        if not reserved_uid.exists():
+            raise ValidationError({'error': 'reserved uid not found'})
+        instances = []
+        for file in files:
+            binary_file_data = models.File.get_data(file)
+            instance = models.File.objects.create(
+                gen_uid=uid,
+                user=request.user,
+                field_name=field_name,
+                **binary_file_data,
+            )
+            instances.append(serializers.FileSerializer(instance).data)
+            models.File.handle(file)
+        return JsonResponse(data=instances, status=status.HTTP_200_OK, safe=False)
     else:
-        return JsonResponse(data={'msg': 'not allowed'})
+        return HttpResponse(content_type=b"application/pdf", content="send a file")
 
 
-def generate_document_uid(request):
-    from uuid import uuid4
-    uid = uuid4()
-    return JsonResponse(data={'uid': uid}, status=status.HTTP_200_OK)
+def generate_uid(request):
+    user = request.user
+    reserved_uid = models.ReservedUID.objects.filter(user=user)
+    if reserved_uid.exists():
+        uid = reserved_uid.first()
+    else:
+        uid = models.ReservedUID.objects.create(user=user)
+    return JsonResponse(data={'uid': uid.pk}, status=status.HTTP_200_OK)
 
 
 class AcadPeriodListView(generics.ListAPIView):
