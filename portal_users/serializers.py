@@ -464,7 +464,7 @@ class ResetPasswordSerializer(serializers.Serializer):
         password_validation.validate_password(data["password"])
 
         try:
-            reset = models.ResetPassword.objects.get(uid=data["uuid"])
+            reset = models.ResetPassword.objects.get(pk=data["uuid"])
         except models.ResetPassword.DoesNotExist:
             raise CustomException(detail=3)  # not_found
 
@@ -482,7 +482,7 @@ class ResetPasswordSerializer(serializers.Serializer):
         return data
 
     def save(self, **kwargs):
-        reset = models.ResetPassword.objects.get(uuid=self.validated_data["uuid"])
+        reset = models.ResetPassword.objects.get(pk=self.validated_data["uuid"])
         user = reset.user
         user.set_password(self.validated_data["password"])
         user.save()
