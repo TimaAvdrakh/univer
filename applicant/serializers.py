@@ -421,16 +421,30 @@ class QuestionnaireSerializer(serializers.ModelSerializer):
         residence_address.save(snapshot=True)
 
     def update_privileges(self, data, creator, questionnaire, reserved_uid, uid=None):
+        print("in update")
         if not uid:
             user_privilege_list = models.UserPrivilegeList.objects.create(questionnaire=questionnaire, profile=creator)
         else:
             user_privilege_list = models.UserPrivilegeList.objects.get(pk=uid)
-            user_privilege_list.privileges.all().delete()
+        for privilege in user_privilege_list.privileges.all():
+            privilege.files.all().delete()
+            privilege.delete()
         privileges = data.pop('privileges')
-        # files = File.objects.filter(gen_uid=reserved_uid, field_name=)
-        for privilege in privileges:
-            p = models.Privilege.objects.create(**privilege, profile=creator, list=user_privilege_list)
-            # TODO привязка файла по генерированному UID
+        field_names = File.objects.filter(
+            gen_uid=reserved_uid,
+            field_name__istartswith=models.Questionnaire.PRIVILEGE_FN
+        ).values_list('field_name', flat=True).distinct('field_name').order_by('field_name')
+        for index, data in enumerate(privileges):
+            data.pop('list', None)
+            data.pop('profile', None)
+            privilege = models.Privilege.objects.create(
+                **data,
+                list=user_privilege_list,
+                profile=creator
+            )
+            matching_files = File.objects.filter(gen_uid=reserved_uid, field_name=field_names[index])
+            privilege.files.set(matching_files)
+            privilege.save()
 
     def update(self, instance: models.Questionnaire, validated_data: dict):
         profile = self.context['request'].user.profile
@@ -789,7 +803,9 @@ class ApplicationLiteSerializer(serializers.ModelSerializer):
                 else:
                     test_result = tr
                     test_certificate = models.TestCert.objects.create(profile=profile,**ts)
-                    disciplines = models.DisciplineMark.objects.bulk_create([models.DisciplineMark(profile=profile, **discipline) for discipline in disciplines_from_val_data])
+                    disciplines = models.DisciplineMark.objects.bulk_create([
+                        models.DisciplineMark(
+                            profile=profile, **discipline) for discipline in disciplines_from_val_data])
                     # Результат теста
                     test_result = models.TestResult.objects.create(profile=profile,test_certificate=test_certificate)
                     test_result.disciplines.set(disciplines)
