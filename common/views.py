@@ -1,3 +1,4 @@
+from django.views.decorators.csrf import csrf_exempt
 from rest_framework import generics
 from rest_framework import permissions
 from rest_framework.exceptions import ValidationError
@@ -28,6 +29,7 @@ def replace_file(request, uid):
         return HttpResponse(content_type=b"application/pdf", content="Replace file")
 
 
+@csrf_exempt
 def upload(request):
     """Эндпоинт загрузки файлов
     Принимает uid'ы, имена полей и бинарные файлы
@@ -38,7 +40,7 @@ def upload(request):
     :returns:
     List[Dict{File}]
     """
-    if request.method == 'POST' and request.FILES:
+    if request.method == 'POST' and request.FILES and request.user.is_authenticated:
         files = request.FILES.getlist('path')
         uid = request.POST.get('uid')
         field_name = request.POST.get('field_name')

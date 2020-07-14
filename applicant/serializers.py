@@ -28,7 +28,7 @@ class PrivilegeTypeSerializer(serializers.ModelSerializer):
 
 
 class PrivilegeSerializer(serializers.ModelSerializer):
-    doc = DocumentSerializer(source='document', read_only=True, required=False)
+    files = FileSerializer(read_only=True, many=True, required=False)
 
     class Meta:
         model = models.Privilege
@@ -185,6 +185,7 @@ class QuestionnaireSerializer(serializers.ModelSerializer):
     address_of_residence = AddressSerializer(required=True)
     privilege_list = UserPrivilegeListSerializer(required=False, many=False)
     phone = ProfilePhoneSerializer(required=True)
+    files = FileSerializer(read_only=True, many=True, required=False)
 
     class Meta:
         model = models.Questionnaire
@@ -419,19 +420,17 @@ class QuestionnaireSerializer(serializers.ModelSerializer):
         residence_address.update(data)
         residence_address.save(snapshot=True)
 
-    def update_privileges(self, data, creator, questionnaire, uid=None,):
+    def update_privileges(self, data, creator, questionnaire, reserved_uid, uid=None):
         if not uid:
             user_privilege_list = models.UserPrivilegeList.objects.create(questionnaire=questionnaire, profile=creator)
         else:
             user_privilege_list = models.UserPrivilegeList.objects.get(pk=uid)
             user_privilege_list.privileges.all().delete()
         privileges = data.pop('privileges')
+        # files = File.objects.filter(gen_uid=reserved_uid, field_name=)
         for privilege in privileges:
-            privilege.pop('files', None)
-            p = models.Privilege.objects.create(**privilege)
-            p.profile = creator
-            p.list = user_privilege_list
-            p.save()
+            p = models.Privilege.objects.create(**privilege, profile=creator, list=user_privilege_list)
+            # TODO привязка файла по генерированному UID
 
     def update(self, instance: models.Questionnaire, validated_data: dict):
         profile = self.context['request'].user.profile
@@ -439,6 +438,7 @@ class QuestionnaireSerializer(serializers.ModelSerializer):
         mod_can_edit = settings.MODERATOR_CAN_EDIT and role.is_mod
         if profile == instance.creator or mod_can_edit:
             try:
+                reserved_uid = ReservedUID.get_uid_by_user(self.context['request'].user)
                 validated_data.pop('files', None)
                 self.update_registration_address(
                     uid=instance.address_of_registration.pk,
@@ -482,10 +482,10 @@ class QuestionnaireSerializer(serializers.ModelSerializer):
                         uid=instance.privilege_list.pk,
                         data=privileges,
                         creator=profile,
-                        questionnaire=instance
+                        questionnaire=instance,
+                        reserved_uid=reserved_uid
                     )
                 instance.update(validated_data)
-                reserved_uid = ReservedUID.get_uid_by_user(self.context['request'].user)
                 files = File.objects.filter(gen_uid=reserved_uid, field_name=models.Questionnaire.ID_DOCUMENT_FN)
                 instance.files.set(files)
                 instance.save(snapshot=True)
@@ -553,7 +553,7 @@ class DisciplineMarkSerializer(serializers.ModelSerializer):
 
 
 class TestCertSerializer(serializers.ModelSerializer):
-    doc = DocumentSerializer(read_only=True, source='document')
+    files = FileSerializer(read_only=True, many=True, required=False)
 
     class Meta:
         model = models.TestCert
@@ -573,7 +573,7 @@ class InternationalCertTypeSerializer(serializers.ModelSerializer):
 
 
 class InternationalCertSerializer(serializers.ModelSerializer):
-    doc = DocumentSerializer(read_only=True, source='document')
+    files = FileSerializer(read_only=True, many=True, required=False)
 
     class Meta:
         model = models.InternationalCert
@@ -587,7 +587,7 @@ class GrantTypeSerializer(serializers.ModelSerializer):
 
 
 class GrantSerializer(serializers.ModelSerializer):
-    doc = DocumentSerializer(source='document', read_only=True)
+    files = FileSerializer(read_only=True, many=True, required=False)
 
     class Meta:
         model = models.Grant
@@ -604,7 +604,7 @@ class TestResultSerializer(serializers.ModelSerializer):
 
 
 class EducationSerializer(serializers.ModelSerializer):
-    doc = DocumentSerializer(read_only=True, source='document')
+    files = FileSerializer(read_only=True, many=True, required=False)
 
     class Meta:
         model = models.Education
@@ -854,7 +854,7 @@ class ApplicationSerializer(ApplicationLiteSerializer):
 
 class AdmissionDocumentSerializer(serializers.ModelSerializer):
     type = serializers.SerializerMethodField(read_only=True)
-    files = FileSerializer()
+    files = FileSerializer(read_only=True, many=True, required=False)
 
     def get_type(self, document: models.AdmissionDocument):
         try:
