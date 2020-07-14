@@ -29,7 +29,8 @@ urlpatterns = [
     path('student_discipline/status/', views.StudentDisciplineStatusListView.as_view(), name='student_discipline_status'),
     path('upload/', views.upload, name='file_upload'),
     path('replace-file/<str:uid>/', views.replace_file, name='replace-file'),
-    path('generate-uid/', views.generate_uid, name='generate-uid')
+    path('delete-file/<str:uid>/', views.delete_file, name='delete-file'),
+    path('generate-uid/', views.generate_uid, name='generate-uid'),
 ]
 
 router = DefaultRouter()

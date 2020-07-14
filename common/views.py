@@ -15,7 +15,7 @@ from django.http import JsonResponse, HttpResponse
 
 
 def replace_file(request, uid):
-    if request.method == 'POST':
+    if request.method == 'PUT':
         file = models.File.objects.filter(pk=uid)
         if not file.exists():
             raise ValidationError({'error': 'file doesn\'t exists'})
@@ -59,6 +59,20 @@ def upload(request):
         return JsonResponse(data=instances, status=status.HTTP_200_OK, safe=False)
     else:
         return HttpResponse(content_type=b"application/pdf", content="send a file")
+
+
+def delete_file(request, uid):
+    if request.method == 'DELETE':
+        file = models.File.objects.filter(pk=uid)
+        if file.exists():
+            file = file.first()
+            if file.user == request.user:
+                file.delete()
+                return JsonResponse(data={'msg': 'ok'}, status=status.HTTP_200_OK)
+            else:
+                return JsonResponse(data={'msg': 'access denied'}, status=status.HTTP_403_FORBIDDEN)
+    else:
+        return JsonResponse(data={'msg': 'method not allowed'}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
 
 def generate_uid(request):
