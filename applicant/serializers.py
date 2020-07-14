@@ -10,7 +10,7 @@ from django.utils.encoding import force_bytes
 from django.utils.translation import get_language
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
-from common.models import IdentityDocument, Comment
+from common.models import IdentityDocument, Comment, ReservedUID, File
 from common.serializers import DocumentSerializer, DocumentTypeSerializer, FileSerializer
 from mail.models import EmailTemplate
 from portal.local_settings import EMAIL_HOST_USER
@@ -28,7 +28,7 @@ class PrivilegeTypeSerializer(serializers.ModelSerializer):
 
 
 class PrivilegeSerializer(serializers.ModelSerializer):
-    doc = DocumentSerializer(source='document', read_only=True, required=False)
+    files = FileSerializer(read_only=True, many=True, required=False)
 
     class Meta:
         model = models.Privilege
@@ -185,6 +185,7 @@ class QuestionnaireSerializer(serializers.ModelSerializer):
     address_of_residence = AddressSerializer(required=True)
     privilege_list = UserPrivilegeListSerializer(required=False, many=False)
     phone = ProfilePhoneSerializer(required=True)
+    files = FileSerializer(read_only=True, many=True, required=False)
 
     class Meta:
         model = models.Questionnaire
@@ -285,12 +286,27 @@ class QuestionnaireSerializer(serializers.ModelSerializer):
             profile=creator,
             questionnaire=questionnaire
         )
-        for privilege in privileges:
-            models.Privilege.objects.create(
-                **privilege,
+        # Получить зарезервированный uid для текущего пользователя
+        reserved_uid = ReservedUID.get_uid_by_user(creator.user)
+        # Т.к. льгот может быть несколько, а в льготе может быть несколько файлов, то нужно
+        # отсортировать по генерированному uid и если имя поля начинается с 'privilege'
+        # (в массиве льгот индекс льготы приписывается в конце имени поля - privilege0, privilege1, ... privilegeN)
+        # Отсортировать по возрастанию и получить только уникальные значения в списке
+        field_name_values = File.objects.filter(
+            gen_uid=reserved_uid,
+            field_name__istartswith=models.Questionnaire.PRIVILEGE_FN
+        ).values_list('field_name', flat=True).distinct('field_name').order_by('field_name')
+        # По индексу enum получить из этого списка field_name, который соответствует каждой льготе
+        for index, data in enumerate(privileges):
+            privilege = models.Privilege.objects.create(
+                **data,
                 list=privilege_list,
                 profile=creator
             )
+            # Отфильтровать файлы и связать с льготой
+            matching_files = File.objects.filter(gen_uid=reserved_uid, field_name=field_name_values[index])
+            privilege.files.set(matching_files)
+            privilege.save()
 
     def create(self, validated_data):
         creator = self.context['request'].user.profile
@@ -348,6 +364,11 @@ class QuestionnaireSerializer(serializers.ModelSerializer):
                 phone=phone,
                 **validated_data
             )
+            # Получить сканы удостоверения личности по зарезервированному uid'у и имени поля
+            uid = ReservedUID.get_uid_by_user(self.context['request'].user)
+            files = File.objects.filter(gen_uid=uid, field_name=models.Questionnaire.ID_DOCUMENT_FN)
+            questionnaire.files.set(files)
+            questionnaire.save()
             if is_privileged:
                 self.create_privileges(
                     privilege_list=privilege_list,
@@ -399,19 +420,17 @@ class QuestionnaireSerializer(serializers.ModelSerializer):
         residence_address.update(data)
         residence_address.save(snapshot=True)
 
-    def update_privileges(self, data, creator, questionnaire, uid=None,):
+    def update_privileges(self, data, creator, questionnaire, reserved_uid, uid=None):
         if not uid:
             user_privilege_list = models.UserPrivilegeList.objects.create(questionnaire=questionnaire, profile=creator)
         else:
             user_privilege_list = models.UserPrivilegeList.objects.get(pk=uid)
             user_privilege_list.privileges.all().delete()
         privileges = data.pop('privileges')
+        # files = File.objects.filter(gen_uid=reserved_uid, field_name=)
         for privilege in privileges:
-            privilege.pop('files', None)
-            p = models.Privilege.objects.create(**privilege)
-            p.profile = creator
-            p.list = user_privilege_list
-            p.save()
+            p = models.Privilege.objects.create(**privilege, profile=creator, list=user_privilege_list)
+            # TODO привязка файла по генерированному UID
 
     def update(self, instance: models.Questionnaire, validated_data: dict):
         profile = self.context['request'].user.profile
@@ -419,6 +438,7 @@ class QuestionnaireSerializer(serializers.ModelSerializer):
         mod_can_edit = settings.MODERATOR_CAN_EDIT and role.is_mod
         if profile == instance.creator or mod_can_edit:
             try:
+                reserved_uid = ReservedUID.get_uid_by_user(self.context['request'].user)
                 validated_data.pop('files', None)
                 self.update_registration_address(
                     uid=instance.address_of_registration.pk,
@@ -462,9 +482,12 @@ class QuestionnaireSerializer(serializers.ModelSerializer):
                         uid=instance.privilege_list.pk,
                         data=privileges,
                         creator=profile,
-                        questionnaire=instance
+                        questionnaire=instance,
+                        reserved_uid=reserved_uid
                     )
                 instance.update(validated_data)
+                files = File.objects.filter(gen_uid=reserved_uid, field_name=models.Questionnaire.ID_DOCUMENT_FN)
+                instance.files.set(files)
                 instance.save(snapshot=True)
                 Profile.objects.filter(pk=profile.pk).update(
                     first_name=instance.first_name,
@@ -530,7 +553,7 @@ class DisciplineMarkSerializer(serializers.ModelSerializer):
 
 
 class TestCertSerializer(serializers.ModelSerializer):
-    doc = DocumentSerializer(read_only=True, source='document')
+    files = FileSerializer(read_only=True, many=True, required=False)
 
     class Meta:
         model = models.TestCert
@@ -550,7 +573,7 @@ class InternationalCertTypeSerializer(serializers.ModelSerializer):
 
 
 class InternationalCertSerializer(serializers.ModelSerializer):
-    doc = DocumentSerializer(read_only=True, source='document')
+    files = FileSerializer(read_only=True, many=True, required=False)
 
     class Meta:
         model = models.InternationalCert
@@ -564,7 +587,7 @@ class GrantTypeSerializer(serializers.ModelSerializer):
 
 
 class GrantSerializer(serializers.ModelSerializer):
-    doc = DocumentSerializer(source='document', read_only=True)
+    files = FileSerializer(read_only=True, many=True, required=False)
 
     class Meta:
         model = models.Grant
@@ -581,7 +604,7 @@ class TestResultSerializer(serializers.ModelSerializer):
 
 
 class EducationSerializer(serializers.ModelSerializer):
-    doc = DocumentSerializer(read_only=True, source='document')
+    files = FileSerializer(read_only=True, many=True, required=False)
 
     class Meta:
         model = models.Education
@@ -605,16 +628,22 @@ class ApplicationLiteSerializer(serializers.ModelSerializer):
         send_mail(subject=subject, message=message, from_email=EMAIL_HOST_USER, recipient_list=[recipient])
         return
 
-    def handle_previous_education(self, data, creator_profile):
-        previous_education = Education.objects.create(profile=creator_profile, **data)
+    def handle_previous_education(self, data, creator_profile, reserved_uid):
+        previous_education: Education = Education.objects.create(profile=creator_profile, **data)
+        files = File.objects.filter(gen_uid=reserved_uid, field_name=models.Application.EDUCATION_FN)
+        previous_education.files.set(files)
+        previous_education.save()
         return previous_education
 
-    def handle_test_results(self, data, creator_profile):
+    def handle_test_results(self, data, creator_profile, reserved_uid):
         # Сертификат теста ЕНТ/КТ
         test_certificate = models.TestCert.objects.create(
             profile=creator_profile,
             **data.get('test_certificate')
         )
+        files = File.objects.filter(gen_uid=reserved_uid, field_name=models.Application.TEST_CERT_FN)
+        test_certificate.files.set(files)
+        test_certificate.save()
         # Пройденные дисциплины на тесте
         disciplines = models.DisciplineMark.objects.bulk_create([
             models.DisciplineMark(profile=creator_profile, **discipline) for discipline in data.get('disciplines')
@@ -628,18 +657,30 @@ class ApplicationLiteSerializer(serializers.ModelSerializer):
         test_result.save()
         return test_result
 
-    def handle_international_certificates(self, data, creator_profile):
+    def handle_international_certificates(self, data, creator_profile, reserved_uid):
         if len(data) == 0:
             return models.InternationalCert.objects.none()
         certs = []
-        for cert in data:
-            certs.append(models.InternationalCert.objects.create(profile=creator_profile, **cert))
+
+        field_name_values = File.objects.filter(
+            gen_uid=reserved_uid,
+            field_name__istartswith=models.Application.INTERNATIONAL_CERT_FN
+        ).values_list('field_name', flat=True).distinct('field_name').order_by('field_name')
+        for index, international_cert in enumerate(data):
+            instance = models.InternationalCert.objects.create(profile=creator_profile, **international_cert)
+            matching_files = File.objects   .filter(gen_uid=reserved_uid, field_name=field_name_values[index])
+            instance.files.set(matching_files)
+            instance.save()
+            certs.append(instance)
         return certs
 
-    def handle_grant(self, data, creator_profile):
+    def handle_grant(self, data, creator_profile, reserved_uid):
         if not data:
             return None
         grant = models.Grant.objects.create(profile=creator_profile, **data)
+        files = File.objects.filter(gen_uid=reserved_uid, field_name=models.Application.GRANT_FN)
+        grant.files.set(files)
+        grant.save()
         return grant
 
     def handle_directions(self, data, creator_profile):
@@ -663,20 +704,34 @@ class ApplicationLiteSerializer(serializers.ModelSerializer):
     def create(self, validated_data: dict):
         creator: Profile = self.context['request'].user.profile
         try:
+            reserved_uid = ReservedUID.get_uid_by_user(creator.user)
             data = {
-                'previous_education': self.handle_previous_education(validated_data.pop('previous_education'), creator),
-                'grant': self.handle_grant(validated_data.pop('grant', None), creator),
+                'previous_education': self.handle_previous_education(
+                    data=validated_data.pop('previous_education'),
+                    creator_profile=creator,
+                    reserved_uid=reserved_uid
+                ),
+                'grant': self.handle_grant(
+                    data=validated_data.pop('grant', None),
+                    creator_profile=creator,
+                    reserved_uid=reserved_uid
+                ),
                 'creator': creator
             }
             unpassed_test = validated_data.get('unpassed_test')
             if unpassed_test:
                 validated_data.pop('test_result', None)
             else:
-                data['test_result'] = self.handle_test_results(validated_data.pop('test_result'), creator)
+                data['test_result'] = self.handle_test_results(
+                    data=validated_data.pop('test_result'),
+                    creator_profile=creator,
+                    reserved_uid=reserved_uid
+                )
             validated_data.update(data)
             international_certs = self.handle_international_certificates(
-                validated_data.pop('international_certs', []),
-                creator
+                data=validated_data.pop('international_certs', []),
+                creator_profile=creator,
+                reserved_uid=reserved_uid
             )
             directions = self.handle_directions(validated_data.pop('directions'), creator)
             application = models.Application.objects.create(**validated_data)
@@ -798,8 +853,8 @@ class ApplicationSerializer(ApplicationLiteSerializer):
 
 
 class AdmissionDocumentSerializer(serializers.ModelSerializer):
-    doc = DocumentSerializer(source='document', read_only=True)
     type = serializers.SerializerMethodField(read_only=True)
+    files = FileSerializer(read_only=True, many=True, required=False)
 
     def get_type(self, document: models.AdmissionDocument):
         try:

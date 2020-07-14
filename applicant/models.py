@@ -583,6 +583,10 @@ class ApplicationStatus(BaseCatalog):
 
 # Анкета поступающего
 class Questionnaire(BaseModel):
+    # имя поля удостоверения личности
+    ID_DOCUMENT_FN = 'id'
+    # имя поля льготы
+    PRIVILEGE_FN = 'privilege'
     MATCH_REG = 0
     MATCH_TMP = 1
     MATCH_RES = 3
@@ -1370,6 +1374,10 @@ class OrderedDirection(BaseModel):
 
 # Заявление
 class Application(BaseModel):
+    EDUCATION_FN = 'edu'
+    TEST_CERT_FN = 'test'
+    INTERNATIONAL_CERT_FN = 'international'
+    GRANT_FN = 'grant'
     previous_education = models.ForeignKey(
         Education,
         on_delete=models.DO_NOTHING,
