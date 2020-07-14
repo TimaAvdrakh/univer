@@ -549,6 +549,14 @@ class ReservedUID(BaseModel):
         editable=False,
     )
 
+    @staticmethod
+    def get_uid_by_user(user):
+        try:
+            reserved_uid = ReservedUID.objects.get(user=user)
+            return reserved_uid.pk
+        except ReservedUID.DoesNotExist:
+            return
+
     class Meta:
         verbose_name = 'Резервированный UID'
         verbose_name_plural = 'Резервированные UID\'ы'

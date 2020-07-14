@@ -8,6 +8,7 @@ from datetime import date
 from portal_users.utils import get_current_study_year, get_current_course, get_course, divide_to_study_years
 from .utils import calculate_credit
 from uuid import uuid4
+from common.models import File
 
 
 class Language(BaseCatalog):
@@ -291,6 +292,11 @@ class Education(BaseModel):
         on_delete=models.SET_NULL,
         blank=True,
         null=True
+    )
+    files = models.ManyToManyField(
+        File,
+        blank=True,
+        verbose_name='Сканы'
     )
 
     def __str__(self):
