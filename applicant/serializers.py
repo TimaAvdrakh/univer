@@ -421,7 +421,6 @@ class QuestionnaireSerializer(serializers.ModelSerializer):
         residence_address.save(snapshot=True)
 
     def update_privileges(self, data, creator, questionnaire, reserved_uid, uid=None):
-        print("in update")
         if not uid:
             user_privilege_list = models.UserPrivilegeList.objects.create(questionnaire=questionnaire, profile=creator)
         else:
