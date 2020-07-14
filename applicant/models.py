@@ -1314,6 +1314,8 @@ class Document1C(BaseCatalog):
 
 # Документы поступающего
 class AdmissionDocument(BaseModel):
+    FIELD_NAME = 'admission'
+
     creator = models.ForeignKey(
         Profile,
         on_delete=models.CASCADE,
@@ -1478,10 +1480,6 @@ class Application(BaseModel):
             )
         except Exception as e:
             print(e)
-        # role: Role = Role.objects.get(profile=self.creator)
-        # role.is_applicant = False
-        # role.is_student = True
-        # role.save()
         return
 
     def reject(self, moderator, comment):

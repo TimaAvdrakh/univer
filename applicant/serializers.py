@@ -890,17 +890,27 @@ class AdmissionDocumentSerializer(serializers.ModelSerializer):
         model = models.AdmissionDocument
         fields = '__all__'
 
-    def validate(self, validated_data):
-        return validated_data
-
     def create(self, validated_data):
-        creator = validated_data.get('creator')
-        return super().create(validated_data)
+        validated_data['creator'] = self.context['request'].user.profile
+        order = self.context['request'].data.get('order')
+        reserved_uid = ReservedUID.get_uid_by_user(validated_data['creator'].user)
+        field_name = f'{models.AdmissionDocument.FIELD_NAME}{order}'
+        files = File.objects.filter(gen_uid=reserved_uid, field_name=field_name)
+        instance: models.AdmissionDocument = super().create(validated_data)
+        instance.files.set(files)
+        instance.save()
+        return instance
 
     def update(self, instance: models.AdmissionDocument, validated_data):
-        new_files = validated_data.pop('files')
-        instance.document.files.clear()
-        instance.document.files.set(new_files)
+        profile = self.context['request'].user.profile
+        mod_can_edit = profile.role.is_mod and settings.MODERATOR_CAN_EDIT
+        if not (profile == instance.creator or mod_can_edit):
+            raise ValidationError({'error': 'access_denied'})
+        reserved_uid = ReservedUID.get_uid_by_user(profile.user)
+        order = self.context['request'].data.get('order')
+        field_name = f'{models.AdmissionDocument.FIELD_NAME}{order}'
+        files = File.objects.filter(gen_uid=reserved_uid, field_name=field_name)
+        instance.files.set(files)
         instance.save()
         return super().update(instance, validated_data)
 
