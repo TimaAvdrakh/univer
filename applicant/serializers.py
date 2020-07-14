@@ -450,69 +450,69 @@ class QuestionnaireSerializer(serializers.ModelSerializer):
         role = profile.role
         mod_can_edit = settings.MODERATOR_CAN_EDIT and role.is_mod
         if profile == instance.creator or mod_can_edit:
-            try:
-                reserved_uid = ReservedUID.get_uid_by_user(self.context['request'].user)
-                validated_data.pop('files', None)
-                self.update_registration_address(
-                    uid=instance.address_of_registration.pk,
-                    data=validated_data.pop('address_of_registration')
-                )
-                tmp_address: dict = validated_data.pop('address_of_temp_reg', None)
-                if tmp_address and any(tmp_address.values()):
-                    self.update_temporary_registration_address(
-                        uid=instance.address_of_temp_reg.pk,
-                        data=tmp_address
-                    )
-                self.update_residence_address(
-                    uid=instance.address_of_residence.pk,
-                    data=validated_data.pop('address_of_residence')
-                )
-                is_orphan = validated_data.get('is_orphan')
-                if instance.is_orphan and not is_orphan:
-                    family = self.create_family(
-                        family_data=validated_data.pop('family'),
-                        profile=profile,
-                        reg_addr_uid=instance.address_of_registration.pk,
-                        tmp_addr_uid=instance.address_of_temp_reg and instance.address_of_temp_reg.pk,
-                        res_addr_uid=instance.address_of_residence.pk
-                    )
-                    instance.family = family
-                    instance.save()
-                if not instance.is_orphan:
-                    self.update_family(uid=instance.family.pk, data=validated_data.pop('family'))
-                self.update_id_doc(uid=instance.id_doc.pk, data=validated_data.pop('id_doc'))
-                self.update_phone(uid=instance.phone.pk, data=validated_data.pop('phone'))
-                is_privileged = validated_data.get('is_privileged')
-                if not instance.is_privileged and is_privileged:
-                    self.create_privileges(
-                        validated_data.pop('privilege_list'),
-                        creator=profile,
-                        questionnaire=instance
-                    )
-                if instance.is_privileged:
-                    privileges = validated_data.pop('privilege_list', None)
-                    self.update_privileges(
-                        uid=instance.privilege_list.pk,
-                        data=privileges,
-                        creator=profile,
-                        questionnaire=instance,
-                        reserved_uid=reserved_uid
-                    )
-                instance.update(validated_data)
-                files = File.objects.filter(gen_uid=reserved_uid, field_name=models.Questionnaire.ID_DOCUMENT_FN)
-                instance.files.set(files)
-                instance.save(snapshot=True)
-                Profile.objects.filter(pk=profile.pk).update(
-                    first_name=instance.first_name,
-                    last_name=instance.last_name,
-                    middle_name=instance.middle_name,
-                    email=instance.email
-                )
-                return instance
-            except Exception as e:
-                raise ValidationError({"got error on update": e})
+            pass
         else:
             raise ValidationError({"error": "access_denied"})
+        try:
+            reserved_uid = ReservedUID.get_uid_by_user(profile.user)
+            self.update_registration_address(
+                uid=instance.address_of_registration.pk,
+                data=validated_data.pop('address_of_registration')
+            )
+            tmp_address: dict = validated_data.pop('address_of_temp_reg', None)
+            if tmp_address and any(tmp_address.values()):
+                self.update_temporary_registration_address(
+                    uid=instance.address_of_temp_reg.pk,
+                    data=tmp_address
+                )
+            self.update_residence_address(
+                uid=instance.address_of_residence.pk,
+                data=validated_data.pop('address_of_residence')
+            )
+            is_orphan = validated_data.get('is_orphan')
+            if instance.is_orphan and not is_orphan:
+                family = self.create_family(
+                    family_data=validated_data.pop('family'),
+                    profile=profile,
+                    reg_addr_uid=instance.address_of_registration.pk,
+                    tmp_addr_uid=instance.address_of_temp_reg and instance.address_of_temp_reg.pk,
+                    res_addr_uid=instance.address_of_residence.pk
+                )
+                instance.family = family
+                instance.save()
+            if not instance.is_orphan:
+                self.update_family(uid=instance.family.pk, data=validated_data.pop('family'))
+            self.update_id_doc(uid=instance.id_doc.pk, data=validated_data.pop('id_doc'))
+            self.update_phone(uid=instance.phone.pk, data=validated_data.pop('phone'))
+            is_privileged = validated_data.get('is_privileged')
+            if not instance.is_privileged and is_privileged:
+                self.create_privileges(
+                    validated_data.pop('privilege_list'),
+                    creator=profile,
+                    questionnaire=instance
+                )
+            if instance.is_privileged:
+                privileges = validated_data.pop('privilege_list', None)
+                self.update_privileges(
+                    uid=instance.privilege_list.pk,
+                    data=privileges,
+                    creator=profile,
+                    questionnaire=instance,
+                    reserved_uid=reserved_uid
+                )
+            instance.update(validated_data)
+            files = File.objects.filter(gen_uid=reserved_uid, field_name=models.Questionnaire.ID_DOCUMENT_FN)
+            instance.files.set(files)
+            instance.save(snapshot=True)
+            Profile.objects.filter(pk=profile.pk).update(
+                first_name=instance.first_name,
+                last_name=instance.last_name,
+                middle_name=instance.middle_name,
+                email=instance.email
+            )
+            return instance
+        except Exception as e:
+            raise ValidationError({"got error on update": e})
 
     def save_history_log(self, creator_profile, status, text):
         comment = Comment.objects.create(
@@ -680,8 +680,9 @@ class ApplicationLiteSerializer(serializers.ModelSerializer):
             field_name__istartswith=models.Application.INTERNATIONAL_CERT_FN
         ).values_list('field_name', flat=True).distinct('field_name').order_by('field_name')
         for index, international_cert in enumerate(data):
+            international_cert.pop('profile', None)
             instance = models.InternationalCert.objects.create(profile=creator_profile, **international_cert)
-            matching_files = File.objects   .filter(gen_uid=reserved_uid, field_name=field_name_values[index])
+            matching_files = File.objects.filter(gen_uid=reserved_uid, field_name=field_name_values[index])
             instance.files.set(matching_files)
             instance.save()
             certs.append(instance)
@@ -715,49 +716,46 @@ class ApplicationLiteSerializer(serializers.ModelSerializer):
         )
 
     def create(self, validated_data: dict):
+        application = None
         creator: Profile = self.context['request'].user.profile
         try:
             reserved_uid = ReservedUID.get_uid_by_user(creator.user)
-            data = {
-                'previous_education': self.handle_previous_education(
-                    data=validated_data.pop('previous_education'),
-                    creator_profile=creator,
-                    reserved_uid=reserved_uid
-                ),
-                'grant': self.handle_grant(
-                    data=validated_data.pop('grant', None),
-                    creator_profile=creator,
-                    reserved_uid=reserved_uid
-                ),
-                'creator': creator
-            }
+            # Создатель заявления
+            validated_data['creator'] = creator
+            # Предыдущее образование
+            validated_data['previous_education'] = self.handle_previous_education(
+                data=validated_data.pop('previous_education'),
+                creator_profile=creator,
+                reserved_uid=reserved_uid
+            )
+            # Грант
+            validated_data['grant'] = self.handle_grant(
+                data=validated_data.pop('grant', None),
+                creator_profile=creator,
+                reserved_uid=reserved_uid
+            )
+            # Результат теста ЕНТ/КТ
             unpassed_test = validated_data.get('unpassed_test')
             if unpassed_test:
                 validated_data.pop('test_result', None)
             else:
-                data['test_result'] = self.handle_test_results(
+                validated_data['test_result'] = self.handle_test_results(
                     data=validated_data.pop('test_result'),
                     creator_profile=creator,
                     reserved_uid=reserved_uid
                 )
-            validated_data.update(data)
+            # Международные сертификаты
             international_certs = self.handle_international_certificates(
                 data=validated_data.pop('international_certs', []),
                 creator_profile=creator,
                 reserved_uid=reserved_uid
             )
+            # Направления
             directions = self.handle_directions(validated_data.pop('directions'), creator)
             application = models.Application.objects.create(**validated_data)
             application.international_certs.set(international_certs)
             application.directions.set(directions)
             application.save()
-            # У меня не создается заявление из-за этого
-            # self.save_history_log(
-            #     creator_profile=creator,
-            #     status=status,
-            #     # Посмотри на переменную status сверху и узнай есть ли у нее атрибут name.
-            #     text=f"Заявление создано со статусом {data['status'].name}"
-            # )
             try:
                 self.send_on_create(recipient=creator.email)
             except Exception as e:
@@ -770,83 +768,94 @@ class ApplicationLiteSerializer(serializers.ModelSerializer):
 
     def update(self, instance: models.Application, validated_data: dict):
         profile = self.context['request'].user.profile
-        role = profile.role
-        mod_can_edit = settings.MODERATOR_CAN_EDIT and role.is_mod
-        if profile == instance.creator or mod_can_edit:
-            my_campaign = profile.user.applicant.campaign
-            previous_education: dict = validated_data.pop('previous_education')
-            education = Education.objects.get(pk=instance.previous_education.uid)
-            education.update(previous_education)
-            education.save(snapshot=True)
-            unpassed_test = validated_data.get('unpassed_test')
-            if not unpassed_test:
-                try:
-                    tr = validated_data.pop('test_result')
-                    ts = tr.get('test_certificate')
-                    disciplines_from_val_data = tr.get('disciplines')
-                    if disciplines_from_val_data.__len__() <= 0:
-                        raise Exception
-                except:
-                    raise ValidationError({"error": "test_result_not_specified"})
-                if instance.test_result:
-                    test_result: dict = tr
-                    test_cert: dict = ts
-                    cert = models.TestCert.objects.get(pk=instance.test_result.test_certificate.uid)
-                    cert.update(test_cert)
-                    cert.save(snapshot=True)
-                    instance.test_result.disciplines.all().delete()
-                    new_disciplines = models.DisciplineMark.objects.bulk_create([
-                    models.DisciplineMark(**discipline) for discipline in disciplines_from_val_data])
-                    instance.test_result.disciplines.set(new_disciplines)
-                    instance.test_result.save(snapshot=True)
-                else:
-                    test_result = tr
-                    test_certificate = models.TestCert.objects.create(profile=profile,**ts)
-                    disciplines = models.DisciplineMark.objects.bulk_create([
-                        models.DisciplineMark(
-                            profile=profile, **discipline) for discipline in disciplines_from_val_data])
-                    # Результат теста
-                    test_result = models.TestResult.objects.create(profile=profile,test_certificate=test_certificate)
-                    test_result.disciplines.set(disciplines)
-                    test_result.save()
-                    instance.test_result = test_result
-                    instance.save()
-
-
-            is_cert_holder = bool = validated_data.get('is_cert_holder', False)
-            international_certs: list = validated_data.pop('international_certs', [])
-            if is_cert_holder and my_campaign.inter_cert_foreign_lang:
-                instance.international_certs.all().delete()
-                international_certs = models.InternationalCert.objects.bulk_create([
-                    models.InternationalCert(**cert) for cert in international_certs
-                ])
-                instance.international_certs.set(international_certs)
-                instance.save()
-            is_grant_holder: bool = validated_data.get('is_grant_holder', False)
-            grant: dict = validated_data.pop('grant', None)
-            if not instance.is_grant_holder and is_grant_holder:
-                grant_model = models.Grant.objects.create(**grant, profile=profile)
-                grant_model.application_set.add(instance)
-                grant_model.save()
-            elif is_grant_holder:
-                grant_model: models.Grant = models.Grant.objects.get(pk=instance.grant.uid)
-                grant_model.update(grant)
-                grant_model.save(snapshot=True)
-            instance.directions.all().delete()
-            directions = models.OrderedDirection.objects.bulk_create([
-                models.OrderedDirection(**direction) for direction in validated_data.pop('directions')
-            ])
-            instance.directions.set(directions)
-            instance.save(snapshot=True)
-            application = super().update(instance, validated_data)
-            # self.save_history_log(
-            #     creator_profile=instance.creator,
-            #     status=instance.status,
-            #     text="В заявление внесены изменения"
-            # )
-            return application
-        else:
+        mod_can_edit = settings.MODERATOR_CAN_EDIT and profile.role.is_mod
+        # Доступ к изменению анкеты
+        if not (profile == instance.creator or mod_can_edit):
             raise ValidationError({"error": "access_denied"})
+        # Резервированный UID берется от текущего пользователя. Им может быть модератор.
+        reserved_uid = ReservedUID.get_uid_by_user(profile.user)
+        # ==============================================================================================================
+        # Предыдущее образовании обязательно должно быть в запросе
+        previous_education: dict = validated_data.pop('previous_education')
+        education: Education = Education.objects.get(pk=instance.previous_education.uid)
+        education.update(previous_education)
+        # Если модератор загрузил файлы, например у абитуриента не было с собой аттестата/диплома,
+        # но передал скан модератору позже. Модератор может загрузить скан от имени абитуриента
+        files = File.objects.filter(gen_uid=reserved_uid, field_name=models.Application.EDUCATION_FN)
+        education.files.set(files)
+        education.save(snapshot=True)
+        # ==============================================================================================================
+        # Прошел/не прошел тест ЕНТ/КТ
+        # unpassed_test - tсли true - то не прошел, иначе прошел
+        unpassed_test = validated_data.get('unpassed_test')
+        test_result = validated_data.pop('test_result', None)
+        # Если до этого был заполнен результат теста и пришли поправки, то обновить результат теста
+        if instance.test_result and test_result:
+            test_certificate: models.TestCert = models.TestCert.objects.get(pk=instance.test_result.test_certificate.pk)
+            test_certificate.update(test_result.get('test_certificate'))
+            test_cert_files = File.objects.filter(gen_uid=reserved_uid, field_name=models.Application.TEST_CERT_FN)
+            test_certificate.files.set(test_cert_files)
+            test_certificate.save(snapshot=True)
+            instance.test_result.disciplines.all().delete()
+            new_disciplines = models.DisciplineMark.objects.bulk_create([
+                models.DisciplineMark(**discipline) for discipline in test_result.get('disciplines')
+            ])
+            instance.test_result.disciplines.set(new_disciplines)
+            instance.test_result.save(snapshot=True)
+        # Если же сначала пометил, что не прошел тест, а потом снял эту отметку и заполнил данные о результате теста,
+        # то создать и прикрепить к заявлению
+        elif instance.unpassed_test and not instance.test_result and not unpassed_test:
+            test_result = self.handle_test_results(
+                data=test_result,
+                creator_profile=instance.creator,
+                reserved_uid=reserved_uid
+            )
+            instance.test_result = test_result
+            instance.save()
+        # ==============================================================================================================
+        # Международные сертификаты
+        is_cert_holder: bool = validated_data.get('is_cert_holder', False)
+        international_certs: list = validated_data.pop('international_certs', [])
+        # Если есть международные сертификаты и кампания их принимает
+        if is_cert_holder and len(international_certs) > 0:
+            # Просто удалить и создать новые сертификаты
+            instance.international_certs.all().delete()
+            international_certs = self.handle_international_certificates(
+                data=international_certs,
+                creator_profile=instance.creator,
+                reserved_uid=reserved_uid
+            )
+            instance.international_certs.set(international_certs)
+            instance.save()
+        # ==============================================================================================================
+        # Проверка на грант
+        is_grant_holder: bool = validated_data.get('is_grant_holder', False)
+        grant: dict = validated_data.pop('grant', None)
+        # Если раньше по каким-то причинам указал, что не грантник, а потом добавил информацию о гранте,
+        # то просто создать грант. Иначе обновить текущий грант и привязать новые сканы гранта
+        if not instance.is_grant_holder and is_grant_holder and grant:
+            grant_model = self.handle_grant(data=grant, creator_profile=instance.creator, reserved_uid=reserved_uid)
+            instance.grant = grant_model
+            instance.save()
+        else:
+            grant_model: models.Grant = models.Grant.objects.get(pk=instance.grant.uid)
+            grant_model.update(grant)
+            grant_files = File.objects.filter(gen_uid=reserved_uid, field_name=models.Application.GRANT_FN)
+            grant_model.files.set(grant_files)
+            grant_model.save(snapshot=True)
+        # ==============================================================================================================
+        # Сделать с выбранными направлениями то же самое, что и с международ. сертификатами - удалить и создать по новой
+        # TODO сделать проверку на соответствие с группой образовательных программ в гранте и первом направлении
+        #  в самом начале запроса на обновление заявления
+        instance.directions.all().delete()
+        directions = models.OrderedDirection.objects.bulk_create([
+            models.OrderedDirection(**direction) for direction in validated_data.pop('directions')
+        ])
+        instance.directions.set(directions)
+        instance.save(snapshot=True)
+        # ==============================================================================================================
+        application = super().update(instance, validated_data)
+        return application
 
 
 class OrderedDirectionSerializer(serializers.ModelSerializer):
