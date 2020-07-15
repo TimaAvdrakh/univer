@@ -15,8 +15,9 @@ from django.utils.translation import gettext as _
 from django.http import JsonResponse, HttpResponse
 
 
+@csrf_exempt
 def replace_file(request, uid):
-    if request.method == 'PUT':
+    if request.method == 'PUT' and request.user.is_authenticated:
         file = models.File.objects.filter(pk=uid)
         if not file.exists():
             raise ValidationError({'error': 'file doesn\'t exists'})
@@ -63,8 +64,9 @@ def upload(request):
         return HttpResponse(content_type=b"application/pdf", content="send a file")
 
 
+@csrf_exempt
 def delete_file(request, uid):
-    if request.method == 'DELETE':
+    if request.method == 'DELETE' and request.user.is_authenticated:
         file = models.File.objects.filter(pk=uid)
         if file.exists():
             file = file.first()

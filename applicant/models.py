@@ -718,6 +718,13 @@ class Questionnaire(BaseModel):
         verbose_name="Телефон",
         related_name="phones",
     )
+    phone2 = models.ForeignKey(
+        ProfilePhone,
+        on_delete=models.DO_NOTHING,
+        verbose_name="Телефон дополнительный",
+        blank=True,
+        null=True
+    )
     email = models.EmailField(
         max_length=100,
         verbose_name="Email"

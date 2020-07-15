@@ -47,7 +47,7 @@ class ApplicantViewSet(ModelViewSet):
     serializer_class = serializers.ApplicantSerializer
     permission_classes = (AllowAny,)
     pagination_class = CustomPagination
-    #sdfsdf
+
     def create(self, request, *args, **kwargs):
         import datetime as dt
         validated_data = request.data
