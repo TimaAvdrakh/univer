@@ -1,5 +1,6 @@
 from django.db import models
 from django.core.validators import MaxValueValidator
+from django.conf import settings
 from django.contrib.auth.models import User
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
@@ -496,10 +497,9 @@ class File(BaseModel):
         related_name='files'
     )
 
-    @staticmethod
     # Запись в media
+    @staticmethod
     def handle(file):
-        from django.conf import settings
         with open(f"{settings.MEDIA_ROOT}/upload/{file.name}", "wb+") as destination:
             for chunk in file.chunks():
                 destination.write(chunk)
