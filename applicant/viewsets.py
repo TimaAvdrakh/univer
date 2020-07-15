@@ -310,7 +310,7 @@ class ApplicationViewSet(ModelViewSet):
             raise ValidationError({"error": {
                 "msg": "max_selected_directions"
             }})
-        is_grant_holder = validated_data.get('is_grant_holder')
+        is_grant_holder = validated_data.get('is_grant_holder', False)
         if is_grant_holder:
             grant = validated_data.get('grant', None)
             grant_epg = models.EducationProgramGroup.objects.get(pk=grant.get('edu_program_group'))
@@ -339,7 +339,8 @@ class ApplicationViewSet(ModelViewSet):
         return super().create(request, *args, **kwargs)
 
     def update(self, request, *args, **kwargs):
-        self.validate(request.data, self.request.user)
+        instance: models.Application = self.get_object()
+        self.validate(request.data, instance.creator.user)
         return super().update(request, *args, **kwargs)
 
     def get_serializer_class(self):
@@ -355,7 +356,6 @@ class ApplicationViewSet(ModelViewSet):
             return Response(data=serializers.ApplicationLiteSerializer(queryset.first()).data, status=HTTP_200_OK)
         else:
             return Response(data=None, status=HTTP_200_OK)
-
 
     @action(methods=['post'], detail=True, url_path='apply-action', url_name='apply_action')
     def apply_action(self, request, pk=None):
