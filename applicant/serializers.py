@@ -288,14 +288,6 @@ class QuestionnaireSerializer(serializers.ModelSerializer):
         )
         # Получить зарезервированный uid для текущего пользователя
         reserved_uid = ReservedUID.get_uid_by_user(creator.user)
-        # Т.к. льгот может быть несколько, а в льготе может быть несколько файлов, то нужно
-        # отсортировать по генерированному uid и если имя поля начинается с 'privilege'
-        # (в массиве льгот индекс льготы приписывается в конце имени поля - privilege0, privilege1, ... privilegeN)
-        # Отсортировать по возрастанию и получить только уникальные значения в списке
-        field_name_values = File.objects.filter(
-            gen_uid=reserved_uid,
-            field_name__istartswith=models.Questionnaire.PRIVILEGE_FN
-        ).values_list('field_name', flat=True).distinct('field_name').order_by('field_name')
         # По индексу enum получить из этого списка field_name, который соответствует каждой льготе
         for index, data in enumerate(privileges):
             privilege = models.Privilege.objects.create(
@@ -304,7 +296,10 @@ class QuestionnaireSerializer(serializers.ModelSerializer):
                 profile=creator
             )
             # Отфильтровать файлы и связать с льготой
-            matching_files = File.objects.filter(gen_uid=reserved_uid, field_name=field_name_values[index])
+            matching_files = File.objects.filter(
+                gen_uid=reserved_uid,
+                field_name=f'{models.Questionnaire.PRIVILEGE_FN}{index}'
+            )
             privilege.files.set(matching_files)
             privilege.save()
 
@@ -429,10 +424,6 @@ class QuestionnaireSerializer(serializers.ModelSerializer):
             privilege.files.all().delete()
             privilege.delete()
         privileges = data.pop('privileges')
-        field_names = File.objects.filter(
-            gen_uid=reserved_uid,
-            field_name__istartswith=models.Questionnaire.PRIVILEGE_FN
-        ).values_list('field_name', flat=True).distinct('field_name').order_by('field_name')
         for index, data in enumerate(privileges):
             data.pop('list', None)
             data.pop('profile', None)
@@ -441,7 +432,9 @@ class QuestionnaireSerializer(serializers.ModelSerializer):
                 list=user_privilege_list,
                 profile=creator
             )
-            matching_files = File.objects.filter(gen_uid=reserved_uid, field_name=field_names[index])
+            matching_files = File.objects.filter(
+                gen_uid=reserved_uid,
+                field_name=f'{models.Questionnaire.PRIVILEGE_FN}{index}')
             privilege.files.set(matching_files)
             privilege.save()
 
@@ -675,14 +668,12 @@ class ApplicationLiteSerializer(serializers.ModelSerializer):
             return models.InternationalCert.objects.none()
         certs = []
 
-        field_name_values = File.objects.filter(
-            gen_uid=reserved_uid,
-            field_name__istartswith=models.Application.INTERNATIONAL_CERT_FN
-        ).values_list('field_name', flat=True).distinct('field_name').order_by('field_name')
         for index, international_cert in enumerate(data):
             international_cert.pop('profile', None)
             instance = models.InternationalCert.objects.create(profile=creator_profile, **international_cert)
-            matching_files = File.objects.filter(gen_uid=reserved_uid, field_name=field_name_values[index])
+            matching_files = File.objects.filter(
+                gen_uid=reserved_uid,
+                field_name=f'{models.Application.INTERNATIONAL_CERT_FN}{index}')
             instance.files.set(matching_files)
             instance.save()
             certs.append(instance)
