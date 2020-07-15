@@ -1,3 +1,4 @@
+from django.conf import settings
 from rest_framework import serializers
 from organizations import models as org_models
 from . import models
@@ -8,8 +9,7 @@ class FileSerializer(serializers.ModelSerializer):
     path = serializers.SerializerMethodField(read_only=True)
 
     def get_path(self, file: models.File):
-        request = self.context['request']
-        absolute_uri = f'{request.scheme}://{request.get_host()}{file.path.url}'
+        absolute_uri = settings.CURRENT_API.replace('/api/v1/', file.path.url)
         return absolute_uri
 
     class Meta:
