@@ -248,7 +248,7 @@ class ApplicationStatusViewSet(ModelViewSet):
 
 
 class ApplicationViewSet(ModelViewSet):
-    queryset = models.Application.objects.annotate(cond_order=models.COND_ORDER).order_by('cond_order', '-created')
+    queryset = models.Application.objects.all()
     serializer_class = serializers.ApplicationSerializer
     pagination_class = CustomPagination
 
