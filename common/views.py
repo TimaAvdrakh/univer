@@ -44,7 +44,11 @@ def upload(request):
     if request.method == 'POST' and request.FILES and request.user.is_authenticated:
         files = request.FILES.getlist('path')
         uid = request.POST.get('uid')
+        if not uid:
+            raise ValidationError({"error": "no generated uid given"})
         field_name = request.POST.get('field_name')
+        if not field_name:
+            raise ValidationError({"error": "no field name given"})
         reserved_uid = models.ReservedUID.objects.filter(pk=uid, user=request.user)
         if not reserved_uid.exists():
             raise ValidationError({'error': 'reserved uid not found'})
