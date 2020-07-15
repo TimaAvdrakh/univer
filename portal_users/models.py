@@ -207,10 +207,6 @@ class Profile(BaseModel):
         verbose_name='Оповещать по почте',
     )
 
-    @property
-    def email(self):
-        return self.user.email
-
     def save(self, *args, **kwargs):
         if self.exchange:
             if self.user is None:
