@@ -748,7 +748,7 @@ class ApplicationLiteSerializer(serializers.ModelSerializer):
             application.directions.set(directions)
             application.save()
             try:
-                self.send_on_create(recipient=creator.email)
+                self.send_on_create(recipient=creator.user.email)
             except Exception as e:
                 print(e)
         except Exception as e:

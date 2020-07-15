@@ -163,7 +163,7 @@ class QuestionnaireViewSet(ModelViewSet):
             'first_name': profile.first_name,
             'last_name': profile.last_name,
             'middle_name': profile.middle_name,
-            'email': profile.email,
+            'email': profile.user.email,
             'number': profile.user.applicant.doc_num
         }
         return Response(data=data, status=HTTP_200_OK)
@@ -452,7 +452,7 @@ class ApplicationViewSet(ModelViewSet):
                     subject='Изменение направлений',
                     message=f'Ваши выбранные направления были изменены модератором {profile.full_name}',
                     from_email='',
-                    recipient_list=[application.creator.email])
+                    recipient_list=[application.creator.user.email])
             except Exception as e:
                 # Положить в очередь крона
                 print(e)

@@ -1483,7 +1483,7 @@ class Application(BaseModel):
                 subject='Ваше заявление подтверждено',
                 message='Ваше заявление подтверждено модератором университета',
                 from_email='',
-                recipient_list=[self.creator.email]
+                recipient_list=[self.creator.user.email]
             )
         except Exception as e:
             print(e)
@@ -1505,7 +1505,7 @@ class Application(BaseModel):
                 'reason': comment
             })
             subject = 'Ваше заявление отклонено'
-            email = EmailMessage(subject=subject, body=message, to=[self.creator.email])
+            email = EmailMessage(subject=subject, body=message, to=[self.creator.user.email])
             email.send()
         except Exception as e:
             print(e)
@@ -1527,7 +1527,7 @@ class Application(BaseModel):
                 'reason': comment
             })
             subject = 'Ваше заявление требует доработки'
-            email = EmailMessage(subject=subject, body=message, to=[self.creator.email])
+            email = EmailMessage(subject=subject, body=message, to=[self.creator.user.email])
             email.send()
         except Exception as e:
             print(e)
