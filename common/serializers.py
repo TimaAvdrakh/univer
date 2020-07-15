@@ -5,6 +5,13 @@ from portal_users.models import Level, AchievementType
 
 
 class FileSerializer(serializers.ModelSerializer):
+    path = serializers.SerializerMethodField(read_only=True)
+
+    def get_path(self, file: models.File):
+        request = self.context['request']
+        absolute_uri = f'{request.scheme}://{request.get_host()}{file.path.url}'
+        return absolute_uri
+
     class Meta:
         model = models.File
         fields = '__all__'

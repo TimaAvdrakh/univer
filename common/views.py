@@ -61,7 +61,7 @@ def upload(request):
                 field_name=field_name,
                 **binary_file_data,
             )
-            instances.append(serializers.FileSerializer(instance).data)
+            instances.append(serializers.FileSerializer(instance, context={'request': request}).data)
             models.File.handle(file)
         return JsonResponse(data=instances, status=status.HTTP_200_OK, safe=False)
     else:
