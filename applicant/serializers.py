@@ -1011,6 +1011,7 @@ class ModeratorQuestionnaireSerializer(serializers.ModelSerializer):
 
         return data
 
+
 class FamilyMemberForModerator(serializers.ModelSerializer):
     address = serializers.CharField()
 

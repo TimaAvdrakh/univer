@@ -3,6 +3,7 @@ from .models import *
 # Register your models here.
 models = [
     RepetitionTypes,
+    Participants,
     Events,
 ]
 
