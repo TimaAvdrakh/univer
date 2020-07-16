@@ -9,8 +9,7 @@ class FileSerializer(serializers.ModelSerializer):
     path = serializers.SerializerMethodField(read_only=True)
 
     def get_path(self, file: models.File):
-        absolute_uri = settings.CURRENT_API.replace('/api/v1/', file.path.url)
-        return absolute_uri
+        return settings.HOST + file.path.url
 
     class Meta:
         model = models.File
