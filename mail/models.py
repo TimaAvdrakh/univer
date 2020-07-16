@@ -103,3 +103,13 @@ class EmailTemplate(BaseModel):
             to=recipient
         )
         return email_task
+
+    @staticmethod
+    def get_data():
+        data = [{
+            'type': tmpl.type,
+            'subject': tmpl.subject,
+            'template': tmpl.template,
+            'is_dynamic': tmpl.is_dynamic
+        } for tmpl in EmailTemplate.objects.all()]
+        return data
