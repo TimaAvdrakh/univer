@@ -30,7 +30,7 @@ def convert_time(context):
 
 class EventsRepetitionTypeSerializer(serializers.ModelSerializer):
     class Meta:
-        model = models.RepetitionTypes
+        model = RepetitionTypes
         fields = [
             'uid',
             'name',
