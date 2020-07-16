@@ -127,8 +127,18 @@ class EventSerializer(serializers.ModelSerializer):
             raise ValidationError({"error": "name_is_empty"})
         return validated_data
 
-    def create_participants(self, participants):
-        participants_to_return = Participants.objects.create()
+    def create_participants(self, participants, exist_participants=None):
+        participants_to_return = exist_participants
+        if participants_to_return is not None:
+            participants_to_return.participant_profiles.all().delete()
+            participants_to_return.group.all().delete()
+            participants_to_return.faculty.all().delete()
+            participants_to_return.cathedra.all().delete()
+            participants_to_return.education_programs.all().delete()
+            participants_to_return.education_program_groups.all().delete()
+
+        if exist_participants is None:
+            participants_to_return = Participants.objects.create()
         if participants.get("participant_profiles", None) is not None:
             participants_to_return.participant_profiles.set(participants.get("participant_profiles"))
         if participants.get("group", None) is not None:
@@ -159,12 +169,12 @@ class EventSerializer(serializers.ModelSerializer):
         return event
 
     def update(self, instance, validated_data):
-        participants = validated_data.pop("participants")
-        if len(participants) == 0:
-            participants = Profile.objects.none()
-        else:
-            instance.participants.all().delete()
-        instance.participants.set(participants)
+        participants = validated_data.get("participants", None)
+        data = {}
+        if participants is not None:
+            participants = self.create_participants(participants, instance.participants)
+            data["participants"] = participants
+        validated_data.update(data)
         instance.save()
         event = super().update(instance, validated_data)
         return event
