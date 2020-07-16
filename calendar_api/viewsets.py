@@ -160,15 +160,16 @@ class ProfileChooseViewSet(ModelViewSet):
 
     @action(methods=['get'], detail=False, url_name='edu_program', url_path='edu_program')
     def get_education_program(self, request, pk=None):
-        edu_program_group = request.query_params.get('education_program_group')
-        edu_program_queryset = EducationProgram.objects.filter(
-            lookup_and_filtration(edu_program_group=edu_program_group),
-            is_active=True).order_by('name')
+        edu_program_group = request.query_params.get('education_program_group', None)
+        lookup = Q()
+        if edu_program_group is not None:
+            lookup = Q(education_program__group=edu_program_group)
+        edu_program_queryset = EducationProgram.objects.filter(lookup, is_active=True).order_by('name')
         serializer = serializers.EducationProgramEventSerializer(edu_program_queryset, many=True)
         return Response(data=serializer.data, status=HTTP_200_OK)
 
     @action(methods=['get'], detail=False, url_path='edu_program_group', url_name='edu_program_group')
-    def get_education_program(self, request, pk=None):
+    def get_education_program_group(self, request, pk=None):
         edu_program_group_queryset = EducationProgramGroup.objects.filter(is_active=True).order_by('name')
         serializer = serializers.EducationProgramGroupEventSerializer(
             edu_program_group_queryset,
