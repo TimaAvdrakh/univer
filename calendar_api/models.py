@@ -23,6 +23,13 @@ from portal_users.models import (
 from schedules.models import (
     Room
 )
+from organizations.models import (
+    Group,
+    Faculty,
+    Cathedra,
+    EducationProgram,
+    EducationProgramGroup,
+)
 
 
 class RepetitionTypes(BaseCatalog):
@@ -32,6 +39,61 @@ class RepetitionTypes(BaseCatalog):
 
     def __str__(self):
         return self.name
+
+
+class Participants(BaseModel):
+    """
+    Данная модель отвечает за включение пользователей в список участников мироприятия.
+    В данной модели поля привязаны к users.Profile, organizations.Group,
+    organizations.Faculty, organizations.Cathedra, organizations.EducationProgramGroup,
+    organizations.EducationGroup
+    """
+
+    participant_profiles = models.ManyToManyField(
+        Profile,
+        blank=True,
+        verbose_name="Профили участников события",
+        related_name="event_participant_profiles",
+    )
+
+    group = models.ManyToManyField(
+        Group,
+        blank=True,
+        verbose_name="Учебная группа",
+        related_name="event_groups",
+    )
+
+    faculty = models.ManyToManyField(
+        Faculty,
+        blank=True,
+        verbose_name="Факультет",
+        related_name="events_faculty",
+    )
+
+    cathedra = models.ManyToManyField(
+        Cathedra,
+        blank=True,
+        verbose_name="Кафедра",
+        related_name="events_cathedra",
+    )
+
+    education_programs = models.ManyToManyField(
+        EducationProgram,
+        blank=True,
+        verbose_name="Образовательная программа",
+        related_name="events_education_program",
+    )
+
+    education_program_groups = models.ManyToManyField(
+        EducationProgramGroup,
+        blank=True,
+        verbose_name="Группа образовательных программ",
+        related_name="events_education_program_groups",
+    )
+
+    class Meta:
+        verbose_name = "Участник события"
+        verbose_name_plural = "Участники события"
 
 
 class Events(BaseCatalog):
@@ -57,12 +119,12 @@ class Events(BaseCatalog):
         verbose_name='Автор события',
         related_name='events_creator'
     )
-    participants = models.ManyToManyField(
-        Profile,
+    participants = models.ForeignKey(
+        Participants,
+        on_delete=models.CASCADE,
         verbose_name='Участники события',
-        related_name='events_participants',
         blank=True,
-
+        null=True,
     )
     notification = models.BooleanField(
         default=False,
