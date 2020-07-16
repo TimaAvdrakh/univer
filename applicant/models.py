@@ -583,6 +583,10 @@ class ApplicationStatus(BaseCatalog):
 
 # Анкета поступающего
 class Questionnaire(BaseModel):
+    # имя поля удостоверения личности
+    ID_DOCUMENT_FN = 'id'
+    # имя поля льготы
+    PRIVILEGE_FN = 'privilege'
     MATCH_REG = 0
     MATCH_TMP = 1
     MATCH_RES = 3
@@ -702,6 +706,7 @@ class Questionnaire(BaseModel):
     )
     id_document = models.ForeignKey(
         Document,
+        blank=True,
         null=True,
         on_delete=models.SET_NULL,
         verbose_name="Удо скан",
@@ -712,6 +717,13 @@ class Questionnaire(BaseModel):
         on_delete=models.DO_NOTHING,
         verbose_name="Телефон",
         related_name="phones",
+    )
+    phone2 = models.ForeignKey(
+        ProfilePhone,
+        on_delete=models.DO_NOTHING,
+        verbose_name="Телефон дополнительный",
+        blank=True,
+        null=True
     )
     email = models.EmailField(
         max_length=100,
@@ -882,6 +894,7 @@ class Privilege(BaseModel):
     )
     document = models.ForeignKey(
         Document,
+        blank=True,
         null=True,
         on_delete=models.SET_NULL,
         verbose_name="Скан документа"
@@ -1088,6 +1101,7 @@ class TestCert(BaseModel):
     )
     document = models.ForeignKey(
         Document,
+        blank=True,
         null=True,
         on_delete=models.DO_NOTHING,
         verbose_name="Скан сертификата"
@@ -1180,6 +1194,7 @@ class InternationalCert(BaseModel):
         Document,
         on_delete=models.SET_NULL,
         null=True,
+        blank=True,
         verbose_name='Документ'
     )
 
@@ -1243,6 +1258,7 @@ class Grant(BaseModel):
     )
     document = models.ForeignKey(
         Document,
+        blank=True,
         null=True,
         on_delete=models.SET_NULL,
         verbose_name='Скан'
@@ -1305,6 +1321,8 @@ class Document1C(BaseCatalog):
 
 # Документы поступающего
 class AdmissionDocument(BaseModel):
+    FIELD_NAME = 'admission'
+
     creator = models.ForeignKey(
         Profile,
         on_delete=models.CASCADE,
@@ -1365,6 +1383,10 @@ class OrderedDirection(BaseModel):
 
 # Заявление
 class Application(BaseModel):
+    EDUCATION_FN = 'edu'
+    TEST_CERT_FN = 'test'
+    INTERNATIONAL_CERT_FN = 'international'
+    GRANT_FN = 'grant'
     previous_education = models.ForeignKey(
         Education,
         on_delete=models.DO_NOTHING,
@@ -1461,14 +1483,10 @@ class Application(BaseModel):
                 subject='Ваше заявление подтверждено',
                 message='Ваше заявление подтверждено модератором университета',
                 from_email='',
-                recipient_list=[self.creator.email]
+                recipient_list=[self.creator.user.email]
             )
         except Exception as e:
             print(e)
-        # role: Role = Role.objects.get(profile=self.creator)
-        # role.is_applicant = False
-        # role.is_student = True
-        # role.save()
         return
 
     def reject(self, moderator, comment):
@@ -1487,7 +1505,7 @@ class Application(BaseModel):
                 'reason': comment
             })
             subject = 'Ваше заявление отклонено'
-            email = EmailMessage(subject=subject, body=message, to=[self.creator.email])
+            email = EmailMessage(subject=subject, body=message, to=[self.creator.user.email])
             email.send()
         except Exception as e:
             print(e)
@@ -1509,7 +1527,7 @@ class Application(BaseModel):
                 'reason': comment
             })
             subject = 'Ваше заявление требует доработки'
-            email = EmailMessage(subject=subject, body=message, to=[self.creator.email])
+            email = EmailMessage(subject=subject, body=message, to=[self.creator.user.email])
             email.send()
         except Exception as e:
             print(e)

@@ -1,3 +1,4 @@
+from django.conf import settings
 from rest_framework import serializers
 from organizations import models as org_models
 from . import models
@@ -5,6 +6,11 @@ from portal_users.models import Level, AchievementType
 
 
 class FileSerializer(serializers.ModelSerializer):
+    path = serializers.SerializerMethodField(read_only=True)
+
+    def get_path(self, file: models.File):
+        return settings.HOST + file.path.url
+
     class Meta:
         model = models.File
         fields = '__all__'

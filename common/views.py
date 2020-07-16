@@ -1,5 +1,7 @@
+from django.views.decorators.csrf import csrf_exempt
 from rest_framework import generics
 from rest_framework import permissions
+from rest_framework.exceptions import ValidationError
 from . import serializers
 from . import models
 from organizations import models as org_models
@@ -7,138 +9,88 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.viewsets import ModelViewSet
 from rest_framework.decorators import action
-from rest_framework.exceptions import ValidationError
 from portal_users.models import Level, AchievementType
 from datetime import date
 from django.utils.translation import gettext as _
-from django import forms
-from django.http import JsonResponse, HttpResponseBadRequest, HttpResponse, Http404
+from django.http import JsonResponse, HttpResponse
 
 
-class FileForm(forms.ModelForm):
-    path = forms.FileField(widget=forms.ClearableFileInput(attrs={'multiple': True}))
-
-    class Meta:
-        model = models.File
-        fields = ["path"]
-
-
+@csrf_exempt
 def replace_file(request, uid):
-    if request.method == 'POST':
-        file = models.File.objects.get(pk=uid)
-        form = FileForm(request.POST, request.FILES)
-        if form.is_valid():
-            new_file = request.FILES.get('path')
-            file.name = new_file.name
-            file.extension = new_file.name.split('.')[-1]
-            file.size = new_file.size
-            file.content_type = new_file.content_type
-            file.path = f'upload/{new_file.name}'
-            file.save()
-            return JsonResponse(data={'path': f'media/{file.path.name}', 'name': file.name}, status=status.HTTP_200_OK)
-        else:
-            return JsonResponse(data={'message': 'form file is invalid'}, status=status.HTTP_422_UNPROCESSABLE_ENTITY)
+    if request.method == 'PUT' and request.user.is_authenticated:
+        file = models.File.objects.filter(pk=uid)
+        if not file.exists():
+            raise ValidationError({'error': 'file doesn\'t exists'})
+        binary_file = request.FILES.get('path')
+        binary_file_data = models.File.get_data(binary_file)
+        file.update(**binary_file_data)
+        models.File.handle(binary_file)
+        return JsonResponse(data=serializers.FileSerializer(file.first()).data, status=status.HTTP_200_OK)
     else:
-        return HttpResponse(
-            content_type=b"application/pdf",
-            content="Replace file"
-        )
+        return HttpResponse(content_type=b"application/pdf", content="Replace file")
 
 
+@csrf_exempt
 def upload(request):
-    """Эндпоинт по принятию файлов от пользователей
-    Принимет один файл за раз
+    """Эндпоинт загрузки файлов
+    Принимает uid'ы, имена полей и бинарные файлы
+    :params:
+    uid: str- сгенерированный uid для текущего пользователя
+    field_name: str - имя поля объекта, к которому относится файл
+    file|files: FormData - бинарный файл|бинарные файлы
+    :returns:
+    List[Dict{File}]
     """
-    # if request.method == "POST" and request.FILES:
-    #     form = FileForm(request.POST, request.FILES)
-    #     if form.is_valid():
-    #         file = request.FILES.get("path")
-    #         form.instance.name = file.name
-    #         form.instance.extension = file.name.split(".")[-1]
-    #         form.instance.size = file.size
-    #         form.instance.content_type = file.content_type
-    #         form.instance.path = f'upload/{file.name}'
-    #         form.save(commit=True)
-    #         models.File.handle(file)
-    #     else:
-    #         raise ValidationError(
-    #             {
-    #                 "error": {
-    #                     "msg": "form is invalid"
-    #                 }
-    #             }
-    #         )
-    #     return JsonResponse({"pk": [form.instance.pk]}, status=status.HTTP_200_OK)
-    if request.method == "POST":
-        if request.FILES:
-            path = request.FILES.getlist("path")
-            if len(path) > 1:
-                files = []
-                try:
-                    form = FileForm(request.POST, request.FILES)
-                    if form.is_valid():
-                        for file in path:
-                            file_instance = models.File.objects.create(
-                                name=file.name,
-                                extension=file.name.split('.')[-1],
-                                size=file.size,
-                                content_type=file.content_type,
-                                path=f'upload/{file.name}'
-                            )
-
-                            files.append(file_instance.pk)
-                            models.File.handle(file)
-                    return JsonResponse({"pk": files}, status=status.HTTP_200_OK)
-                except Exception as e:
-                    raise ValidationError(
-                        {
-                            "error": {
-                                "msg": "an error occurred",
-                                "exc": e
-                            }
-                        }
-                    )
-            else:
-                try:
-                    form = FileForm(request.POST, request.FILES)
-                    if form.is_valid():
-                        file = request.FILES.get("path")
-                        form.instance.name = file.name
-                        form.instance.extension = file.name.split(".")[-1]
-                        form.instance.size = file.size
-                        form.instance.content_type = file.content_type
-                        form.instance.path = f'upload/{file.name}'
-                        form.save(commit=True)
-                        models.File.handle(file)
-                    else:
-                        raise ValidationError(
-                            {
-                                "error": {
-                                    "msg": "form is invalid"
-                                }
-                            }
-                        )
-
-                    return JsonResponse({"pk": [form.instance.pk]}, status=status.HTTP_200_OK)
-                except Exception as e:
-                    raise ValidationError(
-                        {
-                            "error": {
-                                "msg": "an error occurred",
-                                "exc": e
-                            }
-                        }
-                    )
-        else:
-            return HttpResponseBadRequest(
-                content_type=b"application/pdf",
-                content="Send files"
+    if request.method == 'POST' and request.FILES and request.user.is_authenticated:
+        files = request.FILES.getlist('path')
+        uid = request.POST.get('uid')
+        if not uid:
+            raise ValidationError({"error": "no generated uid given"})
+        field_name = request.POST.get('field_name')
+        if not field_name:
+            raise ValidationError({"error": "no field name given"})
+        reserved_uid = models.ReservedUID.objects.filter(pk=uid, user=request.user)
+        if not reserved_uid.exists():
+            raise ValidationError({'error': 'reserved uid not found'})
+        instances = []
+        for file in files:
+            binary_file_data = models.File.get_data(file)
+            instance = models.File.objects.create(
+                gen_uid=uid,
+                user=request.user,
+                field_name=field_name,
+                **binary_file_data,
             )
+            instances.append(serializers.FileSerializer(instance).data)
+            models.File.handle(file)
+        return JsonResponse(data=instances, status=status.HTTP_200_OK, safe=False)
     else:
-        return HttpResponse(
-            content_type=b"application/pdf",
-            content="Send files"
-        )
+        return HttpResponse(content_type=b"application/pdf", content="send a file")
+
+
+@csrf_exempt
+def delete_file(request, uid):
+    if request.method == 'DELETE' and request.user.is_authenticated:
+        file = models.File.objects.filter(pk=uid)
+        if file.exists():
+            file = file.first()
+            if file.user == request.user:
+                file.delete()
+                return JsonResponse(data={'msg': 'ok'}, status=status.HTTP_200_OK)
+            else:
+                return JsonResponse(data={'msg': 'access denied'}, status=status.HTTP_403_FORBIDDEN)
+    else:
+        return JsonResponse(data={'msg': 'method not allowed'}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
+
+def generate_uid(request):
+    user = request.user
+    reserved_uid = models.ReservedUID.objects.filter(user=user)
+    if reserved_uid.exists():
+        uid = reserved_uid.first()
+    else:
+        uid = models.ReservedUID.objects.create(user=user)
+    return JsonResponse(data={'uid': uid.pk}, status=status.HTTP_200_OK)
 
 
 class AcadPeriodListView(generics.ListAPIView):

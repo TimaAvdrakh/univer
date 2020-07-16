@@ -13,12 +13,12 @@ from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.status import HTTP_200_OK
 from rest_framework.viewsets import ModelViewSet
+from common.models import ReservedUID, File
 from common.paginators import CustomPagination
 from univer_admin.permissions import IsAdminOrReadOnly
 from portal_users.models import Profile
 from . import models
 from . import serializers
-from portal.curr_settings import applicant_application_statuses
 from .token import token_generator
 
 
@@ -47,7 +47,7 @@ class ApplicantViewSet(ModelViewSet):
     serializer_class = serializers.ApplicantSerializer
     permission_classes = (AllowAny,)
     pagination_class = CustomPagination
-    #sdfsdf
+
     def create(self, request, *args, **kwargs):
         import datetime as dt
         validated_data = request.data
@@ -163,7 +163,7 @@ class QuestionnaireViewSet(ModelViewSet):
             'first_name': profile.first_name,
             'last_name': profile.last_name,
             'middle_name': profile.middle_name,
-            'email': profile.email,
+            'email': profile.user.email,
             'number': profile.user.applicant.doc_num
         }
         return Response(data=data, status=HTTP_200_OK)
@@ -248,7 +248,7 @@ class ApplicationStatusViewSet(ModelViewSet):
 
 
 class ApplicationViewSet(ModelViewSet):
-    queryset = models.Application.objects.annotate(cond_order=models.COND_ORDER).order_by('cond_order', '-created')
+    queryset = models.Application.objects.all()
     serializer_class = serializers.ApplicationSerializer
     pagination_class = CustomPagination
 
@@ -310,7 +310,7 @@ class ApplicationViewSet(ModelViewSet):
             raise ValidationError({"error": {
                 "msg": "max_selected_directions"
             }})
-        is_grant_holder = validated_data.get('is_grant_holder')
+        is_grant_holder = validated_data.get('is_grant_holder', False)
         if is_grant_holder:
             grant = validated_data.get('grant', None)
             grant_epg = models.EducationProgramGroup.objects.get(pk=grant.get('edu_program_group'))
@@ -339,7 +339,8 @@ class ApplicationViewSet(ModelViewSet):
         return super().create(request, *args, **kwargs)
 
     def update(self, request, *args, **kwargs):
-        self.validate(request.data, self.request.user)
+        instance: models.Application = self.get_object()
+        self.validate(request.data, instance.creator.user)
         return super().update(request, *args, **kwargs)
 
     def get_serializer_class(self):
@@ -355,7 +356,6 @@ class ApplicationViewSet(ModelViewSet):
             return Response(data=serializers.ApplicationLiteSerializer(queryset.first()).data, status=HTTP_200_OK)
         else:
             return Response(data=None, status=HTTP_200_OK)
-
 
     @action(methods=['post'], detail=True, url_path='apply-action', url_name='apply_action')
     def apply_action(self, request, pk=None):
@@ -452,7 +452,7 @@ class ApplicationViewSet(ModelViewSet):
                     subject='Изменение направлений',
                     message=f'Ваши выбранные направления были изменены модератором {profile.full_name}',
                     from_email='',
-                    recipient_list=[application.creator.email])
+                    recipient_list=[application.creator.user.email])
             except Exception as e:
                 # Положить в очередь крона
                 print(e)
@@ -543,12 +543,8 @@ class AddressViewSet(ModelViewSet):
 
 
 class AdmissionDocumentViewSet(ModelViewSet):
-    queryset = models.AdmissionDocument.objects.all()
+    queryset = models.AdmissionDocument.objects.order_by('created')
     serializer_class = serializers.AdmissionDocumentSerializer
-
-    def create(self, request, *args, **kwargs):
-        request.data['creator'] = self.request.user.profile.pk
-        return super().create(request, *args, **kwargs)
 
     @action(methods=['get'], detail=False, url_name='my', url_path='my')
     def get_my_attachments(self, request, pk=None):
@@ -559,23 +555,6 @@ class AdmissionDocumentViewSet(ModelViewSet):
             return Response(data=serializer.data, status=HTTP_200_OK)
         else:
             return Response(data=None, status=HTTP_200_OK)
-
-    @action(methods=['post'], detail=False, url_name='multiple-create', url_path='multiple-create')
-    def multiple_create(self, request, pk=None):
-        try:
-            creator = self.request.user.profile
-            documents = request.data.get('documents')
-            creator.admissiondocument_set.all().delete()
-            for document in documents:
-                print(document)
-                models.AdmissionDocument.objects.create(
-                    document_1c=models.Document1C.objects.get(pk=document['doc1c']),
-                    document=models.Document.objects.get(pk=document['document']),
-                    creator=creator
-                )
-            return Response(data={"msg": "created"}, status=HTTP_200_OK)
-        except Exception as e:
-            raise ValidationError({"error": {"msg": "something went wrong", "exc": e}})
 
 
 class ModeratorViewSet(ModelViewSet):
