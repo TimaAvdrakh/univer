@@ -184,7 +184,7 @@ class QuestionnaireSerializer(serializers.ModelSerializer):
     address_of_temp_reg = AddressSerializer(required=False, allow_null=True)
     address_of_residence = AddressSerializer(required=True)
     privilege_list = UserPrivilegeListSerializer(required=False, many=False)
-    phone = ProfilePhoneSerializer(required=True)
+    phones = ProfilePhoneSerializer(required=True, many=True)
     files = FileSerializer(read_only=True, many=True, required=False)
 
     class Meta:
