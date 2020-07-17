@@ -487,17 +487,13 @@ class QuestionnaireSerializer(serializers.ModelSerializer):
             user_privilege_list = models.UserPrivilegeList.objects.create(questionnaire=questionnaire, profile=creator)
         else:
             user_privilege_list = models.UserPrivilegeList.objects.get(pk=uid)
-        for privilege in user_privilege_list.privileges.all():
-            privilege.files.all().delete()
-            privilege.delete()
+        user_privilege_list.privileges.all().delete()
         privileges = data.pop('privileges')
         for index, data in enumerate(privileges):
             data.pop('list', None)
-            data.pop('profile', None)
             privilege = models.Privilege.objects.create(
                 **data,
                 list=user_privilege_list,
-                profile=creator
             )
             matching_files = File.objects.filter(
                 gen_uid=reserved_uid,
