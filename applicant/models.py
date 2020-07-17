@@ -1,10 +1,8 @@
 import datetime as dt
 from django.contrib.auth.models import User
-from django.core.mail import EmailMessage, send_mail
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
 from django.db.models import Case, When, Value, Q
-from django.template.loader import render_to_string
 from django.utils.translation import ugettext_lazy as _
 from common.models import (
     BaseModel,
@@ -17,6 +15,7 @@ from common.models import (
     Document,
     File,
 )
+from mail.models import EmailTemplate
 from portal_users.models import Profile, ProfilePhone, Gender, MaritalStatus
 from organizations.models import (
     PreparationLevel,
@@ -40,13 +39,6 @@ REJECTED = "REJECTED"
 AWAITS_VERIFICATION = "AWAITS_VERIFICATION"
 NO_QUESTIONNAIRE = "NO_QUESTIONNAIRE"
 TO_IMPROVE = "TO_IMPROVE"
-
-COND_ORDER = Case(
-    When(Q(status__code=AWAITS_VERIFICATION), then=Value(0)),
-    When(Q(status__code=NO_QUESTIONNAIRE), then=Value(1)),
-    default=Value(0),
-    output_field=models.IntegerField(),
-)
 
 
 # Вид льготы
@@ -290,6 +282,11 @@ class Family(BaseModel):
     def __str__(self):
         return f'Семья пользователя {self.profile.full_name}'
 
+    def delete(self, *args, **kwargs):
+        for member in self.members.all():
+            member.delete()
+        super(Family, self).delete(*args, **kwargs)
+
 
 # Член семьи
 class FamilyMember(BaseModel):
@@ -377,6 +374,13 @@ class FamilyMember(BaseModel):
 
     def __str__(self):
         return f"Член семьи пользователя {self.family.profile.full_name}"
+
+    def delete(self, *args, **kwargs):
+        user = self.profile.user
+        address = self.address
+        super().delete(*args, **kwargs)
+        address.delete()
+        user.delete()
 
 
 class AdmissionCampaignType(BaseCatalog):
@@ -600,7 +604,7 @@ class Questionnaire(BaseModel):
         Profile,
         blank=True,
         null=True,
-        on_delete=models.DO_NOTHING,
+        on_delete=models.PROTECT,
         verbose_name="Подающий анкету",
     )
     first_name = models.CharField(
@@ -640,7 +644,7 @@ class Questionnaire(BaseModel):
     )
     marital_status = models.ForeignKey(
         MaritalStatus,
-        on_delete=models.DO_NOTHING,
+        on_delete=models.SET_NULL,
         verbose_name="Семейное положение",
         blank=True,
         null=True,
@@ -712,6 +716,8 @@ class Questionnaire(BaseModel):
         verbose_name="Удо скан",
         related_name="application_id_doc",
     )
+    # phone и phone2 нужно убрать
+    # значения из FK phone записать в M2M phones
     phone = models.ForeignKey(
         ProfilePhone,
         on_delete=models.DO_NOTHING,
@@ -720,10 +726,16 @@ class Questionnaire(BaseModel):
     )
     phone2 = models.ForeignKey(
         ProfilePhone,
-        on_delete=models.DO_NOTHING,
+        on_delete=models.SET_NULL,
         verbose_name="Телефон дополнительный",
         blank=True,
         null=True
+    )
+    phones = models.ManyToManyField(
+        ProfilePhone,
+        blank=True,
+        verbose_name='Телефоны',
+        related_name='questionnaires'
     )
     email = models.EmailField(
         max_length=100,
@@ -743,7 +755,7 @@ class Questionnaire(BaseModel):
     )
     address_of_temp_reg = models.OneToOneField(
         Address,
-        on_delete=models.DO_NOTHING,
+        on_delete=models.SET_NULL,
         verbose_name="Адрес временной регистрации",
         blank=True,
         null=True,
@@ -757,7 +769,7 @@ class Questionnaire(BaseModel):
         Family,
         blank=True,
         null=True,
-        on_delete=models.DO_NOTHING,
+        on_delete=models.SET_NULL,
         verbose_name="Семья",
         related_name="questionnaires",
     )
@@ -767,7 +779,7 @@ class Questionnaire(BaseModel):
     )
     doc_return_method = models.ForeignKey(
         DocumentReturnMethod,
-        on_delete=models.DO_NOTHING,
+        on_delete=models.SET_NULL,
         blank=True,
         null=True,
         verbose_name="Метод возврата документов",
@@ -1452,11 +1464,7 @@ class Application(BaseModel):
         verbose_name_plural = "Заявления"
 
     def __str__(self):
-        if  self.status is not None:
-            status_name = self.status.name
-        else:
-            status_name = 'NO STATUS!'
-        return f'Заявление абитуриента {self.applicant}. {status_name}'
+        return f'Заявление абитуриента {self.applicant}. {self.status.name}'
 
     @property
     def max_choices(self):
@@ -1482,15 +1490,11 @@ class Application(BaseModel):
         )
         # TODO на подтверждение заявления модератором импортировать заявление в 1С
         self.import_self_to_1c()
-        try:
-            send_mail(
-                subject='Ваше заявление подтверждено',
-                message='Ваше заявление подтверждено модератором университета',
-                from_email='',
-                recipient_list=[self.creator.user.email]
-            )
-        except Exception as e:
-            print(e)
+        # Поставить в очередь крона
+        EmailTemplate.put_in_cron_queue(
+            EmailTemplate.APP_APPROVED,
+            recipient=self.creator.user.email
+        )
         return
 
     def reject(self, moderator, comment):
@@ -1503,16 +1507,15 @@ class Application(BaseModel):
         self.status_action = True
         self.save()
         self.save_to_status_change_log(comment=comment_to_save)
-        try:
-            message = render_to_string('applicant/email/html/application_rejected.html', {
-                'rejected_at': dt.datetime.now().strftime('%d.%m.%Y %H:%I'),
-                'reason': comment
-            })
-            subject = 'Ваше заявление отклонено'
-            email = EmailMessage(subject=subject, body=message, to=[self.creator.user.email])
-            email.send()
-        except Exception as e:
-            print(e)
+        data = {
+            'reason': comment,
+            'timestamp': dt.datetime.now().strftime('%d.%m.%Y %H:%I')
+        }
+        EmailTemplate.put_in_cron_queue(
+            template_type=EmailTemplate.APP_REJECTED,
+            recipient=self.creator.user.email,
+            **data
+        )
         return
 
     def improve(self, moderator, comment):
@@ -1526,15 +1529,15 @@ class Application(BaseModel):
         self.save_to_status_change_log(
             comment=comment_to_save,
         )
-        try:
-            message = render_to_string('applicant/email/html/application_to_improve.html', {
-                'reason': comment
-            })
-            subject = 'Ваше заявление требует доработки'
-            email = EmailMessage(subject=subject, body=message, to=[self.creator.user.email])
-            email.send()
-        except Exception as e:
-            print(e)
+        data = {
+            'reason': comment,
+            'timestamp': dt.datetime.now().strftime('%d.%m.%Y %H:%I')
+        }
+        EmailTemplate.put_in_cron_queue(
+            template_type=EmailTemplate.APP_ON_IMPROVEMENT,
+            recipient=self.creator.user.email,
+            **data
+        )
         return
 
     def save_to_status_change_log(self, comment=None, moderator=None):
