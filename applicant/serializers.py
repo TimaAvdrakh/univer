@@ -280,10 +280,11 @@ class QuestionnaireSerializer(serializers.ModelSerializer):
         return result
 
     def create_family(self, family_data, profile, reg_addr_uid, tmp_addr_uid, res_addr_uid):
+        members = family_data.pop('members')
         family = models.Family.objects.create(**family_data, profile=profile)
         self.create_family_members(
             family=family,
-            members=family_data.pop('members'),
+            members=members,
             reg_addr_uid=reg_addr_uid,
             tmp_addr_uid=tmp_addr_uid,
             res_addr_uid=res_addr_uid
@@ -356,7 +357,13 @@ class QuestionnaireSerializer(serializers.ModelSerializer):
             # Докумуент удостоверяющий личность
             id_doc = IdentityDocument.objects.create(**validated_data.pop('id_doc'))
             # Телефон
-            phone = ProfilePhone.objects.create(**validated_data.pop('phone'))
+            phone = ProfilePhone.objects.create(**validated_data.pop('phone'), profile=creator)
+            # Смена для телефонов
+            phones = validated_data.pop('phones', [])
+            phone_result = []
+            if phones:
+                for phone_instance in phones:
+                    phone_result.append(ProfilePhone.objects.create(**phone_instance, profile=creator))
             # Проверка на привилегии
             is_privileged = validated_data.get('is_privileged', False)
             privilege_list = validated_data.pop('privilege_list', None)
@@ -374,6 +381,7 @@ class QuestionnaireSerializer(serializers.ModelSerializer):
             uid = ReservedUID.get_uid_by_user(self.context['request'].user)
             files = File.objects.filter(gen_uid=uid, field_name=models.Questionnaire.ID_DOCUMENT_FN)
             questionnaire.files.add(*files)
+            questionnaire.phones.add(*phones)
             questionnaire.save()
             if is_privileged:
                 self.create_privileges(
@@ -523,7 +531,6 @@ class QuestionnaireSerializer(serializers.ModelSerializer):
             is_orphan = validated_data.get('is_orphan')
             family = validated_data.pop('family', None)
             if instance.is_orphan and not is_orphan:
-                print('in create')
                 family = self.create_family(
                     family_data=family,
                     reg_addr_uid=instance.address_of_registration.pk,
@@ -543,6 +550,14 @@ class QuestionnaireSerializer(serializers.ModelSerializer):
                 )
             self.update_id_doc(uid=instance.id_doc.pk, data=validated_data.pop('id_doc'))
             self.update_phone(uid=instance.phone.pk, data=validated_data.pop('phone'))
+            phones = validated_data.pop('phones', [])
+            phones_result = []
+            if phones:
+                instance.phones.all().delete()
+                for phone in phones:
+                    phones_result.append(ProfilePhone.objects.create(**phone))
+                instance.phones.add(*phones_result)
+                instance.save()
             is_privileged = validated_data.get('is_privileged')
             if not instance.is_privileged and is_privileged:
                 self.create_privileges(
