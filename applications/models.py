@@ -265,6 +265,9 @@ class SubApplication(BaseIdModel):
         blank=True,
         verbose_name='Комментарий к статусу'
     )
+    uuid1c = models.CharField(default='',
+                              max_length=255,
+                              blank=True)
 
     class Meta:
         verbose_name = 'Справка'
