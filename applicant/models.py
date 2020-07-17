@@ -40,7 +40,6 @@ AWAITS_VERIFICATION = "AWAITS_VERIFICATION"
 NO_QUESTIONNAIRE = "NO_QUESTIONNAIRE"
 TO_IMPROVE = "TO_IMPROVE"
 
-
 # Вид льготы
 class PrivilegeType(BaseCatalog):
     class Meta:
