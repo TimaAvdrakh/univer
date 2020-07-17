@@ -720,7 +720,9 @@ class Questionnaire(BaseModel):
     # значения из FK phone записать в M2M phones
     phone = models.ForeignKey(
         ProfilePhone,
-        on_delete=models.DO_NOTHING,
+        blank=True,
+        null=True,
+        on_delete=models.SET_NULL,
         verbose_name="Телефон",
         related_name="phones",
     )

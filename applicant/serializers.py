@@ -184,7 +184,7 @@ class QuestionnaireSerializer(serializers.ModelSerializer):
     address_of_temp_reg = AddressSerializer(required=False, allow_null=True)
     address_of_residence = AddressSerializer(required=True)
     privilege_list = UserPrivilegeListSerializer(required=False, many=False)
-    phone = ProfilePhoneSerializer(required=True)
+    phones = ProfilePhoneSerializer(required=True, many=True)
     files = FileSerializer(read_only=True, many=True, required=False)
 
     class Meta:
@@ -357,7 +357,8 @@ class QuestionnaireSerializer(serializers.ModelSerializer):
             # Докумуент удостоверяющий личность
             id_doc = IdentityDocument.objects.create(**validated_data.pop('id_doc'))
             # Телефон
-            phone = ProfilePhone.objects.create(**validated_data.pop('phone'), profile=creator)
+            validated_data.pop('phone', None)
+            # phone = ProfilePhone.objects.create(**validated_data.pop('phone'), profile=creator)
             # Смена для телефонов
             phones = validated_data.pop('phones', [])
             phone_result = []
@@ -462,7 +463,6 @@ class QuestionnaireSerializer(serializers.ModelSerializer):
         id_doc.save(snapshot=True)
 
     def update_phone(self, uid, data):
-        print(data)
         phone_instance = ProfilePhone.objects.get(pk=uid)
         phone_instance.update(data)
         phone_instance.save(snapshot=True)
@@ -545,7 +545,8 @@ class QuestionnaireSerializer(serializers.ModelSerializer):
                     res_addr_uid=instance.address_of_residence.pk
                 )
             self.update_id_doc(uid=instance.id_doc.pk, data=validated_data.pop('id_doc'))
-            self.update_phone(uid=instance.phone.pk, data=validated_data.pop('phone'))
+            validated_data.pop('phone', None)
+            # self.update_phone(uid=instance.phone.pk, data=validated_data.pop('phone'))
             phones = validated_data.pop('phones', [])
             phones_result = []
             if phones:
