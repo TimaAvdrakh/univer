@@ -11,7 +11,7 @@ from django.utils.translation import get_language
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 from common.models import IdentityDocument, Comment, ReservedUID, File
-from common.serializers import DocumentSerializer, DocumentTypeSerializer, FileSerializer
+from common.serializers import DocumentTypeSerializer, FileSerializer
 from mail.models import EmailTemplate
 from portal.local_settings import EMAIL_HOST_USER
 from portal_users.serializers import ProfilePhoneSerializer
@@ -375,7 +375,6 @@ class QuestionnaireSerializer(serializers.ModelSerializer):
                 address_of_temp_reg=address_of_temp_reg,
                 address_of_residence=address_of_residence,
                 id_doc=id_doc,
-                phone=phone,
                 **validated_data
             )
             # Получить сканы удостоверения личности по зарезервированному uid'у и имени поля
@@ -714,14 +713,6 @@ class ApplicationLiteSerializer(serializers.ModelSerializer):
         model = models.Application
         fields = ['uid', 'status_info', 'applicant', 'created', 'updated', 'max_choices']
 
-    def send_on_create(self, recipient):
-        today = dt.date.today().strftime("%d.%m.%Y")
-        subject = 'Заявление поступило на проверку'
-        message = f'Ваше заявление на поступление от {today} отправлено на проверку модератору. ' \
-                  f'Ожидайте дальнейших действий'
-        send_mail(subject=subject, message=message, from_email=EMAIL_HOST_USER, recipient_list=[recipient])
-        return
-
     def handle_previous_education(self, data, creator_profile, reserved_uid):
         previous_education: Education = Education.objects.create(profile=creator_profile, **data)
         files = File.objects.filter(gen_uid=reserved_uid, field_name=models.Application.EDUCATION_FN)
@@ -835,10 +826,6 @@ class ApplicationLiteSerializer(serializers.ModelSerializer):
             application.international_certs.set(international_certs)
             application.directions.set(directions)
             application.save()
-            # try:
-            #     self.send_on_create(recipient=creator.user.email)
-            # except Exception as e:
-            #     print(e)
         except Exception as e:
             if application and isinstance(application, models.Application):
                 application.delete()
@@ -850,7 +837,7 @@ class ApplicationLiteSerializer(serializers.ModelSerializer):
         mod_can_edit = settings.MODERATOR_CAN_EDIT and profile.role.is_mod
         # Доступ к изменению анкеты
         if not (profile == instance.creator or mod_can_edit):
-            raise ValidationError({"error": "access_denied"})
+            raise ValidationError({"error": "access denied"})
         # Резервированный UID берется от текущего пользователя. Им может быть модератор.
         reserved_uid = ReservedUID.get_uid_by_user(profile.user)
         # ==============================================================================================================
@@ -924,8 +911,6 @@ class ApplicationLiteSerializer(serializers.ModelSerializer):
             grant_model.save(snapshot=True)
         # ==============================================================================================================
         # Сделать с выбранными направлениями то же самое, что и с международ. сертификатами - удалить и создать по новой
-        # TODO сделать проверку на соответствие с группой образовательных программ в гранте и первом направлении
-        #  в самом начале запроса на обновление заявления
         instance.directions.all().delete()
         directions = models.OrderedDirection.objects.bulk_create([
             models.OrderedDirection(**direction) for direction in validated_data.pop('directions')
@@ -955,6 +940,12 @@ class ApplicationSerializer(ApplicationLiteSerializer):
         fields = '__all__'
 
 
+class AdmissionLiteDocument(serializers.ModelSerializer):
+    class Meta:
+        model = models.AdmissionDocument
+        fields = ['uid', 'creator']
+
+
 class AdmissionDocumentSerializer(serializers.ModelSerializer):
     type = serializers.SerializerMethodField(read_only=True)
     files = FileSerializer(read_only=True, many=True, required=False)
@@ -970,6 +961,19 @@ class AdmissionDocumentSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
     def create(self, validated_data):
+        """Создание доп. документов для абитуриента в 3 шаге
+        В дополлнительные документы входят документы, приходящие из 1С закрепленные за приемной комиссией
+        и не вошедшие в шаги 1 (Анкета|Questionnaire) и 2 (Заявление|Application)
+        Например, фото 3x4, флюорография, результаты творческих экзаменов и т.д.
+        :params:
+
+        order: int - сортировка, которая приходит с фронта (индекс объекта из v-for). Некоторые доп.
+        документы не обязательны для заполнения, абитуриенты могут их пропускать или добавить позже. Чтобы не
+        перепутать загруженные файлы
+
+        document_1c: uid - primary key от Document1C (приходит с /documents/campaign-docs/). Важен, чтобы сопоставить
+        заполненый доп. документ с соотвтетсвующим документом из 1С.
+        """
         validated_data['creator'] = self.context['request'].user.profile
         order = self.context['request'].data.get('order')
         reserved_uid = ReservedUID.get_uid_by_user(validated_data['creator'].user)
