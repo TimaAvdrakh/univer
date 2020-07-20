@@ -41,7 +41,8 @@ INSTALLED_APPS = [
     'applicant',
     'calendar_api',
     'applications',
-    'mail'
+    'mail',
+    'instruction',
 ]
 
 MIDDLEWARE = [
