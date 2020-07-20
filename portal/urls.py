@@ -23,7 +23,7 @@ urlpatterns = [
     path('api/v1/organizations/', include('organizations.urls', namespace='organizations')),
     path('api/v1/applications/', include('applications.urls', namespace='applications')),
     path('api/v1/calendar/', include('calendar_api.urls', namespace='calendar_api')),
-
+    path('api/v1/instruction/', include('instruction.urls', namespace='instruction_api')),
 ]
 
 if settings.DEBUG:
