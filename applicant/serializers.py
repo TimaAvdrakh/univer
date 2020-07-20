@@ -534,7 +534,7 @@ class QuestionnaireSerializer(serializers.ModelSerializer):
                 )
                 instance.family = family
                 instance.save()
-            else:
+            elif not instance.is_orphan and not is_orphan and instance.family:
                 self.update_family(
                     uid=instance.family.uid,
                     data=family,
@@ -574,22 +574,21 @@ class QuestionnaireSerializer(serializers.ModelSerializer):
             files = File.objects.filter(gen_uid=reserved_uid, field_name=models.Questionnaire.ID_DOCUMENT_FN)
             instance.files.add(*files)
             instance.save(snapshot=True)
-            if profile == instance.creator:
-                Profile.objects.filter(pk=profile.pk).update(
-                    first_name=instance.first_name,
-                    last_name=instance.last_name,
-                    middle_name=instance.middle_name,
-                    first_name_en=instance.first_name_en,
-                    last_name_en=instance.last_name_en,
-                    email=instance.email,
-                    birth_date=instance.birthday,
-                    birth_place=instance.birthplace,
-                    nationality=instance.nationality,
-                    citizenship=instance.citizenship,
-                    gender=instance.gender,
-                    marital_status=instance.marital_status,
-                    iin=instance.iin,
-                )
+            Profile.objects.filter(pk=instance.creator).update(
+                first_name=instance.first_name,
+                last_name=instance.last_name,
+                middle_name=instance.middle_name,
+                first_name_en=instance.first_name_en,
+                last_name_en=instance.last_name_en,
+                email=instance.email,
+                birth_date=instance.birthday,
+                birth_place=instance.birthplace,
+                nationality=instance.nationality,
+                citizenship=instance.citizenship,
+                gender=instance.gender,
+                marital_status=instance.marital_status,
+                iin=instance.iin,
+            )
             return instance
         except Exception as e:
             raise ValidationError({"got error on update": e})
@@ -903,7 +902,7 @@ class ApplicationLiteSerializer(serializers.ModelSerializer):
             grant_model = self.handle_grant(data=grant, creator_profile=instance.creator, reserved_uid=reserved_uid)
             instance.grant = grant_model
             instance.save()
-        else:
+        elif instance.is_grant_holder and is_grant_holder and grant:
             grant_model: models.Grant = models.Grant.objects.get(pk=instance.grant.uid)
             grant_model.update(grant)
             grant_files = File.objects.filter(gen_uid=reserved_uid, field_name=models.Application.GRANT_FN)
