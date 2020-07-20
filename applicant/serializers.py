@@ -574,7 +574,7 @@ class QuestionnaireSerializer(serializers.ModelSerializer):
             files = File.objects.filter(gen_uid=reserved_uid, field_name=models.Questionnaire.ID_DOCUMENT_FN)
             instance.files.add(*files)
             instance.save(snapshot=True)
-            Profile.objects.filter(pk=instance.creator).update(
+            Profile.objects.filter(pk=instance.creator.pk).update(
                 first_name=instance.first_name,
                 last_name=instance.last_name,
                 middle_name=instance.middle_name,
