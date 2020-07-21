@@ -716,23 +716,6 @@ class Questionnaire(BaseModel):
         verbose_name="Удо скан",
         related_name="application_id_doc",
     )
-    # phone и phone2 нужно убрать
-    # значения из FK phone записать в M2M phones
-    phone = models.ForeignKey(
-        ProfilePhone,
-        blank=True,
-        null=True,
-        on_delete=models.SET_NULL,
-        verbose_name="Телефон",
-        related_name="phones",
-    )
-    phone2 = models.ForeignKey(
-        ProfilePhone,
-        on_delete=models.SET_NULL,
-        verbose_name="Телефон дополнительный",
-        blank=True,
-        null=True
-    )
     phones = models.ManyToManyField(
         ProfilePhone,
         blank=True,
