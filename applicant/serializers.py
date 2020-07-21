@@ -312,7 +312,7 @@ class QuestionnaireSerializer(serializers.ModelSerializer):
                 gen_uid=reserved_uid,
                 field_name=f'{models.Questionnaire.PRIVILEGE_FN}{index}'
             )
-            privilege.files.add(*matching_files)
+            privilege.files.set(matching_files)
             privilege.save()
 
     def create(self, validated_data):
@@ -380,7 +380,7 @@ class QuestionnaireSerializer(serializers.ModelSerializer):
             # Получить сканы удостоверения личности по зарезервированному uid'у и имени поля
             uid = ReservedUID.get_uid_by_user(self.context['request'].user)
             files = File.objects.filter(gen_uid=uid, field_name=models.Questionnaire.ID_DOCUMENT_FN)
-            questionnaire.files.add(*files)
+            questionnaire.files.set(files)
             questionnaire.phones.add(*phones)
             questionnaire.save()
             if is_privileged:
@@ -497,7 +497,7 @@ class QuestionnaireSerializer(serializers.ModelSerializer):
             matching_files = File.objects.filter(
                 gen_uid=reserved_uid,
                 field_name=f'{models.Questionnaire.PRIVILEGE_FN}{index}')
-            privilege.files.add(*matching_files)
+            privilege.files.set(matching_files)
             privilege.save()
 
     def update(self, instance: models.Questionnaire, validated_data: dict):
@@ -572,7 +572,7 @@ class QuestionnaireSerializer(serializers.ModelSerializer):
                 )
             instance.update(validated_data)
             files = File.objects.filter(gen_uid=reserved_uid, field_name=models.Questionnaire.ID_DOCUMENT_FN)
-            instance.files.add(*files)
+            instance.files.set(files)
             instance.save(snapshot=True)
             Profile.objects.filter(pk=instance.creator.pk).update(
                 first_name=instance.first_name,
@@ -715,7 +715,7 @@ class ApplicationLiteSerializer(serializers.ModelSerializer):
     def handle_previous_education(self, data, creator_profile, reserved_uid):
         previous_education: Education = Education.objects.create(profile=creator_profile, **data)
         files = File.objects.filter(gen_uid=reserved_uid, field_name=models.Application.EDUCATION_FN)
-        previous_education.files.add(*files)
+        previous_education.files.set(files)
         previous_education.save()
         return previous_education
 
@@ -726,7 +726,7 @@ class ApplicationLiteSerializer(serializers.ModelSerializer):
             **data.get('test_certificate')
         )
         files = File.objects.filter(gen_uid=reserved_uid, field_name=models.Application.TEST_CERT_FN)
-        test_certificate.files.add(*files)
+        test_certificate.files.set(files)
         test_certificate.save()
         # Пройденные дисциплины на тесте
         disciplines = models.DisciplineMark.objects.bulk_create([
@@ -752,7 +752,7 @@ class ApplicationLiteSerializer(serializers.ModelSerializer):
             matching_files = File.objects.filter(
                 gen_uid=reserved_uid,
                 field_name=f'{models.Application.INTERNATIONAL_CERT_FN}{index}')
-            instance.files.add(*matching_files)
+            instance.files.set(matching_files)
             instance.save()
             certs.append(instance)
         return certs
@@ -762,7 +762,7 @@ class ApplicationLiteSerializer(serializers.ModelSerializer):
             return None
         grant = models.Grant.objects.create(profile=creator_profile, **data)
         files = File.objects.filter(gen_uid=reserved_uid, field_name=models.Application.GRANT_FN)
-        grant.files.add(*files)
+        grant.files.set(files)
         grant.save()
         return grant
 
@@ -847,7 +847,7 @@ class ApplicationLiteSerializer(serializers.ModelSerializer):
         # Если модератор загрузил файлы, например у абитуриента не было с собой аттестата/диплома,
         # но передал скан модератору позже. Модератор может загрузить скан от имени абитуриента
         files = File.objects.filter(gen_uid=reserved_uid, field_name=models.Application.EDUCATION_FN)
-        education.files.add(*files)
+        education.files.set(files)
         education.save(snapshot=True)
         # ==============================================================================================================
         # Прошел/не прошел тест ЕНТ/КТ
@@ -859,7 +859,7 @@ class ApplicationLiteSerializer(serializers.ModelSerializer):
             test_certificate: models.TestCert = models.TestCert.objects.get(pk=instance.test_result.test_certificate.pk)
             test_certificate.update(test_result.get('test_certificate'))
             test_cert_files = File.objects.filter(gen_uid=reserved_uid, field_name=models.Application.TEST_CERT_FN)
-            test_certificate.files.add(*test_cert_files)
+            test_certificate.files.set(test_cert_files)
             test_certificate.save(snapshot=True)
             instance.test_result.disciplines.all().delete()
             new_disciplines = models.DisciplineMark.objects.bulk_create([
@@ -906,7 +906,7 @@ class ApplicationLiteSerializer(serializers.ModelSerializer):
             grant_model: models.Grant = models.Grant.objects.get(pk=instance.grant.uid)
             grant_model.update(grant)
             grant_files = File.objects.filter(gen_uid=reserved_uid, field_name=models.Application.GRANT_FN)
-            grant_model.files.add(*grant_files)
+            grant_model.files.set(grant_files)
             grant_model.save(snapshot=True)
         # ==============================================================================================================
         # Сделать с выбранными направлениями то же самое, что и с международ. сертификатами - удалить и создать по новой
@@ -979,7 +979,7 @@ class AdmissionDocumentSerializer(serializers.ModelSerializer):
         field_name = f'{models.AdmissionDocument.FIELD_NAME}{order}'
         files = File.objects.filter(gen_uid=reserved_uid, field_name=field_name)
         instance: models.AdmissionDocument = super().create(validated_data)
-        instance.files.add(*files)
+        instance.files.set(files)
         instance.save()
         return instance
 
@@ -992,7 +992,7 @@ class AdmissionDocumentSerializer(serializers.ModelSerializer):
         order = self.context['request'].data.get('order')
         field_name = f'{models.AdmissionDocument.FIELD_NAME}{order}'
         files = File.objects.filter(gen_uid=reserved_uid, field_name=field_name)
-        instance.files.add(*files)
+        instance.files.set(files)
         instance.save()
         return instance
 
