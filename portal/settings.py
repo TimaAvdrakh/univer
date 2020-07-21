@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     'applications',
     'mail',
     'instruction',
+    'emc',
 ]
 
 MIDDLEWARE = [
