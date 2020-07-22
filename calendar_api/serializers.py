@@ -280,7 +280,7 @@ class EducationProgramGroupEventSerializer(serializers.ModelSerializer):
         ]
 
 
-class ScheduleStudentSerializer(serializers.ModelSerializer):
+class ScheduleSerializer(serializers.ModelSerializer):
     discipline = serializers.CharField()
     classroom = serializers.CharField()
     time = serializers.CharField()
