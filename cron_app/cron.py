@@ -31,7 +31,7 @@ import urllib3
 import certifi
 from applicant.models import Applicant
 from applications import models as model_aps
-
+from django.contrib.contenttypes.models import ContentType
 
 logger = logging.getLogger('django')
 
@@ -661,124 +661,127 @@ class DeleteInactiveApplicants(CronJobBase):
         Applicant.erase_inactive()
 
 
-class SendApplicationsTo1cJob(CronJobBase):
-    """Отправляет заявки студентов в 1С"""
-    RUN_EVERY_MINS = 10  # every 10 min
-
-    schedule = Schedule(run_every_mins=RUN_EVERY_MINS)
-    code = 'cron_app.send_student_application'
-
+def send_applications_to_1c():
+    IN_PROGRESS = 'b287ecfe-0ac8-499b-9ac4-7da2a64a82ef'
     LANG_EN = '789cb6fa-31e9-11e9-aa40-0cc47a2bc1bf'
     LANG_KZ = '789cb6fb-31e9-11e9-aa40-0cc47a2bc1bf'
     LANG_RU = '789cb6fc-31e9-11e9-aa40-0cc47a2bc1bf'
 
-    IN_PROGRESS = 'b287ecfe-0ac8-499b-9ac4-7da2a64a82ef'
+    # Todo Если получение справки то документ не нужен
+    sub_apps = model_aps.SubApplication.objects.filter(application__send=False).values(
+        'application', 'application__type__uid', 'status', 'subtype_id', 'comment', 'id',
+        'application__profile__uid',
+        'organization', 'is_paper', 'copies', 'lang')
+    applications = sub_apps.values('application').distinct().values(
+        'application', 'application__type_id', 'application__profile__uid')
+
+    sub_apps = list(sub_apps)
+    apps_json = []
+    url = SEND_APPLICATIONS_TO_1C_URL
+    for app in applications:
+        sub_app_by_app = [item for item in sub_apps if item['application'] == app['application']]
+        sub_json = []
+        for sub_application in sub_app_by_app:
+            lang_list = []
+            for lang in sub_application['lang']:
+                if lang == 'ru':
+                    lang_list.append(LANG_RU)
+                if lang == 'kz':
+                    lang_list.append(LANG_KZ)
+                if lang == 'en':
+                    lang_list.append(LANG_EN)
+
+            sub_item = {
+                "applicationSubtypeID": str(sub_application['subtype_id']),
+                "subApplicationID": sub_application['id'],
+                "organizationName": sub_application['organization'],
+                "isPaper": sub_application['is_paper'],
+                "copyNumber": sub_application['copies'],
+                "lang": lang_list
+            }
+            sub_json.append(sub_item)
+        item = {
+            "applicationID": app['application'],
+            "applicationType": str(app['application__type_id']),
+            "applicationScan": "file_name",
+            "applicationStudent": str(app['application__profile__uid']),
+            "applicationSubtype": sub_json
+        }
+        apps_json.append(item)
+    urllib3.disable_warnings()
+    resp = requests.post(
+        url,
+        json=apps_json,
+        verify=False,
+        auth=HTTPBasicAuth('Администратор'.encode(), 'qwe123rty'),
+        timeout=30,
+    )
+    cti = ContentType.objects.get(app_label='applications', model='application').id
+    if resp.status_code == 200:
+        resp_data = resp.json()
+        print(resp_data)
+        for application in resp_data:
+            status = application['status']
+            if status == 'errors':
+                status = 2
+            if status == 'success':
+                status = 0
+            if status == 'failed':
+                status = 1
+
+            log = DocumentChangeLog(
+                content_type_id=cti,
+                object_id=application['applicationID'],
+                status=status,
+            )
+            error_text = ''
+
+            for error in application['applicationErrors']:
+                error_text += '{}\n'.format(error)
+            for subtype in application['subtypeAplications']:
+                error_text += '\n Дочерний тип заявки ' + str(subtype['subApplicationID'])
+                if subtype['status'] == 'errors':
+                    for error in subtype['subApplicationErrors']:
+                        error_text += '{}\n'.format(error)
+                if subtype['status'] != 'failed':
+                    try:
+                        subtype_row = model_aps.SubApplication.objects.get(pk=subtype['subApplicationID'])
+                    except model_aps.SubApplication.DoesNotExist:
+                        error_text += '{}\n Дочерний тип ' + subtype['subApplicationID'] + ' заявки не найден'
+                        continue
+                    subtype_row.status = model_aps.Status.objects.only('uid').get(uid=IN_PROGRESS)
+                    subtype_row.save()
+
+            log.errors = error_text
+            log.save()
+
+            if application['status'] == 'success':
+                try:
+                    application_row = model_aps.Application.objects.get(pk=application['applicationID'])
+                except model_aps.Application.DoesNotExist:
+                    error_text += '{}\n Заявка ' + application['applicationID'] + ' не найдена'
+                    continue
+
+                application_row.send = True
+                application_row.save()
+
+    else:
+        message = '{}\n{}'.format(resp.status_code,
+                                  resp.content.decode())
+        for chat_id in BOT_DEV_CHAT_IDS:
+            bot.send_message(chat_id,
+                             message)
+
+
+class SendApplicationsTo1cJob(CronJobBase):
+    """Отправляет заявки студентов в 1С"""
+    RUN_EVERY_MINS = 1  # every 10 min
+
+    schedule = Schedule(run_every_mins=RUN_EVERY_MINS)
+    code = 'cron_app.send_student_application'
 
     def do(self):
-        # Todo Если получение справки то документ не нужен
-        sub_apps = model_aps.SubApplication.objects.filter(application__send=False).values(
-            'application', 'application__type__uid', 'status', 'subtype_id', 'comment', 'id',
-            'application__profile__uid',
-            'organization', 'is_paper', 'copies', 'lang')
-        applications = sub_apps.values('application').distinct().values(
-            'application', 'application__type_id', 'application__profile__uid')
-
-        sub_apps = list(sub_apps)
-        apps_json = []
-        url = SEND_APPLICATIONS_TO_1C_URL
-        for app in applications:
-            sub_app_by_app = [item for item in sub_apps if item['application'] == app['application']]
-            sub_json = []
-            for sub_application in sub_app_by_app:
-                lang_list = []
-                for lang in sub_application['lang']:
-                    if lang == 'ru':
-                        lang_list.append(self.LANG_RU)
-                    if lang == 'kz':
-                        lang_list.append(self.LANG_KZ)
-                    if lang == 'en':
-                        lang_list.append(self.LANG_EN)
-
-                sub_item = {
-                    "applicationSubtypeID": str(sub_application['subtype_id']),
-                    "subApplicationID": sub_application['id'],
-                    "organizationName": sub_application['organization'],
-                    "isPaper": sub_application['is_paper'],
-                    "copyNumber": sub_application['copies'],
-                    "lang": lang_list
-                }
-                sub_json.append(sub_item)
-            item = {
-                "applicationID": app['application'],
-                "applicationType": str(app['application__type_id']),
-                "applicationScan": "file_name",
-                "applicationStudent": str(app['application__profile__uid']),
-                "applicationSubtype": sub_json
-            }
-            apps_json.append(item)
-        urllib3.disable_warnings()
-        resp = requests.post(
-            url,
-            json=apps_json,
-            verify=False,
-            auth=HTTPBasicAuth('Администратор'.encode(), 'qwe123rty'),
-            timeout=30,
-        )
-
-        if resp.status_code == 200:
-            resp_data = resp.json()
-
-            for application in resp_data:
-                status = application['status']
-                if status == 'errors':
-                    status = 2
-                if status == 'success':
-                    status = 0
-                if status == 'failed':
-                    status = 1
-
-                log = DocumentChangeLog(
-                    content_type_id=CONTENT_TYPES['applications'],
-                    object_id=application['applicationID'],
-                    status=status,
-                )
-                error_text = ''
-
-                for error in application['applicationErrors']:
-                    error_text += '{}\n'.format(error)
-                for subtype in application['subtypeAplications']:
-                    error_text += '\n Дочерний тип заявки ' + str(subtype['subApplicationID'])
-                    if subtype['status'] == 'errors':
-                        for error in subtype['subApplicationErrors']:
-                            error_text += '{}\n'.format(error)
-                    if subtype['status'] != 'failed':
-                        try:
-                            subtype_row = model_aps.SubApplication.objects.get(pk=subtype['subApplicationID'])
-                        except model_aps.SubApplication.DoesNotExist:
-                            error_text += '{}\n Дочерний тип '+ subtype['subApplicationID'] + ' заявки не найден'
-                            continue
-                        subtype_row.status = model_aps.Status.objects.only('uid').get(uid=self.IN_PROGRESS)
-                        subtype_row.save()
-
-                log.errors = error_text
-                log.save()
-
-                if application['status'] == 'success':
-                    try:
-                        application_row = model_aps.Application.objects.get(pk=application['applicationID'])
-                    except model_aps.Application.DoesNotExist:
-                        error_text += '{}\n Заявка ' + application['applicationID'] + ' не найдена'
-                        continue
-
-                    application_row.send = True
-                    application_row.save()
-
-        else:
-            message = '{}\n{}'.format(resp.status_code,
-                                      resp.content.decode())
-            for chat_id in BOT_DEV_CHAT_IDS:
-                bot.send_message(chat_id,
-                                 message)
+        send_applications_to_1c()
 
 
 class CloseApplicationsJob(CronJobBase):
@@ -786,7 +789,7 @@ class CloseApplicationsJob(CronJobBase):
     RUN_EVERY_MINS = 1440  # every day
 
     schedule = Schedule(run_every_mins=RUN_EVERY_MINS)
-    code = 'crop_app.close_applications_job' # an unique code
+    code = 'crop_app.close_applications_job'  # an unique code
 
     def do(self):
         rows = model_aps.SubApplication.objects.filter(

@@ -3,8 +3,8 @@ import logging
 from django.contrib.auth import login
 from django.contrib.auth.models import User
 from django.core.mail import send_mail
-from django.db.models import Q, prefetch_related_objects
-from django.http import JsonResponse, HttpResponseBadRequest, HttpResponse
+from django.db.models import Q
+from django.http import JsonResponse
 from django.utils.encoding import force_text
 from django.utils.http import urlsafe_base64_decode
 from rest_framework.decorators import action
@@ -13,7 +13,6 @@ from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.status import HTTP_200_OK
 from rest_framework.viewsets import ModelViewSet
-from common.models import ReservedUID, File
 from common.paginators import CustomPagination
 from univer_admin.permissions import IsAdminOrReadOnly
 from portal_users.models import Profile
@@ -141,6 +140,13 @@ class ApplicantViewSet(ModelViewSet):
 class QuestionnaireViewSet(ModelViewSet):
     queryset = models.Questionnaire.objects.all()
     serializer_class = serializers.QuestionnaireSerializer
+    
+    def retrieve(self, request, *args, **kwargs):
+        profile = request.user.profile
+        questionnaire = self.get_object()
+        if not (profile == questionnaire.creator or profile.role.is_mod):
+            return Response(data={'msg': 'access denied'})
+        return super(QuestionnaireViewSet, self).retrieve(request, *args, **kwargs)
 
     def get_serializer_class(self):
         if self.action == 'list':
@@ -222,7 +228,7 @@ class RecruitmentPlanViewSet(ModelViewSet):
             return self.get_paginated_response(recruitment_plans)
         serializer = self.get_serializer(recruitment_plans, many=True)
         return Response(data={'results': serializer.data}, status=HTTP_200_OK)
-        #hello
+
 
 class LanguageProficiencyViewSet(ModelViewSet):
     queryset = models.LanguageProficiency.objects.exclude(parent=None)
@@ -286,17 +292,20 @@ class ApplicationViewSet(ModelViewSet):
             raise ValidationError({'error': {'msg': 'all 3 steps not done'}})
 
     def retrieve(self, request, *args, **kwargs):
+        profile = request.user.profile
         application = self.get_object()
-        profile = application.creator
+        applicant = application.creator
+        if not (profile == applicant or profile.role.is_mod):
+            return Response(data={'msg': 'access denied'})
         data = {
             'application': serializers.ApplicationSerializer(application).data
         }
-        questionnaire = models.Questionnaire.objects.filter(creator=profile)
+        questionnaire = models.Questionnaire.objects.filter(creator=applicant)
         if questionnaire.exists():
             data['questionnaire'] = serializers.QuestionnaireSerializer(questionnaire.first()).data
         else:
             data['questionnaire'] = None
-        attachments = models.AdmissionDocument.objects.filter(creator=profile)
+        attachments = models.AdmissionDocument.objects.filter(creator=applicant)
         if attachments.exists():
             data['attachments'] = serializers.AdmissionDocumentSerializer(attachments, many=True).data
         else:
@@ -509,6 +518,12 @@ class AdmissionCampaignViewSet(ModelViewSet):
 class AddressViewSet(ModelViewSet):
     queryset = models.Address.objects.all()
     serializer_class = serializers.AddressSerializer
+    
+    def retrieve(self, request, *args, **kwargs):
+        return Response(data={'msg': 'no address'})
+    
+    def list(self, request, *args, **kwargs):
+        return Response(data={'msg': 'no addresses'})
 
     @action(methods=['get'], detail=False, url_path='regions', url_name='get_regions')
     def get_regions(self, request, pk=None):
@@ -545,6 +560,18 @@ class AddressViewSet(ModelViewSet):
 class AdmissionDocumentViewSet(ModelViewSet):
     queryset = models.AdmissionDocument.objects.order_by('created')
     serializer_class = serializers.AdmissionDocumentSerializer
+    
+    def get_serializer_class(self, *args, **kwargs):
+        if self.action == 'list':
+            return serializers.AdmissionLiteDocument
+        return serializers.AdmissionDocumentSerializer
+    
+    def retrieve(self, request, *args, **kwargs):
+        profile = request.user.profile
+        document: models.AdmissionDocument = self.get_object()
+        if not (profile == document.creator or profile.role.is_mod):
+            return Response(data={'msg': 'access denied'})
+        return super(AdmissionDocumentViewSet, self).retrieve(request, *args, **kwargs)
 
     @action(methods=['get'], detail=False, url_name='my', url_path='my')
     def get_my_attachments(self, request, pk=None):

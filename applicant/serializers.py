@@ -11,7 +11,7 @@ from django.utils.translation import get_language
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 from common.models import IdentityDocument, Comment, ReservedUID, File
-from common.serializers import DocumentSerializer, DocumentTypeSerializer, FileSerializer
+from common.serializers import DocumentTypeSerializer, FileSerializer
 from mail.models import EmailTemplate
 from portal.local_settings import EMAIL_HOST_USER
 from portal_users.serializers import ProfilePhoneSerializer
@@ -184,7 +184,7 @@ class QuestionnaireSerializer(serializers.ModelSerializer):
     address_of_temp_reg = AddressSerializer(required=False, allow_null=True)
     address_of_residence = AddressSerializer(required=True)
     privilege_list = UserPrivilegeListSerializer(required=False, many=False)
-    phone = ProfilePhoneSerializer(required=True)
+    phones = ProfilePhoneSerializer(required=True, many=True)
     files = FileSerializer(read_only=True, many=True, required=False)
 
     class Meta:
@@ -228,9 +228,8 @@ class QuestionnaireSerializer(serializers.ModelSerializer):
         validated_data['address_of_residence'] = address_of_residence
         return validated_data
 
-    def create_family(self, family_data, profile, reg_addr_uid, tmp_addr_uid, res_addr_uid):
-        members = family_data.pop('members')
-        family = models.Family.objects.create(**family_data, profile=profile)
+    def create_family_members(self, family, members, reg_addr_uid, tmp_addr_uid, res_addr_uid):
+        result = []
         for member in members:
             member['family'] = family
             email = member['email']
@@ -269,14 +268,27 @@ class QuestionnaireSerializer(serializers.ModelSerializer):
                 residence_copy.save()
                 member['address'] = residence_copy
             elif address_matches == models.FamilyMember.MATCH_NOT:
-                address = models.Address.objects.create(**member['address'], profile=profile)
+                address = models.Address.objects.create(**member['address'], profile=member_profile)
                 member['address'] = address
             member_match = models.FamilyMember.objects.filter(profile=member_profile)
             if member_match.exists():
                 member_instance = member_match.first()
                 member_instance.update(member)
             else:
-                models.FamilyMember.objects.create(**member)
+                member_instance = models.FamilyMember.objects.create(**member)
+            result.append(member_instance)
+        return result
+
+    def create_family(self, family_data, profile, reg_addr_uid, tmp_addr_uid, res_addr_uid):
+        members = family_data.pop('members')
+        family = models.Family.objects.create(**family_data, profile=profile)
+        self.create_family_members(
+            family=family,
+            members=members,
+            reg_addr_uid=reg_addr_uid,
+            tmp_addr_uid=tmp_addr_uid,
+            res_addr_uid=res_addr_uid
+        )
         return family
 
     def create_privileges(self, privilege_list, creator, questionnaire):
@@ -345,7 +357,14 @@ class QuestionnaireSerializer(serializers.ModelSerializer):
             # Докумуент удостоверяющий личность
             id_doc = IdentityDocument.objects.create(**validated_data.pop('id_doc'))
             # Телефон
-            phone = ProfilePhone.objects.create(**validated_data.pop('phone'))
+            validated_data.pop('phone', None)
+            # phone = ProfilePhone.objects.create(**validated_data.pop('phone'), profile=creator)
+            # Смена для телефонов
+            phones = validated_data.pop('phones', [])
+            phone_result = []
+            if phones:
+                for phone_instance in phones:
+                    phone_result.append(ProfilePhone.objects.create(**phone_instance, profile=creator))
             # Проверка на привилегии
             is_privileged = validated_data.get('is_privileged', False)
             privilege_list = validated_data.pop('privilege_list', None)
@@ -356,13 +375,13 @@ class QuestionnaireSerializer(serializers.ModelSerializer):
                 address_of_temp_reg=address_of_temp_reg,
                 address_of_residence=address_of_residence,
                 id_doc=id_doc,
-                phone=phone,
                 **validated_data
             )
             # Получить сканы удостоверения личности по зарезервированному uid'у и имени поля
             uid = ReservedUID.get_uid_by_user(self.context['request'].user)
             files = File.objects.filter(gen_uid=uid, field_name=models.Questionnaire.ID_DOCUMENT_FN)
             questionnaire.files.set(files)
+            questionnaire.phones.add(*phones)
             questionnaire.save()
             if is_privileged:
                 self.create_privileges(
@@ -370,25 +389,72 @@ class QuestionnaireSerializer(serializers.ModelSerializer):
                     creator=creator,
                     questionnaire=questionnaire
                 )
+            Profile.objects.filter(pk=creator.pk).update(
+                first_name=questionnaire.first_name,
+                last_name=questionnaire.last_name,
+                middle_name=questionnaire.middle_name,
+                first_name_en=questionnaire.first_name_en,
+                last_name_en=questionnaire.last_name_en,
+                email=questionnaire.email,
+                birth_date=questionnaire.birthday,
+                birth_place=questionnaire.birthplace,
+                nationality=questionnaire.nationality,
+                citizenship=questionnaire.citizenship,
+                gender=questionnaire.gender,
+                marital_status=questionnaire.marital_status,
+                iin=questionnaire.iin,
+            )
         except Exception as e:
             if questionnaire and isinstance(questionnaire, models.Questionnaire):
                 questionnaire.delete()
             raise ValidationError({'error on create': e})
         return questionnaire
 
-    def update_family(self, uid, data):
+    def update_family(self, uid, data, profile, reg_addr_uid, tmp_addr_uid, res_addr_uid):
         members = data.pop('members')
         family: models.Family = models.Family.objects.get(pk=uid)
         family.update(data)
         family.save(snapshot=True)
         for member in members:
-            member_instance = models.FamilyMember.objects.get(profile=member['profile'].uid)
-            address_instance = models.Address.objects.get(pk=member_instance.address.uid)
-            address = member.pop('address')
-            address_instance.update(address)
-            address_instance.save(snapshot=True)
-            member_instance.update(member)
-            member_instance.save(snapshot=True)
+            member_profile = member.get('profile')
+            if member_profile and member_profile.uid:
+                member_instance = models.FamilyMember.objects.get(profile=member_profile.uid)
+                address_instance = models.Address.objects.get(pk=member_instance.address.uid)
+                address = member.pop('address')
+                address_instance.update(address)
+                address_instance.save(snapshot=True)
+                member_instance.update(member)
+                member_instance.save(snapshot=True)
+            else:
+                user = User.objects.create(username=member['email'], email=member['email'])
+                user.set_password(member['email'])
+                user.save()
+                member['profile'] = Profile.objects.create(
+                    first_name=member['first_name'],
+                    last_name=member['last_name'],
+                    middle_name=member['middle_name'],
+                    user=user
+                )
+                member['family'] = family
+                address_matches = member['address_matches']
+                if address_matches == models.FamilyMember.MATCH_REG:
+                    addr = models.Address.objects.filter(pk=reg_addr_uid).first()
+                    addr.pk = None
+                    addr.save()
+                    member['address'] = addr
+                elif address_matches == models.FamilyMember.MATCH_TMP:
+                    addr = models.Address.objects.filter(pk=tmp_addr_uid).first()
+                    addr.pk = None
+                    addr.save()
+                    member['address'] = addr
+                elif address_matches == models.FamilyMember.MATCH_RES:
+                    addr = models.Address.objects.filter(pk=res_addr_uid).first()
+                    addr.pk = None
+                    addr.save()
+                    member['address'] = addr
+                elif address_matches == models.FamilyMember.MATCH_NOT:
+                    member['address'] = models.Address.objects.create(**member['address'], profile=member['profile'])
+                models.FamilyMember.objects.create(**member)
 
     def update_id_doc(self, uid, data):
         id_doc = IdentityDocument.objects.get(pk=uid)
@@ -420,17 +486,13 @@ class QuestionnaireSerializer(serializers.ModelSerializer):
             user_privilege_list = models.UserPrivilegeList.objects.create(questionnaire=questionnaire, profile=creator)
         else:
             user_privilege_list = models.UserPrivilegeList.objects.get(pk=uid)
-        for privilege in user_privilege_list.privileges.all():
-            privilege.files.all().delete()
-            privilege.delete()
+        user_privilege_list.privileges.all().delete()
         privileges = data.pop('privileges')
         for index, data in enumerate(privileges):
             data.pop('list', None)
-            data.pop('profile', None)
             privilege = models.Privilege.objects.create(
                 **data,
                 list=user_privilege_list,
-                profile=creator
             )
             matching_files = File.objects.filter(
                 gen_uid=reserved_uid,
@@ -440,8 +502,7 @@ class QuestionnaireSerializer(serializers.ModelSerializer):
 
     def update(self, instance: models.Questionnaire, validated_data: dict):
         profile = self.context['request'].user.profile
-        role = profile.role
-        mod_can_edit = settings.MODERATOR_CAN_EDIT and role.is_mod
+        mod_can_edit = settings.MODERATOR_CAN_EDIT and profile.role.is_mod
         if profile == instance.creator or mod_can_edit:
             pass
         else:
@@ -463,20 +524,36 @@ class QuestionnaireSerializer(serializers.ModelSerializer):
                 data=validated_data.pop('address_of_residence')
             )
             is_orphan = validated_data.get('is_orphan')
+            family = validated_data.pop('family', None)
             if instance.is_orphan and not is_orphan:
                 family = self.create_family(
-                    family_data=validated_data.pop('family'),
+                    family_data=family,
+                    reg_addr_uid=instance.address_of_registration.pk,
+                    tmp_addr_uid=instance.address_of_temp_reg and instance.address_of_temp_reg.pk,
+                    res_addr_uid=instance.address_of_residence
+                )
+                instance.family = family
+                instance.save()
+            elif not instance.is_orphan and not is_orphan and instance.family:
+                self.update_family(
+                    uid=instance.family.uid,
+                    data=family,
                     profile=profile,
                     reg_addr_uid=instance.address_of_registration.pk,
                     tmp_addr_uid=instance.address_of_temp_reg and instance.address_of_temp_reg.pk,
                     res_addr_uid=instance.address_of_residence.pk
                 )
-                instance.family = family
-                instance.save()
-            if not instance.is_orphan:
-                self.update_family(uid=instance.family.pk, data=validated_data.pop('family'))
             self.update_id_doc(uid=instance.id_doc.pk, data=validated_data.pop('id_doc'))
-            self.update_phone(uid=instance.phone.pk, data=validated_data.pop('phone'))
+            validated_data.pop('phone', None)
+            # self.update_phone(uid=instance.phone.pk, data=validated_data.pop('phone'))
+            phones = validated_data.pop('phones', [])
+            phones_result = []
+            if phones:
+                instance.phones.all().delete()
+                for phone in phones:
+                    phones_result.append(ProfilePhone.objects.create(**phone))
+                instance.phones.add(*phones_result)
+                instance.save()
             is_privileged = validated_data.get('is_privileged')
             if not instance.is_privileged and is_privileged:
                 self.create_privileges(
@@ -497,11 +574,20 @@ class QuestionnaireSerializer(serializers.ModelSerializer):
             files = File.objects.filter(gen_uid=reserved_uid, field_name=models.Questionnaire.ID_DOCUMENT_FN)
             instance.files.set(files)
             instance.save(snapshot=True)
-            Profile.objects.filter(pk=profile.pk).update(
+            Profile.objects.filter(pk=instance.creator.pk).update(
                 first_name=instance.first_name,
                 last_name=instance.last_name,
                 middle_name=instance.middle_name,
-                email=instance.email
+                first_name_en=instance.first_name_en,
+                last_name_en=instance.last_name_en,
+                email=instance.email,
+                birth_date=instance.birthday,
+                birth_place=instance.birthplace,
+                nationality=instance.nationality,
+                citizenship=instance.citizenship,
+                gender=instance.gender,
+                marital_status=instance.marital_status,
+                iin=instance.iin,
             )
             return instance
         except Exception as e:
@@ -626,14 +712,6 @@ class ApplicationLiteSerializer(serializers.ModelSerializer):
         model = models.Application
         fields = ['uid', 'status_info', 'applicant', 'created', 'updated', 'max_choices']
 
-    def send_on_create(self, recipient):
-        today = dt.date.today().strftime("%d.%m.%Y")
-        subject = 'Заявление поступило на проверку'
-        message = f'Ваше заявление на поступление от {today} отправлено на проверку модератору. ' \
-                  f'Ожидайте дальнейших действий'
-        send_mail(subject=subject, message=message, from_email=EMAIL_HOST_USER, recipient_list=[recipient])
-        return
-
     def handle_previous_education(self, data, creator_profile, reserved_uid):
         previous_education: Education = Education.objects.create(profile=creator_profile, **data)
         files = File.objects.filter(gen_uid=reserved_uid, field_name=models.Application.EDUCATION_FN)
@@ -747,10 +825,6 @@ class ApplicationLiteSerializer(serializers.ModelSerializer):
             application.international_certs.set(international_certs)
             application.directions.set(directions)
             application.save()
-            try:
-                self.send_on_create(recipient=creator.user.email)
-            except Exception as e:
-                print(e)
         except Exception as e:
             if application and isinstance(application, models.Application):
                 application.delete()
@@ -762,7 +836,7 @@ class ApplicationLiteSerializer(serializers.ModelSerializer):
         mod_can_edit = settings.MODERATOR_CAN_EDIT and profile.role.is_mod
         # Доступ к изменению анкеты
         if not (profile == instance.creator or mod_can_edit):
-            raise ValidationError({"error": "access_denied"})
+            raise ValidationError({"error": "access denied"})
         # Резервированный UID берется от текущего пользователя. Им может быть модератор.
         reserved_uid = ReservedUID.get_uid_by_user(profile.user)
         # ==============================================================================================================
@@ -828,7 +902,7 @@ class ApplicationLiteSerializer(serializers.ModelSerializer):
             grant_model = self.handle_grant(data=grant, creator_profile=instance.creator, reserved_uid=reserved_uid)
             instance.grant = grant_model
             instance.save()
-        else:
+        elif instance.is_grant_holder and is_grant_holder and grant:
             grant_model: models.Grant = models.Grant.objects.get(pk=instance.grant.uid)
             grant_model.update(grant)
             grant_files = File.objects.filter(gen_uid=reserved_uid, field_name=models.Application.GRANT_FN)
@@ -836,8 +910,6 @@ class ApplicationLiteSerializer(serializers.ModelSerializer):
             grant_model.save(snapshot=True)
         # ==============================================================================================================
         # Сделать с выбранными направлениями то же самое, что и с международ. сертификатами - удалить и создать по новой
-        # TODO сделать проверку на соответствие с группой образовательных программ в гранте и первом направлении
-        #  в самом начале запроса на обновление заявления
         instance.directions.all().delete()
         directions = models.OrderedDirection.objects.bulk_create([
             models.OrderedDirection(**direction) for direction in validated_data.pop('directions')
@@ -867,6 +939,12 @@ class ApplicationSerializer(ApplicationLiteSerializer):
         fields = '__all__'
 
 
+class AdmissionLiteDocument(serializers.ModelSerializer):
+    class Meta:
+        model = models.AdmissionDocument
+        fields = ['uid', 'creator']
+
+
 class AdmissionDocumentSerializer(serializers.ModelSerializer):
     type = serializers.SerializerMethodField(read_only=True)
     files = FileSerializer(read_only=True, many=True, required=False)
@@ -882,6 +960,19 @@ class AdmissionDocumentSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
     def create(self, validated_data):
+        """Создание доп. документов для абитуриента в 3 шаге
+        В дополлнительные документы входят документы, приходящие из 1С закрепленные за приемной комиссией
+        и не вошедшие в шаги 1 (Анкета|Questionnaire) и 2 (Заявление|Application)
+        Например, фото 3x4, флюорография, результаты творческих экзаменов и т.д.
+        :params:
+
+        order: int - сортировка, которая приходит с фронта (индекс объекта из v-for). Некоторые доп.
+        документы не обязательны для заполнения, абитуриенты могут их пропускать или добавить позже. Чтобы не
+        перепутать загруженные файлы
+
+        document_1c: uid - primary key от Document1C (приходит с /documents/campaign-docs/). Важен, чтобы сопоставить
+        заполненый доп. документ с соотвтетсвующим документом из 1С.
+        """
         validated_data['creator'] = self.context['request'].user.profile
         order = self.context['request'].data.get('order')
         reserved_uid = ReservedUID.get_uid_by_user(validated_data['creator'].user)
@@ -903,7 +994,7 @@ class AdmissionDocumentSerializer(serializers.ModelSerializer):
         files = File.objects.filter(gen_uid=reserved_uid, field_name=field_name)
         instance.files.set(files)
         instance.save()
-        return super().update(instance, validated_data)
+        return instance
 
 
 class OrderedDirectionsForModerator(serializers.ModelSerializer):

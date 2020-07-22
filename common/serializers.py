@@ -10,6 +10,7 @@ class FileSerializer(serializers.ModelSerializer):
 
     def get_path(self, file: models.File):
         return settings.HOST + file.path.url
+        # return absolute_uri
 
     class Meta:
         model = models.File
