@@ -184,6 +184,7 @@ class ProfileChooseViewSet(ModelViewSet):
 class ScheduleStudentViewSet(ModelViewSet):
     queryset = Lesson.objects.filter(is_active=True)
     serializer_class = serializers.ScheduleStudentSerializer
+    permission_classes = (IsAdminOrReadOnly, )
 
     def list(self, request):
         all_lessons = LessonStudent.objects.filter(
