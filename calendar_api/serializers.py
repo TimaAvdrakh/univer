@@ -207,6 +207,7 @@ class ProfilesEventsSerializer(serializers.ModelSerializer):
         data = super().to_representation(instance)
         data['full_name'] = f"{instance.student.first_name} {instance.student.last_name} {instance.student.middle_name}"
         event_start, event_start_range, event_end, event_end_range = convert_time(self.context)
+
         profile_events = Events.objects.filter(
             Q(participants__participant_profiles=instance.student)|
             Q(participants__group=instance.group)|
@@ -218,6 +219,8 @@ class ProfilesEventsSerializer(serializers.ModelSerializer):
         ).distinct('pk')
         profile_events_data = EventLiteSerializer(profile_events.order_by('pk'), many=True).data
         data['events'] = profile_events_data
+
+
         profile_events = profile_events.filter(
             Q(
                 event_start__lt=event_end,
@@ -228,10 +231,12 @@ class ProfilesEventsSerializer(serializers.ModelSerializer):
                 event_end__gt=event_start,
             )
         ).distinct('pk')
+
         if profile_events.exists():
             data['profile_reserved'] = True
         else:
             data['profile_reserved'] = False
+
         return data
 
 

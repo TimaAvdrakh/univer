@@ -189,7 +189,7 @@ class ScheduleViewSet(ModelViewSet):
     def list(self, request):
         queryset = self.queryset
         profile = request.user.profile
-        if not profile.role.is_student and not profile.role.is_student:
+        if not profile.role.is_student and not profile.role.is_teacher:
             return Response(data=[], status=HTTP_200_OK)
         if profile.role.is_student:
             all_lessons = LessonStudent.objects.filter(
@@ -198,7 +198,7 @@ class ScheduleViewSet(ModelViewSet):
             ).values_list('flow_uid')
             queryset = queryset.filter(flow_uid__in=all_lessons)
         if profile.role.is_teacher:
-            queryset.filter(teachers=profile)
+            queryset = queryset.filter(teachers=profile)
         serializer = self.serializer_class(queryset, many=True).data
         return Response(data=serializer, status=HTTP_200_OK)
 
