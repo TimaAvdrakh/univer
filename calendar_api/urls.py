@@ -8,4 +8,5 @@ router.register(r"events", viewsets.EventsViewSet, "events")
 router.register(r"events_repetition_types", viewsets.EventsRepetitionTypeViewSet, "events_repetition_types")
 router.register(r"reserve_rooms", viewsets.ReserveRoomViewSet, "reserve_rooms")
 router.register(r"check_events", viewsets.ProfileChooseViewSet, "check_events")
+router.register(r"student_schedule", viewsets.ScheduleStudentViewSet, "student_schedule")
 urlpatterns = router.urls

@@ -11,9 +11,15 @@ from portal_users.models import Profile, Role
 from schedules.models import (
     Room,
     RoomType,
+    Lesson,
+    LessonStudent,
+    LessonTeacher,
 )
 from organizations.models import (
     StudyPlan
+)
+from portal_users.serializers import (
+    ProfileLiteSerializer,
 )
 
 
@@ -271,4 +277,27 @@ class EducationProgramGroupEventSerializer(serializers.ModelSerializer):
         fields = [
             'uid',
             'name',
+        ]
+
+
+class ScheduleStudentSerializer(serializers.ModelSerializer):
+    discipline = serializers.CharField()
+    classroom = serializers.CharField()
+    time = serializers.CharField()
+    status = serializers.CharField()
+    language = serializers.CharField()
+    teachers = ProfileLiteSerializer(many=True)
+
+    class Meta:
+        model = Lesson
+        fields = [
+            'uid',
+            'date',
+            'time',
+            'discipline',
+            'teachers',
+            'classroom',
+            'status',
+            'subject',
+            'language',
         ]
