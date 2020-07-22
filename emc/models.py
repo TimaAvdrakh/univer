@@ -6,14 +6,16 @@ from django.contrib.auth.models import User
 class EMC(BaseModel):
     discipline = models.ForeignKey(
         'organizations.Discipline',
-        on_delete=models.CASCADE
+        on_delete=models.CASCADE,
+        related_name='emcs'
     )
     language = models.ForeignKey(
         'organizations.Language',
         on_delete=models.CASCADE
     )
     files = models.ManyToManyField(
-        'common.File'
+        'common.File',
+        blank=True,
     )
     author = models.ForeignKey(
         User,
