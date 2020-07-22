@@ -298,6 +298,12 @@ class Education(BaseModel):
         blank=True,
         verbose_name='Сканы'
     )
+    uid_1c = models.CharField(
+        max_length=64,
+        verbose_name='UID документа в 1С',
+        blank=True,
+        null=True,
+    )
 
     def __str__(self):
         return '{} - {}'.format(self.profile.full_name,
