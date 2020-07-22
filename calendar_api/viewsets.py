@@ -16,6 +16,9 @@ from portal_users.models import Profile
 from schedules.models import (
     Room,
     RoomType,
+    Lesson,
+    LessonStudent,
+    LessonTeacher,
 )
 from univer_admin.permissions import IsAdminOrReadOnly, AdminPermission
 from organizations.models import (
@@ -176,3 +179,29 @@ class ProfileChooseViewSet(ModelViewSet):
             many=True
         )
         return Response(data=serializer.data, status=HTTP_200_OK)
+
+
+class ScheduleViewSet(ModelViewSet):
+    queryset = Lesson.objects.filter(is_active=True)
+    serializer_class = serializers.ScheduleSerializer
+    permission_classes = (IsAdminOrReadOnly, )
+
+    def list(self, request):
+        queryset = self.queryset
+        profile = request.user.profile
+        if not profile.role.is_student and not profile.role.is_student:
+            return Response(data=[], status=HTTP_200_OK)
+        if profile.role.is_student:
+            all_lessons = LessonStudent.objects.filter(
+                is_active=True,
+                student=profile
+            ).values_list('flow_uid')
+            queryset = queryset.filter(flow_uid__in=all_lessons)
+        if profile.role.is_teacher:
+            queryset.filter(teachers=profile)
+        serializer = self.serializer_class(queryset, many=True).data
+        return Response(data=serializer, status=HTTP_200_OK)
+
+
+
+
