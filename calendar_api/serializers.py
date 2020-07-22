@@ -74,6 +74,7 @@ class ReserveRoomSerializer(serializers.ModelSerializer):
             reserve_auditory=instance
         )
         data['events'] = EventLiteSerializer(events_queryset, many=True).data
+
         events_queryset = events_queryset.filter(
             Q(
                 event_start__lt=event_end,
@@ -84,6 +85,17 @@ class ReserveRoomSerializer(serializers.ModelSerializer):
                 event_end__gt=event_start,
             )
         )
+
+        lessons = Lesson.objects.filter(
+            date__gte=event_start_range.date(),
+            date__lte=event_end_range.date(),
+            classroom=instance,
+        ).order_by('date', 'time')
+
+        data['lessons'] = ScheduleSerializer(lessons, many=True).data
+
+        # TODO Написать проверку совпадает ли событие с временем занятия если нужно
+
         if events_queryset.exists():
             data['reserved'] = True
         else:
@@ -220,6 +232,13 @@ class ProfilesEventsSerializer(serializers.ModelSerializer):
         profile_events_data = EventLiteSerializer(profile_events.order_by('pk'), many=True).data
         data['events'] = profile_events_data
 
+        all_lessons = LessonStudent.objects.filter(student=instance.student).values_list('flow_uid')
+        lessons = Lesson.objects.filter(
+            flow_uid__in=all_lessons,
+            date__gte=event_start_range.date(),
+            date__lte=event_end_range.date(),
+        ).order_by('date', 'time')
+        data['lessons'] = ScheduleSerializer(lessons, many=True).data
 
         profile_events = profile_events.filter(
             Q(
@@ -231,6 +250,8 @@ class ProfilesEventsSerializer(serializers.ModelSerializer):
                 event_end__gt=event_start,
             )
         ).distinct('pk')
+
+        #TODO Написать проверку совпадает ли событие с временем занятия если нужно
 
         if profile_events.exists():
             data['profile_reserved'] = True

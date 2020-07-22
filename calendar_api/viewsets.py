@@ -199,6 +199,7 @@ class ScheduleViewSet(ModelViewSet):
             queryset = queryset.filter(flow_uid__in=all_lessons)
         if profile.role.is_teacher:
             queryset = queryset.filter(teachers=profile)
+        queryset = queryset.order_by('date', 'time')
         serializer = self.serializer_class(queryset, many=True).data
         return Response(data=serializer, status=HTTP_200_OK)
 
