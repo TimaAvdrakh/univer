@@ -321,6 +321,7 @@ class ApplicationViewSet(ModelViewSet):
                 "msg": "max_selected_directions"
             }})
         is_grant_holder = validated_data.get('is_grant_holder', False)
+        budget_admission_basis = models.EducationBase.objects.get(code='budget')
         if is_grant_holder:
             grant = validated_data.get('grant', None)
             grant_epg = models.EducationProgramGroup.objects.get(pk=grant.get('edu_program_group'))
@@ -329,7 +330,6 @@ class ApplicationViewSet(ModelViewSet):
             first_direction = models.RecruitmentPlan.objects.get(
                 pk=list(filter(lambda direction: direction['order_number'] == 0, directions))[0]['plan']
             )
-            budget_admission_basis = models.EducationBase.objects.get(code='budget')
             full_time_study_form = models.StudyForm.objects.get(code='full-time')
             if (first_direction.education_program_group != grant_epg) or (
                     first_direction.admission_basis != budget_admission_basis) or (
@@ -337,6 +337,15 @@ class ApplicationViewSet(ModelViewSet):
                 raise ValidationError({'error': {
                     "msg": "direction_and_grant_no_match"
                 }})
+        else:
+            # проверить направления на то, чтобы в них не было бюджетной основы поступления если не грантник
+            for direction in directions:
+                plan: models.RecruitmentPlan = models.RecruitmentPlan.objects.get(pk=direction['plan'])
+                if plan.admission_basis == budget_admission_basis:
+                    raise ValidationError({'error': {
+                        'msg': 'budget_direction_with_no_grant'
+                    }})
+
         international_certs = validated_data.get('international_certs', None)
         if international_certs and not campaign.inter_cert_foreign_lang:
             validated_data['international_certs'] = None
@@ -591,8 +600,7 @@ class ModeratorViewSet(ModelViewSet):
     pagination_class = CustomPagination
 
     def list(self, request, *args, **kwargs):
-        super(ModeratorViewSet, self).list()
-        queryset = self.queryset
+        # queryset = self.queryset
         application_status = request.query_params.get('status')
         full_name = request.query_params.get('full_name')
         preparation_level = request.query_params.get('preparation_level')
@@ -608,29 +616,40 @@ class ModeratorViewSet(ModelViewSet):
             paginated_response = self.get_paginated_response(serializer)
             return Response(data=paginated_response.data, status=HTTP_200_OK)
 
+        lookup = Q()
         if application_status is not None:
             if application_status == models.NO_QUESTIONNAIRE:
-                queryset = queryset.filter(status=None)
+                lookup = lookup & Q(status=None)
+                # queryset = queryset.filter(status=None)
             else:
-                queryset = queryset.filter(status__code=application_status)
+                lookup = lookup & Q(status__code=application_status)
+                # queryset = queryset.filter(status__code=application_status)
 
         if full_name is not None:
             divided = full_name.split()
-            lookup = (Q(creator__first_name__in=divided)
-                      | Q(creator__last_name__in=divided)
-                      | Q(creator__middle_name__in=divided))
-            queryset = queryset.filter(lookup)
+            lookup = lookup | (
+                    Q(creator__first_name__in=divided)
+                    | Q(creator__last_name__in=divided)
+                    | Q(creator__middle_name__in=divided)
+            )
+            # queryset = queryset.filter(lookup)
         if preparation_level is not None:
-            queryset = queryset.filter(directions__plan__preparaion_level=preparation_level)
+            lookup = lookup | Q(directions__plan__preparaion_level=preparation_level)
+            # queryset = queryset.filter(directions__plan__preparaion_level=preparation_level)
         if edu_program_groups is not None:
             # Группа образовательных программ будет строкой, содержащей код и имя ГОП
-            queryset = queryset.filter(
+            lookup = lookup | (
                 Q(directions__plan__education_program_group__name__icontains=edu_program_groups)
                 | Q(directions__plan__education_program_group__code=edu_program_groups)
             )
+            # queryset = queryset.filter(
+            #     Q(directions__plan__education_program_group__name__icontains=edu_program_groups)
+            #     | Q(directions__plan__education_program_group__code=edu_program_groups)
+            # )
         if application_date is not None:
-            queryset = queryset.filter(apply_date=application_date)
-
+            lookup = lookup | Q(apply_date=application_date)
+            # queryset = queryset.filter(apply_date=application_date)
+        queryset = self.queryset.filter(lookup)
         page = self.paginate_queryset(queryset)
         serializer = self.serializer_class(page, many=True).data
         paginated_response = self.get_paginated_response(serializer)
