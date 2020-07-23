@@ -42,6 +42,7 @@ def upload(request):
     List[Dict{File}]
     """
     if request.method == 'POST' and request.FILES and request.user.is_authenticated:
+        config: models.InstitutionConfig = models.InstitutionConfig.get_config()
         files = request.FILES.getlist('path')
         uid = request.POST.get('uid')
         if not uid:
@@ -55,6 +56,8 @@ def upload(request):
         instances = []
         for file in files:
             binary_file_data = models.File.get_data(file)
+            if binary_file_data['size'] > config.max_file_byte_size:
+                raise ValidationError({"error": "entity is too big"})
             instance = models.File.objects.create(
                 gen_uid=uid,
                 user=request.user,

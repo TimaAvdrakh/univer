@@ -589,6 +589,7 @@ class QuestionnaireSerializer(serializers.ModelSerializer):
                 marital_status=instance.marital_status,
                 iin=instance.iin,
             )
+            ReservedUID.objects.filter(pk=reserved_uid).update(is_active=False)
             return instance
         except Exception as e:
             raise ValidationError({"got error on update": e})

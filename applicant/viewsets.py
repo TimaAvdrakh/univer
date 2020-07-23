@@ -20,7 +20,6 @@ from . import models
 from . import serializers
 from .token import token_generator
 
-
 logger = logging.getLogger('django')
 
 
@@ -140,7 +139,7 @@ class ApplicantViewSet(ModelViewSet):
 class QuestionnaireViewSet(ModelViewSet):
     queryset = models.Questionnaire.objects.all()
     serializer_class = serializers.QuestionnaireSerializer
-    
+
     def retrieve(self, request, *args, **kwargs):
         profile = request.user.profile
         questionnaire = self.get_object()
@@ -284,8 +283,10 @@ class ApplicationViewSet(ModelViewSet):
         profile = self.request.user.profile
         done = self.check_done(profile)['done']
         if done:
+            today = dt.date.today()
             application: models.Application = profile.application
             application.status = models.ApplicationStatus.objects.get(code=models.AWAITS_VERIFICATION)
+            application.apply_date = today
             application.save()
             return Response(data={'ok': True}, status=HTTP_200_OK)
         else:
@@ -518,10 +519,10 @@ class AdmissionCampaignViewSet(ModelViewSet):
 class AddressViewSet(ModelViewSet):
     queryset = models.Address.objects.all()
     serializer_class = serializers.AddressSerializer
-    
+
     def retrieve(self, request, *args, **kwargs):
         return Response(data={'msg': 'no address'})
-    
+
     def list(self, request, *args, **kwargs):
         return Response(data={'msg': 'no addresses'})
 
@@ -560,12 +561,12 @@ class AddressViewSet(ModelViewSet):
 class AdmissionDocumentViewSet(ModelViewSet):
     queryset = models.AdmissionDocument.objects.order_by('created')
     serializer_class = serializers.AdmissionDocumentSerializer
-    
+
     def get_serializer_class(self, *args, **kwargs):
         if self.action == 'list':
             return serializers.AdmissionLiteDocument
         return serializers.AdmissionDocumentSerializer
-    
+
     def retrieve(self, request, *args, **kwargs):
         profile = request.user.profile
         document: models.AdmissionDocument = self.get_object()
@@ -589,7 +590,8 @@ class ModeratorViewSet(ModelViewSet):
     serializer_class = serializers.ModeratorSerializer
     pagination_class = CustomPagination
 
-    def list(self, request):
+    def list(self, request, *args, **kwargs):
+        super(ModeratorViewSet, self).list()
         queryset = self.queryset
         application_status = request.query_params.get('status')
         full_name = request.query_params.get('full_name')
@@ -613,16 +615,21 @@ class ModeratorViewSet(ModelViewSet):
                 queryset = queryset.filter(status__code=application_status)
 
         if full_name is not None:
-            lookup = Q(creator__first_name__contains=full_name) \
-                     | Q(creator__last_name__contains=full_name) \
-                     | Q(creator__middle_name__contains=full_name)
+            divided = full_name.split()
+            lookup = (Q(creator__first_name__in=divided)
+                      | Q(creator__last_name__in=divided)
+                      | Q(creator__middle_name__in=divided))
             queryset = queryset.filter(lookup)
         if preparation_level is not None:
             queryset = queryset.filter(directions__plan__preparaion_level=preparation_level)
         if edu_program_groups is not None:
-            queryset = queryset.filter(directions__plan__education_program_group=edu_program_groups)
+            # Группа образовательных программ будет строкой, содержащей код и имя ГОП
+            queryset = queryset.filter(
+                Q(directions__plan__education_program_group__name__icontains=edu_program_groups)
+                | Q(directions__plan__education_program_group__code=edu_program_groups)
+            )
         if application_date is not None:
-            queryset = queryset.filter(created=application_date)
+            queryset = queryset.filter(apply_date=application_date)
 
         page = self.paginate_queryset(queryset)
         serializer = self.serializer_class(page, many=True).data
