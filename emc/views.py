@@ -1,7 +1,6 @@
 from rest_framework.generics import (
     ListAPIView,
     CreateAPIView,
-    RetrieveAPIView,
 )
 from rest_framework.viewsets import ModelViewSet
 from rest_framework.decorators import action
@@ -22,8 +21,7 @@ class EMCModelViewSet(ModelViewSet):
 
     @action(methods=['get'], detail=False, url_path='disciplines', url_name='disciplines')
     def get_disciplines(self, request, pk=None):
-        """Получить список закрпеленных дисциплин в зависомости от роли (студента или учителя)
-        """
+        """Получить список закрпеленных дисциплин в зависомости от роли (студента или учителя)"""
         profile = self.request.user.profile
         is_student = profile.role.is_student
         is_teacher = profile.role.is_teacher
@@ -49,6 +47,7 @@ class EMCModelViewSet(ModelViewSet):
 
     @action(methods=['get'], detail=False, url_path='discipline', url_name='emc-discipline')
     def get_discipline(self, request, pk=None):
+        """Получить список УМК по одной дисциплине в зависомости от роли (студента или учителя)"""
         discipline = request.query_params.get('discipline_uid')
         profile = self.request.user.profile
         is_student = profile.role.is_student
@@ -59,6 +58,19 @@ class EMCModelViewSet(ModelViewSet):
         elif is_teacher:
             discipline = TeacherDiscipline.objects.get(pk=discipline)
             serializer = TeacherDisciplineSerializer(discipline).data
+        else:
+            serializer = None
+        return Response(data=serializer, status=status.HTTP_200_OK)
+
+    @action(methods=['get'], detail=False, url_path='discipline-one', url_name='emc-discipline-one')
+    def get_discipline(self, request, pk=None):
+        """Получить список УМК по одной дисциплине от всех преподавателей"""
+        discipline = request.query_params.get('discipline_name')
+        profile = self.request.user.profile
+        is_teacher = profile.role.is_teacher
+        if is_teacher:
+            discipline = TeacherDiscipline.objects.filter(discipline=discipline)
+            serializer = TeacherDisciplineSerializer(discipline, many=True).data
         else:
             serializer = None
         return Response(data=serializer, status=status.HTTP_200_OK)
@@ -75,20 +87,3 @@ class CreateTeacherEMC(CreateAPIView):
     def perform_create(self, serializer):
         user = self.request.user
         serializer.save(author=user)
-
-
-class EMCListTeacherByDiscipline(ListAPIView):
-    """
-    Это представление отображает УМК(учебно-методический комплекс)
-    преподавателей по одной дисциплине
-    """
-    serializer_class = EMCSerializer
-    permission_classes = (TeacherPermission,)
-
-    def get_queryset(self) -> EMC:
-        name = self.kwargs["discipline"]
-        queryset = EMC.objects.filter(
-            discipline__name=name
-        )
-
-        return queryset
