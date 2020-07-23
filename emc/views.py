@@ -63,9 +63,9 @@ class EMCModelViewSet(ModelViewSet):
         return Response(data=serializer, status=status.HTTP_200_OK)
 
     @action(methods=['get'], detail=False, url_path='discipline-one', url_name='emc-discipline-one')
-    def get_discipline(self, request, pk=None):
+    def get_discipline_one(self, request, pk=None):
         """Получить список УМК по одной дисциплине от всех преподавателей"""
-        discipline = request.query_params.get('discipline_name')
+        discipline = request.query_params.get('discipline')
         profile = self.request.user.profile
         is_teacher = profile.role.is_teacher
         if is_teacher:
