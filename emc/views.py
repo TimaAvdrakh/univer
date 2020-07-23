@@ -12,11 +12,13 @@ from organizations.models import TeacherDiscipline, StudentDiscipline
 from .serializers import EMCSerializer, TeacherDisciplineSerializer, StudentDisciplineSerializer
 from .models import EMC
 from .permissions import TeacherPermission
+from .paginations import SmallResultSetPagination
 
 
 class EMCModelViewSet(ModelViewSet):
     serializer_class = EMCSerializer
     queryset = EMC.objects.all()
+    pagination_class = SmallResultSetPagination
 
     @action(methods=['get'], detail=False, url_path='disciplines', url_name='disciplines')
     def get_disciplines(self, request, pk=None):
@@ -28,12 +30,12 @@ class EMCModelViewSet(ModelViewSet):
         if is_student:
             disciplines = StudentDiscipline.objects.filter(
                 student=profile
-            ).distinct('discipline').order_by('discipline__name')
+            ).distinct('discipline')  # .order_by('discipline__name')
             serializer = StudentDisciplineSerializer(disciplines, many=True).data
         elif is_teacher:
             disciplines = TeacherDiscipline.objects.filter(
                 teacher=profile
-            ).distinct('discipline').order_by('discipline__name')
+            ).distinct('discipline')  # .order_by('discipline__name')
             serializer = TeacherDisciplineSerializer(disciplines, many=True).data
         else:
             serializer = None
@@ -75,23 +77,6 @@ class CreateTeacherEMC(CreateAPIView):
         serializer.save(author=user)
 
 
-class EMCListOneTeacher(ListAPIView):
-    """
-    Это представление отображает УМК(учебно-методический комплекс)
-    преподавателя по его дисциплинам
-    """
-    serializer_class = EMCSerializer
-    permission_classes = (TeacherPermission,)
-
-    def get_queryset(self) -> EMC:
-        user = self.request.user
-        queryset = EMC.objects.filter(
-            author=user
-        )
-
-        return queryset
-
-
 class EMCListTeacherByDiscipline(ListAPIView):
     """
     Это представление отображает УМК(учебно-методический комплекс)
@@ -107,21 +92,3 @@ class EMCListTeacherByDiscipline(ListAPIView):
         )
 
         return queryset
-
-
-class ListStudentEMC(ListAPIView):
-    """
-    Это представление выводит список УМК(учебно-методический комплекс)
-    для авторизованного пользователя, с ролью студент
-    """
-    serializer_class = EMCSerializer
-
-    queryset = EMC.objects.all()
-
-    # def get_queryset(self) -> EMC:
-    #     user = self.request.user
-    #     queryset = EMC.objects.filter(
-    #
-    #     )
-    #
-    #     return queryset

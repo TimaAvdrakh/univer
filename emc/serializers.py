@@ -37,10 +37,12 @@ class EMCSerializer(serializers.ModelSerializer):
         return emc
 
 
-class TeacherDisciplineSerializer(serializers.ModelSerializer):
+class DisciplineSerializer(serializers.ModelSerializer):
     discipline_name = serializers.SerializerMethodField(read_only=True)
     emcs = serializers.SerializerMethodField(read_only=True)
 
+
+class TeacherDisciplineSerializer(DisciplineSerializer):
     def get_emcs(self, td: TeacherDiscipline):
         discipline = td.discipline
         emcs = discipline.emcs.all()
@@ -54,9 +56,7 @@ class TeacherDisciplineSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
-class StudentDisciplineSerializer(serializers.ModelSerializer):
-    discipline_name = serializers.SerializerMethodField(read_only=True)
-    emcs = serializers.SerializerMethodField(read_only=True)
+class StudentDisciplineSerializer(DisciplineSerializer):
 
     def get_emcs(self, td: TeacherDiscipline):
         discipline = td.discipline
