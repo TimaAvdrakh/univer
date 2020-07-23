@@ -29,11 +29,15 @@ class EMCSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         user = self.context['request'].user
+        validated_data['author'] = user
+        # 1. Сохраняем УМК
         emc: EMC = super().create(validated_data)
-        # TODO договориться с фронтовиком насчет field_name в File
-        files = File.objects.filter(gen_uid=ReservedUID.get_uid_by_user(user), field_name=None)
+        # 2. Тащим файлы, загруженные в текущей модалке/форме
+        files = File.objects.filter(gen_uid=ReservedUID.get_uid_by_user(user), field_name=emc.discipline.pk)
         emc.files.set(files)
         emc.save()
+        # Деактивируем UID пользователя, чтобы при заливании новых файлов, не вышли старые со старым UID'ом
+        ReservedUID.deactivate(user)
         return emc
 
 
