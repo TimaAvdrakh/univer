@@ -66,6 +66,32 @@ class EventsViewSet(ModelViewSet):
         paginated_response = self.get_paginated_response(serializer)
         return Response(data=paginated_response.data, status=HTTP_200_OK)
 
+    @action(methods=['get',], detail=False, url_path='supervisor_students', url_name='supervisor_students')
+    def get_supervisor_students(self, request, pk=None):
+        queryset = StudyPlan.objects.filter(advisor=request.user.profile).order_by('group','student__last_name')
+        page = self.paginate_queryset(queryset)
+        serializer = serializers.SupervisorStudentsViewSerializer(page, many=True).data
+        paginated_response = self.get_paginated_response(serializer)
+        return Response(data=paginated_response.data, status=HTTP_200_OK)
+
+    @action(methods=['get',], detail=False, url_path='student_events', url_name='student_events')
+    def get_student_events(self, request, pk=None):
+        student_uid = request.query_params.get('uid', None)
+        try:
+            study_plan = StudyPlan.objects.filter(student=student_uid).first()
+            lookup = Q(creator=student_uid)
+            lookup |= Q(participants__participant_profiles=student_uid)
+            lookup |= Q(participants__group=study_plan.group)
+            lookup |= Q(participants__faculty=study_plan.faculty)
+            lookup |= Q(participants__cathedra=study_plan.cathedra)
+            lookup |= Q(participants__education_programs=study_plan.education_program)
+            # lookup |= Q(participants__education_program_groups=study_plan.education_program.group)
+            events = models.Events.objects.filter(lookup).distinct()
+            serializer = serializers.EventSerializer(events, many=True).data
+            return Response(data=serializer, status=HTTP_200_OK)
+        except StudyPlan.DoesNotExist:
+            return Response(data="Does not exist", status=HTTP_200_OK)
+
 
 class EventsRepetitionTypeViewSet(ModelViewSet):
     queryset = models.RepetitionTypes.objects.all()
