@@ -771,7 +771,7 @@ class ApplicationLiteSerializer(serializers.ModelSerializer):
         ])
         return directions
 
-    def save_history_log(self, creator_profile, status, text=""):
+    def save_history_log(self, application, creator_profile, status, text=""):
         comment = Comment.objects.create(
             text=text,
             creator=creator_profile,
@@ -781,6 +781,7 @@ class ApplicationLiteSerializer(serializers.ModelSerializer):
             author=creator_profile,
             status=status,
             comment=comment,
+            application=application,
         )
 
     def create(self, validated_data: dict):
@@ -1161,6 +1162,14 @@ class ApplicationChangeHistorySerializer(serializers.ModelSerializer):
     status = serializers.CharField()
     comment = CommentsForHistorySerializer(required=True)
     author = serializers.SerializerMethodField(read_only=True)
+    diffs = serializers.SerializerMethodField(read_only=True)
+
+    def get_diffs(self, history: models.ApplicationStatusChangeHistory):
+        application: models.Application = history.application
+        if application:
+            serializer = ChangeLogSerializer(application.diffs, many=True).data
+            return serializer
+        return
 
     def get_author(self, history: models.ApplicationStatusChangeHistory):
         try:
@@ -1176,6 +1185,7 @@ class ApplicationChangeHistorySerializer(serializers.ModelSerializer):
             'status',
             'comment',
             'author',
+            'diffs'
         ]
 
 
