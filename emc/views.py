@@ -3,8 +3,8 @@ from rest_framework.viewsets import ModelViewSet
 from rest_framework.decorators import action
 from rest_framework import status
 from rest_framework.response import Response
-from organizations.models import TeacherDiscipline, StudentDiscipline
-from .serializers import EMCSerializer, TeacherDisciplineSerializer, StudentDisciplineSerializer
+from organizations.models import TeacherDiscipline, StudentDiscipline, StudyPlan
+from .serializers import EMCSerializer, TeacherDisciplineSerializer, StudentDisciplineSerializer, StudyPlanSerializer
 from .models import EMC
 from .permissions import TeacherPermission
 from .paginations import SmallResultSetPagination
@@ -14,6 +14,21 @@ class EMCModelViewSet(ModelViewSet):
     serializer_class = EMCSerializer
     queryset = EMC.objects.all()
     pagination_class = SmallResultSetPagination
+
+    @action(methods=['get'], detail=False, url_path='study_plans', url_name='study_plans')
+    def get_study_plans(self, request, pk=None):
+        """Получить список УП студента"""
+
+        profile = self.request.user.profile
+        is_student = profile.role.is_student
+        if is_student:
+            study_plan = StudyPlan.objects.filter(
+                student=profile,
+            )
+            serializer = StudyPlanSerializer(study_plan, many=True).data
+        else:
+            serializer = None
+        return Response(serializer, status=status.HTTP_200_OK)
 
     @action(methods=['get'], detail=False, url_path='disciplines', url_name='disciplines')
     def get_disciplines(self, request, pk=None):

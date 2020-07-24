@@ -788,6 +788,7 @@ class StudentDiscipline(BaseModel):
         StudyPlan,
         on_delete=models.CASCADE,
         verbose_name='Учебный план',
+        related_name='study_plan'
     )
     acad_period = models.ForeignKey(
         AcadPeriod,
