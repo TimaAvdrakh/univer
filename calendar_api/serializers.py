@@ -210,7 +210,57 @@ class EventLiteSerializer(serializers.ModelSerializer):
             'uid',
             'event_start',
             'event_end',
+            'name',
         ]
+
+
+class SupervisorStudentsViewSerializer(serializers.ModelSerializer):
+    group = serializers.CharField()
+    faculty = serializers.CharField()
+    cathedra = serializers.CharField()
+    education_program = serializers.CharField()
+
+    class Meta:
+        model = StudyPlan
+        fields = [
+            'student',
+            'group',
+            'faculty',
+            'cathedra',
+            'education_program',
+        ]
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance=instance)
+        data['full_name'] = instance.student.full_name
+        return data
+
+
+class ProfileAllEventsAndScheduleSerializer(serializers.ModelSerializer):
+    full_name = serializers.ReadOnlyField()
+
+    class Meta:
+        model = Profile
+        fields = [
+            'uid',
+            'full_name',
+        ]
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance=instance)
+        study_plans = StudyPlan.objects.filter(student=instance).first()
+        events = Events.objects.filter(participants__participant_profiles=instance)
+        lookup = Q()
+        if study_plans:
+            lookup = Q(participants__group=study_plans.group)
+            lookup |= Q(participants__faculty=study_plans.faculty)
+            lookup |= Q(participants__cathedra=study_plans.cathedra)
+            lookup |= Q(participants__education_programs=study_plans.education_programs)
+            lookup |= Q(participants__education_program_groups=study_plans.education_programs.group)
+            data['group'] = study_plans.group.name
+            data['edu_program_group'] = study_plans.education_programs.group
+        events = events.filter(lookup)
+        data['events'] = EventLiteSerializer(events, many=True).data
 
 
 class ProfilesEventsSerializer(serializers.ModelSerializer):
@@ -225,6 +275,7 @@ class ProfilesEventsSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         data = super().to_representation(instance)
+
         event_start, event_start_range, event_end, event_end_range = convert_time(self.context)
         lookup = Q(
             participants__participant_profiles=instance,
