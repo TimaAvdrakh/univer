@@ -682,6 +682,8 @@ class ModeratorViewSet(ModelViewSet):
             #     | Q(directions__plan__education_program_group__code=edu_program_groups)
             # )
         if application_date and len(application_date) > 0:
+            # Костыль, т.к. здесь приходит дата в формате 2020-07-24T11:23:28.312Z
+            application_date = application_date.split('T')[0]
             lookup = lookup & Q(apply_date=application_date)
             # queryset = queryset.filter(apply_date=application_date)
         queryset = self.queryset.filter(lookup).distinct('pk')
