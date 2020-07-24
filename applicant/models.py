@@ -234,8 +234,12 @@ class Address(BaseCatalog):
             self.name_en += f", {self.city.name_en}"
             self.name_ru += f", {self.city.name_ru}"
             self.name_kk += f", {self.city.name_kk}"
+        else:
+            self.name_en += f", {self.city_text}"
+            self.name_ru += f", {self.city_text}"
+            self.name_kk += f", {self.city_text}"
         if self.street:
-            self.name_en += f", St. {self.street}"
+            self.name_en += f", {self.street} St."
             self.name_ru += f", ул. {self.street}"
             self.name_kk += f", {self.street} к."
         if self.home_number:

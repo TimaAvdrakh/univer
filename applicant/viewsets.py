@@ -495,8 +495,8 @@ class ApplicationViewSet(ModelViewSet):
             }
             return Response(data=data, status=HTTP_200_OK)
 
-    @action(methods=['get'], detail=False, url_path='get-main-direction', url_name='get_main_direction')
-    def get_recruitment_plan_by_epg(self, request, pk):
+    @action(methods=['get'], detail=False, url_path='get-budget-directions', url_name='get_budget_directions')
+    def get_budget_directions(self, request, pk=None):
         """Получить основное(ые) напровление(ия)
         Если грантник, получить планы наборов, соответствующих:
         - указанной ГОП,
@@ -519,14 +519,8 @@ class ApplicationViewSet(ModelViewSet):
             if not plans.exists():
                 raise ValidationError({"error": {"msg": "no_directions_for_grant_epg"}})
             return Response(
-                data={
-                    "directions": [
-                        {
-                            "plan": plan.pk,
-                            "order": index
-                        } for index, plan in enumerate(plans[:campaign.chosen_directions_max_count])
-                    ]
-                },
+                data=serializers.RecruitmentPlanSerializer(plans[:campaign.chosen_directions_max_count],
+                                                           many=True).data,
                 status=HTTP_200_OK)
         else:
             return Response(data={"msg": "not an applicant"}, status=HTTP_200_OK)
@@ -655,7 +649,7 @@ class ModeratorViewSet(ModelViewSet):
             return Response(data=paginated_response.data, status=HTTP_200_OK)
 
         lookup = Q()
-        if application_status is not None:
+        if application_status and len(application_status) > 0:
             if application_status == models.NO_QUESTIONNAIRE:
                 lookup = lookup & Q(status=None)
                 # queryset = queryset.filter(status=None)
@@ -663,20 +657,20 @@ class ModeratorViewSet(ModelViewSet):
                 lookup = lookup & Q(status__code=application_status)
                 # queryset = queryset.filter(status__code=application_status)
 
-        if full_name is not None:
+        if full_name and len(full_name) > 0:
             divided = full_name.split()
-            lookup = lookup | (
+            lookup = lookup & (
                     Q(creator__first_name__in=divided)
                     | Q(creator__last_name__in=divided)
                     | Q(creator__middle_name__in=divided)
             )
             # queryset = queryset.filter(lookup)
-        if preparation_level is not None:
-            lookup = lookup | Q(directions__plan__preparaion_level=preparation_level)
+        if preparation_level and len(preparation_level):
+            lookup = lookup & Q(directions__plan__preparaion_level=preparation_level)
             # queryset = queryset.filter(directions__plan__preparaion_level=preparation_level)
-        if edu_program_groups is not None:
+        if edu_program_groups and len(edu_program_groups) > 0:
             # Группа образовательных программ будет строкой, содержащей код и имя ГОП
-            lookup = lookup | (
+            lookup = lookup & (
                 Q(directions__plan__education_program_group__name__icontains=edu_program_groups)
                 | Q(directions__plan__education_program_group__code=edu_program_groups)
             )
@@ -684,10 +678,10 @@ class ModeratorViewSet(ModelViewSet):
             #     Q(directions__plan__education_program_group__name__icontains=edu_program_groups)
             #     | Q(directions__plan__education_program_group__code=edu_program_groups)
             # )
-        if application_date is not None:
-            lookup = lookup | Q(apply_date=application_date)
+        if application_date and len(application_date) > 0:
+            lookup = lookup & Q(apply_date=application_date)
             # queryset = queryset.filter(apply_date=application_date)
-        queryset = self.queryset.filter(lookup)
+        queryset = self.queryset.filter(lookup).distinct('pk')
         page = self.paginate_queryset(queryset)
         serializer = self.serializer_class(page, many=True).data
         paginated_response = self.get_paginated_response(serializer)
