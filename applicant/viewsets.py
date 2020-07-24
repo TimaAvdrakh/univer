@@ -321,7 +321,7 @@ class ApplicationViewSet(ModelViewSet):
                 "msg": "max_selected_directions"
             }})
         is_grant_holder = validated_data.get('is_grant_holder', False)
-        budget_admission_basis = models.EducationBase.objects.get(code='budget')
+        budget_admission_basis = models.EducationBase.objects.get(code=models.EducationBase.BUDGET)
         if is_grant_holder:
             grant = validated_data.get('grant', None)
             grant_epg = models.EducationProgramGroup.objects.get(pk=grant.get('edu_program_group'))
@@ -330,7 +330,7 @@ class ApplicationViewSet(ModelViewSet):
             first_direction = models.RecruitmentPlan.objects.get(
                 pk=list(filter(lambda direction: direction['order_number'] == 0, directions))[0]['plan']
             )
-            full_time_study_form = models.StudyForm.objects.get(code='full-time')
+            full_time_study_form = models.StudyForm.objects.get(code=models.StudyForm.FULL_TIME)
             if (first_direction.education_program_group != grant_epg) or (
                     first_direction.admission_basis != budget_admission_basis) or (
                     first_direction.study_form != full_time_study_form):
@@ -342,9 +342,11 @@ class ApplicationViewSet(ModelViewSet):
             for direction in directions:
                 plan: models.RecruitmentPlan = models.RecruitmentPlan.objects.get(pk=direction['plan'])
                 if plan.admission_basis == budget_admission_basis:
-                    raise ValidationError({'error': {
-                        'msg': 'budget_direction_with_no_grant'
-                    }})
+                    raise ValidationError({
+                        'error': {
+                            'msg': 'budget_direction_with_no_grant'
+                        }
+                    })
 
         international_certs = validated_data.get('international_certs', None)
         if international_certs and not campaign.inter_cert_foreign_lang:
@@ -492,6 +494,42 @@ class ApplicationViewSet(ModelViewSet):
                 "comment": "",
             }
             return Response(data=data, status=HTTP_200_OK)
+
+    @action(methods=['get'], detail=False, url_path='get-main-direction', url_name='get_main_direction')
+    def get_recruitment_plan_by_epg(self, request, pk):
+        """Получить основное(ые) напровление(ия)
+        Если грантник, получить планы наборов, соответствующих:
+        - указанной ГОП,
+        - бюджетной основе поступления,
+        - очной форме обучения,
+        - приемной кампании абитуриента
+        """
+        user = self.request.user
+        if user.profile.role.is_applicant:
+            campaign = user.applicant.campaign
+            epg = models.EducationProgramGroup.objects.get(pk=self.request.query_params.get('epg'))
+            admission_basis = models.EducationBase.objects.get(code=models.EducationBase.BUDGET)
+            study_form = models.StudyForm.objects.get(code=models.StudyForm.FULL_TIME)
+            plans = models.RecruitmentPlan.objects.filter(
+                campaign=campaign,
+                education_program_group=epg,
+                admission_basis=admission_basis,
+                study_form=study_form
+            ).distinct('pk')
+            if not plans.exists():
+                raise ValidationError({"error": {"msg": "no_directions_for_grant_epg"}})
+            return Response(
+                data={
+                    "directions": [
+                        {
+                            "plan": plan.pk,
+                            "order": index
+                        } for index, plan in enumerate(plans[:campaign.chosen_directions_max_count])
+                    ]
+                },
+                status=HTTP_200_OK)
+        else:
+            return Response(data={"msg": "not an applicant"}, status=HTTP_200_OK)
 
 
 class AdmissionCampaignTypeViewSet(ModelViewSet):

@@ -999,10 +999,17 @@ class AdmissionDocumentSerializer(serializers.ModelSerializer):
 
 
 class OrderedDirectionsForModerator(serializers.ModelSerializer):
+    epg_code = serializers.SerializerMethodField(read_only=True)
+
+    def get_epg_code(self, direction: models.OrderedDirection):
+        # Код группы образовательных программ
+        return direction.plan.education_program_group.code
+
     class Meta:
         model = models.OrderedDirection
         fields = [
             'uid',
+            'epg_code',
             'order_number',
         ]
 
@@ -1154,6 +1161,13 @@ class CommentsForHistorySerializer(serializers.ModelSerializer):
 class ApplicationChangeHistorySerializer(serializers.ModelSerializer):
     status = serializers.CharField()
     comment = CommentsForHistorySerializer(required=True)
+    author = serializers.SerializerMethodField(read_only=True)
+
+    def get_author(self, history: models.ApplicationStatusChangeHistory):
+        try:
+            return history.author.full_name
+        except:
+            return ''
 
     class Meta:
         model = models.ApplicationStatusChangeHistory
@@ -1162,6 +1176,7 @@ class ApplicationChangeHistorySerializer(serializers.ModelSerializer):
             'created',
             'status',
             'comment',
+            'author',
         ]
 
 
