@@ -308,6 +308,10 @@ class Education(BaseModel):
         blank=True,
         null=True,
     )
+    modified_for_1c = models.BooleanField(
+        default=False,
+        editable=False,
+    )
 
     def __str__(self):
         return '{} - {}'.format(self.profile.full_name,
