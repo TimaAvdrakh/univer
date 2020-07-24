@@ -20,7 +20,6 @@ from . import models
 from . import serializers
 from .token import token_generator
 
-
 logger = logging.getLogger('django')
 
 
@@ -140,7 +139,7 @@ class ApplicantViewSet(ModelViewSet):
 class QuestionnaireViewSet(ModelViewSet):
     queryset = models.Questionnaire.objects.all()
     serializer_class = serializers.QuestionnaireSerializer
-    
+
     def retrieve(self, request, *args, **kwargs):
         profile = request.user.profile
         questionnaire = self.get_object()
@@ -284,8 +283,10 @@ class ApplicationViewSet(ModelViewSet):
         profile = self.request.user.profile
         done = self.check_done(profile)['done']
         if done:
+            today = dt.date.today()
             application: models.Application = profile.application
             application.status = models.ApplicationStatus.objects.get(code=models.AWAITS_VERIFICATION)
+            application.apply_date = today
             application.save()
             return Response(data={'ok': True}, status=HTTP_200_OK)
         else:
@@ -320,6 +321,7 @@ class ApplicationViewSet(ModelViewSet):
                 "msg": "max_selected_directions"
             }})
         is_grant_holder = validated_data.get('is_grant_holder', False)
+        budget_admission_basis = models.EducationBase.objects.get(code=models.EducationBase.BUDGET)
         if is_grant_holder:
             grant = validated_data.get('grant', None)
             grant_epg = models.EducationProgramGroup.objects.get(pk=grant.get('edu_program_group'))
@@ -328,14 +330,24 @@ class ApplicationViewSet(ModelViewSet):
             first_direction = models.RecruitmentPlan.objects.get(
                 pk=list(filter(lambda direction: direction['order_number'] == 0, directions))[0]['plan']
             )
-            budget_admission_basis = models.EducationBase.objects.get(code='budget')
-            full_time_study_form = models.StudyForm.objects.get(code='full-time')
+            full_time_study_form = models.StudyForm.objects.get(code=models.StudyForm.FULL_TIME)
             if (first_direction.education_program_group != grant_epg) or (
                     first_direction.admission_basis != budget_admission_basis) or (
                     first_direction.study_form != full_time_study_form):
                 raise ValidationError({'error': {
                     "msg": "direction_and_grant_no_match"
                 }})
+        else:
+            # проверить направления на то, чтобы в них не было бюджетной основы поступления если не грантник
+            for direction in directions:
+                plan: models.RecruitmentPlan = models.RecruitmentPlan.objects.get(pk=direction['plan'])
+                if plan.admission_basis == budget_admission_basis:
+                    raise ValidationError({
+                        'error': {
+                            'msg': 'budget_direction_with_no_grant'
+                        }
+                    })
+
         international_certs = validated_data.get('international_certs', None)
         if international_certs and not campaign.inter_cert_foreign_lang:
             validated_data['international_certs'] = None
@@ -483,6 +495,42 @@ class ApplicationViewSet(ModelViewSet):
             }
             return Response(data=data, status=HTTP_200_OK)
 
+    @action(methods=['get'], detail=False, url_path='get-main-direction', url_name='get_main_direction')
+    def get_recruitment_plan_by_epg(self, request, pk):
+        """Получить основное(ые) напровление(ия)
+        Если грантник, получить планы наборов, соответствующих:
+        - указанной ГОП,
+        - бюджетной основе поступления,
+        - очной форме обучения,
+        - приемной кампании абитуриента
+        """
+        user = self.request.user
+        if user.profile.role.is_applicant:
+            campaign = user.applicant.campaign
+            epg = models.EducationProgramGroup.objects.get(pk=self.request.query_params.get('epg'))
+            admission_basis = models.EducationBase.objects.get(code=models.EducationBase.BUDGET)
+            study_form = models.StudyForm.objects.get(code=models.StudyForm.FULL_TIME)
+            plans = models.RecruitmentPlan.objects.filter(
+                campaign=campaign,
+                education_program_group=epg,
+                admission_basis=admission_basis,
+                study_form=study_form
+            ).distinct('pk')
+            if not plans.exists():
+                raise ValidationError({"error": {"msg": "no_directions_for_grant_epg"}})
+            return Response(
+                data={
+                    "directions": [
+                        {
+                            "plan": plan.pk,
+                            "order": index
+                        } for index, plan in enumerate(plans[:campaign.chosen_directions_max_count])
+                    ]
+                },
+                status=HTTP_200_OK)
+        else:
+            return Response(data={"msg": "not an applicant"}, status=HTTP_200_OK)
+
 
 class AdmissionCampaignTypeViewSet(ModelViewSet):
     queryset = models.AdmissionCampaignType.objects.all()
@@ -518,10 +566,10 @@ class AdmissionCampaignViewSet(ModelViewSet):
 class AddressViewSet(ModelViewSet):
     queryset = models.Address.objects.all()
     serializer_class = serializers.AddressSerializer
-    
+
     def retrieve(self, request, *args, **kwargs):
         return Response(data={'msg': 'no address'})
-    
+
     def list(self, request, *args, **kwargs):
         return Response(data={'msg': 'no addresses'})
 
@@ -560,12 +608,12 @@ class AddressViewSet(ModelViewSet):
 class AdmissionDocumentViewSet(ModelViewSet):
     queryset = models.AdmissionDocument.objects.order_by('created')
     serializer_class = serializers.AdmissionDocumentSerializer
-    
+
     def get_serializer_class(self, *args, **kwargs):
         if self.action == 'list':
             return serializers.AdmissionLiteDocument
         return serializers.AdmissionDocumentSerializer
-    
+
     def retrieve(self, request, *args, **kwargs):
         profile = request.user.profile
         document: models.AdmissionDocument = self.get_object()
@@ -589,8 +637,8 @@ class ModeratorViewSet(ModelViewSet):
     serializer_class = serializers.ModeratorSerializer
     pagination_class = CustomPagination
 
-    def list(self, request):
-        queryset = self.queryset
+    def list(self, request, *args, **kwargs):
+        # queryset = self.queryset
         application_status = request.query_params.get('status')
         full_name = request.query_params.get('full_name')
         preparation_level = request.query_params.get('preparation_level')
@@ -606,24 +654,40 @@ class ModeratorViewSet(ModelViewSet):
             paginated_response = self.get_paginated_response(serializer)
             return Response(data=paginated_response.data, status=HTTP_200_OK)
 
+        lookup = Q()
         if application_status is not None:
             if application_status == models.NO_QUESTIONNAIRE:
-                queryset = queryset.filter(status=None)
+                lookup = lookup & Q(status=None)
+                # queryset = queryset.filter(status=None)
             else:
-                queryset = queryset.filter(status__code=application_status)
+                lookup = lookup & Q(status__code=application_status)
+                # queryset = queryset.filter(status__code=application_status)
 
         if full_name is not None:
-            lookup = Q(creator__first_name__contains=full_name) \
-                     | Q(creator__last_name__contains=full_name) \
-                     | Q(creator__middle_name__contains=full_name)
-            queryset = queryset.filter(lookup)
+            divided = full_name.split()
+            lookup = lookup | (
+                    Q(creator__first_name__in=divided)
+                    | Q(creator__last_name__in=divided)
+                    | Q(creator__middle_name__in=divided)
+            )
+            # queryset = queryset.filter(lookup)
         if preparation_level is not None:
-            queryset = queryset.filter(directions__plan__preparaion_level=preparation_level)
+            lookup = lookup | Q(directions__plan__preparaion_level=preparation_level)
+            # queryset = queryset.filter(directions__plan__preparaion_level=preparation_level)
         if edu_program_groups is not None:
-            queryset = queryset.filter(directions__plan__education_program_group=edu_program_groups)
+            # Группа образовательных программ будет строкой, содержащей код и имя ГОП
+            lookup = lookup | (
+                Q(directions__plan__education_program_group__name__icontains=edu_program_groups)
+                | Q(directions__plan__education_program_group__code=edu_program_groups)
+            )
+            # queryset = queryset.filter(
+            #     Q(directions__plan__education_program_group__name__icontains=edu_program_groups)
+            #     | Q(directions__plan__education_program_group__code=edu_program_groups)
+            # )
         if application_date is not None:
-            queryset = queryset.filter(created=application_date)
-
+            lookup = lookup | Q(apply_date=application_date)
+            # queryset = queryset.filter(apply_date=application_date)
+        queryset = self.queryset.filter(lookup)
         page = self.paginate_queryset(queryset)
         serializer = self.serializer_class(page, many=True).data
         paginated_response = self.get_paginated_response(serializer)

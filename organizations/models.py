@@ -48,6 +48,8 @@ class DisciplineComponent(BaseCatalog):
 
 
 class StudyForm(BaseCatalog):
+    FULL_TIME = 'full-time'
+
     class Meta:
         verbose_name = 'Форма обучения'
         verbose_name_plural = 'Формы обучения'
@@ -146,6 +148,8 @@ class Group(BaseCatalog):
 #
 
 class EducationBase(BaseCatalog):
+    BUDGET = 'budget'
+
     class Meta:
         verbose_name = 'Основа обучения'
         verbose_name_plural = 'Основы обучения'
