@@ -14,6 +14,7 @@ from rest_framework.response import Response
 from rest_framework.status import HTTP_200_OK
 from rest_framework.viewsets import ModelViewSet
 from common.paginators import CustomPagination
+from common.serializers import ChangeLogSerializer
 from univer_admin.permissions import IsAdminOrReadOnly
 from portal_users.models import Profile
 from . import models
@@ -721,8 +722,13 @@ class ModeratorViewSet(ModelViewSet):
         queryset = self.queryset.get(pk=application_uid)
         history = models.ApplicationStatusChangeHistory.objects.filter(author=queryset.creator)
         if history.exists():
-            return Response(data=serializers.ApplicationChangeHistorySerializer(history, many=True).data,
-                            status=HTTP_200_OK)
+            return Response(
+                data={
+                    'history': serializers.ApplicationChangeHistorySerializer(history, many=True).data,
+                    'diffs': ChangeLogSerializer(queryset.diffs, many=True).data
+                },
+                status=HTTP_200_OK
+            )
         else:
             return Response(data=None, status=HTTP_200_OK)
 

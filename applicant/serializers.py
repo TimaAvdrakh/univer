@@ -1162,14 +1162,6 @@ class ApplicationChangeHistorySerializer(serializers.ModelSerializer):
     status = serializers.CharField()
     comment = CommentsForHistorySerializer(required=True)
     author = serializers.SerializerMethodField(read_only=True)
-    diffs = serializers.SerializerMethodField(read_only=True)
-
-    def get_diffs(self, history: models.ApplicationStatusChangeHistory):
-        application: models.Application = history.application
-        if application:
-            serializer = ChangeLogSerializer(application.diffs, many=True).data
-            return serializer
-        return
 
     def get_author(self, history: models.ApplicationStatusChangeHistory):
         try:
