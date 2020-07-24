@@ -502,6 +502,12 @@ class Applicant(BaseModel):
         blank=True,
         null=True
     )
+    uid_1c = models.CharField(
+        max_length=64,
+        verbose_name='UID документа в 1С',
+        blank=True,
+        null=True,
+    )
 
     class Meta:
         verbose_name = "Абитуриент"
@@ -910,6 +916,12 @@ class Privilege(BaseModel):
         blank=True,
         null=True,
     )
+    uid_1c = models.CharField(
+        max_length=64,
+        verbose_name='UID документа в 1С',
+        blank=True,
+        null=True,
+    )
 
     class Meta:
         verbose_name = "Льгота"
@@ -1038,6 +1050,11 @@ class RecruitmentPlan(BaseModel):
         null=True,
         verbose_name='Язык обучения'
     )
+    contest_group_uid = models.TextField(
+        blank=True,
+        null=True,
+        verbose_name='UID конкурсной группы'
+    )
 
     class Meta:
         verbose_name = "План набора"
@@ -1110,6 +1127,22 @@ class TestCert(BaseModel):
         on_delete=models.CASCADE,
         verbose_name="Профиль пользователя",
         related_name='my_test_certs'
+    )
+    serial_number = models.CharField(
+        max_length=100,
+        blank=True,
+        null=True,
+        verbose_name='Серия сетрификата'
+    )
+    test_date = models.DateField(
+        verbose_name='День сдачи тестирования',
+        null=True,
+    )
+    uid_1c = models.CharField(
+        max_length=64,
+        verbose_name='UID документа в 1С',
+        blank=True,
+        null=True,
     )
 
     class Meta:
@@ -1194,6 +1227,12 @@ class InternationalCert(BaseModel):
         blank=True,
         verbose_name='Документ'
     )
+    uid_1c = models.CharField(
+        max_length=64,
+        verbose_name='UID документа в 1С',
+        blank=True,
+        null=True,
+    )
 
     class Meta:
         verbose_name = "Международный сертификат"
@@ -1259,6 +1298,12 @@ class Grant(BaseModel):
         null=True,
         on_delete=models.SET_NULL,
         verbose_name='Скан'
+    )
+    uid_1c = models.CharField(
+        max_length=64,
+        verbose_name='UID документа в 1С',
+        blank=True,
+        null=True,
     )
 
     class Meta:
@@ -1442,6 +1487,12 @@ class Application(BaseModel):
     status_action = models.BooleanField(
         default=False,
         verbose_name='Статус действия модератором',
+    )
+    uid_1c = models.CharField(
+        max_length=64,
+        verbose_name='UID документа в 1С',
+        blank=True,
+        null=True,
     )
 
     class Meta:
