@@ -4,10 +4,12 @@ from django.contrib.auth.models import User
 
 
 class EMC(BaseModel):
+    name = models.CharField(max_length=250)
     discipline = models.ForeignKey(
         'organizations.Discipline',
         on_delete=models.CASCADE,
-        related_name='emcs'
+        related_name='emcs',
+        blank=True, null=True
     )
     language = models.ForeignKey(
         'organizations.Language',

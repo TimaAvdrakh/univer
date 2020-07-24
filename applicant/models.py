@@ -227,15 +227,19 @@ class Address(BaseCatalog):
             self.name_ru = f"{self.country.name_ru}"
             self.name_kk = f"{self.country.name_kk}"
         if self.region:
-            self.name_en += f", {self.region.name_en} region"
-            self.name_ru += f", область {self.region.name_ru}"
-            self.name_kk += f", {self.region.name_kk} облысы"
+            self.name_en += f", {self.region.name_en}"
+            self.name_ru += f", {self.region.name_ru}"
+            self.name_kk += f", {self.region.name_kk}"
         if self.city:
-            self.name_en += f", {self.city.name_en} city, "
-            self.name_ru += f", г.{self.city.name_ru}, "
-            self.name_kk += f", {self.city.name_kk} қ., "
+            self.name_en += f", {self.city.name_en}"
+            self.name_ru += f", {self.city.name_ru}"
+            self.name_kk += f", {self.city.name_kk}"
+        else:
+            self.name_en += f", {self.city_text}"
+            self.name_ru += f", {self.city_text}"
+            self.name_kk += f", {self.city_text}"
         if self.street:
-            self.name_en += f", St. {self.street}"
+            self.name_en += f", {self.street} St."
             self.name_ru += f", ул. {self.street}"
             self.name_kk += f", {self.street} к."
         if self.home_number:
@@ -597,6 +601,7 @@ class Questionnaire(BaseModel):
     ID_DOCUMENT_FN = 'id'
     # имя поля льготы
     PRIVILEGE_FN = 'privilege'
+    # имя поля аватар
     MATCH_REG = 0
     MATCH_TMP = 1
     MATCH_RES = 3
@@ -1491,6 +1496,11 @@ class Application(BaseModel):
     uid_1c = models.CharField(
         max_length=64,
         verbose_name='UID документа в 1С',
+        blank=True,
+        null=True,
+    )
+    apply_date = models.DateField(
+        verbose_name='Дата подачи заявления',
         blank=True,
         null=True,
     )

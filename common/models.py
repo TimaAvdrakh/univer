@@ -539,6 +539,13 @@ class InstitutionConfig(BaseModel):
         upload_to='upload',
         verbose_name='Задний фон',
     )
+    max_file_size = models.PositiveIntegerField(
+        verbose_name='Максимально допустимый размер файла (в мегабайтах МБ)',
+        blank=True,
+        null=True,
+        default=10,
+        validators=[MaxValueValidator(500)]
+    )
 
     class Meta:
         verbose_name = 'Настройки образовательного учреждения'
@@ -546,6 +553,20 @@ class InstitutionConfig(BaseModel):
 
     def __str__(self):
         return 'Настройки ОУ'
+
+    @property
+    def max_file_byte_size(self):
+        megabyte = 1024 ** 2  # 1MB
+        return self.max_file_size * megabyte
+
+    @staticmethod
+    def get_config():
+        return InstitutionConfig.objects.first()
+
+    def save(self, *args, **kwargs):
+        if InstitutionConfig.objects.exists() and not self.pk:
+            raise Exception('Config of institute already exists')
+        super().save(*args, **kwargs)
 
 
 class ReservedUID(BaseModel):
@@ -562,6 +583,10 @@ class ReservedUID(BaseModel):
             return reserved_uid.pk
         except ReservedUID.DoesNotExist:
             return
+
+    @staticmethod
+    def deactivate(user):
+        ReservedUID.objects.filter(user=user).update(is_active=False)
 
     class Meta:
         verbose_name = 'Резервированный UID'
