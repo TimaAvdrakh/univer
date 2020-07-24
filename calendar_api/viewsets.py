@@ -82,15 +82,22 @@ class ReserveRoomViewSet(ModelViewSet):
         queryset = self.queryset
         event_start = request.query_params.get("event_start")
         event_end = request.query_params.get("event_end")
-        room_type = request.query_params.get("room_type")
-        department = request.query_params.get("department")
+        room_type = request.query_params.get("room_type", None)
+        department = request.query_params.get("department", None)
+
+        room_name = request.query_params.get("room_name", None)
+
         if event_start is None or event_end is None:
             raise ValidationError({"error": "date_not_given"})
         lookup = Q()
+
+        if room_name is not None:
+            lookup = Q(name__contains=room_name)
         if room_type is not None:
             lookup = lookup & Q(type=room_type)
         if department is not None:
             lookup = lookup & Q(department=department)
+
         queryset = queryset.filter(lookup)
         context = {
             "event_start": event_start,
@@ -127,11 +134,20 @@ class ProfileChooseViewSet(ModelViewSet):
 
         role = request.query_params.get("role", None)
 
+        full_name = request.query_params.get('full_name', None)
+
+        lookup = Q()
+
+        if full_name is not None:
+            lookup = Q(first_name__contains=full_name)
+            lookup |= Q(last_name__contains=full_name)
+            lookup |= Q(middle_name__contains=full_name)
+
         study_plans = StudyPlan.objects.filter(lookup_and_filtration(
             group, faculty, cathedra, edu_program, edu_program_group
         )).values_list('student')
 
-        queryset = self.queryset
+        queryset = self.queryset.filter(lookup)
 
         if study_plans.exists():
             queryset = queryset.filter(pk__in=study_plans)
