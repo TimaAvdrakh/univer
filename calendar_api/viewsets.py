@@ -102,7 +102,7 @@ class ReserveRoomViewSet(ModelViewSet):
 
 
 class ProfileChooseViewSet(ModelViewSet):
-    queryset = StudyPlan.objects.filter(is_active=True)
+    queryset = Profile.objects.filter(is_active=True)
     serializer_class = serializers.ProfilesEventsSerializer
     permission_classes = (IsAdminOrReadOnly,)
     pagination_class = CustomPagination
@@ -113,22 +113,36 @@ class ProfileChooseViewSet(ModelViewSet):
         event_end = request.query_params.get("event_end", None)
         if event_start is None or event_end is None:
             raise ValidationError({"error": "event_start and event_end query params required"})
+
         group = request.query_params.get("group", None)
         faculty = request.query_params.get("faculty", None)
         cathedra = request.query_params.get("cathedra", None)
         edu_program = request.query_params.get("education_program", None)
         edu_program_group = request.query_params.get("education_program_group", None)
 
-        queryset = self.queryset.filter(lookup_and_filtration(
+        role = request.query_params.get("role", None)
+
+        study_plans = StudyPlan.objects.filter(lookup_and_filtration(
             group, faculty, cathedra, edu_program, edu_program_group
-        ))
+        )).values_list('student')
+
+        queryset = self.queryset
+
+        if study_plans.exists():
+            queryset = queryset.filter(pk__in=study_plans)
+        if role is not None:
+            queryset = queryset.filter(role_name__role_name=role)
+
         paginated_queryset = self.paginate_queryset(queryset)
+
         context = {
             "event_start": self.request.query_params.get("event_start"),
             "event_end": self.request.query_params.get("event_end")
         }
+
         serializer = self.serializer_class(paginated_queryset, many=True, context=context).data
         paginated_response = self.get_paginated_response(serializer)
+
         return Response(data=paginated_response.data, status=HTTP_200_OK)
 
     @action(methods=['get'], detail=False, url_path='groups', url_name='groups')

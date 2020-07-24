@@ -209,35 +209,53 @@ class EventLiteSerializer(serializers.ModelSerializer):
 
 
 class ProfilesEventsSerializer(serializers.ModelSerializer):
+    full_name = serializers.ReadOnlyField()
+
     class Meta:
-        model = StudyPlan
+        model = Profile
         fields = [
-            'student',
+            'uid',
+            'full_name',
         ]
 
     def to_representation(self, instance):
         data = super().to_representation(instance)
-        data['full_name'] = f"{instance.student.first_name} {instance.student.last_name} {instance.student.middle_name}"
         event_start, event_start_range, event_end, event_end_range = convert_time(self.context)
-
-        profile_events = Events.objects.filter(
-            Q(participants__participant_profiles=instance.student)|
-            Q(participants__group=instance.group)|
-            Q(participants__faculty=instance.faculty)|
-            Q(participants__cathedra=instance.cathedra)|
-            Q(participants__education_programs=instance.education_program),
+        lookup = Q(
+            participants__participant_profiles=instance,
             event_start__gte=event_start_range,
             event_end__lte=event_end_range,
-        ).distinct('pk')
-        profile_events_data = EventLiteSerializer(profile_events.order_by('pk'), many=True).data
+        )
+
+        study_plan = instance.studyplan_set.all()
+        if study_plan.exist():
+            lookup = lookup | Q(participants__group=instance.studyplan_set.group)
+            lookup = lookup | Q(participants__faculty=instance.studyplan_set.faculty)
+            lookup = lookup | Q(participants__cathedra=instance.studyplan_set.cathedra)
+            lookup = lookup | Q(participants__education_programs=instance.studyplan_set.education_program)
+
+        profile_events = Events.objects.filter(lookup).distinct()
+
+        profile_events_data = EventLiteSerializer(profile_events.order_by('event_start'), many=True).data
         data['events'] = profile_events_data
 
-        all_lessons = LessonStudent.objects.filter(student=instance.student).values_list('flow_uid')
-        lessons = Lesson.objects.filter(
-            flow_uid__in=all_lessons,
-            date__gte=event_start_range.date(),
-            date__lte=event_end_range.date(),
-        ).order_by('date', 'time')
+        lessons = []
+
+        if instance.role.is_student:
+            all_lessons = LessonStudent.objects.filter(student=instance).values_list('flow_uid')
+            lessons = Lesson.objects.filter(
+                flow_uid__in=all_lessons,
+                date__gte=event_start_range.date(),
+                date__lte=event_end_range.date(),
+            ).order_by('date', 'time')
+
+        if instance.role.is_teacher:
+            lessons = Lesson.objects.filter(
+                teachers=instance,
+                ate__gte=event_start_range.date(),
+                date__lte=event_end_range.date(),
+            ).order_by('date', 'time')
+
         data['lessons'] = ScheduleSerializer(lessons, many=True).data
 
         profile_events = profile_events.filter(
@@ -251,7 +269,7 @@ class ProfilesEventsSerializer(serializers.ModelSerializer):
             )
         ).distinct('pk')
 
-        #TODO Написать проверку совпадает ли событие с временем занятия если нужно
+        # TODO Написать проверку совпадает ли событие с временем занятия если нужно
 
         if profile_events.exists():
             data['profile_reserved'] = True

@@ -6,7 +6,7 @@ from organizations import models as org_models
 from common.utils import get_sentinel_user
 from common.utils import password_generator
 from cron_app.models import CredentialsEmailTask
-from django.db.models import Max
+from django.db.models import Max, Q
 from validate_email import validate_email
 from portal.curr_settings import INACTIVE_STUDENT_STATUSES
 from schedules.models import LessonStudent
@@ -223,7 +223,8 @@ class Profile(BaseModel):
                     )
                     username = raw_username
                 else:
-                    max_order = UsernameRule.objects.filter(raw_username=raw_username).aggregate(max_order=Max('order'))[
+                    max_order = \
+                    UsernameRule.objects.filter(raw_username=raw_username).aggregate(max_order=Max('order'))[
                         'max_order']
                     new_max = max_order + 1
                     UsernameRule.objects.create(
@@ -292,7 +293,6 @@ class Profile(BaseModel):
             self.first_name,
             self.middle_name
         )
-
 
     @property
     def name_initial(self):
@@ -705,3 +705,113 @@ class InfoShowPermission(BaseModel):
     class Meta:
         verbose_name = 'Разрешение для отображения инфо пользователя'
         verbose_name_plural = 'Разрешения для отображения инфо пользователя'
+
+
+class RoleNames(BaseCatalog):
+    class Meta:
+        verbose_name = "Католог наименования роли"
+        verbose_name_plural = "Каталог наименования ролей"
+
+    def __str__(self):
+        return self.name
+
+    @staticmethod
+    def create_or_update():
+        roles = [
+            {
+                "name": "Студент",
+                "code": "IS_STUDENT",
+            },
+            {
+                "name": "Преподаватель",
+                "code": "IS_TEACHER",
+            },
+            {
+                "name": "Администратор организации",
+                "code": "IS_ORG_ADMIN",
+            },
+            {
+                "name": "Эдвайзор",
+                "code": "is_supervisor".upper(),
+            },
+            {
+                "name": "Абитуриент",
+                "code": "is_applicant".upper(),
+            },
+            {
+                "name": "Модератор",
+                "code": "is_mod".upper(),
+            },
+        ]
+        for role in roles:
+            match = RoleNames.objects.filter(code=role["code"])
+            if match.exists():
+                match.update(**role)
+            else:
+                RoleNames.objects.create(**role)
+
+
+def copy_role(role, profiles):
+    for profile in profiles:
+        lookup = Q(
+            role_name=role,
+            profile=profile
+        )
+        if not RoleNamesRelated.objects.filter(lookup).exists():
+            RoleNamesRelated.objects.create(
+                role_name=role,
+                profile=profile,
+            )
+
+
+class RoleNamesRelated(BaseModel):
+    profile = models.ForeignKey(
+        Profile,
+        blank=True,
+        null=True,
+        on_delete=models.CASCADE,
+        verbose_name="Профиль",
+        related_name="role_name",
+    )
+
+    role_name = models.ForeignKey(
+        RoleNames,
+        blank=True,
+        null=True,
+        on_delete=models.CASCADE,
+        verbose_name="Имя роли",
+    )
+
+    class Meta:
+        verbose_name = "Отношение роли к профилю"
+        verbose_name_plural = "Отношение ролей к профилям"
+
+    def __str__(self):
+        return f"{self.profile.full_name} роль {self.role_name.name}"
+
+    @staticmethod
+    def copy_from_roles():
+        role_names = RoleNames.objects.all()
+        for role in role_names:
+            if role.code == "IS_STUDENT":
+                profiles = Profile.objects.filter(role__is_student=True)
+                copy_role(role, profiles)
+            if role.code == "IS_TEACHER":
+                profiles = Profile.objects.filter(role__is_teacher=True)
+                copy_role(role, profiles)
+            if role.code == "IS_ORG_ADMIN":
+                profiles = Profile.objects.filter(role__is_org_admin=True)
+                copy_role(role, profiles)
+            if role.code == "is_supervisor".upper():
+                profiles = Profile.objects.filter(role__is_supervisor=True)
+                copy_role(role, profiles)
+            if role.code == "is_applicant".upper():
+                profiles = Profile.objects.filter(role__is_applicant=True)
+                copy_role(role, profiles)
+            if role.code == "is_mod".upper():
+                profiles = Profile.objects.filter(role__is_mod=True)
+                copy_role(role, profiles)
+
+
+
+
