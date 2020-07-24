@@ -12,7 +12,12 @@ from rest_framework.response import Response
 from rest_framework.status import HTTP_200_OK
 from rest_framework.viewsets import ModelViewSet
 from common.paginators import CustomPagination
-from portal_users.models import Profile
+from portal_users.models import (
+    Profile,
+    RoleNames,
+    Role,
+    RoleNamesRelated,
+)
 from schedules.models import (
     Room,
     RoomType,
@@ -77,15 +82,22 @@ class ReserveRoomViewSet(ModelViewSet):
         queryset = self.queryset
         event_start = request.query_params.get("event_start")
         event_end = request.query_params.get("event_end")
-        room_type = request.query_params.get("room_type")
-        department = request.query_params.get("department")
+        room_type = request.query_params.get("room_type", None)
+        department = request.query_params.get("department", None)
+
+        room_name = request.query_params.get("room_name", None)
+
         if event_start is None or event_end is None:
             raise ValidationError({"error": "date_not_given"})
         lookup = Q()
+
+        if room_name is not None:
+            lookup = Q(name__contains=room_name)
         if room_type is not None:
             lookup = lookup & Q(type=room_type)
         if department is not None:
             lookup = lookup & Q(department=department)
+
         queryset = queryset.filter(lookup)
         context = {
             "event_start": event_start,
@@ -102,7 +114,7 @@ class ReserveRoomViewSet(ModelViewSet):
 
 
 class ProfileChooseViewSet(ModelViewSet):
-    queryset = StudyPlan.objects.filter(is_active=True)
+    queryset = Profile.objects.filter(is_active=True)
     serializer_class = serializers.ProfilesEventsSerializer
     permission_classes = (IsAdminOrReadOnly,)
     pagination_class = CustomPagination
@@ -113,22 +125,46 @@ class ProfileChooseViewSet(ModelViewSet):
         event_end = request.query_params.get("event_end", None)
         if event_start is None or event_end is None:
             raise ValidationError({"error": "event_start and event_end query params required"})
+
         group = request.query_params.get("group", None)
         faculty = request.query_params.get("faculty", None)
         cathedra = request.query_params.get("cathedra", None)
         edu_program = request.query_params.get("education_program", None)
         edu_program_group = request.query_params.get("education_program_group", None)
 
-        queryset = self.queryset.filter(lookup_and_filtration(
+        role = request.query_params.get("role", None)
+
+        full_name = request.query_params.get('full_name', None)
+
+        lookup = Q()
+
+        if full_name is not None:
+            lookup = Q(first_name__contains=full_name)
+            lookup |= Q(last_name__contains=full_name)
+            lookup |= Q(middle_name__contains=full_name)
+
+        study_plans = StudyPlan.objects.filter(lookup_and_filtration(
             group, faculty, cathedra, edu_program, edu_program_group
-        ))
+        )).values_list('student')
+
+        queryset = self.queryset.filter(lookup)
+
+        if study_plans.exists():
+            queryset = queryset.filter(pk__in=study_plans)
+        if role is not None:
+            profiles_from_role_related = RoleNamesRelated.objects.filter(role_name=role).values_list('profile')
+            queryset = queryset.filter(pk__in=profiles_from_role_related)
+
         paginated_queryset = self.paginate_queryset(queryset)
+
         context = {
             "event_start": self.request.query_params.get("event_start"),
             "event_end": self.request.query_params.get("event_end")
         }
+
         serializer = self.serializer_class(paginated_queryset, many=True, context=context).data
         paginated_response = self.get_paginated_response(serializer)
+
         return Response(data=paginated_response.data, status=HTTP_200_OK)
 
     @action(methods=['get'], detail=False, url_path='groups', url_name='groups')
@@ -180,11 +216,17 @@ class ProfileChooseViewSet(ModelViewSet):
         )
         return Response(data=serializer.data, status=HTTP_200_OK)
 
+    @action(methods=['get'], detail=False, url_path='role_names', url_name='role_names')
+    def get_role_names(self, request, pk=None):
+        role_names = RoleNames.objects.filter(is_active=True).order_by('name')
+        serializer = serializers.RolenNamesSerializer(role_names, many=True).data
+        return Response(data=serializer, status=HTTP_200_OK)
+
 
 class ScheduleViewSet(ModelViewSet):
     queryset = Lesson.objects.filter(is_active=True)
     serializer_class = serializers.ScheduleSerializer
-    permission_classes = (IsAdminOrReadOnly, )
+    permission_classes = (IsAdminOrReadOnly,)
 
     def list(self, request):
         queryset = self.queryset
@@ -202,7 +244,3 @@ class ScheduleViewSet(ModelViewSet):
         queryset = queryset.order_by('date', 'time')
         serializer = self.serializer_class(queryset, many=True).data
         return Response(data=serializer, status=HTTP_200_OK)
-
-
-
-
