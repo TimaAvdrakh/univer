@@ -656,14 +656,17 @@ class ModeratorViewSet(ModelViewSet):
             else:
                 lookup = lookup & Q(status__code=application_status)
                 # queryset = queryset.filter(status__code=application_status)
-
         if full_name and len(full_name) > 0:
-            divided = full_name.split()
-            lookup = lookup & (
-                    Q(creator__first_name__in=divided)
-                    | Q(creator__last_name__in=divided)
-                    | Q(creator__middle_name__in=divided)
-            )
+            full_name_lookup = Q()
+            lookups = [
+                'creator__first_name__icontains',
+                'creator__last_name__icontains',
+                'creator__middle_name__icontains'
+            ]
+            container = [Q(**{name_lookup: name_value}) for name_lookup in lookups for name_value in full_name.split()]
+            for item in container:
+                full_name_lookup.add(item, Q.OR)
+            lookup = lookup & full_name_lookup
             # queryset = queryset.filter(lookup)
         if preparation_level and len(preparation_level):
             lookup = lookup & Q(directions__plan__preparaion_level=preparation_level)
