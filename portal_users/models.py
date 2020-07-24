@@ -596,6 +596,10 @@ class ProfilePhone(BaseModel):
         max_length=50,
         verbose_name='Номер телефона',
     )
+    modified_for_1c = models.BooleanField(
+        default=False,
+        editable=False,
+    )
 
     # def save(self, *args, **kwargs):
     #     if self.exchange and self._state.adding:

@@ -220,6 +220,10 @@ class Address(BaseCatalog):
         blank=True,
         null=True
     )
+    modified_for_1c = models.BooleanField(
+        default=False,
+        editable=False,
+    )
 
     def save(self, *args, **kwargs):
         if self.country:
@@ -277,6 +281,10 @@ class Family(BaseModel):
         on_delete=models.CASCADE,
         blank=True,
         null=True,
+    )
+    modified_for_1c = models.BooleanField(
+        default=False,
+        editable=False,
     )
 
     class Meta:
@@ -370,6 +378,10 @@ class FamilyMember(BaseModel):
     email = models.EmailField(
         max_length=500,
         verbose_name="Email"
+    )
+    modified_for_1c = models.BooleanField(
+        default=False,
+        editable=False,
     )
 
     class Meta:
@@ -511,6 +523,10 @@ class Applicant(BaseModel):
         verbose_name='UID документа в 1С',
         blank=True,
         null=True,
+    )
+    modified_for_1c = models.BooleanField(
+        default=False,
+        editable=False,
     )
 
     class Meta:
@@ -791,6 +807,10 @@ class Questionnaire(BaseModel):
         default=False,
         verbose_name='Имеет льготы'
     )
+    modified_for_1c = models.BooleanField(
+        default=False,
+        editable=False,
+    )
 
     class Meta:
         verbose_name = "Анкета"
@@ -801,6 +821,21 @@ class Questionnaire(BaseModel):
             return f"Абитуриент {self.creator.full_name}"
         else:
             return f"Абитуриент {self.first_name_en} {self.last_name_en}"
+
+    @property
+    def diffs(self):
+        diffs = []
+        diffs.extend(self.family.diffs)
+        for member in self.family.members.all():
+            diffs.extend(member.diffs)
+        diffs.extend(self.id_doc.diffs)
+        diffs.extend(self.address_of_registration.diffs)
+        if self.address_of_temp_reg:
+            diffs.extend(self.address_of_temp_reg.diffs)
+        diffs.extend(self.address_of_residence.diffs)
+        changes = Changelog.objects.filter(object_id=self.pk)
+        diffs.extend(changes)
+        return diffs
 
     def delete(self, *args, **kwargs):
         id_doc = self.id_doc
@@ -926,6 +961,10 @@ class Privilege(BaseModel):
         verbose_name='UID документа в 1С',
         blank=True,
         null=True,
+    )
+    modified_for_1c = models.BooleanField(
+        default=False,
+        editable=False,
     )
 
     class Meta:
@@ -1086,6 +1125,10 @@ class DisciplineMark(BaseModel):
         null=True,
         related_name='my_disciplines'
     )
+    modified_for_1c = models.BooleanField(
+        default=False,
+        editable=False,
+    )
 
     class Meta:
         verbose_name = "Пройденная дисциплина на ЕНТ/КТ"
@@ -1148,6 +1191,10 @@ class TestCert(BaseModel):
         verbose_name='UID документа в 1С',
         blank=True,
         null=True,
+    )
+    modified_for_1c = models.BooleanField(
+        default=False,
+        editable=False,
     )
 
     class Meta:
@@ -1238,6 +1285,10 @@ class InternationalCert(BaseModel):
         blank=True,
         null=True,
     )
+    modified_for_1c = models.BooleanField(
+        default=False,
+        editable=False,
+    )
 
     class Meta:
         verbose_name = "Международный сертификат"
@@ -1309,6 +1360,10 @@ class Grant(BaseModel):
         verbose_name='UID документа в 1С',
         blank=True,
         null=True,
+    )
+    modified_for_1c = models.BooleanField(
+        default=False,
+        editable=False,
     )
 
     class Meta:
@@ -1504,6 +1559,10 @@ class Application(BaseModel):
         blank=True,
         null=True,
     )
+    modified_for_1c = models.BooleanField(
+        default=False,
+        editable=False,
+    )
 
     class Meta:
         verbose_name = "Заявление"
@@ -1642,6 +1701,18 @@ class Application(BaseModel):
             return True
         else:
             return False
+
+    @property
+    def diffs(self):
+        diffs = []
+        diffs.extend(self.previous_education.diffs)
+        if not self.unpassed_test:
+            diffs.extend(self.test_result.test_certificate.diffs)
+        if self.is_grant_holder:
+            diffs.extend(self.grant.diffs)
+        changes = Changelog.objects.filter(object_id=self.pk)
+        diffs.extend(changes)
+        return diffs
 
 
 class ApplicationStatusChangeHistory(BaseModel):

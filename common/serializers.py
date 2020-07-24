@@ -5,6 +5,17 @@ from . import models
 from portal_users.models import Level, AchievementType
 
 
+class ChangeLogSerializer(serializers.ModelSerializer):
+    cls = serializers.SerializerMethodField(read_only=True)
+
+    def get_cls(self, log: models.Changelog):
+        return log.content_type.model
+
+    class Meta:
+        model = models.Changelog
+        fields = ['cls', 'key', 'old_value', 'new_value']
+
+
 class FileSerializer(serializers.ModelSerializer):
     path = serializers.SerializerMethodField(read_only=True)
 

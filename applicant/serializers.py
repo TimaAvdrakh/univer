@@ -1,5 +1,3 @@
-import datetime as dt
-from django.core.mail import send_mail
 from django.contrib.auth.models import User
 from django.contrib.auth.hashers import make_password
 from django.contrib.sites.shortcuts import get_current_site
@@ -11,9 +9,8 @@ from django.utils.translation import get_language
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 from common.models import IdentityDocument, Comment, ReservedUID, File
-from common.serializers import DocumentTypeSerializer, FileSerializer
+from common.serializers import DocumentTypeSerializer, FileSerializer, ChangeLogSerializer
 from mail.models import EmailTemplate
-from portal.local_settings import EMAIL_HOST_USER
 from portal_users.serializers import ProfilePhoneSerializer
 from portal_users.models import Profile, Role, ProfilePhone
 from organizations.models import Education
@@ -186,6 +183,7 @@ class QuestionnaireSerializer(serializers.ModelSerializer):
     privilege_list = UserPrivilegeListSerializer(required=False, many=False)
     phones = ProfilePhoneSerializer(required=True, many=True)
     files = FileSerializer(read_only=True, many=True, required=False)
+    diffs = ChangeLogSerializer(read_only=True, many=True)
 
     class Meta:
         model = models.Questionnaire
@@ -934,6 +932,7 @@ class ApplicationSerializer(ApplicationLiteSerializer):
     international_certs = InternationalCertSerializer(required=False, many=True)
     grant = GrantSerializer(required=False, allow_null=True)
     directions = OrderedDirectionSerializer(required=True, many=True)
+    diffs = ChangeLogSerializer(read_only=True, many=True)
 
     class Meta:
         model = models.Application
