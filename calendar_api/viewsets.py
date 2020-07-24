@@ -12,7 +12,12 @@ from rest_framework.response import Response
 from rest_framework.status import HTTP_200_OK
 from rest_framework.viewsets import ModelViewSet
 from common.paginators import CustomPagination
-from portal_users.models import Profile
+from portal_users.models import (
+    Profile,
+    RoleNames,
+    Role,
+    RoleNamesRelated,
+)
 from schedules.models import (
     Room,
     RoomType,
@@ -131,7 +136,8 @@ class ProfileChooseViewSet(ModelViewSet):
         if study_plans.exists():
             queryset = queryset.filter(pk__in=study_plans)
         if role is not None:
-            queryset = queryset.filter(role_name__role_name=role)
+            profiles_from_role_related = RoleNamesRelated.objects.filter(role_name=role).values_list('profile')
+            queryset = queryset.filter(pk__in=profiles_from_role_related)
 
         paginated_queryset = self.paginate_queryset(queryset)
 
@@ -194,11 +200,17 @@ class ProfileChooseViewSet(ModelViewSet):
         )
         return Response(data=serializer.data, status=HTTP_200_OK)
 
+    @action(methods=['get'], detail=False, url_path='role_names', url_name='role_names')
+    def get_role_names(self, request, pk=None):
+        role_names = RoleNames.objects.filter(is_active=True).order_by('name')
+        serializer = serializers.RolenNamesSerializer(role_names, many=True).data
+        return Response(data=serializer, status=HTTP_200_OK)
+
 
 class ScheduleViewSet(ModelViewSet):
     queryset = Lesson.objects.filter(is_active=True)
     serializer_class = serializers.ScheduleSerializer
-    permission_classes = (IsAdminOrReadOnly, )
+    permission_classes = (IsAdminOrReadOnly,)
 
     def list(self, request):
         queryset = self.queryset
@@ -216,7 +228,3 @@ class ScheduleViewSet(ModelViewSet):
         queryset = queryset.order_by('date', 'time')
         serializer = self.serializer_class(queryset, many=True).data
         return Response(data=serializer, status=HTTP_200_OK)
-
-
-
-

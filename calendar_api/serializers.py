@@ -7,7 +7,12 @@ from django.template.loader import render_to_string
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 from .models import *
-from portal_users.models import Profile, Role
+from portal_users.models import (
+    Profile,
+    Role,
+    RoleNames,
+    RoleNamesRelated,
+)
 from schedules.models import (
     Room,
     RoomType,
@@ -227,12 +232,13 @@ class ProfilesEventsSerializer(serializers.ModelSerializer):
             event_end__lte=event_end_range,
         )
 
-        study_plan = instance.studyplan_set.all()
-        if study_plan.exist():
-            lookup = lookup | Q(participants__group=instance.studyplan_set.group)
-            lookup = lookup | Q(participants__faculty=instance.studyplan_set.faculty)
-            lookup = lookup | Q(participants__cathedra=instance.studyplan_set.cathedra)
-            lookup = lookup | Q(participants__education_programs=instance.studyplan_set.education_program)
+        study_plan = instance.studyplan_set.filter(student=instance).first()
+        if study_plan:
+            lookup = lookup | Q(participants__group=study_plan.group)
+            lookup = lookup | Q(participants__faculty=study_plan.faculty)
+            lookup = lookup | Q(participants__cathedra=study_plan.cathedra)
+            lookup = lookup | Q(participants__education_programs=study_plan.education_program)
+            lookup = lookup | Q(participants__education_program_groups=study_plan.education_program.group)
 
         profile_events = Events.objects.filter(lookup).distinct()
 
@@ -252,7 +258,7 @@ class ProfilesEventsSerializer(serializers.ModelSerializer):
         if instance.role.is_teacher:
             lessons = Lesson.objects.filter(
                 teachers=instance,
-                ate__gte=event_start_range.date(),
+                date__gte=event_start_range.date(),
                 date__lte=event_end_range.date(),
             ).order_by('date', 'time')
 
@@ -320,6 +326,16 @@ class EducationProgramGroupEventSerializer(serializers.ModelSerializer):
         model = EducationProgramGroup
         fields = [
             'uid',
+            'name',
+        ]
+
+
+class RolenNamesSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = RoleNames
+        fields = [
+            'uid',
+            'code',
             'name',
         ]
 
