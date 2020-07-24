@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from common.models import File, ReservedUID
 from common.serializers import FileSerializer
-from organizations.models import TeacherDiscipline, StudentDiscipline
+from organizations.models import TeacherDiscipline, StudentDiscipline, StudyPlan
 from .models import EMC
 
 
@@ -73,4 +73,16 @@ class StudentDisciplineSerializer(DisciplineSerializer):
 
     class Meta:
         model = StudentDiscipline
+        fields = '__all__'
+
+
+class StudyPlanSerializer(serializers.ModelSerializer):
+    student_disciplines = serializers.SerializerMethodField(read_only=True)
+
+    def get_student_disciplines(self, sp: StudyPlan):
+        student_disciplines = sp.study_plan.all()
+        return StudentDisciplineSerializer(student_disciplines, many=True).data
+
+    class Meta:
+        model = StudyPlan
         fields = '__all__'
