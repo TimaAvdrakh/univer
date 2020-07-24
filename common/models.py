@@ -584,6 +584,10 @@ class ReservedUID(BaseModel):
         except ReservedUID.DoesNotExist:
             return
 
+    @staticmethod
+    def deactivate(user):
+        ReservedUID.objects.filter(user=user).update(is_active=False)
+
     class Meta:
         verbose_name = 'Резервированный UID'
         verbose_name_plural = 'Резервированные UID\'ы'
