@@ -1597,6 +1597,7 @@ class Application(BaseModel):
         self.save_to_status_change_log(
             comment=comment,
             moderator=moderator,
+            application=self,
         )
         # TODO на подтверждение заявления модератором импортировать заявление в 1С
         self.import_self_to_1c()
@@ -1616,7 +1617,7 @@ class Application(BaseModel):
         self.status = ApplicationStatus.objects.get(code=REJECTED)
         self.status_action = True
         self.save()
-        self.save_to_status_change_log(comment=comment_to_save)
+        self.save_to_status_change_log(application=self, comment=comment_to_save)
         data = {
             'reason': comment,
             'timestamp': dt.datetime.now().strftime('%d.%m.%Y %H:%I')
@@ -1637,6 +1638,7 @@ class Application(BaseModel):
         self.status = ApplicationStatus.objects.get(code=TO_IMPROVE)
         self.save()
         self.save_to_status_change_log(
+            application=self,
             comment=comment_to_save,
         )
         data = {
@@ -1650,7 +1652,7 @@ class Application(BaseModel):
         )
         return
 
-    def save_to_status_change_log(self, comment=None, moderator=None):
+    def save_to_status_change_log(self, application, comment=None, moderator=None):
         if comment is None:
             comment = Comment.objects.create(
                 text="Заявление утверждено",
@@ -1661,6 +1663,7 @@ class Application(BaseModel):
             author=self.creator,
             comment=comment,
             status=self.status,
+            application=application
         )
 
     @property
@@ -1736,6 +1739,13 @@ class ApplicationStatusChangeHistory(BaseModel):
         null=True,
         on_delete=models.CASCADE,
         verbose_name='Комментарий изменения'
+    )
+    # Как можно хранить историю изменения статуса заявления без заявления
+    application = models.ForeignKey(
+        Application,
+        on_delete=models.SET_NULL,
+        blank=True,
+        null=True
     )
 
     class Meta:
