@@ -7,7 +7,12 @@ from django.template.loader import render_to_string
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 from .models import *
-from portal_users.models import Profile, Role
+from portal_users.models import (
+    Profile,
+    Role,
+    RoleNames,
+    RoleNamesRelated,
+)
 from schedules.models import (
     Room,
     RoomType,
@@ -209,35 +214,54 @@ class EventLiteSerializer(serializers.ModelSerializer):
 
 
 class ProfilesEventsSerializer(serializers.ModelSerializer):
+    full_name = serializers.ReadOnlyField()
+
     class Meta:
-        model = StudyPlan
+        model = Profile
         fields = [
-            'student',
+            'uid',
+            'full_name',
         ]
 
     def to_representation(self, instance):
         data = super().to_representation(instance)
-        data['full_name'] = f"{instance.student.first_name} {instance.student.last_name} {instance.student.middle_name}"
         event_start, event_start_range, event_end, event_end_range = convert_time(self.context)
-
-        profile_events = Events.objects.filter(
-            Q(participants__participant_profiles=instance.student)|
-            Q(participants__group=instance.group)|
-            Q(participants__faculty=instance.faculty)|
-            Q(participants__cathedra=instance.cathedra)|
-            Q(participants__education_programs=instance.education_program),
+        lookup = Q(
+            participants__participant_profiles=instance,
             event_start__gte=event_start_range,
             event_end__lte=event_end_range,
-        ).distinct('pk')
-        profile_events_data = EventLiteSerializer(profile_events.order_by('pk'), many=True).data
+        )
+
+        study_plan = instance.studyplan_set.filter(student=instance).first()
+        if study_plan:
+            lookup = lookup | Q(participants__group=study_plan.group)
+            lookup = lookup | Q(participants__faculty=study_plan.faculty)
+            lookup = lookup | Q(participants__cathedra=study_plan.cathedra)
+            lookup = lookup | Q(participants__education_programs=study_plan.education_program)
+            lookup = lookup | Q(participants__education_program_groups=study_plan.education_program.group)
+
+        profile_events = Events.objects.filter(lookup).distinct()
+
+        profile_events_data = EventLiteSerializer(profile_events.order_by('event_start'), many=True).data
         data['events'] = profile_events_data
 
-        all_lessons = LessonStudent.objects.filter(student=instance.student).values_list('flow_uid')
-        lessons = Lesson.objects.filter(
-            flow_uid__in=all_lessons,
-            date__gte=event_start_range.date(),
-            date__lte=event_end_range.date(),
-        ).order_by('date', 'time')
+        lessons = []
+
+        if instance.role.is_student:
+            all_lessons = LessonStudent.objects.filter(student=instance).values_list('flow_uid')
+            lessons = Lesson.objects.filter(
+                flow_uid__in=all_lessons,
+                date__gte=event_start_range.date(),
+                date__lte=event_end_range.date(),
+            ).order_by('date', 'time')
+
+        if instance.role.is_teacher:
+            lessons = Lesson.objects.filter(
+                teachers=instance,
+                date__gte=event_start_range.date(),
+                date__lte=event_end_range.date(),
+            ).order_by('date', 'time')
+
         data['lessons'] = ScheduleSerializer(lessons, many=True).data
 
         profile_events = profile_events.filter(
@@ -251,7 +275,7 @@ class ProfilesEventsSerializer(serializers.ModelSerializer):
             )
         ).distinct('pk')
 
-        #TODO Написать проверку совпадает ли событие с временем занятия если нужно
+        # TODO Написать проверку совпадает ли событие с временем занятия если нужно
 
         if profile_events.exists():
             data['profile_reserved'] = True
@@ -302,6 +326,16 @@ class EducationProgramGroupEventSerializer(serializers.ModelSerializer):
         model = EducationProgramGroup
         fields = [
             'uid',
+            'name',
+        ]
+
+
+class RolenNamesSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = RoleNames
+        fields = [
+            'uid',
+            'code',
             'name',
         ]
 
