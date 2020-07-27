@@ -839,7 +839,6 @@ class Questionnaire(BaseModel):
 
     def delete(self, *args, **kwargs):
         id_doc = self.id_doc
-        phone = self.phone
         reg = self.address_of_registration
         tmp = self.address_of_temp_reg
         res = self.address_of_residence
@@ -855,7 +854,6 @@ class Questionnaire(BaseModel):
             profile.delete()
             user.delete()
         id_doc.delete()
-        phone.delete()
         reg.delete()
         res.delete()
         try:
