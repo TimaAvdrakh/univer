@@ -839,23 +839,23 @@ class Questionnaire(BaseModel):
 
     def delete(self, *args, **kwargs):
         id_doc = self.id_doc
-        phone = self.phone
         reg = self.address_of_registration
         tmp = self.address_of_temp_reg
         res = self.address_of_residence
         family = self.family
-        if self.is_privileged:
+        if self.is_privileged and self.privilege_list:
             self.privilege_list.privileges.all().delete()
             self.privilege_list.delete()
         super(Questionnaire, self).delete(*args, **kwargs)
-        for member in family.members.all():
-            profile = member.profile
-            user = profile.user
-            member.delete()
-            profile.delete()
-            user.delete()
+        if family:
+            for member in family.members.all():
+                profile = member.profile
+                user = profile.user
+                member.delete()
+                profile.delete()
+                user.delete()
+            family.delete()
         id_doc.delete()
-        phone.delete()
         reg.delete()
         res.delete()
         try:
