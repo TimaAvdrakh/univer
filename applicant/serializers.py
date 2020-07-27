@@ -380,7 +380,7 @@ class QuestionnaireSerializer(serializers.ModelSerializer):
             uid = ReservedUID.get_uid_by_user(self.context['request'].user)
             files = File.objects.filter(gen_uid=uid, field_name=models.Questionnaire.ID_DOCUMENT_FN)
             questionnaire.files.set(files)
-            questionnaire.phones.add(*phones)
+            questionnaire.phones.add(*phone_result)
             questionnaire.save()
             if is_privileged:
                 self.create_privileges(
