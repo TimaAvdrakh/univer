@@ -482,10 +482,7 @@ class QuestionnaireSerializer(serializers.ModelSerializer):
         for privilege in privileges:
             privilege.pop('list', None)
             files = privilege.pop('files', [])
-            privilege = models.Privilege.objects.create(
-                **data,
-                list=user_privilege_list,
-            )
+            privilege = models.Privilege.objects.create(**privilege, list=user_privilege_list)
             privilege.files.set(files)
             privilege.save()
 
