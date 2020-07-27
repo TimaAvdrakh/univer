@@ -44,26 +44,12 @@ def upload(request):
     if request.method == 'POST' and request.FILES and request.user.is_authenticated:
         config: models.InstitutionConfig = models.InstitutionConfig.get_config()
         files = request.FILES.getlist('path')
-        uid = request.POST.get('uid')
-        if not uid:
-            raise ValidationError({"error": "no generated uid given"})
-        field_name = request.POST.get('field_name')
-        if not field_name:
-            raise ValidationError({"error": "no field name given"})
-        reserved_uid = models.ReservedUID.objects.filter(pk=uid, user=request.user)
-        if not reserved_uid.exists():
-            raise ValidationError({'error': 'reserved uid not found'})
         instances = []
         for file in files:
             binary_file_data = models.File.get_data(file)
             if binary_file_data['size'] > config.max_file_byte_size:
                 raise ValidationError({"error": "entity is too big"})
-            instance = models.File.objects.create(
-                gen_uid=uid,
-                user=request.user,
-                field_name=field_name,
-                **binary_file_data,
-            )
+            instance = models.File.objects.create(user=request.user, **binary_file_data)
             instances.append(serializers.FileSerializer(instance).data)
             models.File.handle(file)
         return JsonResponse(data=instances, status=status.HTTP_200_OK, safe=False)
