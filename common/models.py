@@ -103,6 +103,12 @@ class BaseModel(models.Model):
     def comments(self):
         comments = Comment.objects.filter(object_id=self.pk).order_by('-created')
         return comments
+    
+    @property
+    def docs(self):
+        if hasattr(self, 'files'):
+            return self.files.all()
+        return
 
 
 class BaseCatalog(BaseModel):
