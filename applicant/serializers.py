@@ -382,7 +382,7 @@ class QuestionnaireSerializer(serializers.ModelSerializer):
             questionnaire.files.set(files)
             questionnaire.phones.add(*phone_result)
             questionnaire.save()
-            if is_privileged:
+            if is_privileged and privilege_list:
                 self.create_privileges(
                     privilege_list=privilege_list,
                     creator=creator,

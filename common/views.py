@@ -88,12 +88,8 @@ def delete_file(request, uid):
 
 def generate_uid(request):
     user = request.user
-    reserved_uid = models.ReservedUID.objects.filter(user=user)
-    if reserved_uid.exists():
-        uid = reserved_uid.first()
-    else:
-        uid = models.ReservedUID.objects.create(user=user)
-    return JsonResponse(data={'uid': uid.pk}, status=status.HTTP_200_OK)
+    reserved_uid = models.ReservedUID.objects.create(user=user)
+    return JsonResponse(data={'uid': reserved_uid.pk}, status=status.HTTP_200_OK)
 
 
 class AcadPeriodListView(generics.ListAPIView):

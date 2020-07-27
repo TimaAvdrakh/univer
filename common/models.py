@@ -588,7 +588,7 @@ class ReservedUID(BaseModel):
     @staticmethod
     def get_uid_by_user(user):
         try:
-            reserved_uid = ReservedUID.objects.get(user=user)
+            reserved_uid = ReservedUID.objects.filter(user=user).order_by('created').last()
             return reserved_uid.pk
         except ReservedUID.DoesNotExist:
             return
