@@ -363,6 +363,7 @@ class QuestionnaireSerializer(serializers.ModelSerializer):
             if phones:
                 for phone_instance in phones:
                     phone_result.append(ProfilePhone.objects.create(**phone_instance, profile=creator))
+
             # Проверка на привилегии
             is_privileged = validated_data.get('is_privileged', False)
             privilege_list = validated_data.pop('privilege_list', None)
@@ -402,6 +403,7 @@ class QuestionnaireSerializer(serializers.ModelSerializer):
                 marital_status=questionnaire.marital_status,
                 iin=questionnaire.iin,
             )
+            ReservedUID.deactivate(creator.user)
         except Exception as e:
             if questionnaire and isinstance(questionnaire, models.Questionnaire):
                 questionnaire.delete()
@@ -528,7 +530,8 @@ class QuestionnaireSerializer(serializers.ModelSerializer):
                     family_data=family,
                     reg_addr_uid=instance.address_of_registration.pk,
                     tmp_addr_uid=instance.address_of_temp_reg and instance.address_of_temp_reg.pk,
-                    res_addr_uid=instance.address_of_residence
+                    res_addr_uid=instance.address_of_residence,
+                    profile=instance.creator
                 )
                 instance.family = family
                 instance.save()
@@ -536,7 +539,7 @@ class QuestionnaireSerializer(serializers.ModelSerializer):
                 self.update_family(
                     uid=instance.family.uid,
                     data=family,
-                    profile=profile,
+                    profile=instance.creator,
                     reg_addr_uid=instance.address_of_registration.pk,
                     tmp_addr_uid=instance.address_of_temp_reg and instance.address_of_temp_reg.pk,
                     res_addr_uid=instance.address_of_residence.pk
@@ -587,7 +590,7 @@ class QuestionnaireSerializer(serializers.ModelSerializer):
                 marital_status=instance.marital_status,
                 iin=instance.iin,
             )
-            ReservedUID.objects.filter(pk=reserved_uid).update(is_active=False)
+            ReservedUID.deactivate(profile.user)
             return instance
         except Exception as e:
             raise ValidationError({"got error on update": e})
@@ -825,6 +828,7 @@ class ApplicationLiteSerializer(serializers.ModelSerializer):
             application.international_certs.set(international_certs)
             application.directions.set(directions)
             application.save()
+            ReservedUID.deactivate(creator.user)
         except Exception as e:
             if application and isinstance(application, models.Application):
                 application.delete()
@@ -918,6 +922,7 @@ class ApplicationLiteSerializer(serializers.ModelSerializer):
         instance.save(snapshot=True)
         # ==============================================================================================================
         application = super().update(instance, validated_data)
+        ReservedUID.deactivate(profile.user)
         return application
 
 
@@ -982,6 +987,7 @@ class AdmissionDocumentSerializer(serializers.ModelSerializer):
         instance: models.AdmissionDocument = super().create(validated_data)
         instance.files.set(files)
         instance.save()
+        ReservedUID.deactivate(validated_data['creator'].user)
         return instance
 
     def update(self, instance: models.AdmissionDocument, validated_data):
@@ -995,6 +1001,7 @@ class AdmissionDocumentSerializer(serializers.ModelSerializer):
         files = File.objects.filter(gen_uid=reserved_uid, field_name=field_name)
         instance.files.set(files)
         instance.save()
+        ReservedUID.deactivate(profile.user)
         return instance
 
 
