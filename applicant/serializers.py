@@ -731,7 +731,7 @@ class ApplicationLiteSerializer(serializers.ModelSerializer):
     def handle_grant(self, data, creator_profile):
         if not data:
             return None
-        grant.pop('creator', None)
+        data.pop('creator', None)
         files = data.pop('files', [])
         grant = models.Grant.objects.create(profile=creator_profile, **data)
         grant.files.set(files)
