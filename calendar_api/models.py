@@ -13,15 +13,16 @@ from common.models import (
     Comment,
     Citizenship,
     Nationality,
-    Changelog
+    Changelog,
+    File,
 )
 from portal_users.models import (
     Profile,
     Gender,
-    Role
+    Role,
 )
 from schedules.models import (
-    Room
+    Room,
 )
 from organizations.models import (
     Group,
@@ -149,6 +150,11 @@ class Events(BaseCatalog):
         blank=True,
         on_delete=models.CASCADE,
         verbose_name='Тип повторения события',
+    )
+    files = models.ManyToManyField(
+        File,
+        blank=True,
+        verbose_name="Файлы события"
     )
 
     class Meta:

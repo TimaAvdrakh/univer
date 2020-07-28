@@ -26,6 +26,9 @@ from organizations.models import (
 from portal_users.serializers import (
     ProfileLiteSerializer,
 )
+from common.serializers import (
+    FileSerializer,
+)
 
 
 def convert_time(context):
@@ -78,6 +81,7 @@ class ReserveRoomSerializer(serializers.ModelSerializer):
             event_end__lte=event_end_range,
             reserve_auditory=instance
         )
+        data['current_time'] = str(datetime.datetime.now())
         data['events'] = EventLiteSerializer(events_queryset, many=True).data
 
         events_queryset = events_queryset.filter(
@@ -123,6 +127,7 @@ class EventParticipantsSerializer(serializers.ModelSerializer):
 
 class EventSerializer(serializers.ModelSerializer):
     participants = EventParticipantsSerializer(required=False)
+    files = FileSerializer(required=False, many=True)
 
     class Meta:
         model = Events
@@ -137,6 +142,7 @@ class EventSerializer(serializers.ModelSerializer):
             'event_description',
             'reserve_auditory',
             'repetition_type',
+            'files',
         ]
 
     def validate(self, validated_data):
@@ -186,8 +192,10 @@ class EventSerializer(serializers.ModelSerializer):
             'creator': creator,
             'participants': participants,
         }
+        files = validated_data.get('files',[])
         validated_data.update(data)
         event = Events.objects.create(**validated_data)
+        event.objects.set(files)
         event.save()
         return event
 
@@ -198,6 +206,8 @@ class EventSerializer(serializers.ModelSerializer):
             participants = self.create_participants(participants, instance.participants)
             data["participants"] = participants
         validated_data.update(data)
+        files = validated_data.pop('files', [])
+        instance.files.set(files)
         instance.save()
         event = super().update(instance, validated_data)
         return event

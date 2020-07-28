@@ -13,7 +13,7 @@ class ChangeLogSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = models.Changelog
-        fields = ['cls', 'key', 'old_value', 'new_value']
+        fields = ['cls', 'key', 'old_value', 'new_value', 'created']
 
 
 class FileSerializer(serializers.ModelSerializer):

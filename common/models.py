@@ -55,6 +55,7 @@ class BaseModel(models.Model):
         snapshot = kwargs.pop('snapshot', False)
         if snapshot:
             if self.pk:
+                editor = kwargs.pop('editor', None)
                 # Тащим пока что неизмененную модель и конвертируем ее в словарь
                 original = model_to_dict(self._meta.model.objects.get(pk=self.pk))
                 # Применили изменения
@@ -69,13 +70,20 @@ class BaseModel(models.Model):
                     if original[k] != updated_dict[k]:
                         field = self._meta.get_field(k)
                         if field.many_to_many:
-                            original[k] = list(map(lambda x: x.uid, original[k]))
-                            updated_dict[k] = list(map(lambda x: x.uid, updated_dict[k]))
+                            original[k] = list(map(lambda x: str(x), original[k]))
+                            updated_dict[k] = list(map(lambda x: str(x), updated_dict[k]))
+                        elif field.many_to_one:
+                            pass
+                        elif field.one_to_one:
+                            pass
+                        elif field.one_to_many:
+                            pass
                         Changelog.objects.create(
                             content_object=updated,
                             key=k,
                             old_value=original[k],
-                            new_value=updated_dict[k]
+                            new_value=updated_dict[k],
+                            editor=editor
                         )
         if hasattr(self, 'modified_for_1c'):
             setattr(self, 'modified_for_1c', True)
@@ -103,6 +111,12 @@ class BaseModel(models.Model):
     def comments(self):
         comments = Comment.objects.filter(object_id=self.pk).order_by('-created')
         return comments
+    
+    @property
+    def docs(self):
+        if hasattr(self, 'files'):
+            return self.files.all()
+        return
 
 
 class BaseCatalog(BaseModel):
@@ -452,6 +466,13 @@ class Changelog(BaseModel):
     content_object = GenericForeignKey(
         'content_type',
         'object_id'
+    )
+    editor = models.ForeignKey(
+        'portal_users.Profile',
+        on_delete=models.CASCADE,
+        blank=True,
+        null=True,
+        verbose_name='Пользователь, применивший изменения'
     )
 
     def __str__(self):
