@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from . import models
+from django.conf import settings
 from django.contrib.auth.models import User
 from common.exceptions import CustomException
 from django.contrib.auth import password_validation
@@ -1305,6 +1306,26 @@ class AvatarSerializer(serializers.ModelSerializer):
 
         profile.avatar.save(image_name, image, save=True)
         return profile
+
+
+class ModeratorChangeAvatarSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.Profile
+        fields = ['avatar']
+
+    def create(self, validated_data):
+        request = self.context.get('request')
+        profile = request.user.profile
+        if profile.role.is_mod and settings.MODERATOR_CAN_EDIT:
+            applicant_profile_uid = request.data.get('profile')
+            applicant_profile = models.Profile.objects.get(pk=applicant_profile_uid)
+            image = validated_data["avatar"]
+            extension = image.name.split(".")[-1]
+            image_name = "{}.{}".format(str(uuid4()), extension)
+            applicant_profile.avatar.save(image_name, image, save=True)
+            return profile
+        else:
+            raise Exception("if moderator and can upload avatars")
 
 
 class TeacherSerializer(serializers.ModelSerializer):

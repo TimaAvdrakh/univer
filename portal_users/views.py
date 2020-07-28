@@ -608,6 +608,11 @@ class AvatarUploadView(generics.CreateAPIView):
     queryset = models.Profile.objects.filter(is_active=True)
 
 
+class ModeratorChangeAvatarView(generics.CreateAPIView):
+    serializer_class = serializers.ModeratorChangeAvatarSerializer
+    queryset = models.Profile.objects.all()
+
+
 class RoleGetView(APIView):
     """Получить своих ролей"""
 
