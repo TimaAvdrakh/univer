@@ -39,6 +39,7 @@ urlpatterns = [
     path('profile/<pk>/fieldstoshow/edit/', views.FieldsToShowUpdateView.as_view(), name='fields_to_show_edit'),
 
     path('avatar/upload/', views.AvatarUploadView.as_view(), name='avatar_upload'),
+    path('avatar/moderator-change/', views.ModeratorChangeAvatarView.as_view(), name='avatar_moderator_change'),
     path('my_roles/', views.RoleGetView.as_view(), name='my_roles'),
 
     path('my_discipline/control_forms/', views.ChooseControlFormListView.as_view(),
