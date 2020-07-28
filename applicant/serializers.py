@@ -122,44 +122,37 @@ class ApplicantSerializer(serializers.ModelSerializer):
         if validated_data['password'] != validated_data['confirm_password']:
             raise ValidationError({"error": "pass_no_match"})
         applicant = super().create(validated_data)
-        try:
-            raw_password = applicant.password
-            order_number = models.Applicant.objects.aggregate(Max("order_number"))["order_number__max"]
-            # Самый первый подающий
-            if not order_number:
-                order_number = 0
-            elif order_number == 9999:
-                raise ValidationError({"error": "places_exceeded"})
-            applicant.order_number = order_number + 1
-            applicant.password = make_password(raw_password)
-            applicant.confirm_password = make_password(validated_data['confirm_password'])
-            username = applicant.generate_login(applicant.order_number)
-            # Создаем юзера, который хэндлид авторизацию
-            user = User.objects.create(username=username, email=applicant.email)
-            # Шифруем пароли
-            user.set_password(raw_password=raw_password)
-            user.is_active = False
-            user.save()
-            applicant.user = user
-            applicant.save()
-            # Создаем профиль т.к. под него завязана авторизация
-            profile = Profile.objects.create(
-                user=user,
-                first_name=applicant.first_name,
-                last_name=applicant.last_name,
-                middle_name=applicant.middle_name,
-                email=applicant.email
-            )
-            Role.objects.create(is_applicant=True, profile=profile)
-            self.send_verification_email(user, raw_password)
-            # Возвращаем экземпляр абитуриента
-            return applicant
-        except Exception as e:
-            user = applicant.user
-            if user:
-                user.delete()
-            applicant.delete()
-            raise ValidationError({"error": e})
+        raw_password = applicant.password
+        order_number = models.Applicant.objects.aggregate(Max("order_number"))["order_number__max"]
+        # Самый первый подающий
+        if not order_number:
+            order_number = 0
+        elif order_number == 9999:
+            raise ValidationError({"error": "places_exceeded"})
+        applicant.order_number = order_number + 1
+        applicant.password = make_password(raw_password)
+        applicant.confirm_password = make_password(validated_data['confirm_password'])
+        username = applicant.generate_login(applicant.order_number)
+        # Создаем юзера, который хэндлид авторизацию
+        user = User.objects.create(username=username, email=applicant.email)
+        # Шифруем пароли
+        user.set_password(raw_password=raw_password)
+        user.is_active = False
+        user.save()
+        applicant.user = user
+        applicant.save()
+        # Создаем профиль т.к. под него завязана авторизация
+        profile = Profile.objects.create(
+            user=user,
+            first_name=applicant.first_name,
+            last_name=applicant.last_name,
+            middle_name=applicant.middle_name,
+            email=applicant.email
+        )
+        Role.objects.create(is_applicant=True, profile=profile)
+        self.send_verification_email(user, raw_password)
+        # Возвращаем экземпляр абитуриента
+        return applicant
 
 
 class IdentityDocumentSerializer(serializers.ModelSerializer):
@@ -313,92 +306,87 @@ class QuestionnaireSerializer(serializers.ModelSerializer):
             return questionnaire.first()
         else:
             questionnaire = None
-        try:
-            # Сначала нужно разобраться с адресами
-            # Адрес прописки/регистрации
-            address_of_registration = models.Address.objects.create(
-                **validated_data.pop('address_of_registration'),
-                profile=creator,
-            )
-            # Временный адрес (для жителей Казахстана)
-            address_of_temp_reg = validated_data.pop('address_of_temp_reg')
-            if address_of_temp_reg:
-                address_of_temp_reg = models.Address.objects.create(
-                    **address_of_temp_reg,
-                    profile=creator
-                )
-            # Фактический адрес проживания
-            address_of_residence = models.Address.objects.create(
-                **validated_data.pop('address_of_residence'),
+
+        # Сначала нужно разобраться с адресами
+        # Адрес прописки/регистрации
+        address_of_registration = models.Address.objects.create(
+            **validated_data.pop('address_of_registration'),
+            profile=creator,
+        )
+        # Временный адрес (для жителей Казахстана)
+        address_of_temp_reg = validated_data.pop('address_of_temp_reg')
+        if address_of_temp_reg:
+            address_of_temp_reg = models.Address.objects.create(
+                **address_of_temp_reg,
                 profile=creator
             )
-            # Обработка данных семьи и ее членов
-            is_orphan = validated_data.get('is_orphan', False)
-            if not is_orphan:
-                family_data = validated_data.pop('family')
-                family = self.create_family(
-                    family_data=family_data,
-                    profile=creator,
-                    reg_addr_uid=address_of_registration.pk,
-                    tmp_addr_uid=address_of_temp_reg and address_of_temp_reg.pk,
-                    res_addr_uid=address_of_residence.pk
-                )
-            else:
-                family = None
-            # Докумуент удостоверяющий личность
-            id_doc = IdentityDocument.objects.create(**validated_data.pop('id_doc'))
-            # Телефон
-            validated_data.pop('phone', None)
-            # phone = ProfilePhone.objects.create(**validated_data.pop('phone'), profile=creator)
-            # Смена для телефонов
-            phones = validated_data.pop('phones', [])
-            phone_result = []
-            if phones:
-                for phone_instance in phones:
-                    phone_result.append(ProfilePhone.objects.create(**phone_instance, profile=creator))
+        # Фактический адрес проживания
+        address_of_residence = models.Address.objects.create(
+            **validated_data.pop('address_of_residence'),
+            profile=creator
+        )
+        # Обработка данных семьи и ее членов
+        is_orphan = validated_data.get('is_orphan', False)
+        if not is_orphan:
+            family_data = validated_data.pop('family')
+            family = self.create_family(
+                family_data=family_data,
+                profile=creator,
+                reg_addr_uid=address_of_registration.pk,
+                tmp_addr_uid=address_of_temp_reg and address_of_temp_reg.pk,
+                res_addr_uid=address_of_residence.pk
+            )
+        else:
+            family = None
+        # Докумуент удостоверяющий личность
+        id_doc = IdentityDocument.objects.create(**validated_data.pop('id_doc'))
+        # Телефон
+        validated_data.pop('phone', None)
+        # phone = ProfilePhone.objects.create(**validated_data.pop('phone'), profile=creator)
+        # Смена для телефонов
+        phones = validated_data.pop('phones', [])
+        phone_result = []
+        if phones:
+            for phone_instance in phones:
+                phone_result.append(ProfilePhone.objects.create(**phone_instance, profile=creator))
 
-            # Проверка на привилегии
-            is_privileged = validated_data.get('is_privileged', False)
-            privilege_list = validated_data.pop('privilege_list', None)
-            files = validated_data.pop('files', [])
-            questionnaire = models.Questionnaire.objects.create(
+        # Проверка на привилегии
+        is_privileged = validated_data.get('is_privileged', False)
+        privilege_list = validated_data.pop('privilege_list', None)
+        files = validated_data.pop('files', [])
+        questionnaire = models.Questionnaire.objects.create(
+            creator=creator,
+            family=family,
+            address_of_registration=address_of_registration,
+            address_of_temp_reg=address_of_temp_reg,
+            address_of_residence=address_of_residence,
+            id_doc=id_doc,
+            **validated_data
+        )
+        questionnaire.files.set(files)
+        questionnaire.phones.add(*phone_result)
+        questionnaire.save()
+        if is_privileged and privilege_list:
+            self.create_privileges(
+                privilege_list=privilege_list,
                 creator=creator,
-                family=family,
-                address_of_registration=address_of_registration,
-                address_of_temp_reg=address_of_temp_reg,
-                address_of_residence=address_of_residence,
-                id_doc=id_doc,
-                **validated_data
+                questionnaire=questionnaire
             )
-            questionnaire.files.set(files)
-            questionnaire.phones.add(*phone_result)
-            questionnaire.save()
-            if is_privileged and privilege_list:
-                self.create_privileges(
-                    privilege_list=privilege_list,
-                    creator=creator,
-                    questionnaire=questionnaire
-                )
-            Profile.objects.filter(pk=creator.pk).update(
-                first_name=questionnaire.first_name,
-                last_name=questionnaire.last_name,
-                middle_name=questionnaire.middle_name,
-                first_name_en=questionnaire.first_name_en,
-                last_name_en=questionnaire.last_name_en,
-                email=questionnaire.email,
-                birth_date=questionnaire.birthday,
-                birth_place=questionnaire.birthplace,
-                nationality=questionnaire.nationality,
-                citizenship=questionnaire.citizenship,
-                gender=questionnaire.gender,
-                marital_status=questionnaire.marital_status,
-                iin=questionnaire.iin,
-            )
-            ReservedUID.deactivate(creator.user)
-        except Exception as e:
-            if questionnaire and isinstance(questionnaire, models.Questionnaire):
-                questionnaire.delete()
-            raise ValidationError({'error on create': e})
+        Profile.objects.filter(pk=creator.pk).update(
+            first_name=questionnaire.first_name,
+            last_name=questionnaire.last_name,
+            middle_name=questionnaire.middle_name,
+            first_name_en=questionnaire.first_name_en,
+            last_name_en=questionnaire.last_name_en,
+            email=questionnaire.email,
+            birth_date=questionnaire.birthday,
+            birth_place=questionnaire.birthplace,
+            nationality=questionnaire.nationality,
+            citizenship=questionnaire.citizenship,
+            gender=questionnaire.gender,
+            marital_status=questionnaire.marital_status,
+            iin=questionnaire.iin,
+        )
         return questionnaire
 
     def update_family(self, uid, data, editor, reg_addr_uid, tmp_addr_uid, res_addr_uid):
