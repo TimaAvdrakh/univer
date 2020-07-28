@@ -945,7 +945,7 @@ class AdmissionDocumentSerializer(serializers.ModelSerializer):
         if not (profile == instance.creator or mod_can_edit):
             raise ValidationError({'error': 'access_denied'})
         files = validated_data.pop('files', [])
-        instance.files.set(files)
+        instance.files.add(*files)
         instance.save()
         return instance
 
