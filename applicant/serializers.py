@@ -1147,3 +1147,10 @@ class ApplicantMyStatusSerializer(serializers.ModelSerializer):
         else:
             data['comment'] = ""
         return data
+
+
+class ApplicantProfileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.Profile
+        fields = ['uid', 'avatar']
+

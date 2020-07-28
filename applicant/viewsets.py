@@ -312,6 +312,7 @@ class ApplicationViewSet(ModelViewSet):
             data['attachments'] = serializers.AdmissionDocumentSerializer(attachments, many=True).data
         else:
             data['attachments'] = None
+        data['profile'] = serializers.ApplicantProfileSerializer(profile).data
         return Response(data=data, status=HTTP_200_OK)
 
     def validate(self, validated_data, user):
