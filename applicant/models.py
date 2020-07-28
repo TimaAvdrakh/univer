@@ -846,7 +846,6 @@ class Questionnaire(BaseModel):
         if self.is_privileged:
             try:
                 self.privilege_list.privileges.all().delete()
-                self.privilege_list.delete()
             except:
                 pass
         super(Questionnaire, self).delete(*args, **kwargs)
