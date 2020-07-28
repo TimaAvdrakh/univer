@@ -26,6 +26,9 @@ from organizations.models import (
 from portal_users.serializers import (
     ProfileLiteSerializer,
 )
+from common.serializers import (
+    FileSerializer,
+)
 
 
 def convert_time(context):
@@ -123,6 +126,7 @@ class EventParticipantsSerializer(serializers.ModelSerializer):
 
 class EventSerializer(serializers.ModelSerializer):
     participants = EventParticipantsSerializer(required=False)
+    files = FileSerializer(required=False, many=True)
 
     class Meta:
         model = Events
@@ -137,6 +141,7 @@ class EventSerializer(serializers.ModelSerializer):
             'event_description',
             'reserve_auditory',
             'repetition_type',
+            'files',
         ]
 
     def validate(self, validated_data):
