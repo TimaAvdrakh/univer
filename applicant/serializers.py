@@ -1147,3 +1147,18 @@ class ApplicantMyStatusSerializer(serializers.ModelSerializer):
         else:
             data['comment'] = ""
         return data
+
+
+class ApplicantProfileSerializer(serializers.ModelSerializer):
+    avatar = serializers.SerializerMethodField(read_only=True)
+
+    class Meta:
+        model = models.Profile
+        fields = ['uid', 'avatar']
+
+    def get_avatar(self, profile: Profile):
+        avatar = profile.avatar
+        if avatar:
+            url = settings.HOST + avatar.url
+            return url
+        return
