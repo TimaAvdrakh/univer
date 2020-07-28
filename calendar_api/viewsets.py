@@ -36,6 +36,7 @@ from organizations.models import (
 )
 from . import models
 from . import serializers
+from . import permissions
 
 
 def lookup_and_filtration(group=None, faculty=None, cathedra=None, edu_program=None, edu_program_group=None):
@@ -76,21 +77,24 @@ class EventsViewSet(ModelViewSet):
 
     @action(methods=['get',], detail=False, url_path='student_events', url_name='student_events')
     def get_student_events(self, request, pk=None):
-        student_uid = request.query_params.get('uid', None)
-        try:
-            study_plan = StudyPlan.objects.filter(student=student_uid).first()
-            lookup = Q(creator=student_uid)
-            lookup |= Q(participants__participant_profiles=student_uid)
-            lookup |= Q(participants__group=study_plan.group)
-            lookup |= Q(participants__faculty=study_plan.faculty)
-            lookup |= Q(participants__cathedra=study_plan.cathedra)
-            lookup |= Q(participants__education_programs=study_plan.education_program)
-            # lookup |= Q(participants__education_program_groups=study_plan.education_program.group)
-            events = models.Events.objects.filter(lookup).distinct()
-            serializer = serializers.EventSerializer(events, many=True).data
-            return Response(data=serializer, status=HTTP_200_OK)
-        except StudyPlan.DoesNotExist:
-            return Response(data="Does not exist", status=HTTP_200_OK)
+        if request.user.profile.role.is_supervisor:
+            student_uid = request.query_params.get('uid', None)
+            try:
+                study_plan = StudyPlan.objects.filter(student=student_uid).first()
+                lookup = Q(creator=student_uid)
+                lookup |= Q(participants__participant_profiles=student_uid)
+                lookup |= Q(participants__group=study_plan.group)
+                lookup |= Q(participants__faculty=study_plan.faculty)
+                lookup |= Q(participants__cathedra=study_plan.cathedra)
+                lookup |= Q(participants__education_programs=study_plan.education_program)
+                # lookup |= Q(participants__education_program_groups=study_plan.education_program.group)
+                events = models.Events.objects.filter(lookup).distinct()
+                serializer = serializers.EventSerializer(events, many=True).data
+                return Response(data=serializer, status=HTTP_200_OK)
+            except StudyPlan.DoesNotExist:
+                return Response(data="Does not exist", status=HTTP_200_OK)
+        else:
+            raise PermissionError({"error": "You don't have rights to this data"})
 
 
 class EventsRepetitionTypeViewSet(ModelViewSet):
