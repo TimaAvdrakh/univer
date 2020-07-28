@@ -536,7 +536,7 @@ class QuestionnaireSerializer(serializers.ModelSerializer):
                 creator=profile,
                 questionnaire=instance
             )
-        if instance.is_privileged:
+        elif instance.is_privileged and is_privileged:
             privileges = validated_data.pop('privilege_list', None)
             self.update_privileges(
                 uid=instance.privilege_list.pk,
@@ -544,6 +544,8 @@ class QuestionnaireSerializer(serializers.ModelSerializer):
                 creator=profile,
                 questionnaire=instance,
             )
+        elif instance.is_privileged and not is_privileged:
+            instance.privilege_list.privileges.all().delete()
         files = validated_data.pop('files', [])
         instance.update(validated_data)
         instance.files.add(*files)
