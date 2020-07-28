@@ -482,10 +482,7 @@ class QuestionnaireSerializer(serializers.ModelSerializer):
         for privilege in privileges:
             privilege.pop('list', None)
             files = privilege.pop('files', [])
-            privilege = models.Privilege.objects.create(
-                **data,
-                list=user_privilege_list,
-            )
+            privilege = models.Privilege.objects.create(**privilege, list=user_privilege_list)
             privilege.files.set(files)
             privilege.save()
 
@@ -935,10 +932,7 @@ class AdmissionDocumentSerializer(serializers.ModelSerializer):
         заполненый доп. документ с соотвтетсвующим документом из 1С.
         """
         validated_data['creator'] = self.context['request'].user.profile
-        order = self.context['request'].data.get('order')
-        reserved_uid = ReservedUID.get_uid_by_user(validated_data['creator'].user)
-        field_name = f'{models.AdmissionDocument.FIELD_NAME}{order}'
-        files = File.objects.filter(gen_uid=reserved_uid, field_name=field_name)
+        files = validated_data.pop('files', [])
         instance: models.AdmissionDocument = super().create(validated_data)
         instance.files.set(files)
         instance.save()
@@ -950,13 +944,9 @@ class AdmissionDocumentSerializer(serializers.ModelSerializer):
         mod_can_edit = profile.role.is_mod and settings.MODERATOR_CAN_EDIT
         if not (profile == instance.creator or mod_can_edit):
             raise ValidationError({'error': 'access_denied'})
-        reserved_uid = ReservedUID.get_uid_by_user(profile.user)
-        order = self.context['request'].data.get('order')
-        field_name = f'{models.AdmissionDocument.FIELD_NAME}{order}'
-        files = File.objects.filter(gen_uid=reserved_uid, field_name=field_name)
+        files = validated_data.pop('files', [])
         instance.files.set(files)
         instance.save()
-        ReservedUID.deactivate(profile.user)
         return instance
 
 
