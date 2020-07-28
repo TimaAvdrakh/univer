@@ -284,6 +284,7 @@ class QuestionnaireSerializer(serializers.ModelSerializer):
 
     def create_privileges(self, privilege_list, creator, questionnaire):
         privileges = privilege_list.pop('privileges')
+        privilege_list.pop('questionnaire', None)
         privilege_list = models.UserPrivilegeList.objects.create(
             **privilege_list,
             profile=creator,
