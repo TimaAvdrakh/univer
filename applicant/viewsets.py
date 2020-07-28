@@ -14,6 +14,7 @@ from rest_framework.response import Response
 from rest_framework.status import HTTP_200_OK
 from rest_framework.viewsets import ModelViewSet
 from common.paginators import CustomPagination
+from common.serializers import ChangeLogSerializer
 from univer_admin.permissions import IsAdminOrReadOnly
 from portal_users.models import Profile
 from . import models
@@ -682,6 +683,8 @@ class ModeratorViewSet(ModelViewSet):
             #     | Q(directions__plan__education_program_group__code=edu_program_groups)
             # )
         if application_date and len(application_date) > 0:
+            # Костыль, т.к. здесь приходит дата в формате 2020-07-24T11:23:28.312Z
+            application_date = application_date.split('T')[0]
             lookup = lookup & Q(apply_date=application_date)
             # queryset = queryset.filter(apply_date=application_date)
         queryset = self.queryset.filter(lookup).distinct('pk')
@@ -719,8 +722,13 @@ class ModeratorViewSet(ModelViewSet):
         queryset = self.queryset.get(pk=application_uid)
         history = models.ApplicationStatusChangeHistory.objects.filter(author=queryset.creator)
         if history.exists():
-            return Response(data=serializers.ApplicationChangeHistorySerializer(history, many=True).data,
-                            status=HTTP_200_OK)
+            return Response(
+                data={
+                    'history': serializers.ApplicationChangeHistorySerializer(history, many=True).data,
+                    'diffs': ChangeLogSerializer(queryset.diffs, many=True).data
+                },
+                status=HTTP_200_OK
+            )
         else:
             return Response(data=None, status=HTTP_200_OK)
 

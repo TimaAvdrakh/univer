@@ -313,7 +313,8 @@ class ProfileDetailSerializer(serializers.ModelSerializer):
 
         if data["avatar"] is not None:
             data["avatar"] = current_site + data["avatar"]
-
+        else:
+            data['avatar'] = None
         return data
 
 

@@ -77,6 +77,8 @@ class BaseModel(models.Model):
                             old_value=original[k],
                             new_value=updated_dict[k]
                         )
+        if hasattr(self, 'modified_for_1c'):
+            setattr(self, 'modified_for_1c', True)
         super().save(*args, **kwargs)
 
     def update(self, src: dict):
@@ -101,6 +103,12 @@ class BaseModel(models.Model):
     def comments(self):
         comments = Comment.objects.filter(object_id=self.pk).order_by('-created')
         return comments
+    
+    @property
+    def docs(self):
+        if hasattr(self, 'files'):
+            return self.files.all()
+        return
 
 
 class BaseCatalog(BaseModel):
@@ -247,6 +255,10 @@ class IdentityDocument(BaseModel):
         verbose_name='UID документа в 1С',
         blank=True,
         null=True,
+    )
+    modified_for_1c = models.BooleanField(
+        default=False,
+        editable=False,
     )
 
     def __str__(self):
@@ -447,6 +459,9 @@ class Changelog(BaseModel):
         'content_type',
         'object_id'
     )
+
+    def __str__(self):
+        return f'Поле {self.key}, {self.content_type.name}'
 
     class Meta:
         verbose_name = 'Изменения заявления'
