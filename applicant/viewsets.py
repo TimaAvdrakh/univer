@@ -719,14 +719,22 @@ class ModeratorViewSet(ModelViewSet):
             url_name='get_application_status_history')
     def get_history(self, request, pk=None):
         application_uid = self.request.query_params.get('uid')
-        queryset = self.queryset.get(pk=application_uid)
-        history = models.ApplicationStatusChangeHistory.objects.filter(author=queryset.creator)
+        queryset: models.Application = self.queryset.get(pk=application_uid)
+        history = models.ApplicationStatusChangeHistory.objects.filter(author=queryset.creator).order_by('created')
         if history.exists():
+            records = serializers.ApplicationChangeHistorySerializer(history, many=True).data
+            dates = models.Changelog.objects.filter(object_id=application_uid).values_list(
+                'created__date', flat=True
+            ).distinct('created__date')
+            logs = []
+            for log in dates:
+                logs.extend(ChangeLogSerializer(models.Changelog.objects.filter(object_id=application_uid,
+                                                                                created__date=log), many=True).data)
+            # item['created'] потому что это не сам объект, а сериализованный объект -
+            # в сериализаторе используется OrderedDict
+            data = sorted([*records, *logs], key=lambda item: item['created'])
             return Response(
-                data={
-                    'history': serializers.ApplicationChangeHistorySerializer(history, many=True).data,
-                    'diffs': ChangeLogSerializer(queryset.diffs, many=True).data
-                },
+                data=data,
                 status=HTTP_200_OK
             )
         else:
