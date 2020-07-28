@@ -1317,7 +1317,7 @@ class ModeratorChangeAvatarSerializer(serializers.ModelSerializer):
         request = self.context.get('request')
         profile = request.user.profile
         if profile.role.is_mod and settings.MODERATOR_CAN_EDIT:
-            applicant_profile_uid = request.data.get('uid')
+            applicant_pgtrofile_uid = request.data.get('uid')
             applicant_profile = models.Profile.objects.get(pk=applicant_profile_uid)
             image = validated_data["avatar"]
             extension = image.name.split(".")[-1]
