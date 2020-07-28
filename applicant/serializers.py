@@ -1131,7 +1131,6 @@ class ApplicationChangeHistorySerializer(serializers.ModelSerializer):
             'status',
             'comment',
             'author',
-            'diffs'
         ]
 
 
