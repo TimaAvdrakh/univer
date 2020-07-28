@@ -81,6 +81,7 @@ class ReserveRoomSerializer(serializers.ModelSerializer):
             event_end__lte=event_end_range,
             reserve_auditory=instance
         )
+        data['current_time'] = str(datetime.datetime.now())
         data['events'] = EventLiteSerializer(events_queryset, many=True).data
 
         events_queryset = events_queryset.filter(
@@ -191,8 +192,10 @@ class EventSerializer(serializers.ModelSerializer):
             'creator': creator,
             'participants': participants,
         }
+        files = validated_data.get('files',[])
         validated_data.update(data)
         event = Events.objects.create(**validated_data)
+        event.objects.set(files)
         event.save()
         return event
 
@@ -203,6 +206,8 @@ class EventSerializer(serializers.ModelSerializer):
             participants = self.create_participants(participants, instance.participants)
             data["participants"] = participants
         validated_data.update(data)
+        files = validated_data.pop('files', [])
+        instance.files.set(files)
         instance.save()
         event = super().update(instance, validated_data)
         return event
