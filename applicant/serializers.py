@@ -483,7 +483,7 @@ class QuestionnaireSerializer(serializers.ModelSerializer):
             privilege.pop('list', None)
             files = privilege.pop('files', [])
             privilege = models.Privilege.objects.create(**privilege, list=user_privilege_list)
-            privilege.files.set(files)
+            privilege.files.add(*files)
             privilege.save()
 
     def update(self, instance: models.Questionnaire, validated_data: dict):
@@ -526,13 +526,12 @@ class QuestionnaireSerializer(serializers.ModelSerializer):
             self.update_family(
                 uid=instance.family.uid,
                 data=family,
-                profile=instance.creator,
+                editor=instance.creator,
                 reg_addr_uid=instance.address_of_registration.pk,
                 tmp_addr_uid=instance.address_of_temp_reg and instance.address_of_temp_reg.pk,
                 res_addr_uid=instance.address_of_residence.pk
             )
-        self.update_id_doc(uid=instance.id_doc.pk, data=validated_data.pop('id_doc'))
-        validated_data.pop('phone', None)
+        self.update_id_doc(uid=instance.id_doc.pk, data=validated_data.pop('id_doc'), editor=profile)
         # self.update_phone(uid=instance.phone.pk, data=validated_data.pop('phone'))
         phones = validated_data.pop('phones', [])
         phones_result = []
@@ -559,7 +558,7 @@ class QuestionnaireSerializer(serializers.ModelSerializer):
             )
         files = validated_data.pop('files', [])
         instance.update(validated_data)
-        instance.files.set(files)
+        instance.files.add(*files)
         instance.save(snapshot=True, editor=profile)
         Profile.objects.filter(pk=instance.creator.pk).update(
             first_name=instance.first_name,
@@ -810,7 +809,7 @@ class ApplicationLiteSerializer(serializers.ModelSerializer):
         previous_education: dict = validated_data.pop('previous_education')
         previous_education_files = previous_education.pop('files', [])
         education: Education = Education.objects.get(pk=instance.previous_education.uid)
-        education.files.set(previous_education_files)
+        education.files.add(*previous_education_files)
         education.update(previous_education)
         education.save(snapshot=True, editor=profile)
         # ==============================================================================================================
@@ -824,7 +823,7 @@ class ApplicationLiteSerializer(serializers.ModelSerializer):
             test_certificate_files = test_certificate_data.pop('files', [])
             test_certificate: models.TestCert = models.TestCert.objects.get(pk=instance.test_result.test_certificate.pk)
             test_certificate.update(test_certificate_data)
-            test_certificate.files.set(test_certificate_files)
+            test_certificate.files.add(*test_certificate_files)
             test_certificate.save(snapshot=True, editor=profile)
             instance.test_result.disciplines.all().delete()
             new_disciplines = models.DisciplineMark.objects.bulk_create([
@@ -866,7 +865,7 @@ class ApplicationLiteSerializer(serializers.ModelSerializer):
             grant_model: models.Grant = models.Grant.objects.get(pk=instance.grant.uid)
             grant_files = grant.pop('files', [])
             grant_model.update(grant)
-            grant_model.files.set(grant_files)
+            grant_model.files.add(*grant_files)
             grant_model.save(snapshot=True, editor=profile)
         # ==============================================================================================================
         # Сделать с выбранными направлениями то же самое, что и с международ. сертификатами - удалить и создать по новой
