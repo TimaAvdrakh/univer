@@ -181,12 +181,19 @@ class DocumentTypeGroup(BaseCatalog):
 
 class DocumentType(BaseCatalog):
     #  Документы абитуриентов
+    APPLICANT = 'applicant_docs'
     #  Документы иностранных граждан
+    FOREIGNERS = 'foreign_citizen_docs'
     #  Документы об образовании
+    EDUCATION = 'edu_docs'
     #  Паспорта
+    PASSPORTS = 'passports'
     #  Регистрация деятельности
+    ACTIVITY_REGISTRATION = 'activity_registration'
     #  Основания приказов
+    ORDER = 'orders'
     #  Другие
+    PAYMENT = 'payment'
     group = models.ForeignKey(
         DocumentTypeGroup,
         on_delete=models.SET_NULL,
