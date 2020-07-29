@@ -863,7 +863,8 @@ class ApplicationLiteSerializer(serializers.ModelSerializer):
             grant_model.files.add(*grant_files)
             grant_model.save(snapshot=True, editor=profile)
         elif instance.is_grant_holder and instance.grant and not is_grant_holder:
-            instance.grant.delete()
+            instance.grant = None
+            instance.save()
         # ==============================================================================================================
         # Сделать с выбранными направлениями то же самое, что и с международ. сертификатами - удалить и создать по новой
         instance.directions.all().delete()
