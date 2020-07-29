@@ -85,6 +85,17 @@ class GrantType(BaseCatalog):
 
 # Адресный классификатор
 class AddressClassifier(BaseCatalog):
+    # Типы адресных элементов
+    # ==============================
+    # Регионы/области имеют тип адр. элемента 1
+    REGION = 1
+    # Районы имеют тип адр. элемента 2
+    DISTRICT = 2
+    # Города имеют тип адр. элемента 3
+    CITY = 3
+    # Населенные пункты имеют тип адр. элемента 4
+    LOCALITY = 4
+    # ==============================
     address_element_type = models.PositiveIntegerField(
         verbose_name="Тип адресного элемента"
     )
