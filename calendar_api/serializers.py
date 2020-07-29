@@ -124,10 +124,20 @@ class EventParticipantsSerializer(serializers.ModelSerializer):
             'education_program_groups',
         ]
 
+    def to_representation(self, instance):
+        data = super().to_representation(instance=instance)
+        data["participant_profiles"] = ProfileLiteSerializer(instance.participant_profiles, many=True).data
+        data['group'] = GroupEventSerializer(instance.group, many=True).data
+        data['faculty'] = FacultyEventSerializer(instance.faculty, many=True).data
+        data['cathedta'] = CathedraEventSerializer(instance.cathedra, many=True).data
+        data['education_programs'] = EducationProgramEventSerializer(instance.education_programs, many=True).data
+        data['education_program_groups'] = EducationProgramGroupEventSerializer(
+            instance.education_program_groups, many=True).data
+        return data
+
 
 class EventSerializer(serializers.ModelSerializer):
     participants = EventParticipantsSerializer(required=False)
-    files = FileSerializer(required=False, many=True)
 
     class Meta:
         model = Events
@@ -144,6 +154,11 @@ class EventSerializer(serializers.ModelSerializer):
             'repetition_type',
             'files',
         ]
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance=instance)
+        data['files'] = FileSerializer(instance.files, many=True).data
+        return data
 
     def validate(self, validated_data):
         if validated_data.get('event_start', None) is None:
@@ -185,24 +200,25 @@ class EventSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         creator = self.context['request'].user.profile
-        participants = validated_data.get("participants", None)
-        if participants is not None:
-            participants = self.create_participants(participants)
         data = {
             'creator': creator,
-            'participants': participants,
         }
-        files = validated_data.get('files',[])
+        participants = validated_data.pop("participants", None)
+        if len(participants):
+            participants = self.create_participants(participants)
+            data['participants'] = participants
+        files = validated_data.pop('files', [])
         validated_data.update(data)
         event = Events.objects.create(**validated_data)
-        event.objects.set(files)
+        if len(files):
+            event.files.set(files)
         event.save()
         return event
 
     def update(self, instance, validated_data):
-        participants = validated_data.get("participants", None)
+        participants = validated_data.pop("participants", None)
         data = {}
-        if participants is not None:
+        if len(participants):
             participants = self.create_participants(participants, instance.participants)
             data["participants"] = participants
         validated_data.update(data)
