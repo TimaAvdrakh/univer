@@ -269,6 +269,7 @@ class Education(BaseModel):
     study_form = models.ForeignKey(
         StudyForm,
         on_delete=models.SET_NULL,
+        blank=True,
         null=True,
         verbose_name='Форма обучения'
     )

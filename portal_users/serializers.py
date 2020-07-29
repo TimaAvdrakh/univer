@@ -1323,7 +1323,7 @@ class ModeratorChangeAvatarSerializer(serializers.ModelSerializer):
             extension = image.name.split(".")[-1]
             image_name = "{}.{}".format(str(uuid4()), extension)
             applicant_profile.avatar.save(image_name, image, save=True)
-            return profile
+            return applicant_profile
         else:
             raise Exception("if moderator and can upload avatars")
 
