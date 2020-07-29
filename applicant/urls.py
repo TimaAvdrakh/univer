@@ -22,6 +22,7 @@ router.register(r"addresses", viewsets.AddressViewSet, "addresses")
 router.register(r"attachments", viewsets.AdmissionDocumentViewSet, "applicant_attachments")
 router.register(r"moderator", viewsets.ModeratorViewSet, "moderator")
 router.register(r"documents", viewsets.Document1CViewSet, "documents")
+router.register(r"address-classifiers", viewsets.AddressClassifierViewSet, "address_classifiers")
 urlpatterns = router.urls
 
 # endpoint для файлов

@@ -312,6 +312,7 @@ class ApplicationViewSet(ModelViewSet):
             data['attachments'] = serializers.AdmissionDocumentSerializer(attachments, many=True).data
         else:
             data['attachments'] = None
+        data['profile'] = serializers.ApplicantProfileSerializer(applicant).data
         return Response(data=data, status=HTTP_200_OK)
 
     def validate(self, validated_data, user):
@@ -558,6 +559,11 @@ class AdmissionCampaignViewSet(ModelViewSet):
         return Response(data=prep_levels, status=HTTP_200_OK)
 
 
+class AddressClassifierViewSet(ModelViewSet):
+    queryset = models.AddressClassifier.objects.all()
+    serializer_class = serializers.AddressClassifierSerializer
+
+
 class AddressViewSet(ModelViewSet):
     queryset = models.Address.objects.all()
     serializer_class = serializers.AddressSerializer
@@ -570,32 +576,62 @@ class AddressViewSet(ModelViewSet):
 
     @action(methods=['get'], detail=False, url_path='regions', url_name='get_regions')
     def get_regions(self, request, pk=None):
-        regions = models.AddressClassifier.objects.filter(address_element_type=1)
+        regions = models.AddressClassifier.objects.filter(address_element_type=models.AddressClassifier.REGION)
         data = serializers.AddressClassifierSerializer(regions, many=True).data
         return Response(data=data, status=HTTP_200_OK)
 
     @action(methods=['get'], detail=False, url_path='districts', url_name='districts')
     def get_districts(self, request, pk=None):
-        region = models.AddressClassifier.objects.filter(pk=request.query_params.get('region')).first()
-        districts = models.AddressClassifier.objects.filter(address_element_type=2, region_code=region.region_code)
+        region = request.query_params.get('region')
+        if region and region != 'null':
+            region = models.AddressClassifier.objects.filter(pk=region).first()
+            districts = models.AddressClassifier.objects.filter(
+                address_element_type=models.AddressClassifier.DISTRICT,
+                region_code=region.region_code
+            )
+        else:
+            districts = models.AddressClassifier.objects.none()
         data = serializers.AddressClassifierSerializer(districts, many=True).data
         return Response(data=data, status=HTTP_200_OK)
 
     @action(methods=['get'], detail=False, url_path='cities', url_name='cities')
     def get_cities(self, request, pk=None):
-        district = models.AddressClassifier.objects.filter(pk=request.query_params.get('district')).first()
-        cities = models.AddressClassifier.objects.filter(address_element_type=3, region_code=district.region_code)
+        region = request.query_params.get('region')
+        district = request.query_params.get('district')
+        # Фильтр по коду области
+        if region and region != 'null':
+            region = models.AddressClassifier.objects.get(pk=region)
+            cities = models.AddressClassifier.objects.filter(
+                address_element_type=models.AddressClassifier.CITY,
+                region_code=region.region_code
+            )
+        # Фильтр по коду района
+        elif district and district != 'null':
+            district = models.AddressClassifier.objects.get(pk=district)
+            cities = models.AddressClassifier.objects.filter(
+                address_element_type=models.AddressClassifier.CITY,
+                district_code=district.district_code,
+                region_code=district.region_code,
+            )
+        else:
+            cities = models.AddressClassifier.objects.none()
+        # district = models.AddressClassifier.objects.filter(pk=request.query_params.get('district')).first()
+        # cities = models.AddressClassifier.objects.filter(address_element_type=3, region_code=district.region_code)
         data = serializers.AddressClassifierSerializer(cities, many=True).data
         return Response(data=data, status=HTTP_200_OK)
 
     @action(methods=['get'], detail=False, url_path='localities', url_name='localities')
     def get_localities(self, request, pk=None):
-        district = models.AddressClassifier.objects.filter(pk=request.query_params.get('district')).first()
-        localities = models.AddressClassifier.objects.filter(
-            address_element_type=4,
-            region_code=district.region_code,
-            district_code=district.district_code,
-        )
+        district = request.query_params.get('district')
+        if district and district != 'null':
+            district = models.AddressClassifier.objects.filter(pk=request.query_params.get('district')).first()
+            localities = models.AddressClassifier.objects.filter(
+                address_element_type=models.AddressClassifier.LOCALITY,
+                region_code=district.region_code,
+                district_code=district.district_code,
+            )
+        else:
+            localities = models.AddressClassifier.objects.none()
         data = serializers.AddressClassifierSerializer(localities, many=True).data
         return Response(data=data, status=HTTP_200_OK)
 

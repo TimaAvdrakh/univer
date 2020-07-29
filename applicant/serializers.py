@@ -689,6 +689,7 @@ class ApplicationLiteSerializer(serializers.ModelSerializer):
         fields = ['uid', 'status_info', 'applicant', 'created', 'updated', 'max_choices']
 
     def handle_previous_education(self, data, creator_profile):
+        data.pop('profile', None)
         files = data.pop('files', [])
         previous_education: Education = Education.objects.create(profile=creator_profile, **data)
         previous_education.files.set(files)
@@ -697,6 +698,7 @@ class ApplicationLiteSerializer(serializers.ModelSerializer):
 
     def handle_test_results(self, data, creator_profile):
         # Сертификат теста ЕНТ/КТ
+        data.pop('profile', None)
         test_certificate = data.pop('test_certificate')
         files = test_certificate.pop('files', [])
         test_certificate = models.TestCert.objects.create(profile=creator_profile, **test_certificate)
@@ -717,7 +719,7 @@ class ApplicationLiteSerializer(serializers.ModelSerializer):
             return models.InternationalCert.objects.none()
         certs = []
 
-        for index, international_cert in enumerate(data):
+        for international_cert in data:
             international_cert.pop('profile', None)
             files = international_cert.pop('files', [])
             instance = models.InternationalCert.objects.create(profile=creator_profile, **international_cert)
@@ -729,6 +731,7 @@ class ApplicationLiteSerializer(serializers.ModelSerializer):
     def handle_grant(self, data, creator_profile):
         if not data:
             return None
+        data.pop('profile', None)
         files = data.pop('files', [])
         grant = models.Grant.objects.create(profile=creator_profile, **data)
         grant.files.set(files)
@@ -859,6 +862,9 @@ class ApplicationLiteSerializer(serializers.ModelSerializer):
             grant_model.update(grant)
             grant_model.files.add(*grant_files)
             grant_model.save(snapshot=True, editor=profile)
+        elif instance.is_grant_holder and instance.grant and not is_grant_holder:
+            instance.grant = None
+            instance.save()
         # ==============================================================================================================
         # Сделать с выбранными направлениями то же самое, что и с международ. сертификатами - удалить и создать по новой
         instance.directions.all().delete()
@@ -1144,3 +1150,18 @@ class ApplicantMyStatusSerializer(serializers.ModelSerializer):
         else:
             data['comment'] = ""
         return data
+
+
+class ApplicantProfileSerializer(serializers.ModelSerializer):
+    avatar = serializers.SerializerMethodField(read_only=True)
+
+    class Meta:
+        model = models.Profile
+        fields = ['uid', 'avatar']
+
+    def get_avatar(self, profile: Profile):
+        avatar = profile.avatar
+        if avatar:
+            url = settings.HOST + avatar.url
+            return url
+        return
