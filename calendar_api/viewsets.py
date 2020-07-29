@@ -203,7 +203,7 @@ class ProfileChooseViewSet(ModelViewSet):
         cathedra = request.query_params.get('cathedra', None)
         edu_program = request.query_params.get("education_program", None)
         edu_program_group = request.query_params.get("education_program_group", None)
-        queryset = self.queryset.filter(lookup_and_filtration(
+        queryset = StudyPlan.objects.filter(lookup_and_filtration(
             faculty=faculty,
             cathedra=cathedra,
             edu_program=edu_program,
