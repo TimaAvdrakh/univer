@@ -1,8 +1,9 @@
 import datetime as dt
+import logging
 from django.contrib.auth.models import User
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
-from django.db.models import Case, When, Value, Q
+from django.db.models import Q
 from django.utils.translation import ugettext_lazy as _
 from common.models import (
     BaseModel,
@@ -33,6 +34,9 @@ from organizations.models import (
     Language,
 )
 from organizations.models import DocumentType
+
+logger = logging.getLogger('django')
+
 
 APPROVED = "APPROVED"
 REJECTED = "REJECTED"
@@ -554,8 +558,8 @@ class Applicant(BaseModel):
 
     @staticmethod
     def erase_inactive():
-        lookup = Q(user__is_active=False) & Q(created__date__gte=dt.datetime.now() - dt.timedelta(days=1))
-        selected_accounts = Applicant.objects.filter(lookup)[:20]
+        selected_accounts = Applicant.objects.filter(Q(user__is_active=False))
+        logger.debug(f"Inactive count {selected_accounts.count()}")
         # Сплайс не имеет методов Queryset
         inactive_account: Applicant
         for inactive_account in selected_accounts:

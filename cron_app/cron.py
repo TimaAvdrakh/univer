@@ -43,16 +43,19 @@ class EmailCronJob(CronJobBase):
     code = 'crop_app.my_cron_job'  # a unique code
 
     def do(self):
-        emails = models.EmailTask.objects.filter(is_success=False)[:20]
+        emails = models.EmailTask.objects.filter(is_success=False)[:100]
         for email in emails:
-            send_mail(
+            result = send_mail(
                 subject=email.subject,
                 message=email.message,
                 from_email=EMAIL_HOST_USER,
                 recipient_list=[email.to]
             )
-            email.is_success = True
-            email.save()
+            if result == 1:
+                email.is_success = True
+                email.save()
+            else:
+                logger.warning(f"Email was not sent. Result {result}")
 
 
 class PasswordResetUrlSendJob(CronJobBase):
@@ -64,7 +67,7 @@ class PasswordResetUrlSendJob(CronJobBase):
 
     def do(self):
         tasks = models.ResetPasswordUrlSendTask.objects.filter(is_success=False)
-        logger.warning(f'Reset task count {tasks.count()}')
+        # logger.warning(f'Reset task count {tasks.count()}')
         for task in tasks:
             reset_password = task.reset_password
             logger.warning(f'ResetPassword instance {reset_password}')
@@ -74,7 +77,7 @@ class PasswordResetUrlSendJob(CronJobBase):
             msg_html = render_to_string('emails/reset_password/reset_password.html', {'uid': reset_password.uuid,
                                                                                       'lang': task.lang_code,
                                                                                       'site': current_site})
-            logger.warning(f'Rendered messages,  {msg_html}, {msg_plain}')
+            # logger.warning(f'Rendered messages,  {msg_html}, {msg_plain}')
             try:
                 send_mail(
                     'Восстановление пароля',
@@ -655,9 +658,10 @@ class DeleteInactiveApplicants(CronJobBase):
     RUN_AT_TIMES = ['00:00']
 
     schedule = Schedule(run_every_mins=RUN_DAILY)
-    code = 'cron_app.applicant_verification_job'
+    code = 'cron_app.delete_inactive_applicants'
 
     def do(self):
+        logger.warning('Deactivating inactive users')
         Applicant.erase_inactive()
 
 
