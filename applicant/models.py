@@ -559,7 +559,7 @@ class Applicant(BaseModel):
     @staticmethod
     def erase_inactive():
         selected_accounts = Applicant.objects.filter(Q(user__is_active=False))
-        logger.debug(f"Inactive count {selected_accounts.count()}")
+        logger.warning(f"Inactive count {selected_accounts.count()}")
         # Сплайс не имеет методов Queryset
         inactive_account: Applicant
         for inactive_account in selected_accounts:
