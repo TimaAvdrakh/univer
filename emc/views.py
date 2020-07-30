@@ -60,10 +60,9 @@ class EMCModelViewSet(ModelViewSet):
         is_student = profile.role.is_student
         is_teacher = profile.role.is_teacher
         if is_student:
-            student_discipline = StudentDiscipline.objects.filter(
-                student=profile,
-            ).distinct('discipline__name').order_by('discipline__name')
-            emc_files = EMC.objects.filter(author=student_discipline[0].teacher.user)
+            student_discipline = StudentDiscipline.objects.get(pk=discipline_uid)
+            emc_files = EMC.objects.filter(author=student_discipline.teacher.user,
+                                           discipline__uid=student_discipline.discipline.uid)
             serializer = EMCSerializer(emc_files, many=True).data
         elif is_teacher:
             teacher_discipline = TeacherDiscipline.objects.get(pk=discipline_uid)
