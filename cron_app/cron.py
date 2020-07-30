@@ -45,17 +45,20 @@ class EmailCronJob(CronJobBase):
     def do(self):
         emails = models.EmailTask.objects.filter(is_success=False)[:100]
         for email in emails:
-            result = send_mail(
-                subject=email.subject,
-                message=email.message,
-                from_email=EMAIL_HOST_USER,
-                recipient_list=[email.to]
-            )
-            if result == 1:
-                email.is_success = True
-                email.save()
-            else:
-                logger.warning(f"Email was not sent. Result {result}")
+            try:
+                result = send_mail(
+                    subject=email.subject,
+                    message=email.message,
+                    from_email=EMAIL_HOST_USER,
+                    recipient_list=[email.to]
+                )
+                if result == 1:
+                    email.is_success = True
+                    email.save()
+                else:
+                    logger.warning(f"Email was not sent. Result {result}")
+            except Exception as e:
+                logger.warning(f"Caught exception on sending email to {email.to}. Code {e}")
 
 
 class PasswordResetUrlSendJob(CronJobBase):
@@ -663,6 +666,7 @@ class DeleteInactiveApplicants(CronJobBase):
     def do(self):
         logger.warning('Deactivating inactive users')
         Applicant.erase_inactive()
+        logger.warning('Deleted inactive users')
 
 
 def send_applications_to_1c():
