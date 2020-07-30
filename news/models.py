@@ -1,5 +1,6 @@
 from django.contrib.auth import get_user_model
 from django.db import models
+from django.utils.timezone import now
 from common.models import BaseModel
 
 User = get_user_model()
@@ -26,9 +27,24 @@ class News(BaseModel):
         blank=True,
         verbose_name='Прикрепленные файлы'
     )
+    addressees = models.ManyToManyField(
+        'portal_users.Profile',
+        blank=True,
+        verbose_name='Адресаты'
+    )
+    pub_date = models.DateField(
+        verbose_name='Дата публикации',
+        default=now,
+        blank=True,
+    )
 
     class Meta:
-        ordering = ['-created']
+        ordering = ['-pub_date']
+
+    def save(self, *args, **kwargs):
+        if self.pub_date < now():
+            raise Exception('cannot publish earlier than today')
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return f'{self.title[:30]}, Автор {self.author}'
