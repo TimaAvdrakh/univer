@@ -39,18 +39,23 @@ class EMCModelViewSet(ModelViewSet):
         is_teacher = profile.role.is_teacher
         if is_student:
             disciplines = StudentDiscipline.objects.filter(
-                student=profile,
-                # study_plan__uid=study_plan
+                student=profile
             ).distinct('discipline__name').order_by('discipline__name')
-            serializer = StudentDisciplineSerializer(disciplines, many=True).data
+            paginated_queryset = self.paginate_queryset(disciplines)
+            return self.get_paginated_response(
+                StudentDisciplineSerializer(paginated_queryset, many=True).data
+            )
         elif is_teacher:
             disciplines = TeacherDiscipline.objects.filter(
                 teacher=profile
             ).distinct('discipline__name').order_by('discipline__name')
-            serializer = TeacherDisciplineSerializer(disciplines, many=True).data
+            paginated_queryset = self.paginate_queryset(disciplines)
+            return self.get_paginated_response(
+                TeacherDisciplineSerializer(paginated_queryset, many=True).data
+            )
         else:
             serializer = None
-        return Response(serializer, status=status.HTTP_200_OK)
+            return Response(serializer, status=status.HTTP_200_OK)
 
     @action(methods=['get'], detail=False, url_path='discipline', url_name='emc-discipline')
     def get_discipline(self, request, pk=None):
