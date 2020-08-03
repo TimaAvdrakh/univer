@@ -166,6 +166,18 @@ class ProfileChooseViewSet(ModelViewSet):
 
         full_name = request.query_params.get('full_name', None)
 
+        study_plans = StudyPlan.objects.filter(lookup_and_filtration(
+            group, faculty, cathedra, edu_program, edu_program_group
+        )).values_list('student')
+
+        queryset = self.queryset
+
+        queryset = queryset.filter(pk__in=study_plans)
+
+        if role is not None:
+            profiles_from_role_related = RoleNamesRelated.objects.filter(role_name=role).values_list('profile')
+            queryset = queryset.filter(pk__in=profiles_from_role_related)
+
         lookup = Q()
 
         if full_name is not None:
@@ -173,17 +185,7 @@ class ProfileChooseViewSet(ModelViewSet):
             lookup |= Q(last_name__contains=full_name)
             lookup |= Q(middle_name__contains=full_name)
 
-        study_plans = StudyPlan.objects.filter(lookup_and_filtration(
-            group, faculty, cathedra, edu_program, edu_program_group
-        )).values_list('student')
-
-        queryset = self.queryset.filter(lookup)
-
-        if study_plans.exists():
-            queryset = queryset.filter(pk__in=study_plans)
-        if role is not None:
-            profiles_from_role_related = RoleNamesRelated.objects.filter(role_name=role).values_list('profile')
-            queryset = queryset.filter(pk__in=profiles_from_role_related)
+        queryset = queryset.filter(lookup)
 
         paginated_queryset = self.paginate_queryset(queryset)
 
