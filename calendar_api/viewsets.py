@@ -41,16 +41,16 @@ from . import permissions
 
 def lookup_and_filtration(group=None, faculty=None, cathedra=None, edu_program=None, edu_program_group=None):
     lookup = Q()
-    if group is not None:
-        lookup = lookup & Q(group=group)
-    if faculty is not None:
-        lookup = lookup & Q(faculty=faculty)
-    if cathedra is not None:
-        lookup = lookup & Q(cathedra=cathedra)
-    if edu_program is not None:
-        lookup = lookup & Q(education_program=edu_program)
-    if edu_program_group is not None:
-        lookup = lookup & Q(education_progra__group=edu_program_group)
+    if len(group):
+        lookup = lookup & Q(group__in=group)
+    if len(faculty):
+        lookup = lookup & Q(faculty__in=faculty)
+    if len(cathedra):
+        lookup = lookup & Q(cathedra__in=cathedra)
+    if len(edu_program):
+        lookup = lookup & Q(education_program__in=edu_program)
+    if len(edu_program_group):
+        lookup = lookup & Q(education_progra__group__in=edu_program_group)
     return lookup
 
 
@@ -136,7 +136,7 @@ class ReserveRoomViewSet(ModelViewSet):
         serializer_data = self.serializer_class(queryset, many=True, context=context)
         return Response(data=serializer_data.data, status=HTTP_200_OK)
 
-    @action(methods=['get'], detail=False, url_name='room_type', url_path='room_type')
+    @action(methods=['get'], detail=True, url_name='room_type', url_path='room_type')
     def get_room_type(self, request, pk=None):
         room_type_queryset = RoomType.objects.filter(is_active=True)
         serializer = serializers.RoomTypeSerializer(room_type_queryset, many=True)
@@ -146,25 +146,26 @@ class ReserveRoomViewSet(ModelViewSet):
 class ProfileChooseViewSet(ModelViewSet):
     queryset = Profile.objects.filter(is_active=True)
     serializer_class = serializers.ProfilesEventsSerializer
-    permission_classes = (IsAdminOrReadOnly,)
+    # permission_classes = (IsAdminOrReadOnly,)
     pagination_class = CustomPagination
 
-    @action(methods=['get'], detail=False, url_name='profiles', url_path='profiles')
+    @action(methods=['post'], detail=False, url_name='profiles', url_path='profiles')
     def get_profiles(self, request, pk=None):
-        event_start = request.query_params.get("event_start", None)
-        event_end = request.query_params.get("event_end", None)
+        objects = request.data
+        event_start = objects.get("event_start", None)
+        event_end = objects.get("event_end", None)
         if event_start is None or event_end is None:
             raise ValidationError({"error": "event_start and event_end query params required"})
 
-        group = request.query_params.get("group", None)
-        faculty = request.query_params.get("faculty", None)
-        cathedra = request.query_params.get("cathedra", None)
-        edu_program = request.query_params.get("education_program", None)
-        edu_program_group = request.query_params.get("education_program_group", None)
+        group = objects.get("group", [])
+        faculty = objects.get("faculty", [])
+        cathedra = objects.get("cathedra", [])
+        edu_program = objects.get("education_program", [])
+        edu_program_group = objects.get("education_program_group", [])
 
-        role = request.query_params.get("role", None)
+        role = objects.get("role", [])
 
-        full_name = request.query_params.get('full_name', None)
+        full_name = objects.get('full_name', None)
 
         study_plans = StudyPlan.objects.filter(lookup_and_filtration(
             group, faculty, cathedra, edu_program, edu_program_group
@@ -174,8 +175,8 @@ class ProfileChooseViewSet(ModelViewSet):
 
         queryset = queryset.filter(pk__in=study_plans)
 
-        if role is not None:
-            profiles_from_role_related = RoleNamesRelated.objects.filter(role_name=role).values_list('profile')
+        if len(role):
+            profiles_from_role_related = RoleNamesRelated.objects.filter(role_name__in=role).values_list('profile')
             queryset = queryset.filter(pk__in=profiles_from_role_related)
 
         lookup = Q()
@@ -190,8 +191,8 @@ class ProfileChooseViewSet(ModelViewSet):
         paginated_queryset = self.paginate_queryset(queryset)
 
         context = {
-            "event_start": self.request.query_params.get("event_start"),
-            "event_end": self.request.query_params.get("event_end")
+            "event_start": event_start,
+            "event_end": event_end
         }
 
         serializer = self.serializer_class(paginated_queryset, many=True, context=context).data
