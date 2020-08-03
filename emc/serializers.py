@@ -46,6 +46,9 @@ class DisciplineSerializer(serializers.ModelSerializer):
     emcs = serializers.SerializerMethodField(read_only=True)
     teacher_name = serializers.SerializerMethodField(read_only=True)
 
+    def get_discipline_name(self, td: TeacherDiscipline):
+        return td.discipline.name
+
     def get_emcs(self, td: TeacherDiscipline):
         discipline = td.discipline
         emcs = discipline.emcs.all()
@@ -59,17 +62,16 @@ class DisciplineSerializer(serializers.ModelSerializer):
 
 
 class TeacherDisciplineSerializer(DisciplineSerializer):
-    def get_discipline_name(self, td: TeacherDiscipline):
-        return td.discipline.name
-
     class Meta:
         model = TeacherDiscipline
         fields = '__all__'
 
 
 class StudentDisciplineSerializer(DisciplineSerializer):
-    def get_discipline_name(self, sd: StudentDiscipline):
-        return sd.discipline.name
+    # acad_period = serializers.SerializerMethodField(read_only=True)
+    #
+    # def get_acad_period(self, sd: StudentDiscipline):
+    #     return sd.acad_period.number
 
     class Meta:
         model = StudentDiscipline

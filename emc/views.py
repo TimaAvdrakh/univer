@@ -34,17 +34,47 @@ class EMCModelViewSet(ModelViewSet):
     def get_disciplines(self, request, pk=None):
         """Получить список закрпеленных дисциплин в зависомости от роли (студента или учителя)"""
         study_plan = request.query_params.get('study_plan_uid')
+        acad_period = request.query_params.get('acad_period_uid')
         profile = self.request.user.profile
         is_student = profile.role.is_student
         is_teacher = profile.role.is_teacher
         if is_student:
-            disciplines = StudentDiscipline.objects.filter(
-                student=profile
-            ).distinct('discipline__name').order_by('discipline__name')
-            paginated_queryset = self.paginate_queryset(disciplines)
-            return self.get_paginated_response(
-                StudentDisciplineSerializer(paginated_queryset, many=True).data
-            )
+            if study_plan and acad_period:
+                disciplines = StudentDiscipline.objects.filter(
+                    student=profile,
+                    study_plan=study_plan,
+                    acad_period=acad_period
+                ).distinct('discipline__name').order_by('discipline__name')
+                paginated_queryset = self.paginate_queryset(disciplines)
+                return self.get_paginated_response(
+                    StudentDisciplineSerializer(paginated_queryset, many=True).data
+                )
+            elif study_plan:
+                disciplines = StudentDiscipline.objects.filter(
+                    student=profile,
+                    study_plan=study_plan,
+                ).distinct('discipline__name').order_by('discipline__name')
+                paginated_queryset = self.paginate_queryset(disciplines)
+                return self.get_paginated_response(
+                    StudentDisciplineSerializer(paginated_queryset, many=True).data
+                )
+            elif acad_period:
+                disciplines = StudentDiscipline.objects.filter(
+                    student=profile,
+                    acad_period=acad_period
+                ).distinct('discipline__name').order_by('discipline__name')
+                paginated_queryset = self.paginate_queryset(disciplines)
+                return self.get_paginated_response(
+                    StudentDisciplineSerializer(paginated_queryset, many=True).data
+                )
+            else:
+                disciplines = StudentDiscipline.objects.filter(
+                    student=profile
+                ).distinct('discipline__name').order_by('discipline__name')
+                paginated_queryset = self.paginate_queryset(disciplines)
+                return self.get_paginated_response(
+                    StudentDisciplineSerializer(paginated_queryset, many=True).data
+                )
         elif is_teacher:
             disciplines = TeacherDiscipline.objects.filter(
                 teacher=profile
