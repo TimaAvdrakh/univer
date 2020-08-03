@@ -203,7 +203,7 @@ class EventSerializer(serializers.ModelSerializer):
         data = {
             'creator': creator,
         }
-        participants = validated_data.pop("participants", None)
+        participants = validated_data.pop("participants", {})
         if len(participants):
             participants = self.create_participants(participants)
             data['participants'] = participants
@@ -216,7 +216,7 @@ class EventSerializer(serializers.ModelSerializer):
         return event
 
     def update(self, instance, validated_data):
-        participants = validated_data.pop("participants", None)
+        participants = validated_data.pop("participants", {})
         data = {}
         if len(participants):
             participants = self.create_participants(participants, instance.participants)
