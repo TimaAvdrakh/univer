@@ -799,6 +799,7 @@ class StudentDiscipline(BaseModel):
         AcadPeriod,
         on_delete=models.CASCADE,
         verbose_name='Академический период',
+        related_name='acad_period'
     )
     discipline = models.ForeignKey(
         Discipline,

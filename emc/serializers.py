@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from common.models import File, ReservedUID
 from common.serializers import FileSerializer
-from organizations.models import TeacherDiscipline, StudentDiscipline, StudyPlan
+from organizations.models import TeacherDiscipline, StudentDiscipline, StudyPlan, AcadPeriod
 from .models import EMC
 
 
@@ -68,10 +68,6 @@ class TeacherDisciplineSerializer(DisciplineSerializer):
 
 
 class StudentDisciplineSerializer(DisciplineSerializer):
-    # acad_period = serializers.SerializerMethodField(read_only=True)
-    #
-    # def get_acad_period(self, sd: StudentDiscipline):
-    #     return sd.acad_period.number
 
     class Meta:
         model = StudentDiscipline
@@ -79,12 +75,27 @@ class StudentDisciplineSerializer(DisciplineSerializer):
 
 
 class StudyPlanSerializer(serializers.ModelSerializer):
-    student_disciplines = serializers.SerializerMethodField(read_only=True)
-
-    def get_student_disciplines(self, sp: StudyPlan):
-        student_disciplines = sp.study_plan.all()
-        return StudentDisciplineSerializer(student_disciplines, many=True).data
+    # student_disciplines = serializers.SerializerMethodField(read_only=True)
+    #
+    # def get_student_disciplines(self, sp: StudyPlan):
+    #     student_disciplines = sp.study_plan.all()
+    #     return StudentDisciplineSerializer(student_disciplines, many=True).data
 
     class Meta:
         model = StudyPlan
         fields = '__all__'
+
+
+class AcadSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = AcadPeriod
+        fields = '__all__'
+
+
+class AcadPeriodAndStudyPlan(serializers.Serializer):
+    acad = AcadSerializer(many=True)
+    study_plan = StudyPlanSerializer(many=True)
+
+    class Meta:
+        fields = ['acad', 'study_plan']
+
