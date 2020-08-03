@@ -216,7 +216,7 @@ class ProfileChooseViewSet(ModelViewSet):
     @action(methods=['get'], detail=False, url_name='cathedra', url_path='cathedra')
     def get_cathedra(self, request, pk=None):
         faculty = request.query_params.get('faculty')
-        queryset = self.queryset.filter(lookup_and_filtration(faculty=faculty)).values_list('cathedra').distinct()
+        queryset = StudyPlan.objects.filter(lookup_and_filtration(faculty=faculty)).values_list('cathedra').distinct()
         cathedra_queryset = Cathedra.objects.filter(pk__in=queryset, is_active=True).order_by('name')
         serializer = serializers.CathedraEventSerializer(cathedra_queryset, many=True)
         return Response(data=serializer.data, status=HTTP_200_OK)
@@ -227,7 +227,7 @@ class ProfileChooseViewSet(ModelViewSet):
         serializer = serializers.FacultyEventSerializer(faculty_queryset, many=True)
         return Response(data=serializer.data, status=HTTP_200_OK)
 
-    @action(methods=['get'], detail=False, url_name='edu_program', url_path='edu_program')
+    @action(methods=['get'], detail=False, url_name='edu_program_group', url_path='edu_program_group')
     def get_education_program(self, request, pk=None):
         edu_program_group = request.query_params.get('education_program_group', None)
         lookup = Q()
@@ -237,7 +237,7 @@ class ProfileChooseViewSet(ModelViewSet):
         serializer = serializers.EducationProgramEventSerializer(edu_program_queryset, many=True)
         return Response(data=serializer.data, status=HTTP_200_OK)
 
-    @action(methods=['get'], detail=False, url_path='edu_program_group', url_name='edu_program_group')
+    @action(methods=['get'], detail=False, url_path='edu_program', url_name='edu_program')
     def get_education_program_group(self, request, pk=None):
         edu_program_group_queryset = EducationProgramGroup.objects.filter(is_active=True).order_by('name')
         serializer = serializers.EducationProgramGroupEventSerializer(
