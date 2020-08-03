@@ -39,19 +39,35 @@ from . import serializers
 from . import permissions
 
 
-def lookup_and_filtration(group=None, faculty=None, cathedra=None, edu_program=None, edu_program_group=None):
+def lookup_and_filtration_list(group=None, faculty=None, cathedra=None, edu_program=None, edu_program_group=None):
     lookup = Q()
-    if len(group):
+    if group is not None and len(group):
         lookup = lookup & Q(group__in=group)
-    if len(faculty):
+    if faculty is not None and len(faculty):
         lookup = lookup & Q(faculty__in=faculty)
-    if len(cathedra):
+    if cathedra is not None and len(cathedra):
         lookup = lookup & Q(cathedra__in=cathedra)
-    if len(edu_program):
+    if edu_program is not None and len(edu_program):
         lookup = lookup & Q(education_program__in=edu_program)
-    if len(edu_program_group):
+    if edu_program_group is not None and len(edu_program_group):
         lookup = lookup & Q(education_progra__group__in=edu_program_group)
     return lookup
+
+
+def lookup_and_filtration(group=None, faculty=None, cathedra=None, edu_program=None, edu_program_group=None):
+    lookup = Q()
+    if group is not None:
+        lookup = lookup & Q(group=group)
+    if faculty is not None:
+        lookup = lookup & Q(faculty=faculty)
+    if cathedra is not None:
+        lookup = lookup & Q(cathedra=cathedra)
+    if edu_program is not None:
+        lookup = lookup & Q(education_program=edu_program)
+    if edu_program_group is not None:
+        lookup = lookup & Q(education_progra__group=edu_program_group)
+    return lookup
+
 
 
 class EventsViewSet(ModelViewSet):
@@ -167,7 +183,7 @@ class ProfileChooseViewSet(ModelViewSet):
 
         full_name = objects.get('full_name', None)
 
-        study_plans = StudyPlan.objects.filter(lookup_and_filtration(
+        study_plans = StudyPlan.objects.filter(lookup_and_filtration_list(
             group, faculty, cathedra, edu_program, edu_program_group
         )).values_list('student')
 
@@ -211,7 +227,7 @@ class ProfileChooseViewSet(ModelViewSet):
             cathedra=cathedra,
             edu_program=edu_program,
             edu_program_group=edu_program_group,
-        )).values_list('group', flat=True).distinct()
+        )).values_list('group').distinct()
         groups_queryset = Group.objects.filter(pk__in=queryset, is_active=True).order_by('name')
         serializer = serializers.GroupEventSerializer(groups_queryset, many=True)
         return Response(data=serializer.data, status=HTTP_200_OK)
