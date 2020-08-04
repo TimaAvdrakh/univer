@@ -81,7 +81,6 @@ class ReserveRoomSerializer(serializers.ModelSerializer):
             event_end__lte=event_end_range,
             reserve_auditory=instance
         )
-        data['current_time'] = str(datetime.datetime.now())
         data['events'] = EventLiteSerializer(events_queryset, many=True).data
 
         events_queryset = events_queryset.filter(
