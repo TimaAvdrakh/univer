@@ -12,6 +12,7 @@ from rest_framework.response import Response
 from rest_framework.status import HTTP_200_OK
 from rest_framework.viewsets import ModelViewSet
 from common.paginators import CustomPagination
+from datetime import datetime
 from portal_users.models import (
     Profile,
     RoleNames,
@@ -111,6 +112,10 @@ class EventsViewSet(ModelViewSet):
                 return Response(data="Does not exist", status=HTTP_200_OK)
         else:
             raise PermissionError({"error": "You don't have rights to this data"})
+
+    @action(methods=['get'], detail=False, url_path='get_cur_time', url_name='get_cur_time')
+    def get_cur_time(self, request, pk=None):
+        return Response(data={"current_time": datetime.now()}, status=HTTP_200_OK)
 
 
 class EventsRepetitionTypeViewSet(ModelViewSet):

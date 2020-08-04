@@ -657,16 +657,16 @@ class DeleteInactiveApplicants(CronJobBase):
     """
     Удаляет неактивных абитуриентов, которые не подтвердили свою регистрацию по почте
     """
-    RUN_DAILY = 24 * 60
+    RUN_EVERY_MINS = 24 * 60
     RUN_AT_TIMES = ['00:00']
 
-    schedule = Schedule(run_every_mins=RUN_DAILY)
+    schedule = Schedule(run_every_mins=RUN_EVERY_MINS)
     code = 'cron_app.delete_inactive_applicants'
 
     def do(self):
-        logger.warning('Deactivating inactive users')
+        logger.info('Deactivating inactive users')
         Applicant.erase_inactive()
-        logger.warning('Deleted inactive users')
+        logger.info('Deleted inactive users')
 
 
 def send_applications_to_1c():

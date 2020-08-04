@@ -38,6 +38,7 @@ from organizations.models import DocumentType
 logger = logging.getLogger('django')
 
 
+MAKE_APP = "MAKE_APP"
 APPROVED = "APPROVED"
 REJECTED = "REJECTED"
 AWAITS_VERIFICATION = "AWAITS_VERIFICATION"
@@ -559,11 +560,19 @@ class Applicant(BaseModel):
     @staticmethod
     def erase_inactive():
         selected_accounts = Applicant.objects.filter(Q(user__is_active=False))
-        logger.warning(f"Inactive count {selected_accounts.count()}")
-        # Сплайс не имеет методов Queryset
+        logger.info(f"Inactive count {selected_accounts.count()}")
         inactive_account: Applicant
+        # Код рабочий, только в раньше было inactive_account.user.delete() который работал очень долго,
+        # т.к. удалял все каскадом. Поэтому удаление происходит вручную
         for inactive_account in selected_accounts:
-            inactive_account.user.delete()
+            user = inactive_account.user
+            profile = user.profile
+            role = profile.role
+            role.delete()
+            profile.delete()
+            user.delete()
+            inactive_account.delete()
+        logger.info("Deleted inactive applicants")
 
 
 # Статус заявки
@@ -578,6 +587,13 @@ class ApplicationStatus(BaseCatalog):
     @staticmethod
     def create_or_update():
         statuses = [
+            {
+                "name": MAKE_APP,
+                "name_ru": "Составьте заявление",
+                "name_kk": "Мәлімдеме жасаңыз",
+                "name_en": "Make a statement",
+                "code": MAKE_APP,
+            },
             {
                 "name": APPROVED,
                 "name_ru": "Заявление утверждено",
@@ -1619,7 +1635,6 @@ class Application(BaseModel):
             moderator=moderator,
             application=self,
         )
-        # TODO на подтверждение заявления модератором импортировать заявление в 1С
         self.import_self_to_1c()
         # Поставить в очередь крона
         EmailTemplate.put_in_cron_queue(
