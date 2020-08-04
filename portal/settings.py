@@ -149,23 +149,17 @@ CORS_ORIGIN_ALLOW_ALL = True
 CORS_ALLOW_CREDENTIALS = True
 
 CRON_CLASSES = [
+    "cron_app.cron.DeleteInactiveApplicants",
     "cron_app.cron.EmailCronJob",
-    # "cron_app.cron.PasswordResetUrlSendJob",
     "cron_app.cron.SendApplicationsTo1cJob",
-    # "cron_app.cron.SendCredentialsJob",
     "cron_app.cron.NotifyAdvisorJob",
     "cron_app.cron.AdvisorRejectBidJob",
     "cron_app.cron.StudPerformanceChangedJob",
     "cron_app.cron.ControlNotifyJob",
     "cron_app.cron.CloseLessonsJob",
-    # "cron_app.cron.SendStudentDisciplinesTo1CJob",
-    # "cron_app.cron.SendConfirmedDisciplineCreditTo1CJob",
-    # "cron_app.cron.SendConfirmedThemesOfTheses",
     "cron_app.cron.ClosePlannedJournalJob",
     "cron_app.cron.GenerateExcelJob",
-    # "cron_app.cron.DeleteDuplicateJob",
     "cron_app.cron.CloseApplicationsJob",
-    "cron_app.cron.DeleteInactiveApplicants"
 ]
 
 # SESSION_COOKIE_AGE = 60
@@ -185,7 +179,7 @@ LOGGING = {
     },
     'handlers': {
         'file': {
-            'level': 'WARNING',
+            'level': 'DEBUG',
             'class': 'logging.FileHandler',
             'filename': './back.log',
             'formatter': 'verbose'
