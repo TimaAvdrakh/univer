@@ -196,17 +196,19 @@ class DocumentReturnMethodViewSet(ModelViewSet):
 class RecruitmentPlanViewSet(ModelViewSet):
     queryset = models.RecruitmentPlan.objects.all()
     serializer_class = serializers.RecruitmentPlanSerializer
-    permission_classes = (IsAdminOrReadOnly,)
     pagination_class = CustomPagination
 
-    @action(methods=['get'], detail=False, url_path='search', url_name='search_recruitment_plans')
+    @action(methods=['post'], detail=False, url_path='search', url_name='search_recruitment_plans')
     def search(self, request, pk=None):
-        params = request.query_params
+        params = request.data
+        if not params:
+            serializer = self.get_serializer(self.queryset, many=True)
+            return Response(data={'results': serializer.data}, status=HTTP_200_OK)
         user = self.request.user
-        if user.profile.role.is_mod:
-            lookup = Q()
-        elif user.profile.role.is_applicant:
+        if user.profile.role.is_applicant:
             lookup = Q(campaign=user.applicant.campaign) & Q(prep_level=user.applicant.prep_level)
+        else:
+            lookup = Q()
         study_form = params.get('sf')
         if study_form:
             lookup = lookup & Q(study_form=study_form)
@@ -222,7 +224,7 @@ class RecruitmentPlanViewSet(ModelViewSet):
         edu_base = params.get('eb')
         if edu_base:
             lookup = lookup & Q(admission_basis=edu_base)
-        recruitment_plans = self.paginate_queryset(self.queryset.filter(lookup))
+        recruitment_plans = self.paginate_queryset(self.queryset.filter(lookup).distinct('pk'))
         if recruitment_plans:
             recruitment_plans = self.serializer_class(recruitment_plans, many=True).data
             return self.get_paginated_response(recruitment_plans)
@@ -492,7 +494,7 @@ class ApplicationViewSet(ModelViewSet):
             return Response(data=data, status=HTTP_200_OK)
         else:
             data = {
-                "status": "Составьте заявление",
+                "status": models.ApplicationStatus.objects.get(code=models.MAKE_APP).name,
                 "comment": "",
             }
             return Response(data=data, status=HTTP_200_OK)

@@ -1141,7 +1141,7 @@ class ApplicantMyStatusSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         data = super().to_representation(instance=instance)
-        data['status'] = instance.status and instance.status.name_ru
+        data['status'] = instance.status and instance.status.name
         data['status_code'] = instance.status and instance.status.code
         last_comment = models.ApplicationStatusChangeHistory.objects.filter(author=instance.creator).order_by(
             'created').last()

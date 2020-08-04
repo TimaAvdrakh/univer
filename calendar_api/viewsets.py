@@ -12,6 +12,7 @@ from rest_framework.response import Response
 from rest_framework.status import HTTP_200_OK
 from rest_framework.viewsets import ModelViewSet
 from common.paginators import CustomPagination
+from datetime import datetime
 from portal_users.models import (
     Profile,
     RoleNames,
@@ -39,6 +40,21 @@ from . import serializers
 from . import permissions
 
 
+def lookup_and_filtration_list(group=None, faculty=None, cathedra=None, edu_program=None, edu_program_group=None):
+    lookup = Q()
+    if group is not None and len(group):
+        lookup = lookup & Q(group__in=group)
+    if faculty is not None and len(faculty):
+        lookup = lookup & Q(faculty__in=faculty)
+    if cathedra is not None and len(cathedra):
+        lookup = lookup & Q(cathedra__in=cathedra)
+    if edu_program is not None and len(edu_program):
+        lookup = lookup & Q(education_program__in=edu_program)
+    if edu_program_group is not None and len(edu_program_group):
+        lookup = lookup & Q(education_progra__group__in=edu_program_group)
+    return lookup
+
+
 def lookup_and_filtration(group=None, faculty=None, cathedra=None, edu_program=None, edu_program_group=None):
     lookup = Q()
     if group is not None:
@@ -52,6 +68,7 @@ def lookup_and_filtration(group=None, faculty=None, cathedra=None, edu_program=N
     if edu_program_group is not None:
         lookup = lookup & Q(education_progra__group=edu_program_group)
     return lookup
+
 
 
 class EventsViewSet(ModelViewSet):
@@ -96,6 +113,10 @@ class EventsViewSet(ModelViewSet):
         else:
             raise PermissionError({"error": "You don't have rights to this data"})
 
+    @action(methods=['get'], detail=False, url_path='get_cur_time', url_name='get_cur_time')
+    def get_cur_time(self, request, pk=None):
+        return Response(data={"current_time": datetime.now()}, status=HTTP_200_OK)
+
 
 class EventsRepetitionTypeViewSet(ModelViewSet):
     queryset = models.RepetitionTypes.objects.all()
@@ -136,7 +157,7 @@ class ReserveRoomViewSet(ModelViewSet):
         serializer_data = self.serializer_class(queryset, many=True, context=context)
         return Response(data=serializer_data.data, status=HTTP_200_OK)
 
-    @action(methods=['get'], detail=False, url_name='room_type', url_path='room_type')
+    @action(methods=['get'], detail=True, url_name='room_type', url_path='room_type')
     def get_room_type(self, request, pk=None):
         room_type_queryset = RoomType.objects.filter(is_active=True)
         serializer = serializers.RoomTypeSerializer(room_type_queryset, many=True)
@@ -146,25 +167,38 @@ class ReserveRoomViewSet(ModelViewSet):
 class ProfileChooseViewSet(ModelViewSet):
     queryset = Profile.objects.filter(is_active=True)
     serializer_class = serializers.ProfilesEventsSerializer
-    permission_classes = (IsAdminOrReadOnly,)
+    # permission_classes = (IsAdminOrReadOnly,)
     pagination_class = CustomPagination
 
-    @action(methods=['get'], detail=False, url_name='profiles', url_path='profiles')
+    @action(methods=['post'], detail=False, url_name='profiles', url_path='profiles')
     def get_profiles(self, request, pk=None):
-        event_start = request.query_params.get("event_start", None)
-        event_end = request.query_params.get("event_end", None)
+        objects = request.data
+        event_start = objects.get("event_start", None)
+        event_end = objects.get("event_end", None)
         if event_start is None or event_end is None:
             raise ValidationError({"error": "event_start and event_end query params required"})
 
-        group = request.query_params.get("group", None)
-        faculty = request.query_params.get("faculty", None)
-        cathedra = request.query_params.get("cathedra", None)
-        edu_program = request.query_params.get("education_program", None)
-        edu_program_group = request.query_params.get("education_program_group", None)
+        group = objects.get("group", [])
+        faculty = objects.get("faculty", [])
+        cathedra = objects.get("cathedra", [])
+        edu_program = objects.get("education_program", [])
+        edu_program_group = objects.get("education_program_group", [])
 
-        role = request.query_params.get("role", None)
+        role = objects.get("role", [])
 
-        full_name = request.query_params.get('full_name', None)
+        full_name = objects.get('full_name', None)
+
+        study_plans = StudyPlan.objects.filter(lookup_and_filtration_list(
+            group, faculty, cathedra, edu_program, edu_program_group
+        )).values_list('student')
+
+        queryset = self.queryset
+
+        queryset = queryset.filter(pk__in=study_plans)
+
+        if len(role):
+            profiles_from_role_related = RoleNamesRelated.objects.filter(role_name__in=role).values_list('profile')
+            queryset = queryset.filter(pk__in=profiles_from_role_related)
 
         lookup = Q()
 
@@ -173,23 +207,13 @@ class ProfileChooseViewSet(ModelViewSet):
             lookup |= Q(last_name__contains=full_name)
             lookup |= Q(middle_name__contains=full_name)
 
-        study_plans = StudyPlan.objects.filter(lookup_and_filtration(
-            group, faculty, cathedra, edu_program, edu_program_group
-        )).values_list('student')
-
-        queryset = self.queryset.filter(lookup)
-
-        if study_plans.exists():
-            queryset = queryset.filter(pk__in=study_plans)
-        if role is not None:
-            profiles_from_role_related = RoleNamesRelated.objects.filter(role_name=role).values_list('profile')
-            queryset = queryset.filter(pk__in=profiles_from_role_related)
+        queryset = queryset.filter(lookup)
 
         paginated_queryset = self.paginate_queryset(queryset)
 
         context = {
-            "event_start": self.request.query_params.get("event_start"),
-            "event_end": self.request.query_params.get("event_end")
+            "event_start": event_start,
+            "event_end": event_end
         }
 
         serializer = self.serializer_class(paginated_queryset, many=True, context=context).data
@@ -208,7 +232,7 @@ class ProfileChooseViewSet(ModelViewSet):
             cathedra=cathedra,
             edu_program=edu_program,
             edu_program_group=edu_program_group,
-        )).values_list('group', flat=True).distinct()
+        )).values_list('group').distinct()
         groups_queryset = Group.objects.filter(pk__in=queryset, is_active=True).order_by('name')
         serializer = serializers.GroupEventSerializer(groups_queryset, many=True)
         return Response(data=serializer.data, status=HTTP_200_OK)
@@ -216,7 +240,7 @@ class ProfileChooseViewSet(ModelViewSet):
     @action(methods=['get'], detail=False, url_name='cathedra', url_path='cathedra')
     def get_cathedra(self, request, pk=None):
         faculty = request.query_params.get('faculty')
-        queryset = self.queryset.filter(lookup_and_filtration(faculty=faculty)).values_list('cathedra').distinct()
+        queryset = StudyPlan.objects.filter(lookup_and_filtration(faculty=faculty)).values_list('cathedra').distinct()
         cathedra_queryset = Cathedra.objects.filter(pk__in=queryset, is_active=True).order_by('name')
         serializer = serializers.CathedraEventSerializer(cathedra_queryset, many=True)
         return Response(data=serializer.data, status=HTTP_200_OK)
@@ -227,7 +251,7 @@ class ProfileChooseViewSet(ModelViewSet):
         serializer = serializers.FacultyEventSerializer(faculty_queryset, many=True)
         return Response(data=serializer.data, status=HTTP_200_OK)
 
-    @action(methods=['get'], detail=False, url_name='edu_program', url_path='edu_program')
+    @action(methods=['get'], detail=False, url_name='edu_program_group', url_path='edu_program_group')
     def get_education_program(self, request, pk=None):
         edu_program_group = request.query_params.get('education_program_group', None)
         lookup = Q()
@@ -237,7 +261,7 @@ class ProfileChooseViewSet(ModelViewSet):
         serializer = serializers.EducationProgramEventSerializer(edu_program_queryset, many=True)
         return Response(data=serializer.data, status=HTTP_200_OK)
 
-    @action(methods=['get'], detail=False, url_path='edu_program_group', url_name='edu_program_group')
+    @action(methods=['get'], detail=False, url_path='edu_program', url_name='edu_program')
     def get_education_program_group(self, request, pk=None):
         edu_program_group_queryset = EducationProgramGroup.objects.filter(is_active=True).order_by('name')
         serializer = serializers.EducationProgramGroupEventSerializer(

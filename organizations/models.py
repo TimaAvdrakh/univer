@@ -262,9 +262,9 @@ class Education(BaseModel):
         null=True,
     )
     avg_mark = models.FloatField(
-        validators=[MinValueValidator(0.0), MaxValueValidator(4.0)],
+        validators=[MinValueValidator(0.0), MaxValueValidator(5.0)],
         null=True,
-        verbose_name='Средняя оценка (не выще 3.7)'
+        verbose_name='Средняя оценка (не выше 5.0)'
     )
     study_form = models.ForeignKey(
         StudyForm,
@@ -312,6 +312,13 @@ class Education(BaseModel):
     modified_for_1c = models.BooleanField(
         default=False,
         editable=False,
+    )
+    education_program = models.ForeignKey(
+        EducationProgram,
+        on_delete=models.SET_NULL,
+        blank=True,
+        null=True,
+        verbose_name='Образовательные программы'
     )
 
     def __str__(self):

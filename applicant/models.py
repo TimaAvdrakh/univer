@@ -1,8 +1,9 @@
 import datetime as dt
+import logging
 from django.contrib.auth.models import User
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
-from django.db.models import Case, When, Value, Q
+from django.db.models import Q
 from django.utils.translation import ugettext_lazy as _
 from common.models import (
     BaseModel,
@@ -34,6 +35,10 @@ from organizations.models import (
 )
 from organizations.models import DocumentType
 
+logger = logging.getLogger('django')
+
+
+MAKE_APP = "MAKE_APP"
 APPROVED = "APPROVED"
 REJECTED = "REJECTED"
 AWAITS_VERIFICATION = "AWAITS_VERIFICATION"
@@ -554,12 +559,20 @@ class Applicant(BaseModel):
 
     @staticmethod
     def erase_inactive():
-        lookup = Q(user__is_active=False) & Q(created__date__gte=dt.datetime.now() - dt.timedelta(days=1))
-        selected_accounts = Applicant.objects.filter(lookup)[:20]
-        # Сплайс не имеет методов Queryset
+        selected_accounts = Applicant.objects.filter(Q(user__is_active=False))
+        logger.info(f"Inactive count {selected_accounts.count()}")
         inactive_account: Applicant
+        # Код рабочий, только в раньше было inactive_account.user.delete() который работал очень долго,
+        # т.к. удалял все каскадом. Поэтому удаление происходит вручную
         for inactive_account in selected_accounts:
-            inactive_account.user.delete()
+            user = inactive_account.user
+            profile = user.profile
+            role = profile.role
+            role.delete()
+            profile.delete()
+            user.delete()
+            inactive_account.delete()
+        logger.info("Deleted inactive applicants")
 
 
 # Статус заявки
@@ -574,6 +587,13 @@ class ApplicationStatus(BaseCatalog):
     @staticmethod
     def create_or_update():
         statuses = [
+            {
+                "name": MAKE_APP,
+                "name_ru": "Составьте заявление",
+                "name_kk": "Мәлімдеме жасаңыз",
+                "name_en": "Make a statement",
+                "code": MAKE_APP,
+            },
             {
                 "name": APPROVED,
                 "name_ru": "Заявление утверждено",
@@ -1615,7 +1635,6 @@ class Application(BaseModel):
             moderator=moderator,
             application=self,
         )
-        # TODO на подтверждение заявления модератором импортировать заявление в 1С
         self.import_self_to_1c()
         # Поставить в очередь крона
         EmailTemplate.put_in_cron_queue(
