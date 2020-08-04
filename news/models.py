@@ -86,30 +86,35 @@ class News(BaseModel):
     def __str__(self):
         return f'{self.title[:30]}, Автор {self.author}'
 
-    def set_for_roles(self, role_types: list):
-        origin_role_types = set(Role.get_role_types())
-        role_types = set(role_types)
-        assert role_types.issubset(origin_role_types), "Given role types are not a subset of original role types"
-        self.roles = list(role_types)
+    def set_for(
+            self,
+            role_types: List[str] = None,
+            addressees: List[Profile] = None,
+            courses: List[int] = None,
+            prep_levels: List[PreparationLevel] = None,
+            faculties: List[Faculty] = None,
+            cathedras: List[Cathedra] = None,
+            education_programs: List[EducationProgram] = None,
+            groups: List[Group] = None
+    ):
+        if role_types:
+            origin_role_types = set(Role.get_role_types())
+            role_types = set(role_types)
+            assert role_types.issubset(origin_role_types), "Given role types are not a subset of original role types"
+            self.roles = list(role_types)
+        if courses:
+            self.courses = courses
+        if addressees:
+            self.addressees = addressees
+        if prep_levels:
+            self.prep_levels = prep_levels
+        if faculties:
+            self.faculties = faculties
+        if cathedras:
+            self.cathedras = cathedras
+        if education_programs:
+            self.education_programs = education_programs
+        if groups:
+            self.groups = groups
         self.save()
-
-    def set_news_for_addressees(self, profiles: List[Profile]):
-        pass
-
-    def set_news_for_courses(self, course: List[int]):
-        pass
-
-    def set_news_for_prep_levels(self, prep_levels: List[PreparationLevel]):
-        pass
-
-    def set_news_for_faculties(self, faculties: List[Faculty]):
-        pass
-
-    def set_news_for_cathedras(self, cathedras: List[Cathedra]):
-        pass
-
-    def set_news_for_education_programs(self, education_programs: List[EducationProgram]):
-        pass
-
-    def set_news_for_groups(self, groups: List[Group]):
-        pass
+        return
