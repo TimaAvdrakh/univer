@@ -3,10 +3,10 @@ from rest_framework.viewsets import ModelViewSet
 from rest_framework.decorators import action
 from rest_framework import status
 from rest_framework.response import Response
-from organizations.models import TeacherDiscipline, StudentDiscipline, StudyPlan, AcadPeriod
+from organizations.models import TeacherDiscipline, StudentDiscipline, StudyPlan, AcadPeriod, Language
 from .serializers import (
     EMCSerializer, TeacherDisciplineSerializer, StudentDisciplineSerializer,
-    StudyPlanSerializer, AcadSerializer
+    StudyPlanSerializer, AcadSerializer, LanguageSerializer
 )
 from .models import EMC
 from .permissions import TeacherPermission
@@ -18,22 +18,30 @@ class EMCModelViewSet(ModelViewSet):
     queryset = EMC.objects.all()
     pagination_class = SmallResultSetPagination
 
-    @action(methods=['get'], detail=False, url_path='study_plans', url_name='study_plans')
-    def get_study_plans(self, request, pk=None):
-        """Получить список УП студента"""
+    @action(methods=['get'], detail=False, url_path='filter_for_student', url_name='filter_for_student')
+    def get_filter_for_student(self, request, pk=None):
+        """Получить список по дисциплине, по языкам и академ прериодам в странице студента"""
 
         profile = self.request.user.profile
         is_student = profile.role.is_student
         if is_student:
-            study_plan = StudyPlan.objects.filter(
-                student=profile,
+            language = Language.objects.filter(
+                language__student=profile,
             )
             acad_periods = AcadPeriod.objects.filter(
                 acad_period__student=profile
             ).distinct('number')
+            student_discipline = StudentDiscipline.objects.filter(
+                student=profile,
+            )
             serializer_acad = AcadSerializer(acad_periods, many=True).data
-            serializer_study = StudyPlanSerializer(study_plan, many=True).data
-            return Response({"acad_periods": serializer_acad, "study_plan": serializer_study}, status=status.HTTP_200_OK)
+            serializer_language = LanguageSerializer(language, many=True).data
+            serializer_student_discipline = StudentDisciplineSerializer(student_discipline, many=True).data
+            return Response({
+                "acad_periods": serializer_acad,
+                "language": serializer_language,
+                "student_discipline": serializer_student_discipline
+            }, status=status.HTTP_200_OK)
 
     @action(methods=['get'], detail=False, url_path='disciplines', url_name='disciplines')
     def get_disciplines(self, request, pk=None):

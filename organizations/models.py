@@ -833,6 +833,7 @@ class StudentDiscipline(BaseModel):
         blank=True,
         on_delete=models.CASCADE,
         verbose_name='Язык',
+        related_name='language',
     )
     cycle = models.ForeignKey(
         DisciplineCycle,

@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from common.models import File, ReservedUID
 from common.serializers import FileSerializer
-from organizations.models import TeacherDiscipline, StudentDiscipline, StudyPlan, AcadPeriod
+from organizations.models import TeacherDiscipline, StudentDiscipline, StudyPlan, AcadPeriod, Language
 from .models import EMC
 
 
@@ -68,7 +68,6 @@ class TeacherDisciplineSerializer(DisciplineSerializer):
 
 
 class StudentDisciplineSerializer(DisciplineSerializer):
-
     class Meta:
         model = StudentDiscipline
         fields = '__all__'
@@ -92,10 +91,15 @@ class AcadSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
+class LanguageSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Language
+        fields = '__all__'
+
+
 class AcadPeriodAndStudyPlan(serializers.Serializer):
     acad = AcadSerializer(many=True)
     study_plan = StudyPlanSerializer(many=True)
 
     class Meta:
         fields = ['acad', 'study_plan']
-

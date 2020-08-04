@@ -21,6 +21,7 @@ class EMC(BaseModel):
     )
     author = models.ForeignKey(
         User,
-        on_delete=models.CASCADE
+        on_delete=models.CASCADE,
+        blank=True, null=True
     )
     description = models.TextField()
