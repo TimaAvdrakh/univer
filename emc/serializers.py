@@ -1,7 +1,10 @@
 from rest_framework import serializers
 from common.models import File, ReservedUID
 from common.serializers import FileSerializer
-from organizations.models import TeacherDiscipline, StudentDiscipline, StudyPlan, AcadPeriod, Language
+from organizations.models import (
+    TeacherDiscipline, StudentDiscipline, StudyPlan,
+    AcadPeriod, Language, Discipline)
+
 from .models import EMC
 
 
@@ -25,7 +28,7 @@ class EMCSerializer(serializers.ModelSerializer):
         try:
             return emc.author.profile.full_name
         except:
-            return emc.author.username
+            return emc.author.last_name
 
     def create(self, validated_data):
         user = self.context['request'].user
@@ -41,7 +44,7 @@ class EMCSerializer(serializers.ModelSerializer):
         return emc
 
 
-class DisciplineSerializer(serializers.ModelSerializer):
+class InDisciplineSerializer(serializers.ModelSerializer):
     discipline_name = serializers.SerializerMethodField(read_only=True)
     emcs = serializers.SerializerMethodField(read_only=True)
     teacher_name = serializers.SerializerMethodField(read_only=True)
@@ -61,13 +64,13 @@ class DisciplineSerializer(serializers.ModelSerializer):
             return None
 
 
-class TeacherDisciplineSerializer(DisciplineSerializer):
+class TeacherDisciplineSerializer(InDisciplineSerializer):
     class Meta:
         model = TeacherDiscipline
         fields = '__all__'
 
 
-class StudentDisciplineSerializer(DisciplineSerializer):
+class StudentDisciplineSerializer(InDisciplineSerializer):
     class Meta:
         model = StudentDiscipline
         fields = '__all__'
@@ -94,6 +97,12 @@ class AcadSerializer(serializers.ModelSerializer):
 class LanguageSerializer(serializers.ModelSerializer):
     class Meta:
         model = Language
+        fields = '__all__'
+
+
+class DisciplineSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Discipline
         fields = '__all__'
 
 

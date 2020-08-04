@@ -812,6 +812,7 @@ class StudentDiscipline(BaseModel):
         Discipline,
         on_delete=models.CASCADE,
         verbose_name='Дисциплина',
+        related_name='discipline'
     )
     discipline_code = models.CharField(
         default='',

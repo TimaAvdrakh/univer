@@ -3,10 +3,13 @@ from rest_framework.viewsets import ModelViewSet
 from rest_framework.decorators import action
 from rest_framework import status
 from rest_framework.response import Response
-from organizations.models import TeacherDiscipline, StudentDiscipline, StudyPlan, AcadPeriod, Language
+from organizations.models import (
+    TeacherDiscipline, StudentDiscipline, StudyPlan,
+    AcadPeriod, Language, Discipline
+)
 from .serializers import (
     EMCSerializer, TeacherDisciplineSerializer, StudentDisciplineSerializer,
-    StudyPlanSerializer, AcadSerializer, LanguageSerializer
+    StudyPlanSerializer, AcadSerializer, LanguageSerializer, DisciplineSerializer
 )
 from .models import EMC
 from .permissions import TeacherPermission
@@ -20,28 +23,64 @@ class EMCModelViewSet(ModelViewSet):
 
     @action(methods=['get'], detail=False, url_path='filter_for_student', url_name='filter_for_student')
     def get_filter_for_student(self, request, pk=None):
-        """Получить список по дисциплине, по языкам и академ прериодам в странице студента"""
+        """Получить список по дисциплине, по языкам, академ прериодам
+        и по учебному плану в странице студента для фильтра
+        """
 
         profile = self.request.user.profile
         is_student = profile.role.is_student
         if is_student:
             language = Language.objects.filter(
                 language__student=profile,
-            )
+            ).distinct('uid').order_by('uid')
+            study_plan = StudyPlan.objects.filter(
+                study_plan__student=profile,
+            ).distinct('uid').order_by('uid')
             acad_periods = AcadPeriod.objects.filter(
                 acad_period__student=profile
-            ).distinct('number')
+            ).distinct('uid').order_by('uid')
             student_discipline = StudentDiscipline.objects.filter(
                 student=profile,
-            )
+            ).distinct('uid').order_by('uid')
+            serializer_study_plan = StudyPlanSerializer(study_plan, many=True).data
             serializer_acad = AcadSerializer(acad_periods, many=True).data
             serializer_language = LanguageSerializer(language, many=True).data
             serializer_student_discipline = StudentDisciplineSerializer(student_discipline, many=True).data
             return Response({
                 "acad_periods": serializer_acad,
+                "study_plan": serializer_study_plan,
                 "language": serializer_language,
                 "student_discipline": serializer_student_discipline
             }, status=status.HTTP_200_OK)
+
+    @action(methods=['get'], detail=False, url_path='create_emc', url_name='create_emc')
+    def get_create_emc(self, request, pk=None):
+        """Получить список по дисциплине и по языкам в странице преподавателя для создание УМК"""
+
+        language = Language.objects.all()
+        discipline = Discipline.objects.all()
+        serializer_discipline = DisciplineSerializer(discipline, many=True).data
+        serializer_language = LanguageSerializer(language, many=True).data
+        return Response({
+            "disciplines": serializer_discipline,
+            "languages": serializer_language,
+        }, status=status.HTTP_200_OK)
+
+    @action(methods=['get'], detail=False, url_path='emc_list', url_name='emc_list')
+    def get_emc_list(self, request, pk=None):
+        """Получить список УМК """
+        profile = self.request.user.profile
+        is_student = profile.role.is_student
+        is_teacher = profile.role.is_teacher
+        if is_student:
+            sd = StudentDiscipline.objects.filter(student=profile).values_list("discipline", flat=True)
+            emc = EMC.objects.filter(
+                discipline__in=sd,
+            ).distinct('discipline')
+            paginated_queryset = self.paginate_queryset(emc)
+            return self.get_paginated_response(
+                EMCSerializer(paginated_queryset, many=True).data
+            )
 
     @action(methods=['get'], detail=False, url_path='disciplines', url_name='disciplines')
     def get_disciplines(self, request, pk=None):
