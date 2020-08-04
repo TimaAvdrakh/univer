@@ -806,11 +806,13 @@ class StudentDiscipline(BaseModel):
         AcadPeriod,
         on_delete=models.CASCADE,
         verbose_name='Академический период',
+        related_name='acad_period'
     )
     discipline = models.ForeignKey(
         Discipline,
         on_delete=models.CASCADE,
         verbose_name='Дисциплина',
+        related_name='discipline'
     )
     discipline_code = models.CharField(
         default='',
@@ -839,6 +841,7 @@ class StudentDiscipline(BaseModel):
         blank=True,
         on_delete=models.CASCADE,
         verbose_name='Язык',
+        related_name='language',
     )
     cycle = models.ForeignKey(
         DisciplineCycle,

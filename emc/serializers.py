@@ -1,7 +1,10 @@
 from rest_framework import serializers
 from common.models import File, ReservedUID
 from common.serializers import FileSerializer
-from organizations.models import TeacherDiscipline, StudentDiscipline, StudyPlan
+from organizations.models import (
+    TeacherDiscipline, StudentDiscipline, StudyPlan,
+    AcadPeriod, Language, Discipline)
+
 from .models import EMC
 
 
@@ -25,7 +28,7 @@ class EMCSerializer(serializers.ModelSerializer):
         try:
             return emc.author.profile.full_name
         except:
-            return emc.author.username
+            return emc.author.last_name
 
     def create(self, validated_data):
         user = self.context['request'].user
@@ -41,7 +44,7 @@ class EMCSerializer(serializers.ModelSerializer):
         return emc
 
 
-class DisciplineSerializer(serializers.ModelSerializer):
+class InDisciplineSerializer(serializers.ModelSerializer):
     discipline_name = serializers.SerializerMethodField(read_only=True)
     emcs = serializers.SerializerMethodField(read_only=True)
     teacher_name = serializers.SerializerMethodField(read_only=True)
@@ -61,30 +64,51 @@ class DisciplineSerializer(serializers.ModelSerializer):
             return None
 
 
-class TeacherDisciplineSerializer(DisciplineSerializer):
+class TeacherDisciplineSerializer(InDisciplineSerializer):
     class Meta:
         model = TeacherDiscipline
         fields = '__all__'
 
 
-class StudentDisciplineSerializer(DisciplineSerializer):
-    # acad_period = serializers.SerializerMethodField(read_only=True)
-    #
-    # def get_acad_period(self, sd: StudentDiscipline):
-    #     return sd.acad_period.number
-
+class StudentDisciplineSerializer(InDisciplineSerializer):
     class Meta:
         model = StudentDiscipline
         fields = '__all__'
 
 
 class StudyPlanSerializer(serializers.ModelSerializer):
-    student_disciplines = serializers.SerializerMethodField(read_only=True)
-
-    def get_student_disciplines(self, sp: StudyPlan):
-        student_disciplines = sp.study_plan.all()
-        return StudentDisciplineSerializer(student_disciplines, many=True).data
+    # student_disciplines = serializers.SerializerMethodField(read_only=True)
+    #
+    # def get_student_disciplines(self, sp: StudyPlan):
+    #     student_disciplines = sp.study_plan.all()
+    #     return StudentDisciplineSerializer(student_disciplines, many=True).data
 
     class Meta:
         model = StudyPlan
         fields = '__all__'
+
+
+class AcadSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = AcadPeriod
+        fields = '__all__'
+
+
+class LanguageSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Language
+        fields = '__all__'
+
+
+class DisciplineSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Discipline
+        fields = '__all__'
+
+
+class AcadPeriodAndStudyPlan(serializers.Serializer):
+    acad = AcadSerializer(many=True)
+    study_plan = StudyPlanSerializer(many=True)
+
+    class Meta:
+        fields = ['acad', 'study_plan']
