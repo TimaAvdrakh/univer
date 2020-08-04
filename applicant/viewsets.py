@@ -492,7 +492,7 @@ class ApplicationViewSet(ModelViewSet):
             return Response(data=data, status=HTTP_200_OK)
         else:
             data = {
-                "status": "Составьте заявление",
+                "status": models.ApplicationStatus.objects.get(code=models.MAKE_APP).name,
                 "comment": "",
             }
             return Response(data=data, status=HTTP_200_OK)
