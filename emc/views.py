@@ -52,35 +52,77 @@ class EMCModelViewSet(ModelViewSet):
                 "language": serializer_language,
                 "student_discipline": serializer_student_discipline
             }, status=status.HTTP_200_OK)
+        else:
+            serializer = None
+            return Response(serializer, status=status.HTTP_200_OK)
 
     @action(methods=['get'], detail=False, url_path='create_emc', url_name='create_emc')
     def get_create_emc(self, request, pk=None):
         """Получить список по дисциплине и по языкам в странице преподавателя для создание УМК"""
 
-        language = Language.objects.all()
-        discipline = Discipline.objects.all()
-        serializer_discipline = DisciplineSerializer(discipline, many=True).data
-        serializer_language = LanguageSerializer(language, many=True).data
-        return Response({
-            "disciplines": serializer_discipline,
-            "languages": serializer_language,
-        }, status=status.HTTP_200_OK)
+        profile = self.request.user.profile
+        is_teacher = profile.role.is_teacher
+        if is_teacher:
+            language = Language.objects.filter(
+                teacher_language__teacher=profile
+            ).distinct('uid').order_by('uid')
+            discipline = Discipline.objects.filter(
+                teacher_discipline__teacher=profile
+            ).distinct('uid').order_by('uid')
+            serializer_discipline = DisciplineSerializer(discipline, many=True).data
+            serializer_language = LanguageSerializer(language, many=True).data
+            return Response({
+                "disciplines": serializer_discipline,
+                "languages": serializer_language,
+            }, status=status.HTTP_200_OK)
+        else:
+            serializer = None
+            return Response(serializer, status=status.HTTP_200_OK)
 
     @action(methods=['get'], detail=False, url_path='emc_list', url_name='emc_list')
     def get_emc_list(self, request, pk=None):
         """Получить список УМК """
+        language = request.query_params.get('language_uid')
+        study_plan = request.query_params.get('study_plan_uid')
+        acad_period = request.query_params.get('acad_period_uid')
+        student_discipline = request.query_params.get('student_discipline_uid')
         profile = self.request.user.profile
         is_student = profile.role.is_student
         is_teacher = profile.role.is_teacher
         if is_student:
-            sd = StudentDiscipline.objects.filter(student=profile).values_list("discipline", flat=True)
+            sd = StudentDiscipline.objects.filter(
+                student=profile,
+            ).values_list("discipline", flat=True)
+            if language:
+                sd = sd.filter(language=language)
+            if study_plan:
+                sd = sd.filter(study_plan=study_plan)
+            if acad_period:
+                sd = sd.filter(acad_period=acad_period)
+            if student_discipline:
+                sd = sd.filter(discipline=student_discipline)
             emc = EMC.objects.filter(
-                discipline__in=sd,
-            ).distinct('discipline')
+                    discipline__in=sd,
+                ).distinct('discipline')
             paginated_queryset = self.paginate_queryset(emc)
             return self.get_paginated_response(
                 EMCSerializer(paginated_queryset, many=True).data
             )
+        else:
+            serializer = None
+            return Response(serializer, status=status.HTTP_200_OK)
+
+    @action(methods=['get'], detail=False, url_path='emc_detail', url_name='emc_detail')
+    def get_emc_detail(self, request, pk=None):
+        """Получить один УМК """
+
+        emc_uid = request.query_params.get('emc_uid')
+        if emc_uid:
+            emc_files = EMC.objects.get(pk=emc_uid)
+            serializer = EMCSerializer(emc_files).data
+        else:
+            serializer = None
+        return Response(data=serializer, status=status.HTTP_200_OK)
 
     @action(methods=['get'], detail=False, url_path='disciplines', url_name='disciplines')
     def get_disciplines(self, request, pk=None):

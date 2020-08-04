@@ -812,7 +812,7 @@ class StudentDiscipline(BaseModel):
         Discipline,
         on_delete=models.CASCADE,
         verbose_name='Дисциплина',
-        related_name='discipline'
+        related_name='student_discipline'
     )
     discipline_code = models.CharField(
         default='',
@@ -841,7 +841,7 @@ class StudentDiscipline(BaseModel):
         blank=True,
         on_delete=models.CASCADE,
         verbose_name='Язык',
-        related_name='language',
+        related_name='student_language',
     )
     cycle = models.ForeignKey(
         DisciplineCycle,
@@ -1125,6 +1125,7 @@ class TeacherDiscipline(BaseModel):
         Discipline,
         on_delete=models.CASCADE,
         verbose_name='Дисциплина',
+        related_name='teacher_discipline'
     )
     load_type2 = models.ForeignKey(
         LoadType2,
@@ -1144,6 +1145,7 @@ class TeacherDiscipline(BaseModel):
         blank=True,
         on_delete=models.CASCADE,
         verbose_name='Язык преподавания',
+        related_name='teacher_language',
     )
     uuid1c = models.CharField(  # TODO
         max_length=100,
