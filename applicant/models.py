@@ -38,6 +38,7 @@ from organizations.models import DocumentType
 logger = logging.getLogger('django')
 
 
+MAKE_APP = "MAKE_APP"
 APPROVED = "APPROVED"
 REJECTED = "REJECTED"
 AWAITS_VERIFICATION = "AWAITS_VERIFICATION"
@@ -586,6 +587,13 @@ class ApplicationStatus(BaseCatalog):
     @staticmethod
     def create_or_update():
         statuses = [
+            {
+                "name": MAKE_APP,
+                "name_ru": "Составьте заявление",
+                "name_kk": "Мәлімдеме жасаңыз",
+                "name_en": "Make a statement",
+                "code": MAKE_APP,
+            },
             {
                 "name": APPROVED,
                 "name_ru": "Заявление утверждено",
