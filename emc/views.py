@@ -112,6 +112,18 @@ class EMCModelViewSet(ModelViewSet):
             serializer = None
             return Response(serializer, status=status.HTTP_200_OK)
 
+    @action(methods=['get'], detail=False, url_path='emc_detail', url_name='emc_detail')
+    def get_emc_detail(self, request, pk=None):
+        """Получить один УМК """
+
+        emc_uid = request.query_params.get('emc_uid')
+        if emc_uid:
+            emc_files = EMC.objects.get(pk=emc_uid)
+            serializer = EMCSerializer(emc_files).data
+        else:
+            serializer = None
+        return Response(data=serializer, status=status.HTTP_200_OK)
+
     @action(methods=['get'], detail=False, url_path='disciplines', url_name='disciplines')
     def get_disciplines(self, request, pk=None):
         """Получить список закрпеленных дисциплин в зависомости от роли (студента или учителя)"""
