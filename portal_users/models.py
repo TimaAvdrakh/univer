@@ -224,8 +224,8 @@ class Profile(BaseModel):
                     username = raw_username
                 else:
                     max_order = \
-                    UsernameRule.objects.filter(raw_username=raw_username).aggregate(max_order=Max('order'))[
-                        'max_order']
+                        UsernameRule.objects.filter(raw_username=raw_username).aggregate(max_order=Max('order'))[
+                            'max_order']
                     new_max = max_order + 1
                     UsernameRule.objects.create(
                         raw_username=raw_username,
@@ -461,15 +461,23 @@ class Role(BaseModel):
         default=False,
         verbose_name='Модератор'
     )
-    is_mod_can_edit = models.BooleanField(
-        default=False,
-        verbose_name='Права модератора на редактирование анкет'
-    )
     is_columnist = models.BooleanField(
         default=False,
         verbose_name='Колумнист',
         help_text='Ведет новостной блок портала'
     )
+
+    @staticmethod
+    def get_role_types():
+        return list(
+            map(
+                lambda field: field.name,
+                filter(
+                    lambda field: field.name.startswith('is_') and field.name != 'is_active',
+                    Role._meta.local_fields
+                )
+            )
+        )
 
     def __str__(self):
         return '{}'.format(self.profile.user.username)
@@ -820,7 +828,3 @@ class RoleNamesRelated(BaseModel):
             if role.code == "is_mod".upper():
                 profiles = Profile.objects.filter(role__is_mod=True)
                 copy_role(role, profiles)
-
-
-
-

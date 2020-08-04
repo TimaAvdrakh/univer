@@ -51,7 +51,8 @@ urlpatterns = [
     path('gender/', views.GenderListView.as_view(),
          name='gender'),
     path('citizenship/', views.CitizenshipListView.as_view(),
-         name='citizenship')
+         name='citizenship'),
+    path('role-types/', views.get_role_types, name='role_types')
 ]
 
 router = DefaultRouter()

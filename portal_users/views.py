@@ -1,8 +1,6 @@
-from django.shortcuts import render
-from rest_framework.views import APIView
+from rest_framework.decorators import api_view
 from rest_framework import generics
 from rest_framework import status
-from rest_framework.viewsets import ModelViewSet
 from rest_framework.response import Response
 from . import serializers
 from . import models
@@ -11,7 +9,6 @@ from django.contrib.auth.models import User
 from organizations import models as org_models
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import permissions as rest_permissions
-from rest_framework.parsers import FileUploadParser
 from . import permissions
 from .utils import get_current_study_year
 from portal.curr_settings import student_discipline_info_status, not_choosing_load_types2, CYCLE_DISCIPLINE
@@ -918,3 +915,8 @@ class CitizenshipListView(generics.ListAPIView):
         queryset = queryset.filter(pk__in=citizenship_pks)
 
         return queryset
+
+
+@api_view(http_method_names=['GET'])
+def get_role_types(request):
+    return Response(data={'types': models.Role.get_role_types()}, status=status.HTTP_200_OK)
