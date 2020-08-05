@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     'mail',
     'instruction',
     'emc',
+    'news',
 ]
 
 MIDDLEWARE = [
