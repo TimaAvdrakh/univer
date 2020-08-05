@@ -559,7 +559,9 @@ class Applicant(BaseModel):
 
     @staticmethod
     def erase_inactive():
-        selected_accounts = Applicant.objects.filter(Q(user__is_active=False))
+        selected_accounts = Applicant.objects.filter(
+            Q(user__is_active=False) & Q(created__date=dt.date.today() - dt.timedelta(days=1))
+        )
         logger.info(f"Inactive count {selected_accounts.count()}")
         inactive_account: Applicant
         # Код рабочий, только в раньше было inactive_account.user.delete() который работал очень долго,
