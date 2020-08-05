@@ -31,7 +31,7 @@ class EMCModelViewSet(ModelViewSet):
         is_student = profile.role.is_student
         if is_student:
             language = Language.objects.filter(
-                language__student=profile,
+                student_language__student=profile,
             ).distinct('uid').order_by('uid')
             study_plan = StudyPlan.objects.filter(
                 study_plan__student=profile,
