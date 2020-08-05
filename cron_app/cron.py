@@ -657,8 +657,7 @@ class DeleteInactiveApplicants(CronJobBase):
     """
     Удаляет неактивных абитуриентов, которые не подтвердили свою регистрацию по почте
     """
-    RUN_EVERY_MINS = 24 * 60
-    RUN_AT_TIMES = ['00:00']
+    RUN_EVERY_MINS = 1
 
     schedule = Schedule(run_every_mins=RUN_EVERY_MINS)
     code = 'cron_app.delete_inactive_applicants'
